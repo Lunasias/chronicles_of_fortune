@@ -34,10 +34,150 @@ export interface RoundResult {
   narration: string;
 }
 
+export interface CombatantIntel {
+  name: string;
+  classOrType: string;
+  tendencies: {
+    attack: number;
+    strike: number;
+    magic: number;
+    skill: number;
+  };
+  weakness: string;
+  resistance: string;
+  recommendedCounter: string;
+  tacticalTip: string;
+}
+
 export class BattleEngine {
   public attacker: Combatant;
   public defender: Combatant;
   public isPlayerAttacking: boolean;
+
+  static getCombatantIntel(combatant: Combatant): CombatantIntel {
+    const name = combatant.name.toLowerCase();
+    const classKey = combatant.classKey || (combatant.playerRef?.classKey) || '';
+
+    if (combatant.isBoss) {
+      return {
+        name: combatant.name,
+        classOrType: 'DRACONIC OVERLORD',
+        tendencies: { attack: 25, strike: 45, magic: 20, skill: 10 },
+        weakness: 'Ice & Holy Spells, Piercing Attacks',
+        resistance: 'Fire & Physical Slashes',
+        recommendedCounter: '⚡ High Strike Tendency! Ready Counter!',
+        tacticalTip: 'The Dragon Overlord favors devastating Strikes. A successful Counter deals catastrophic reverse damage!'
+      };
+    }
+
+    if (combatant.playerRef) {
+      const p = combatant.playerRef;
+      if (classKey === 'warrior') {
+        return {
+          name: p.displayName,
+          classOrType: 'WARRIOR JUGGERNAUT',
+          tendencies: { attack: 40, strike: 35, magic: 10, skill: 15 },
+          weakness: 'Elemental Magic & Armor Piercing',
+          resistance: 'Physical Blunt & Defend Stance',
+          recommendedCounter: '🔮 Cast Magic to bypass ironclad defense!',
+          tacticalTip: 'High physical DEF. Physical attacks do chip damage, but Magic tears right through.'
+        };
+      } else if (classKey === 'magician') {
+        return {
+          name: p.displayName,
+          classOrType: 'ARCANE EVOKER',
+          tendencies: { attack: 15, strike: 15, magic: 50, skill: 20 },
+          weakness: 'Physical Rushdown & Critical Strike',
+          resistance: 'Magic Spells & Elemental Shields',
+          recommendedCounter: '⚔️ Rushdown with physical Attack; avoid Magic!',
+          tacticalTip: 'Has deadly offensive magic. Use Magic Guard to block spells, then retaliate with blade.'
+        };
+      } else if (classKey === 'thief') {
+        return {
+          name: p.displayName,
+          classOrType: 'SHADOW INFILTRATOR',
+          tendencies: { attack: 35, strike: 45, magic: 5, skill: 15 },
+          weakness: 'Guarded Counter & High DEF',
+          resistance: 'High Evasion & Speed',
+          recommendedCounter: '🛡️ Counter their aggressive Strike pickpocket!',
+          tacticalTip: 'Speed demon who loves stealing gold via Strike. Predict their strike with Counter!'
+        };
+      } else if (classKey === 'cleric') {
+        return {
+          name: p.displayName,
+          classOrType: 'HOLY CRUSADER',
+          tendencies: { attack: 25, strike: 25, magic: 35, skill: 15 },
+          weakness: 'Heavy Burst Strike & Darkness',
+          resistance: 'Holy Light & Sustained Attrition',
+          recommendedCounter: '⚡ Burst them down with Strike before they heal!',
+          tacticalTip: 'Holy Smite heals HP while dealing damage. Do not let the duel drag out.'
+        };
+      }
+    }
+
+    // Common Monsters
+    if (name.includes('slime')) {
+      return {
+        name: combatant.name,
+        classOrType: 'AMORPHOUS OOZE',
+        tendencies: { attack: 55, strike: 20, magic: 20, skill: 5 },
+        weakness: 'Blunt Force & Fire',
+        resistance: 'Slash Blades',
+        recommendedCounter: '⚔️ Standard Attack is safest!',
+        tacticalTip: 'Predictable baseline monster. Rarely Counters.'
+      };
+    } else if (name.includes('goblin') || name.includes('kobold')) {
+      return {
+        name: combatant.name,
+        classOrType: 'WRETCHED SCAVENGER',
+        tendencies: { attack: 45, strike: 35, magic: 10, skill: 10 },
+        weakness: 'Holy Light & Magic',
+        resistance: 'Poisons',
+        recommendedCounter: '🛡️ Counter their wild club Strikes!',
+        tacticalTip: 'Goblins swing erratically with wild overhead strikes.'
+      };
+    } else if (name.includes('skeleton')) {
+      return {
+        name: combatant.name,
+        classOrType: 'CRYPT UNDEAD',
+        tendencies: { attack: 40, strike: 35, magic: 10, skill: 15 },
+        weakness: 'Holy Smite & Crushing Hammers',
+        resistance: 'Piercing Arrows & Cold',
+        recommendedCounter: '🔮 Magic or Counter against sword swings.',
+        tacticalTip: 'Bony frame easily shattered by Holy and Magic.'
+      };
+    } else if (name.includes('spider') || name.includes('bat')) {
+      return {
+        name: combatant.name,
+        classOrType: 'ABYSSAL BEAST',
+        tendencies: { attack: 50, strike: 30, magic: 15, skill: 5 },
+        weakness: 'Fire Spells & Wide Slashes',
+        resistance: 'Earth & Darkness',
+        recommendedCounter: '⚔️ Strong Physical Slash or Magic Fire.',
+        tacticalTip: 'Fragile HP. High speed but low defense.'
+      };
+    } else if (name.includes('wraith') || name.includes('specter')) {
+      return {
+        name: combatant.name,
+        classOrType: 'SPECTRAL APPARITION',
+        tendencies: { attack: 15, strike: 15, magic: 60, skill: 10 },
+        weakness: 'Holy Magic & Silvered Weapons',
+        resistance: 'Immune to Normal Physical Damage',
+        recommendedCounter: '🔮 Use Magic or Magic Guard!',
+        tacticalTip: 'Phasing through reality. Defend against physical is useless; use Magic Guard!'
+      };
+    }
+
+    return {
+      name: combatant.name,
+      classOrType: 'ROVING FOE',
+      tendencies: { attack: 45, strike: 30, magic: 15, skill: 10 },
+      weakness: 'Adaptive Tactics',
+      resistance: 'Standard',
+      recommendedCounter: '⚔️ Balanced Stance',
+      tacticalTip: 'Observe opponent attack patterns and punish overextensions.'
+    };
+  }
 
   constructor(combatant1: Combatant, combatant2: Combatant) {
     // Determine initiative by Speed stat

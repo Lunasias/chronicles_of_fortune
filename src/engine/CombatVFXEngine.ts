@@ -54,12 +54,28 @@ export interface SkillCutscene {
   elapsed: number;
 }
 
+export interface FloatingText {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  text: string;
+  color: string;
+  size: number;
+  alpha: number;
+  decay: number;
+  gravity: number;
+  shadowColor: string;
+}
+
 export class CombatVFXEngine {
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
   public groundCracks: GroundCrack[] = [];
   public runicRings: RunicRing[] = [];
+  public floatingTexts: FloatingText[] = [];
 
+  public hitstopTimer = 0;
   public screenShakeAmount = 0;
   public screenShakeX = 0;
   public screenShakeY = 0;
@@ -80,8 +96,68 @@ export class CombatVFXEngine {
 
   constructor() {}
 
+  triggerHitstop(frames = 4) {
+    this.hitstopTimer = frames;
+  }
+
   triggerScreenShake(intensity = 14) {
     this.screenShakeAmount = intensity;
+  }
+
+  spawnFloatingCombatText(
+    x: number,
+    y: number,
+    text: string,
+    type: 'normal' | 'crit' | 'magic' | 'counter' | 'heal' | 'miss' = 'normal'
+  ) {
+    let color = '#fef08a';
+    let shadowColor = '#ca8a04';
+    let size = 18;
+    let vy = -3.8;
+    let vx = (Math.random() - 0.5) * 1.5;
+
+    if (type === 'crit') {
+      color = '#ef4444';
+      shadowColor = '#7f1d1d';
+      size = 24;
+      vy = -5.2;
+      this.triggerHitstop(5);
+    } else if (type === 'magic') {
+      color = '#c084fc';
+      shadowColor = '#581c87';
+      size = 20;
+      vy = -4.2;
+    } else if (type === 'counter') {
+      color = '#38bdf8';
+      shadowColor = '#0369a1';
+      size = 22;
+      vy = -4.8;
+      this.triggerHitstop(6);
+    } else if (type === 'heal') {
+      color = '#4ade80';
+      shadowColor = '#15803d';
+      size = 20;
+      vy = -3.5;
+    } else if (type === 'miss') {
+      color = '#94a3b8';
+      shadowColor = '#334155';
+      size = 16;
+      vy = -2.5;
+    }
+
+    this.floatingTexts.push({
+      x,
+      y,
+      vx,
+      vy,
+      text,
+      color,
+      size,
+      alpha: 1.0,
+      decay: 0.022,
+      gravity: 0.12,
+      shadowColor
+    });
   }
 
   // =========================================================================
@@ -510,6 +586,12 @@ export class CombatVFXEngine {
   }
 
   update() {
+    // 0. Hitstop micro-pause
+    if (this.hitstopTimer > 0) {
+      this.hitstopTimer--;
+      return;
+    }
+
     // 1. Screen Shake dampening
     if (this.screenShakeAmount > 0) {
       this.screenShakeX = (Math.random() * 2 - 1) * this.screenShakeAmount;
@@ -578,6 +660,18 @@ export class CombatVFXEngine {
       r.alpha -= r.decay;
       if (r.alpha <= 0) {
         this.runicRings.splice(i, 1);
+      }
+    }
+
+    // 9. Update Floating Combat Texts
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = this.floatingTexts[i];
+      ft.x += ft.vx;
+      ft.y += ft.vy;
+      ft.vy += ft.gravity;
+      ft.alpha -= ft.decay;
+      if (ft.alpha <= 0) {
+        this.floatingTexts.splice(i, 1);
       }
     }
   }
@@ -694,6 +788,24 @@ export class CombatVFXEngine {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    });
+
+    // 5. Draw Bouncing Floating Combat Numbers & Text
+    this.floatingTexts.forEach(ft => {
+      ctx.save();
+      ctx.font = `bold ${ft.size}px Silkscreen, monospace`;
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = Math.max(0, ft.alpha);
+      // Dark outline
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#000000';
+      ctx.strokeText(ft.text, ft.x, ft.y);
+      // Colored core with glow
+      ctx.fillStyle = ft.color;
+      ctx.shadowColor = ft.shadowColor;
+      ctx.shadowBlur = 10;
+      ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
     });
   }

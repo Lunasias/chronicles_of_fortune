@@ -15,6 +15,7 @@ export class BattleUI {
   public attackerAnim: CharacterAnimState = 'idle';
   public defenderAnim: CharacterAnimState = 'idle';
   public isExecutingRound = false;
+  public isScoutOpen = false;
 
   constructor(game: GameState) {
     this.game = game;
@@ -35,6 +36,56 @@ export class BattleUI {
     document.getElementById('btnCmdCounter')?.addEventListener('click', () => this.handleDefenderInput('counter'));
     document.getElementById('btnCmdMagicGuard')?.addEventListener('click', () => this.handleDefenderInput('magic_guard'));
     document.getElementById('btnCmdGiveUp')?.addEventListener('click', () => this.handleDefenderInput('give_up'));
+
+    // Tactical Scout & Intel ("2" button / Spy System)
+    document.getElementById('btnBattleScout')?.addEventListener('click', () => this.toggleScoutDrawer());
+    document.getElementById('btnCloseScout')?.addEventListener('click', () => this.toggleScoutDrawer());
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '2' && !document.getElementById('battleScreen')?.classList.contains('hidden')) {
+        this.toggleScoutDrawer();
+      }
+    });
+  }
+
+  toggleScoutDrawer() {
+    this.isScoutOpen = !this.isScoutOpen;
+    audio.click();
+    const modal = document.getElementById('battleScoutModal');
+    if (!modal) return;
+
+    if (this.isScoutOpen) {
+      const b = this.game.activeBattle;
+      if (!b) return;
+      const enemy = b.isPlayerAttacking ? b.defender : b.attacker;
+      const intel = BattleEngine.getCombatantIntel(enemy);
+
+      const nameEl = document.getElementById('scoutEnemyName');
+      if (nameEl) nameEl.innerText = intel.name;
+      const typeEl = document.getElementById('scoutEnemyType');
+      if (typeEl) typeEl.innerText = intel.classOrType;
+
+      const atkEl = document.getElementById('scoutAtkPct');
+      if (atkEl) atkEl.innerText = `${intel.tendencies.attack}%`;
+      const strEl = document.getElementById('scoutStrikePct');
+      if (strEl) strEl.innerText = `${intel.tendencies.strike}%`;
+      const magEl = document.getElementById('scoutMagicPct');
+      if (magEl) magEl.innerText = `${intel.tendencies.magic}%`;
+      const sklEl = document.getElementById('scoutSkillPct');
+      if (sklEl) sklEl.innerText = `${intel.tendencies.skill}%`;
+
+      const weakEl = document.getElementById('scoutWeakness');
+      if (weakEl) weakEl.innerText = intel.weakness;
+      const resEl = document.getElementById('scoutResistance');
+      if (resEl) resEl.innerText = intel.resistance;
+      const recEl = document.getElementById('scoutRecommended');
+      if (recEl) recEl.innerText = intel.recommendedCounter;
+      const tipEl = document.getElementById('scoutLoreTip');
+      if (tipEl) tipEl.innerText = intel.tacticalTip;
+
+      modal.classList.remove('hidden');
+    } else {
+      modal.classList.add('hidden');
+    }
   }
 
   startBattle(
@@ -66,8 +117,17 @@ export class BattleUI {
     this.attackerAnim = 'idle';
     this.defenderAnim = 'idle';
     this.isExecutingRound = false;
+    this.isScoutOpen = false;
+
+    // Switch to battle chiptune theme
+    if (enemy.isBoss) {
+      audio.playBgm('boss');
+    } else {
+      audio.playBgm('battle');
+    }
 
     document.getElementById('battleScreen')?.classList.remove('hidden');
+    document.getElementById('battleScoutModal')?.classList.add('hidden');
     if (this.canvas.parentElement) {
       this.canvas.width = this.canvas.parentElement.clientWidth || 800;
       this.canvas.height = this.canvas.parentElement.clientHeight || 450;
@@ -254,6 +314,26 @@ export class BattleUI {
       if (b.attacker.playerRef) b.attacker.playerRef.hp = b.attacker.hp;
       if (b.defender.playerRef) b.defender.playerRef.hp = b.defender.hp;
 
+      // Spawn Bouncing Floating Combat Text & Hitstop
+      const defTargetX = b.isPlayerAttacking ? ex : px;
+      const defTargetY = (b.isPlayerAttacking ? ey : py) - 45;
+      const atkTargetX = b.isPlayerAttacking ? px : ex;
+      const atkTargetY = (b.isPlayerAttacking ? py : ey) - 45;
+
+      if (result.isCounterSuccess) {
+        combatVFX.spawnFloatingCombatText(atkTargetX, atkTargetY, `PARRY! -${result.damageToAttacker}`, 'counter');
+      } else if (result.isStrikeSuccess) {
+        combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `CRITICAL! -${result.damageToDefender}`, 'crit');
+      } else if (atkAction === 'magic') {
+        if (result.isMagicBlocked) {
+          combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `BLOCKED! -${result.damageToDefender}`, 'magic');
+        } else {
+          combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `MAGIC! -${result.damageToDefender}`, 'magic');
+        }
+      } else if (result.damageToDefender > 0) {
+        combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `-${result.damageToDefender}`, 'normal');
+      }
+
       // Hurt reactions
       if (result.damageToDefender > 0) {
         this.defenderAnim = 'hurt';
@@ -291,6 +371,9 @@ export class BattleUI {
   private concludeBattle(winner: Combatant, loser: Combatant) {
     audio.fanfare();
     document.getElementById('battleScreen')?.classList.add('hidden');
+    document.getElementById('battleScoutModal')?.classList.add('hidden');
+    this.isScoutOpen = false;
+    audio.playBgm('overworld');
 
     if (this.onBattleEndCallback) {
       this.onBattleEndCallback(winner, loser);

@@ -35,8 +35,10 @@ export class TownUI {
     const modal = document.getElementById('townModal')!;
     const p = this.game.activePlayer;
 
+    const townLvl = townNode.townData?.level || 1;
+    const tierTitle = townLvl >= 3 ? '🏰 GRAND CITADEL' : townLvl >= 2 ? '🛡️ FORTRESS TOWN' : '🏘️ HAMLET';
     document.getElementById('townName')!.innerText = townNode.name;
-    document.getElementById('townBiome')!.innerText = `${townNode.biome.toUpperCase()} REALM • LEVEL ${townNode.townData?.level || 1}`;
+    document.getElementById('townBiome')!.innerText = `${townNode.biome.toUpperCase()} REALM • ${tierTitle} (LEVEL ${townLvl})`;
 
     const ownerId = townNode.townData?.ownerId;
     const owner = this.game.players.find(pl => pl.id === ownerId);
@@ -108,9 +110,9 @@ export class TownUI {
     if (!this.currentTown) return;
     const p = this.game.activePlayer;
 
-    const success = townManager.investInTown(this.currentTown, p);
-    if (success) {
-      this.game.addLog(`📈 ${p.displayName} invested in ${this.currentTown.name}! Upgraded to Level ${this.currentTown.townData!.level}!`, 'level');
+    const res = townManager.investInTown(this.currentTown, p);
+    if (res.success) {
+      this.game.addLog(`📈 ${p.displayName} invested in ${this.currentTown.name}! Upgraded to ${res.tierName} (Level ${res.newLevel})!`, 'level');
       this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
     } else {
       this.game.addLog(`Cannot invest in this town (Must be owner with sufficient funds).`);

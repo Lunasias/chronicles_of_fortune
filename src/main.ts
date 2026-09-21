@@ -6,13 +6,14 @@ import { TownUI } from './ui/TownUI';
 import { ShopUI } from './ui/ShopUI';
 import { PrankUI } from './ui/PrankUI';
 import { WeeklyReportUI } from './ui/WeeklyReportUI';
-import { HERO_CLASSES, Player } from './game/Player';
+import { HERO_CLASSES, Player, FIELD_SPELLS } from './game/Player';
 import { BoardNode } from './game/BoardMap';
 import { Combatant } from './game/BattleEngine';
 import { townManager } from './game/TownManager';
 import { darklingSystem } from './game/DarklingSystem';
 import { aiSystem } from './game/AISystem';
 import { audio } from './engine/AudioSynthesizer';
+import { royalDecreeSystem } from './game/RoyalDecreeSystem';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -183,6 +184,14 @@ class DokaponApp {
       this.game.addLog(`🌀 Used ${spin.name}! Next roll will roll ${p.activeSpinnerMultiplier} dice!`, 'level');
     });
 
+    // Toggle Chiptune BGM
+    document.getElementById('btnToggleBgm')?.addEventListener('click', () => {
+      const isEnabled = audio.toggleBgm();
+      const btn = document.getElementById('btnToggleBgm')!;
+      btn.innerText = isEnabled ? '🎵' : '🔇';
+      this.game.addLog(isEnabled ? '🎵 Chiptune BGM unmuted.' : '🔇 Chiptune BGM muted.');
+    });
+
     // Field Magic / Darkling Calamity button
     document.getElementById('btnFieldMagic')?.addEventListener('click', () => {
       audio.click();
@@ -190,8 +199,12 @@ class DokaponApp {
       if (p.isDarkling) {
         document.getElementById('darklingSpellsModal')?.classList.remove('hidden');
       } else {
-        this.game.addLog(`Only The Darkling or spell scrolls can cast Field Magic.`);
+        this.openFieldMagicModal();
       }
+    });
+
+    document.getElementById('btnCloseFieldMagic')?.addEventListener('click', () => {
+      document.getElementById('fieldMagicModal')?.classList.add('hidden');
     });
 
     // Darkling Calamities
@@ -674,17 +687,129 @@ class DokaponApp {
     this.hud.update();
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
-        this.game.startTurn();
-        this.hud.update();
-        if (this.game.activePlayer.isAI) {
-          setTimeout(() => this.triggerDiceRoll(), 800);
-        }
+        // Announce King Rico's Royal Decree for the new week!
+        this.openRoyalDecreeModal(() => {
+          this.game.startTurn();
+          this.hud.update();
+          if (this.game.activePlayer.isAI) {
+            setTimeout(() => this.triggerDiceRoll(), 800);
+          }
+        });
       });
     });
 
     if (this.game.activePlayer.isAI && this.game.phase === 'BOARD_TURN') {
       setTimeout(() => this.triggerDiceRoll(), 800);
     }
+  }
+
+  private openRoyalDecreeModal(onClose?: () => void) {
+    const decree = royalDecreeSystem.activeDecree;
+    const modal = document.getElementById('royalDecreeModal');
+    if (!modal) {
+      if (onClose) onClose();
+      return;
+    }
+
+    const iconEl = document.getElementById('decreeIcon');
+    if (iconEl) iconEl.innerText = decree.icon;
+    const titleEl = document.getElementById('decreeTitle');
+    if (titleEl) titleEl.innerText = decree.title;
+    const headEl = document.getElementById('decreeHeadline');
+    if (headEl) headEl.innerText = decree.headline;
+    const descEl = document.getElementById('decreeDescription');
+    if (descEl) descEl.innerText = decree.description;
+    const perkEl = document.getElementById('decreePerk');
+    if (perkEl) perkEl.innerText = decree.perkSummary;
+
+    modal.classList.remove('hidden');
+
+    const btn = document.getElementById('btnAcknowledgeDecree');
+    const handleAck = () => {
+      audio.click();
+      modal.classList.add('hidden');
+      btn?.removeEventListener('click', handleAck);
+      if (onClose) onClose();
+    };
+    btn?.addEventListener('click', handleAck);
+  }
+
+  private openFieldMagicModal() {
+    const p = this.game.activePlayer;
+    const modal = document.getElementById('fieldMagicModal');
+    if (!modal) return;
+
+    // Populate target select with other players
+    const select = document.getElementById('fieldSpellTargetSelect') as HTMLSelectElement;
+    if (select) {
+      select.innerHTML = '';
+      const opponents = this.game.players.filter(pl => pl.id !== p.id);
+      if (opponents.length === 0) {
+        select.innerHTML = '<option value="">No opponents</option>';
+      } else {
+        opponents.forEach(op => {
+          const opt = document.createElement('option');
+          opt.value = `${op.id}`;
+          opt.innerText = `${op.displayName} (${op.className}) • ${op.gold}G • ${op.hp}/${op.maxHp} HP`;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // Populate spell cards
+    const listEl = document.getElementById('fieldSpellList')!;
+    listEl.innerHTML = '';
+
+    p.fieldSpells.forEach(spellKey => {
+      const spell = FIELD_SPELLS[spellKey];
+      if (!spell) return;
+
+      const canCast = p.mp >= spell.mpCost;
+      const card = document.createElement('div');
+      card.className = `pixel-box p-2.5 flex flex-col justify-between ${
+        canCast ? 'bg-slate-900 border-purple-500/60 hover:bg-slate-800 cursor-pointer' : 'bg-slate-950/80 border-slate-800 opacity-50'
+      }`;
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between mb-1">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xl">${spell.icon}</span>
+            <div>
+              <span class="text-xs font-bold text-amber-300 block">${spell.name}</span>
+              <span class="text-[9px] text-purple-300 font-bold">${spell.mpCost} MP</span>
+            </div>
+          </div>
+          <button class="pixel-btn ${canCast ? 'pixel-btn-purple' : 'bg-slate-800'} px-2 py-0.5 text-[10px] text-white">
+            ${canCast ? 'CAST ➔' : 'NO MP'}
+          </button>
+        </div>
+        <p class="text-[9px] text-slate-300 leading-snug mt-1">${spell.desc}</p>
+      `;
+
+      if (canCast) {
+        card.addEventListener('click', () => {
+          const targetId = spell.requiresTarget && select ? parseInt(select.value) : undefined;
+          const res = this.game.castFieldSpell(p, spell.id, targetId);
+          const resEl = document.getElementById('fieldSpellResultMsg')!;
+          resEl.innerText = res.message;
+          resEl.classList.remove('hidden');
+          resEl.style.color = res.success ? '#4ade80' : '#f87171';
+
+          this.hud.update();
+          if (res.success) {
+            this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+            setTimeout(() => {
+              modal.classList.add('hidden');
+              resEl.classList.add('hidden');
+            }, 1200);
+          }
+        });
+      }
+
+      listEl.appendChild(card);
+    });
+
+    modal.classList.remove('hidden');
   }
 
   private triggerVictoryModal(winner: Player, feat: string) {

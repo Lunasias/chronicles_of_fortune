@@ -296,6 +296,9 @@
           <span>DAY: <strong id="hudDayCount" class="text-white">1</strong></span>
           <span>WEEK: <strong id="hudWeekCount" class="text-amber-300">1</strong></span>
         </div>
+        <button id="btnToggleBgm" class="pixel-btn px-2 py-1 text-xs text-amber-300 hover:text-white" title="Toggle Chiptune BGM">
+          🎵
+        </button>
         <button id="btnSettings" class="pixel-btn px-2 py-1 text-xs text-slate-300 hover:text-white" title="Options & Rules">
           ⚙️
         </button>
@@ -411,6 +414,14 @@
           </div>
         </div>
 
+        <!-- Center Tactical Scout Button -->
+        <div class="pointer-events-auto flex flex-col items-center">
+          <button id="btnBattleScout" class="pixel-btn pixel-btn-purple px-3 py-1.5 text-xs text-amber-300 font-bold flex items-center gap-1.5 shadow-xl animate-pulse">
+            <span>👁️</span>
+            <span>SCOUT [2]</span>
+          </button>
+        </div>
+
         <!-- Enemy Status -->
         <div class="pixel-box p-2.5 bg-slate-900/95 border-red-500/60 max-w-xs w-full shadow-lg text-right">
           <div class="flex justify-between text-xs font-bold text-red-300 mb-1">
@@ -429,6 +440,63 @@
         <span id="battleTurnText" class="pixel-box px-4 py-1.5 text-xs text-amber-300 bg-slate-900/95 shadow-lg border-amber-500">
           CHOOSE YOUR ACTION!
         </span>
+      </div>
+
+      <!-- TACTICAL SCOUT & ENEMY INTEL MODAL (Press 2) -->
+      <div id="battleScoutModal" class="hidden absolute inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
+        <div class="pixel-box-gold max-w-md w-full p-4 text-left shadow-2xl relative">
+          <div class="flex justify-between items-center border-b-2 border-amber-600/50 pb-2 mb-3">
+            <div>
+              <span class="text-xs text-amber-400 font-bold tracking-wider">👁️ TACTICAL SCOUT INTEL</span>
+              <h3 id="scoutEnemyName" class="text-sm text-white font-bold">DRAGON OVERLORD</h3>
+              <span id="scoutEnemyType" class="text-[9px] text-amber-300">BOSS COMBATANT</span>
+            </div>
+            <button id="btnCloseScout" class="pixel-btn px-2 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ CLOSE</button>
+          </div>
+
+          <!-- Move Tendency Probabilities -->
+          <div class="mb-3">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Behavioral Move Tendencies</span>
+            <div class="grid grid-cols-4 gap-1.5 text-center">
+              <div class="bg-red-950/60 border border-red-800/60 p-1.5 rounded">
+                <span class="text-[9px] text-rose-300 block">⚔️ Attack</span>
+                <span id="scoutAtkPct" class="text-xs font-bold text-white">25%</span>
+              </div>
+              <div class="bg-amber-950/60 border border-amber-700/60 p-1.5 rounded">
+                <span class="text-[9px] text-amber-300 block">💥 Strike</span>
+                <span id="scoutStrikePct" class="text-xs font-bold text-amber-300">45%</span>
+              </div>
+              <div class="bg-purple-950/60 border border-purple-800/60 p-1.5 rounded">
+                <span class="text-[9px] text-purple-300 block">🔮 Magic</span>
+                <span id="scoutMagicPct" class="text-xs font-bold text-purple-300">20%</span>
+              </div>
+              <div class="bg-blue-950/60 border border-blue-800/60 p-1.5 rounded">
+                <span class="text-[9px] text-cyan-300 block">🌟 Skill</span>
+                <span id="scoutSkillPct" class="text-xs font-bold text-cyan-300">10%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tactical Weaknesses & Counters -->
+          <div class="space-y-2 mb-3 text-[10px]">
+            <div class="bg-slate-900/90 p-2 rounded border border-slate-700">
+              <span class="text-emerald-400 font-bold">⚡ Elemental Weakness: </span>
+              <span id="scoutWeakness" class="text-slate-200">Ice & Holy Magic</span>
+            </div>
+            <div class="bg-slate-900/90 p-2 rounded border border-slate-700">
+              <span class="text-rose-400 font-bold">🛡️ Resistance: </span>
+              <span id="scoutResistance" class="text-slate-200">Fire & Slash blades</span>
+            </div>
+            <div class="bg-amber-950/80 p-2 rounded border border-amber-600/70 text-amber-200 font-bold">
+              <span>💡 Recommended Move: </span>
+              <span id="scoutRecommended" class="text-yellow-300">Ready Counter against Strike!</span>
+            </div>
+          </div>
+
+          <p id="scoutLoreTip" class="text-[9px] text-slate-400 italic bg-slate-950/80 p-2 rounded border border-slate-800">
+            Observation lore tip goes here...
+          </p>
+        </div>
       </div>
     </div>
 
@@ -625,6 +693,64 @@
       <button id="btnDismissWeeklyReport" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
         PROCEED TO NEXT WEEK ➔
       </button>
+    </div>
+  </div>
+
+  <!-- KING RICO'S ROYAL DECREE MODAL (z-40) -->
+  <div id="royalDecreeModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-lg w-full p-6 text-center shadow-2xl relative">
+      <div class="text-4xl mb-1" id="decreeIcon">👑📜</div>
+      <span class="text-[10px] text-amber-400 font-bold tracking-widest block uppercase">BY ROYAL PROCLAMATION</span>
+      <h2 id="decreeTitle" class="text-base text-amber-300 font-bold mb-2 tracking-wider">THE KING'S MONSTER BOUNTY</h2>
+      
+      <div class="pixel-box p-3.5 bg-slate-900 border-amber-700/60 mb-4 text-left">
+        <h3 id="decreeHeadline" class="text-xs font-bold text-white mb-1.5">King Rico decrees an emergency royal bounty!</h3>
+        <p id="decreeDescription" class="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+          Description text...
+        </p>
+        <div class="bg-amber-950/70 border border-amber-600/70 p-2 rounded text-amber-200 text-xs font-bold flex items-center gap-2">
+          <span>⚡</span>
+          <span id="decreePerk">Perk summary</span>
+        </div>
+      </div>
+
+      <button id="btnAcknowledgeDecree" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
+        ACCEPT ROYAL DECREE ⚔️
+      </button>
+    </div>
+  </div>
+
+  <!-- FIELD MAGIC GRIMOIRE MODAL (z-40) -->
+  <div id="fieldMagicModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-sm">
+    <div class="pixel-box-gold max-w-lg w-full p-5 text-left shadow-2xl relative">
+      <div class="flex items-center justify-between border-b-2 border-purple-600/50 pb-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📖✨</span>
+          <div>
+            <h2 class="text-sm font-bold text-amber-300 tracking-wider">FIELD MAGIC GRIMOIRE</h2>
+            <span class="text-[10px] text-purple-300">Overworld Arcane Sorcery</span>
+          </div>
+        </div>
+        <button id="btnCloseFieldMagic" class="pixel-btn px-2.5 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ CLOSE</button>
+      </div>
+
+      <!-- Target Selection Dropdown -->
+      <div class="mb-3 bg-slate-900/90 p-2.5 rounded border border-slate-700 flex items-center justify-between">
+        <label for="fieldSpellTargetSelect" class="text-[10px] text-slate-300 font-bold uppercase tracking-wide">
+          🎯 Target Player:
+        </label>
+        <select id="fieldSpellTargetSelect" class="bg-slate-950 border border-amber-600/60 text-xs text-amber-300 px-2 py-1 rounded focus:outline-none font-bold">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Spell Cards Grid -->
+      <div id="fieldSpellList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 mb-3">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <p id="fieldSpellResultMsg" class="hidden text-[10px] p-2 rounded bg-slate-950/90 border border-slate-800 text-center font-bold">
+      </p>
     </div>
   </div>
 

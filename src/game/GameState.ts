@@ -1,10 +1,11 @@
-import { Player } from './Player';
+import { Player, FIELD_SPELLS } from './Player';
 import { BoardNode, DOKAPON_NODES } from './BoardMap';
 import { BattleEngine, Combatant } from './BattleEngine';
 import { townManager } from './TownManager';
 import { darklingSystem } from './DarklingSystem';
 import { aiSystem } from './AISystem';
 import { audio } from '../engine/AudioSynthesizer';
+import { royalDecreeSystem } from './RoyalDecreeSystem';
 
 export type GamePhase =
   | 'TITLE'
@@ -71,6 +72,11 @@ export class GameState {
     this.phase = 'BOARD_TURN';
     p.tickTurn();
 
+    // Start overworld chiptune music if not active
+    if (audio.getCurrentTrack() !== 'overworld') {
+      audio.playBgm('overworld');
+    }
+
     // Collect daily town tax
     const taxEarned = townManager.collectTurnRevenue(p, this.allNodes);
     if (taxEarned > 0) {
@@ -78,6 +84,96 @@ export class GameState {
     }
 
     this.addLog(`It is now ${p.displayName}'s turn (${p.isAI ? 'AI Bot' : 'Player'}).`);
+  }
+
+  // Cast Field Magic Grimoire Spell on the board
+  castFieldSpell(
+    caster: Player,
+    spellKey: string,
+    targetPlayerId?: number
+  ): { success: boolean; message: string } {
+    const spell = FIELD_SPELLS[spellKey];
+    if (!spell) return { success: false, message: 'Unknown spell scroll.' };
+
+    if (caster.mp < spell.mpCost) {
+      return { success: false, message: `Not enough MP! Requires ${spell.mpCost} MP.` };
+    }
+
+    let target: Player | undefined;
+    if (spell.requiresTarget) {
+      if (targetPlayerId === undefined) {
+        return { success: false, message: 'Select a target player first!' };
+      }
+      target = this.players.find(p => p.id === targetPlayerId);
+      if (!target || target.id === caster.id) {
+        return { success: false, message: 'Invalid target player.' };
+      }
+    }
+
+    // Deduct MP
+    caster.mp -= spell.mpCost;
+    audio.magicCast();
+
+    if (spellKey === 'zap' && target) {
+      const dmg = Math.round(25 + caster.getTotalStat('mag') * 1.5);
+      target.hp = Math.max(1, target.hp - dmg);
+      this.addLog(`⚡ ${caster.displayName} cast Thunderbolt on ${target.displayName} for ${dmg} damage!`, 'battle');
+      return { success: true, message: `⚡ Thunderbolt struck ${target.displayName} for ${dmg} damage!` };
+    }
+
+    if (spellKey === 'swap' && target) {
+      const tempNodeId = caster.nodeId;
+      const tempGx = caster.gridX;
+      const tempGy = caster.gridY;
+      const tempGz = caster.gridZ;
+
+      caster.nodeId = target.nodeId;
+      caster.gridX = target.gridX;
+      caster.gridY = target.gridY;
+      caster.gridZ = target.gridZ;
+
+      target.nodeId = tempNodeId;
+      target.gridX = tempGx;
+      target.gridY = tempGy;
+      target.gridZ = tempGz;
+
+      this.addLog(`🔄 ${caster.displayName} cast Dimension Swap, switching places with ${target.displayName}!`, 'level');
+      return { success: true, message: `🔄 Swapped locations with ${target.displayName}!` };
+    }
+
+    if (spellKey === 'tax_audit' && target) {
+      const stolen = Math.floor(target.gold * 0.25);
+      target.gold -= stolen;
+      caster.gold += stolen;
+      audio.coin();
+      this.addLog(`🧲 ${caster.displayName} audited ${target.displayName}, seizing ${stolen}G!`, 'gold');
+      return { success: true, message: `🧲 Royal Audit seized ${stolen}G from ${target.displayName}!` };
+    }
+
+    if (spellKey === 'curse_rust' && target) {
+      target.rustTurns = 3;
+      this.addLog(`🩸 ${caster.displayName} inflicted Curse of Rust on ${target.displayName}! (ATK & DEF reduced 30% for 3 turns)`, 'darkling');
+      return { success: true, message: `🩸 ${target.displayName}'s equipment rusted! ATK & DEF reduced 30% for 3 turns.` };
+    }
+
+    if (spellKey === 'holy_sanctuary') {
+      caster.hp = caster.maxHp;
+      caster.rustTurns = 0;
+      this.addLog(`🕊️ ${caster.displayName} cast Holy Sanctuary! Fully restored HP and cleansed all curses!`, 'level');
+      return { success: true, message: `🕊️ Holy Sanctuary cast! Fully restored HP and cleansed all debuffs.` };
+    }
+
+    if (spellKey === 'castle_warp') {
+      const castleNode = this.allNodes.find(n => n.id === 0) || this.allNodes[0];
+      caster.nodeId = 0;
+      caster.gridX = castleNode.gx;
+      caster.gridY = castleNode.gy;
+      caster.gridZ = castleNode.gz;
+      this.addLog(`🚪 ${caster.displayName} cast Castle Recall and warped to Dokapon Castle!`, 'level');
+      return { success: true, message: `🚪 Warped safely to Dokapon Castle!` };
+    }
+
+    return { success: false, message: 'Spell effect failed.' };
   }
 
   // Roll 1 die, or 2-3 dice if using spinner or in Darkling form
@@ -264,6 +360,8 @@ export class GameState {
       // Weekly Report Ceremony every 7 days!
       if (this.dayCounter % 7 === 1 && this.dayCounter > 1) {
         this.weekCounter++;
+        royalDecreeSystem.generateWeeklyDecree(this.weekCounter, this.allNodes, this.players);
+        this.addLog(`📜 ROYAL DECREE: ${royalDecreeSystem.activeDecree.headline}`, 'gold');
         this.phase = 'WEEKLY_REPORT';
         if (onWeeklyReportCallback) {
           onWeeklyReportCallback();

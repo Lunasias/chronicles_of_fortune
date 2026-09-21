@@ -80,6 +80,66 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
   }
 };
 
+export interface FieldSpellData {
+  id: string;
+  name: string;
+  icon: string;
+  mpCost: number;
+  desc: string;
+  requiresTarget: boolean;
+}
+
+export const FIELD_SPELLS: Record<string, FieldSpellData> = {
+  zap: {
+    id: 'zap',
+    name: 'Thunderbolt',
+    icon: '⚡',
+    mpCost: 15,
+    desc: 'Strikes any target player with lightning, dealing 25 + MAG*1.5 damage.',
+    requiresTarget: true
+  },
+  swap: {
+    id: 'swap',
+    name: 'Dimension Swap',
+    icon: '🔄',
+    mpCost: 20,
+    desc: 'Instantly swaps board locations with any chosen player.',
+    requiresTarget: true
+  },
+  tax_audit: {
+    id: 'tax_audit',
+    name: 'Royal Audit',
+    icon: '🧲',
+    mpCost: 25,
+    desc: 'Audits target player, seizing 25% of their gold coin pouch.',
+    requiresTarget: true
+  },
+  curse_rust: {
+    id: 'curse_rust',
+    name: 'Curse of Rust',
+    icon: '🩸',
+    mpCost: 18,
+    desc: 'Corrodes target player weapons and armor, reducing ATK & DEF by 30% for 3 turns.',
+    requiresTarget: true
+  },
+  holy_sanctuary: {
+    id: 'holy_sanctuary',
+    name: 'Holy Sanctuary',
+    icon: '🕊️',
+    mpCost: 30,
+    desc: 'Blesses caster, fully recovering HP and curing all negative status.',
+    requiresTarget: false
+  },
+  castle_warp: {
+    id: 'castle_warp',
+    name: 'Castle Recall',
+    icon: '🚪',
+    mpCost: 10,
+    desc: 'Opens an astral portal teleporting directly back to Dokapon Castle (Tile 0).',
+    requiresTarget: false
+  }
+};
+
 export class Player {
   public id: number;
   public name: string;
@@ -130,6 +190,7 @@ export class Player {
 
   public inventory: EquipmentItem[] = [];
   public fieldSpells: string[] = [];
+  public rustTurns: number = 0;
 
   // The Darkling Form
   public isDarkling = false;
@@ -176,7 +237,7 @@ export class Player {
     this.gridY = startNode.gy;
     this.gridZ = startNode.gz;
 
-    // Starting basic bag
+    // Starting basic bag & field grimoire
     this.inventory.push({
       id: 'pot_hp',
       name: 'Life Potion',
@@ -185,6 +246,9 @@ export class Player {
       desc: 'Restores 50 HP',
       icon: '🧪'
     });
+
+    // Starter field magic spells
+    this.fieldSpells = ['zap', 'swap', 'holy_sanctuary'];
   }
 
   get displayName(): string {
@@ -202,6 +266,10 @@ export class Player {
     Object.values(this.equipment).forEach(item => {
       if (item && item[stat]) val += item[stat]!;
     });
+    // Curse of Rust reduces physical attack and defense by 30%
+    if (this.rustTurns > 0 && (stat === 'atk' || stat === 'def')) {
+      val = Math.max(1, Math.floor(val * 0.7));
+    }
     return val;
   }
 
@@ -321,6 +389,11 @@ export class Player {
         this.prank.hasGraffiti = false;
         this.prank.sillyName = undefined;
       }
+    }
+
+    // Tick down rust curse
+    if (this.rustTurns > 0) {
+      this.rustTurns--;
     }
   }
 }
