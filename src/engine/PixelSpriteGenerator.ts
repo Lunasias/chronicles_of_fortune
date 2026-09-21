@@ -1750,6 +1750,10 @@ export class PixelSpriteGenerator {
   // 4. COMPACT DARK FANTASY ISOMETRIC ARCHITECTURE (FITS NEATLY ON TILE!)
   // =========================================================================
   getBuildingSprite(type: string, ownerColor: string | null = null): HTMLCanvasElement {
+    if (trpgAssets.isLoaded) {
+      return trpgAssets.getLocationStructure(type, ownerColor, 80, 80);
+    }
+
     const key = `dark_bld_compact_${type}_${ownerColor || 'none'}`;
     if (this.cache.has(key)) return this.cache.get(key)!;
 

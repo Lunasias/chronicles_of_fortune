@@ -297,7 +297,8 @@ export class IsometricRenderer {
         node.type === 'shop_magic' ||
         node.type === 'church' ||
         node.type === 'dark_gate' ||
-        node.type === 'boss'
+        node.type === 'boss' ||
+        node.type === 'vault'
       ) {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 40,
@@ -350,19 +351,32 @@ export class IsometricRenderer {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 20,
           draw: () => {
-            const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
-            const tree = pixelSprites.getTreeSprite(treeType, time * 0.002 + node.id);
-            ctx.drawImage(tree, p.x + 32, p.y - 64, 52, 72);
+            if (trpgAssets.isLoaded && (node.biome === 'snow' || node.biome === 'forest')) {
+              const pine = trpgAssets.getPropCanvas('pine_tree', 48, 87);
+              ctx.drawImage(pine, p.x + 28, p.y - 74, 48, 87);
+            } else {
+              const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
+              const tree = pixelSprites.getTreeSprite(treeType, time * 0.002 + node.id);
+              ctx.drawImage(tree, p.x + 32, p.y - 64, 52, 72);
+            }
           }
         });
       }
 
-      // Dark Fantasy Biome Atmospheric Props (Totems, Lanterns, Obelisks, Crystals)
+      // Dark Fantasy Biome Atmospheric Props (Totems, Crystals, Campfire, Rocks)
       if (node.id % 3 === 0) {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 15,
           draw: () => {
-            this.drawDarkFantasyBiomeProp(ctx, p.x - 38, p.y - 42, node.biome, node.id, time);
+            if (trpgAssets.isLoaded && node.biome === 'abyss') {
+              const crystal = trpgAssets.getPropCanvas('crystals', 36, 38);
+              ctx.drawImage(crystal, p.x - 36, p.y - 42, 36, 38);
+            } else if (trpgAssets.isLoaded && node.biome === 'desert') {
+              const boulder = trpgAssets.getPropCanvas('boulder', 32, 34);
+              ctx.drawImage(boulder, p.x - 34, p.y - 36, 32, 34);
+            } else {
+              this.drawDarkFantasyBiomeProp(ctx, p.x - 38, p.y - 42, node.biome, node.id, time);
+            }
           }
         });
       }

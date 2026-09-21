@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { BoardNode } from '../game/BoardMap';
 import { townManager } from '../game/TownManager';
 import { audio } from '../engine/AudioSynthesizer';
+import { trpgAssets } from '../engine/TRPGAssetLoader';
 
 export class TownUI {
   private game: GameState;
@@ -62,6 +63,13 @@ export class TownUI {
 
     const investCost = 150 * (townNode.townData?.level || 1);
     investCostText.innerText = `Invest ${investCost}G (Upgrade)`;
+
+    // Render 2.5D Isometric Town Plaza Diorama
+    const canvas = document.getElementById('townDioramaCanvas') as HTMLCanvasElement;
+    if (canvas) {
+      const ownerColor = owner?.color || null;
+      trpgAssets.renderTownPlazaDiorama(canvas, townNode.name, townNode.townData?.level || 1, ownerColor);
+    }
 
     modal.classList.remove('hidden');
 

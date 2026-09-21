@@ -183,9 +183,9 @@ export class TRPGAssetLoader {
         sx, sy, srcW, srcH,
         0, 0, targetWidth, targetHeight
       );
+      this.canvasCache.set(cacheKey, canvas);
     }
 
-    this.canvasCache.set(cacheKey, canvas);
     return canvas;
   }
 
@@ -255,9 +255,9 @@ export class TRPGAssetLoader {
         slice.sx, slice.sy, slice.sw, slice.sh,
         0, 0, targetWidth, targetHeight
       );
+      this.canvasCache.set(cacheKey, canvas);
     }
 
-    this.canvasCache.set(cacheKey, canvas);
     return canvas;
   }
 
@@ -309,9 +309,9 @@ export class TRPGAssetLoader {
         slice.sx, slice.sy, slice.sw, slice.sh,
         0, 0, targetWidth, targetHeight
       );
+      this.canvasCache.set(cacheKey, canvas);
     }
 
-    this.canvasCache.set(cacheKey, canvas);
     return canvas;
   }
 
@@ -356,10 +356,391 @@ export class TRPGAssetLoader {
         slice.sx, slice.sy, slice.sw, slice.sh,
         0, 0, targetWidth, targetHeight
       );
+      this.canvasCache.set(cacheKey, canvas);
+    }
+
+    return canvas;
+  }
+
+  // =========================================================================
+  // 5. AUTHENTIC 2.5D ISOMETRIC BUILDINGS & LOCATION STRUCTURES
+  // Assembled directly from Isometric_MedievalFantasy_Tiles.png & OutlinedEntities.png
+  // =========================================================================
+  public getLocationStructure(
+    type: string,
+    ownerColor: string | null = null,
+    targetWidth: number = 80,
+    targetHeight: number = 80
+  ): HTMLCanvasElement {
+    const cacheKey = `loc_${type}_${ownerColor || 'none'}_${targetWidth}_${targetHeight}`;
+    if (this.canvasCache.has(cacheKey)) {
+      return this.canvasCache.get(cacheKey)!;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+
+    if (!this.tilesImg || !this.tilesImg.complete || this.tilesImg.naturalWidth === 0) {
+      return canvas;
+    }
+
+    const img = this.tilesImg;
+    const ent = this.entityImg;
+    const cx = targetWidth / 2;
+    const cy = targetHeight * 0.52;
+
+    if (type === 'town' || type === 'capital') {
+      // 1. Drop Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 22, 34, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Center Castle Foundation (Stone masonry: 16, 136, 16, 17)
+      ctx.drawImage(img, 16, 136, 16, 17, cx - 18, cy - 6, 36, 38);
+
+      // 3. Left Watchtower
+      ctx.drawImage(img, 16, 136, 16, 17, cx - 32, cy - 16, 20, 36);
+      // Left Tower Battlements (112, 136, 16, 17)
+      ctx.drawImage(img, 112, 136, 16, 17, cx - 32, cy - 28, 20, 20);
+
+      // 4. Right Watchtower
+      ctx.drawImage(img, 16, 136, 16, 17, cx + 12, cy - 16, 20, 36);
+      // Right Tower Battlements
+      ctx.drawImage(img, 112, 136, 16, 17, cx + 12, cy - 28, 20, 20);
+
+      // 5. Central Ramparts & Battlements
+      ctx.drawImage(img, 112, 136, 16, 17, cx - 14, cy - 20, 28, 20);
+
+      // 6. Castle Gate / Portcullis (160, 136, 16, 17)
+      ctx.drawImage(img, 160, 136, 16, 17, cx - 10, cy + 8, 20, 20);
+
+      // 7. Flanking Wood Fences (160, 153, 16, 17)
+      ctx.drawImage(img, 160, 153, 16, 17, cx - 36, cy + 10, 16, 16);
+      ctx.drawImage(img, 160, 153, 16, 17, cx + 20, cy + 10, 16, 16);
+
+      // 8. Owner Flagpole & Heraldry Banner
+      ctx.strokeStyle = ownerColor || '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 16);
+      ctx.lineTo(cx, cy - 38);
+      ctx.stroke();
+
+      ctx.fillStyle = ownerColor || '#f59e0b';
+      ctx.fillRect(cx, cy - 38, 14, 9);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(cx + 2, cy - 36, 4, 5);
+    } else if (type === 'shop_item') {
+      // 1. Drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 20, 28, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Red Brick Shop Walls (32, 136, 16, 17)
+      ctx.drawImage(img, 32, 136, 16, 17, cx - 18, cy - 8, 36, 36);
+
+      // 3. Timber Awning / Roof (Wooden bridge planking: 128, 123, 16, 13)
+      ctx.drawImage(img, 128, 123, 16, 13, cx - 24, cy - 22, 48, 22);
+
+      // 4. Shopkeeper Counter (Wood post: 128, 56, 16, 29)
+      ctx.drawImage(img, 128, 56, 16, 29, cx - 12, cy + 6, 24, 18);
+
+      // 5. Berry Bush & Herb Pot (144, 35, 16, 17)
+      ctx.drawImage(img, 144, 35, 16, 17, cx + 14, cy + 4, 18, 18);
+      // Red Flower barrel (128, 21, 16, 17)
+      ctx.drawImage(img, 128, 21, 16, 17, cx - 28, cy + 8, 16, 16);
+
+      // 6. Potion Badge
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 12, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🧪', cx, cy - 8);
+    } else if (type === 'shop_weapon') {
+      // 1. Drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 20, 30, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Dark Stone Armory Workshop (80, 136, 16, 17)
+      ctx.drawImage(img, 80, 136, 16, 17, cx - 20, cy - 10, 40, 38);
+
+      // 3. Castle battlements roof
+      ctx.drawImage(img, 112, 136, 16, 17, cx - 22, cy - 24, 44, 20);
+
+      // 4. Blazing Forge Hearth (Campfire 144, 21, 16, 17)
+      ctx.drawImage(img, 144, 21, 16, 17, cx - 28, cy + 2, 22, 22);
+
+      // 5. Stone Anvil (Boulder: 144, 0, 16, 17)
+      ctx.drawImage(img, 144, 0, 16, 17, cx + 10, cy + 6, 20, 20);
+
+      // 6. Sword Badge
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 14, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚔️', cx, cy - 10);
+    } else if (type === 'shop_magic') {
+      // 1. Drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 20, 30, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Arcane Sanctuary (80, 136, 16, 17)
+      ctx.drawImage(img, 80, 136, 16, 17, cx - 18, cy - 10, 36, 38);
+
+      // 3. Glowing Blue Crystals (160, 35, 16, 17)
+      ctx.drawImage(img, 160, 35, 16, 17, cx - 32, cy - 2, 22, 24);
+      ctx.drawImage(img, 160, 35, 16, 17, cx + 12, cy - 2, 22, 24);
+
+      // 4. Arcane Spire Top
+      ctx.drawImage(img, 160, 56, 16, 29, cx - 10, cy - 36, 20, 32);
+
+      // 5. Magic Badge
+      ctx.fillStyle = '#8b5cf6';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 14, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔮', cx, cy - 10);
+    } else if (type === 'church') {
+      // 1. Drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 20, 28, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Marble Sanctuary Nave (16, 136, 16, 17)
+      ctx.drawImage(img, 16, 136, 16, 17, cx - 18, cy - 10, 36, 38);
+
+      // 3. Church Spire (160, 56, 16, 29)
+      ctx.drawImage(img, 160, 56, 16, 29, cx - 10, cy - 38, 20, 34);
+
+      // 4. Holy Cross atop the steeple
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 42);
+      ctx.lineTo(cx, cy - 32);
+      ctx.moveTo(cx - 4, cy - 38);
+      ctx.lineTo(cx + 4, cy - 38);
+      ctx.stroke();
+
+      // 5. Stained Glass Window
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 4, 6, Math.PI, 0);
+      ctx.rect(cx - 6, cy + 4, 12, 10);
+      ctx.fill();
+    } else if (type === 'dark_gate') {
+      // 1. Molten Magma Foundation (32, 35, 16, 16)
+      ctx.drawImage(img, 32, 35, 16, 16, cx - 24, cy + 4, 48, 24);
+
+      // 2. Obsidian Pillars (80, 136, 16, 17)
+      ctx.drawImage(img, 80, 136, 16, 17, cx - 26, cy - 24, 16, 40);
+      ctx.drawImage(img, 80, 136, 16, 17, cx + 10, cy - 24, 16, 40);
+
+      // 3. Obsidian Arch
+      ctx.drawImage(img, 112, 136, 16, 17, cx - 22, cy - 34, 44, 20);
+
+      // 4. Dark Portal Eye / Vortex
+      ctx.fillStyle = '#3b0764';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - 6, 14, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Shadow Sentry (From entities row 16)
+      if (ent && ent.complete && ent.naturalWidth > 0) {
+        ctx.drawImage(ent, 0, 16 * 17, 16, 17, cx - 12, cy - 2, 24, 26);
+      }
+    } else if (type === 'boss') {
+      // 1. Scorched Caldera Base (32, 35, 16, 16)
+      ctx.drawImage(img, 32, 35, 16, 16, cx - 28, cy + 4, 56, 26);
+
+      // 2. Obsidian Fortress Citadel (80, 136, 16, 17)
+      ctx.drawImage(img, 80, 136, 16, 17, cx - 22, cy - 14, 44, 40);
+
+      // 3. Flaming Bonfires (160, 21, 16, 17)
+      ctx.drawImage(img, 160, 21, 16, 17, cx - 36, cy + 4, 22, 22);
+      ctx.drawImage(img, 160, 21, 16, 17, cx + 16, cy + 4, 22, 22);
+
+      // 4. Demon Overlord atop the fortress (From entities row 20)
+      if (ent && ent.complete && ent.naturalWidth > 0) {
+        ctx.drawImage(ent, 0, 20 * 17, 16, 17, cx - 18, cy - 36, 36, 38);
+      }
+    } else if (type === 'vault') {
+      // 1. Desert Sandstone Base (48, 0, 16, 17)
+      ctx.drawImage(img, 48, 0, 16, 17, cx - 22, cy - 4, 44, 34);
+
+      // 2. Sandstone wall (64, 136, 16, 17)
+      ctx.drawImage(img, 64, 136, 16, 17, cx - 16, cy - 18, 32, 26);
+
+      // 3. Shimmering Gold Chest
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(cx - 10, cy - 2, 20, 14);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(cx - 8, cy, 16, 10);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(cx - 2, cy + 2, 4, 4);
     }
 
     this.canvasCache.set(cacheKey, canvas);
     return canvas;
+  }
+
+  // =========================================================================
+  // 6. INTERACTIVE 2.5D TOWN PLAZA DIORAMA (Rendered in Town Modal)
+  // =========================================================================
+  public renderTownPlazaDiorama(
+    canvas: HTMLCanvasElement,
+    townName: string,
+    townLevel: number,
+    ownerColor: string | null
+  ) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Sky & Woodland Night Backdrop
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#0a1526');
+    sky.addColorStop(0.5, '#1e293b');
+    sky.addColorStop(1, '#0f172a');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    if (!this.tilesImg || !this.tilesImg.complete || !this.entityImg || !this.entityImg.complete) {
+      return;
+    }
+
+    const tiles = this.tilesImg;
+    const ent = this.entityImg;
+
+    // 2. Isometric Paved Town Plaza
+    const tileW = 54;
+    const tileH = 27;
+    const startX = w / 2;
+    const startY = h * 0.72;
+
+    for (let r = -2; r <= 2; r++) {
+      for (let c = -4; c <= 4; c++) {
+        const tx = startX + (c - r) * (tileW / 2);
+        const ty = startY + (c + r) * (tileH / 2);
+        const isRoad = Math.abs(c) <= 1;
+        const tileSrc = isRoad ? { sx: 32, sy: 0 } : { sx: 16, sy: 0 };
+        ctx.drawImage(tiles, tileSrc.sx, tileSrc.sy, 16, 17, tx - tileW / 2, ty - tileH / 2, tileW, tileW * 1.06);
+      }
+    }
+
+    // 3. Central Town Castle Citadel
+    const castle = this.getLocationStructure('town', ownerColor, 120, 120);
+    ctx.drawImage(castle, w * 0.48 - 60, h * 0.12, 120, 120);
+
+    // 4. Left Side: Tavern Inn with Campfire
+    ctx.drawImage(tiles, 144, 21, 16, 17, w * 0.18, h * 0.50, 36, 38); // campfire
+    // Citizen sitting by campfire (Priest/Monk)
+    ctx.drawImage(ent, 0, 2 * 17, 16, 17, w * 0.12, h * 0.40, 34, 36);
+    // Pine Tree
+    ctx.drawImage(tiles, 160, 56, 16, 29, w * 0.05, h * 0.22, 42, 70);
+
+    // 5. Right Side: Apothecary Merchant & Town Guard
+    ctx.drawImage(tiles, 144, 35, 16, 17, w * 0.76, h * 0.52, 34, 36); // berry bush
+    // Knight town guard on patrol
+    ctx.drawImage(ent, 16, 0, 16, 17, w * 0.82, h * 0.38, 38, 40); // knight facing SE
+    // Archer guard
+    ctx.drawImage(ent, 0, 4 * 17, 16, 17, w * 0.71, h * 0.35, 34, 36);
+
+    // 6. Town Nameplate Ribbon
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.strokeStyle = ownerColor || '#fbbf24';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(14, 10, 210, 26, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = ownerColor || '#fde047';
+    ctx.font = 'bold 9px Silkscreen, sans-serif';
+    ctx.fillText(`🏰 ${townName} (LV ${townLevel})`, 22, 26);
+  }
+
+  // =========================================================================
+  // 7. INTERACTIVE 2.5D SHOP INTERIOR DIORAMA (Rendered in Shop Modal)
+  // =========================================================================
+  public renderShopInteriorDiorama(canvas: HTMLCanvasElement, shopType: string) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Cozy Shop Chamber Gradient
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, '#090d16');
+    bg.addColorStop(0.5, '#1e293b');
+    bg.addColorStop(1, '#0b1120');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    if (!this.tilesImg || !this.tilesImg.complete || !this.entityImg || !this.entityImg.complete) {
+      return;
+    }
+
+    const tiles = this.tilesImg;
+    const ent = this.entityImg;
+
+    // 2. Floor Tiles
+    for (let x = 0; x < w; x += 32) {
+      ctx.drawImage(tiles, 32, 0, 16, 17, x, h * 0.52, 32, 34);
+    }
+
+    if (shopType === 'shop_weapon') {
+      // Ironforge Blacksmith:
+      // Left Anvil & Forge Fire
+      ctx.drawImage(tiles, 144, 21, 16, 17, 30, h * 0.32, 40, 42);
+      // Armorer Knight behind counter
+      ctx.drawImage(ent, 0, 1 * 17, 16, 17, w * 0.46, h * 0.15, 48, 51);
+      // Racks of Swords & Armor
+      ctx.drawImage(tiles, 80, 136, 16, 17, w * 0.78, h * 0.22, 40, 42);
+      ctx.drawImage(tiles, 160, 153, 16, 17, w * 0.88, h * 0.32, 36, 38);
+    } else if (shopType === 'shop_magic') {
+      // Arcane Magic Emporium:
+      // Glowing Crystal Spires on sides
+      ctx.drawImage(tiles, 160, 35, 16, 17, 35, h * 0.25, 36, 40);
+      ctx.drawImage(tiles, 160, 35, 16, 17, w * 0.84, h * 0.25, 36, 40);
+      // Hooded Mage behind the arcane altar
+      ctx.drawImage(ent, 0, 3 * 17, 16, 17, w * 0.46, h * 0.15, 48, 51);
+    } else {
+      // General Goods & Apothecary:
+      // Herb bush & barrels on left
+      ctx.drawImage(tiles, 144, 35, 16, 17, 35, h * 0.32, 36, 38);
+      // Friendly Rogue Merchant behind counter
+      ctx.drawImage(ent, 0, 6 * 17, 16, 17, w * 0.46, h * 0.15, 48, 51);
+      // Flower barrel on right
+      ctx.drawImage(tiles, 128, 21, 16, 17, w * 0.82, h * 0.32, 36, 38);
+    }
+
+    // Front Wooden Counter Countertop across the middle
+    ctx.drawImage(tiles, 128, 123, 16, 13, w * 0.38, h * 0.52, 140, 28);
   }
 }
 

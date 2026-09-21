@@ -1,6 +1,7 @@
 import { GameState } from '../game/GameState';
 import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
+import { trpgAssets } from '../engine/TRPGAssetLoader';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Consumables & Multi-Spinners
@@ -55,6 +56,12 @@ export class ShopUI {
     if (type === 'shop_weapon') title.innerText = 'IRONFORGE WEAPONS & ARMOR';
     else if (type === 'shop_magic') title.innerText = 'ARCANE MAGIC EMPORIUM';
     else title.innerText = 'CONTINENTAL GOODS & SPINNERS';
+
+    // Render 2.5D Isometric Shop Interior Diorama
+    const canvas = document.getElementById('shopDioramaCanvas') as HTMLCanvasElement;
+    if (canvas) {
+      trpgAssets.renderShopInteriorDiorama(canvas, type);
+    }
 
     this.renderList('buy');
     modal.classList.remove('hidden');
