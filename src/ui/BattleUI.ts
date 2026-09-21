@@ -163,7 +163,7 @@ export class BattleUI {
       mag: p.getTotalStat('mag'),
       spd: p.getTotalStat('spd'),
       luk: p.getTotalStat('luk'),
-      isPvP: false,
+      isPvP: enemy.isPvP || false,
       playerRef: p,
       classKey: p.classKey,
       skillName: p.skillName

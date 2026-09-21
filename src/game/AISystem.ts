@@ -25,20 +25,42 @@ export class AISystem {
 
       let score = 0;
       if (node.type === 'town') {
-        if (node.townData?.isOccupiedByMonster) score += 50; // Town to liberate!
-        else if (node.townData?.ownerId === aiPlayer.id) score += 30; // Owned town to rest/invest
-        else score -= 15; // Rival's town with toll
+        if (node.townData?.isOccupiedByMonster) {
+          const maxHp = node.townData.monsterMaxHp || node.townData.monsterHp;
+          // Monster is low on HP: PRIME TARGET TO LAST-HIT (ลาสมอน)!
+          if (node.townData.monsterHp <= maxHp * 0.5) {
+            score += 130;
+          } else {
+            score += 60; // Town to liberate!
+          }
+        } else if (node.townData?.ownerId === aiPlayer.id) {
+          score += 35; // Owned town to rest/invest
+        } else {
+          score -= 15; // Rival's town with toll
+        }
       } else if (node.type === 'blue') {
         score += 25;
       } else if (node.type === 'church') {
-        if (aiPlayer.hp < aiPlayer.maxHp * 0.5) score += 60;
+        if (aiPlayer.hp < aiPlayer.maxHp * 0.5) score += 70;
         else score += 10;
       } else if (node.type === 'shop_item' || node.type === 'shop_weapon') {
-        score += 20;
+        score += 25;
       } else if (node.type === 'red') {
         score -= 30;
       } else if (node.type === 'dark_gate') {
         score += aiPlayer.isDarkling ? 0 : 40;
+      }
+
+      // Check for rival on tile (PvP opportunity!)
+      const rivalOnNode = allPlayers.find(p => p.id !== aiPlayer.id && p.nodeId === id);
+      if (rivalOnNode) {
+        if (aiPlayer.isDarkling) {
+          score += 160;
+        } else if (aiPlayer.hp > rivalOnNode.hp + 20) {
+          score += 90; // Ambush weakened rival!
+        } else {
+          score += 45; // Dokapon duel!
+        }
       }
 
       // Add a bit of unpredictability

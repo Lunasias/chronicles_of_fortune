@@ -30,6 +30,8 @@ class DokaponApp {
   private dragStartX = 0;
   private dragStartY = 0;
   private hasMovedWhileDragging = false;
+  private bossCurrentHp = 380;
+  private bossMaxHp = 380;
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -78,7 +80,7 @@ class DokaponApp {
   private bindInteractiveTileSelection() {
     // Mouse hover over 2.5D isometric tiles
     this.canvas.addEventListener('mousemove', e => {
-      if (this.game.phase === 'MOVING' || this.game.phase === 'TITLE') return;
+      if (this.isDragging || this.game.phase === 'MOVING' || this.game.phase === 'TITLE') return;
 
       const hoveredNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes);
 
@@ -271,6 +273,7 @@ class DokaponApp {
       this.hasMovedWhileDragging = false;
       this.dragStartX = e.clientX;
       this.dragStartY = e.clientY;
+      this.canvas.style.cursor = 'grabbing';
     });
     window.addEventListener('mousemove', e => {
       if (this.isDragging) {
@@ -289,6 +292,7 @@ class DokaponApp {
     });
     window.addEventListener('mouseup', () => {
       this.isDragging = false;
+      this.canvas.style.cursor = 'grab';
     });
 
     // Inventory button
@@ -357,25 +361,34 @@ class DokaponApp {
 
     for (let i = 0; i < playerCount; i++) {
       const card = document.createElement('div');
-      card.className = 'pixel-box p-2.5 bg-slate-900 border-slate-800 flex flex-col gap-1.5';
+      card.className = 'pixel-box p-3 bg-slate-900 border-slate-700 flex flex-col gap-2 shadow';
       card.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-amber-300">PLAYER ${i + 1}</span>
-          <label class="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
-            <input type="checkbox" class="is-ai-check accent-amber-500" ${i > 0 ? 'checked' : ''}>
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+          <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+            <span>⚔️</span>
+            <span>PLAYER ${i + 1}</span>
+          </span>
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer hover:text-amber-300">
+            <input type="checkbox" class="is-ai-check accent-amber-500 cursor-pointer" ${i > 0 ? 'checked' : ''}>
             <span>AI Bot</span>
           </label>
         </div>
-        <div class="flex gap-2">
-          <input type="text" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded text-white flex-1" value="${defaultNames[i]}">
-          <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded text-amber-400">
-            ${classKeys
-              .map(
-                ck =>
-                  `<option value="${ck}" ${ck === classKeys[i % 4] ? 'selected' : ''}>${HERO_CLASSES[ck].name} ${HERO_CLASSES[ck].avatar}</option>`
-              )
-              .join('')}
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1 min-w-0">
+            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Name</span>
+            <input type="text" maxlength="12" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-white w-full min-w-0 outline-none focus:border-amber-400" value="${defaultNames[i]}">
+          </div>
+          <div class="flex flex-col gap-1 min-w-0">
+            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Class</span>
+            <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-amber-400 w-full min-w-0 outline-none cursor-pointer">
+              ${classKeys
+                .map(
+                  ck =>
+                    `<option value="${ck}" ${ck === classKeys[i % 4] ? 'selected' : ''}>${HERO_CLASSES[ck].name} ${HERO_CLASSES[ck].avatar}</option>`
+                )
+                .join('')}
+            </select>
+          </div>
         </div>
       `;
       container.appendChild(card);
@@ -439,9 +452,13 @@ class DokaponApp {
           this.game.updateReachableHighlights();
 
           if (this.game.activePlayer.isAI) {
-            // AI automatically picks destination
-            const candidates = this.game.highlightedNodes;
-            const chosenTarget = candidates[Math.floor(Math.random() * candidates.length)] || candidates[0];
+            // AI intelligently picks best destination (last-hit towns, PvP, shops)
+            const chosenTarget = aiSystem.chooseRoute(
+              this.game.highlightedNodes,
+              this.game.activePlayer,
+              this.game.allNodes,
+              this.game.players
+            );
             const path = this.game.findPathToTarget(chosenTarget);
             if (path) {
               this.game.executePath(
@@ -570,11 +587,19 @@ class DokaponApp {
     };
 
     this.battleUI.startBattle(rivalCombatant, (winner, loser) => {
-      if (winner.playerRef?.id === challenger.id) {
-        this.prankUI.open(rival, () => this.advanceTurn());
-      } else {
-        this.prankUI.open(challenger, () => this.advanceTurn());
-      }
+      const loserPlayer = (winner.playerRef?.id === challenger.id) ? rival : challenger;
+      const winnerPlayer = (winner.playerRef?.id === challenger.id) ? challenger : rival;
+
+      // Dokapon Kingdom rule: Send defeated player back to Dokapon Castle (node 0) with 1 HP
+      const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
+      loserPlayer.nodeId = castleNode.id;
+      loserPlayer.gridX = castleNode.gx;
+      loserPlayer.gridY = castleNode.gy;
+      loserPlayer.gridZ = castleNode.gz;
+      loserPlayer.hp = 1;
+      this.game.addLog(`🚑 ${loserPlayer.displayName} was knocked out and carried back to Dokapon Castle!`, 'battle');
+
+      this.prankUI.open(loserPlayer, () => this.advanceTurn());
     });
   }
 
@@ -585,7 +610,7 @@ class DokaponApp {
     const monsterCombatant: Combatant = {
       name: data.monsterName,
       hp: data.monsterHp,
-      maxHp: data.monsterHp,
+      maxHp: data.monsterMaxHp || data.monsterHp,
       mp: 30,
       maxMp: 30,
       atk: data.monsterAtk,
@@ -599,6 +624,10 @@ class DokaponApp {
       if (winner.playerRef) {
         const rewards = townManager.liberateTown(townNode, winner.playerRef);
         this.game.addLog(`👑 TOWN LIBERATED! ${winner.playerRef.displayName} freed ${townNode.name} (+${rewards.goldReward}G, +${rewards.xpReward} XP)!`, 'level');
+      } else {
+        // Monster survived! Persist remaining HP for last-hit opportunity
+        data.monsterHp = Math.max(1, Math.ceil(winner.hp));
+        this.game.addLog(`💀 LAST HIT OPPORTUNITY! ${data.monsterName} survived with ${data.monsterHp}/${monsterCombatant.maxHp} HP! Anyone can steal the kill!`, 'battle');
       }
       this.advanceTurn();
     });
@@ -657,12 +686,12 @@ class DokaponApp {
   }
 
   private initiateBossBattle() {
-    this.game.addLog(`⚠️ ANCIENT DRAGON OVERLORD DESCENDS! COMBAT OF LEGENDS!`, 'battle');
+    this.game.addLog(`⚠️ ANCIENT DRAGON OVERLORD DESCENDS! COMBAT OF LEGENDS! (HP: ${this.bossCurrentHp}/${this.bossMaxHp})`, 'battle');
 
     const bossCombatant: Combatant = {
       name: 'Dragon King Ignis',
-      hp: 380,
-      maxHp: 380,
+      hp: this.bossCurrentHp,
+      maxHp: this.bossMaxHp,
       mp: 80,
       maxMp: 80,
       atk: 29,
@@ -675,10 +704,14 @@ class DokaponApp {
 
     this.battleUI.startBattle(bossCombatant, (winner, loser) => {
       if (winner.playerRef) {
+        this.bossCurrentHp = 0;
         this.game.addLog(`👑 ${winner.playerRef.displayName} SLAYED THE DRAGON OVERLORD! ETERNAL GLORY!`, 'level');
         this.game.phase = 'VICTORY';
         this.triggerVictoryModal(winner.playerRef, 'Slayed Dragon King Ignis');
       } else {
+        // Dragon survived! Persist remaining boss HP
+        this.bossCurrentHp = Math.max(1, Math.ceil(winner.hp));
+        this.game.addLog(`🐉 Dragon King Ignis survived with ${this.bossCurrentHp}/${this.bossMaxHp} HP! Next challenger can finish him off!`, 'battle');
         this.advanceTurn();
       }
     });

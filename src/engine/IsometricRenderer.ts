@@ -33,9 +33,31 @@ export class IsometricRenderer {
   public hoveredNodeId: number | null = null;
   public previewPathNodeIds: number[] = [];
 
-  // Weather & Dust Particles
-  private particles: Array<{ x: number; y: number; vx: number; vy: number; color: string; size: number }> = [];
-  private dustPuffs: Array<{ x: number; y: number; size: number; alpha: number }> = [];
+  // Precomputed Static Board Cache for 60 FPS zero-allocation performance
+  private nodeScreenCache = new Map<number, { x: number; y: number; depth: number }>();
+  private roadwaySegments: Array<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    roadColor: string;
+    dashColor: string;
+  }> = [];
+  public hasInitializedBoardCache = false;
+  private particles: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    color: string;
+    size: number;
+  }> = [];
+  private dustPuffs: Array<{
+    x: number;
+    y: number;
+    size: number;
+    alpha: number;
+  }> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -64,33 +86,87 @@ export class IsometricRenderer {
     return { x, y };
   }
 
+  // Initialize static board caches once to eliminate all runtime allocations
+  public initBoardCache(nodes: BoardNode[]) {
+    this.nodeScreenCache.clear();
+    this.roadwaySegments = [];
+
+    const nodeMap = new Map<number, BoardNode>();
+    nodes.forEach(n => {
+      nodeMap.set(n.id, n);
+      const p = this.toScreen(n.gx, n.gy, n.gz);
+      const depth = (n.gx + n.gy) * 1000 + n.gz * 100;
+      this.nodeScreenCache.set(n.id, { x: p.x, y: p.y, depth });
+    });
+
+    nodes.forEach(node => {
+      const p1 = this.nodeScreenCache.get(node.id)!;
+      node.neighbors.forEach(nId => {
+        if (nId > node.id) {
+          const target = nodeMap.get(nId);
+          if (!target) return;
+          const p2 = this.nodeScreenCache.get(nId)!;
+
+          let roadColor = '#1e293b';
+          if (node.biome === 'snow') roadColor = '#1e293b';
+          else if (node.biome === 'volcano') roadColor = '#450a0a';
+          else if (node.biome === 'desert') roadColor = '#451a03';
+          else if (node.biome === 'forest') roadColor = '#052e16';
+          else if (node.biome === 'cavern') roadColor = '#0f172a';
+          else if (node.biome === 'coral') roadColor = '#083344';
+          else if (node.biome === 'abyss') roadColor = '#2e1065';
+
+          const dashColor = node.biome === 'volcano' ? '#f97316' : node.biome === 'abyss' ? '#a855f7' : '#94a3b8';
+          this.roadwaySegments.push({
+            x1: p1.x,
+            y1: p1.y,
+            x2: p2.x,
+            y2: p2.y,
+            roadColor,
+            dashColor
+          });
+        }
+      });
+    });
+
+    this.hasInitializedBoardCache = true;
+  }
+
   // =========================================================================
   // ISOMETRIC RAYCASTING: Detect which tile was hovered or clicked
   // =========================================================================
   screenToNode(clientX: number, clientY: number, nodes: BoardNode[]): BoardNode | null {
+    if (!this.hasInitializedBoardCache) {
+      this.initBoardCache(nodes);
+    }
+
     const rect = this.canvas.getBoundingClientRect();
     const sx = clientX - rect.left;
     const sy = clientY - rect.top;
 
-    // Convert from screen viewport to world coordinate
     const worldX = (sx - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
     const worldY = (sy - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
 
     let closestNode: BoardNode | null = null;
     let minDistance = 99999;
+    const hw = this.tileWidth / 2;
+    const hh = this.tileHeight / 2;
 
-    nodes.forEach(node => {
-      const p = this.toScreen(node.gx, node.gy, node.gz);
-      // Rhombus test
-      const dx = Math.abs(worldX - p.x);
-      const dy = Math.abs(worldY - p.y);
-      const dist = (dx / (this.tileWidth / 2)) + (dy / (this.tileHeight / 2));
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const pos = this.nodeScreenCache.get(node.id);
+      const nx = pos ? pos.x : (node.gx - node.gy) * hw;
+      const ny = pos ? pos.y : (node.gx + node.gy) * hh - node.gz * this.elevationStep;
+
+      const dx = Math.abs(worldX - nx);
+      const dy = Math.abs(worldY - ny);
+      const dist = dx / hw + dy / hh;
 
       if (dist <= 1.2 && dist < minDistance) {
         minDistance = dist;
         closestNode = node;
       }
-    });
+    }
 
     return closestNode;
   }
@@ -113,20 +189,24 @@ export class IsometricRenderer {
     previewPath: number[] = [],
     time: number = 0
   ) {
+    if (!this.hasInitializedBoardCache) {
+      this.initBoardCache(nodes);
+    }
+
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;
 
     this.previewPathNodeIds = previewPath;
 
-    // Smooth camera interpolation
-    this.camera.x += (this.camera.targetX - this.camera.x) * 0.08;
-    this.camera.y += (this.camera.targetY - this.camera.y) * 0.08;
-    this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.08;
+    // Fast, responsive 60 FPS camera interpolation
+    this.camera.x += (this.camera.targetX - this.camera.x) * 0.16;
+    this.camera.y += (this.camera.targetY - this.camera.y) * 0.16;
+    this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.16;
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Dynamic Fantasy World Sky & Parallax Horizons (No more dark void!)
+    // 1. Dynamic Fantasy World Sky & Parallax Horizons
     worldBackground.renderSky(ctx, this.camera, w, h, time);
 
     ctx.save();
@@ -134,10 +214,9 @@ export class IsometricRenderer {
     ctx.scale(this.camera.zoom, this.camera.zoom);
     ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 2. World Space Atmosphere (Volumetric Clouds, Birds, Motes)
+    // 2. World Space Atmosphere
     worldBackground.renderAtmosphere(ctx, this.camera, time);
 
-    // View frustum boundaries for smooth culling
     const halfW = (w / 2) / this.camera.zoom + 200;
     const halfH = (h / 2) / this.camera.zoom + 200;
     const minX = this.camera.x - halfW;
@@ -145,102 +224,76 @@ export class IsometricRenderer {
     const minY = this.camera.y - halfH;
     const maxY = this.camera.y + halfH;
 
-    // Filter visible nodes within viewport
-    const visibleNodes = nodes.filter(node => {
-      const p = this.toScreen(node.gx, node.gy, node.gz);
-      return p.x >= minX - 100 && p.x <= maxX + 100 && p.y >= minY - 150 && p.y <= maxY + 150;
-    });
+    // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
+    this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
 
-    // 2. 2.5D Isometric Textured Roadways
-    this.renderIsometricRoads(ctx, nodes, minX, maxX, minY, maxY);
-
-    // 3. Interactive Breadcrumb Stepping Stones for Previewed Path
+    // 4. Interactive Breadcrumb Stepping Stones for Previewed Path
     this.renderPathBreadcrumbs(ctx, nodes);
 
-    // 4. Depth-Sorted Entities (Terrain Blocks, Buildings, Props, Characters)
-    this.renderDepthSortedWorld(ctx, visibleNodes, players, activePlayer, highlightedNodes, time);
+    // 5. Depth-Sorted Entities (Terrain Blocks, Buildings, Props, Characters)
+    this.renderDepthSortedWorld(ctx, nodes, players, activePlayer, highlightedNodes, minX, maxX, minY, maxY, time);
 
-    // 5. Running Dust Particles
+    // 6. Running Dust Particles
     this.renderDustPuffs(ctx);
 
-    // 6. Weather & Light Flares
+    // 7. Weather & Light Flares
     this.renderWeatherParticles(ctx);
 
     ctx.restore();
   }
 
-
   private renderIsometricRoads(
     ctx: CanvasRenderingContext2D,
-    nodes: BoardNode[],
     minX: number,
     maxX: number,
     minY: number,
     maxY: number
   ) {
-    nodes.forEach(node => {
-      const p1 = this.toScreen(node.gx, node.gy, node.gz);
+    for (let i = 0; i < this.roadwaySegments.length; i++) {
+      const seg = this.roadwaySegments[i];
 
-      node.neighbors.forEach(nId => {
-        if (nId > node.id) {
-          const target = nodes.find(n => n.id === nId);
-          if (!target) return;
-          const p2 = this.toScreen(target.gx, target.gy, target.gz);
+      // View frustum culling
+      if (
+        Math.max(seg.x1, seg.x2) < minX ||
+        Math.min(seg.x1, seg.x2) > maxX ||
+        Math.max(seg.y1, seg.y2) < minY ||
+        Math.min(seg.y1, seg.y2) > maxY
+      ) {
+        continue;
+      }
 
-          // Culling check
-          if (
-            Math.max(p1.x, p2.x) < minX ||
-            Math.min(p1.x, p2.x) > maxX ||
-            Math.max(p1.y, p2.y) < minY ||
-            Math.min(p1.y, p2.y) > maxY
-          ) {
-            return;
-          }
+      // Deep Road Trench Shadow
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 20;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1 + 14);
+      ctx.lineTo(seg.x2, seg.y2 + 14);
+      ctx.stroke();
 
-          // Deep Road Trench Shadow
-          ctx.strokeStyle = '#020617';
-          ctx.lineWidth = 20;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y + 14);
-          ctx.lineTo(p2.x, p2.y + 14);
-          ctx.stroke();
+      // Textured Cobblestone Body
+      ctx.strokeStyle = seg.roadColor;
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1 + 10);
+      ctx.lineTo(seg.x2, seg.y2 + 10);
+      ctx.stroke();
 
-          // Textured Cobblestone Body with Dark Fantasy Province Tint
-          let roadColor = '#1e293b';
-          if (node.biome === 'snow') roadColor = '#1e293b'; // Black ice road
-          else if (node.biome === 'volcano') roadColor = '#450a0a'; // Scorched obsidian fissure
-          else if (node.biome === 'desert') roadColor = '#451a03'; // Blighted sand path
-          else if (node.biome === 'forest') roadColor = '#052e16'; // Gloomwood thorn road
-          else if (node.biome === 'cavern') roadColor = '#0f172a'; // Deep catacomb iron track
-          else if (node.biome === 'coral') roadColor = '#083344'; // Drowned reef abyss road
-          else if (node.biome === 'abyss') roadColor = '#2e1065'; // Void bone bridge
-
-          ctx.strokeStyle = roadColor;
-          ctx.lineWidth = 16;
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y + 10);
-          ctx.lineTo(p2.x, p2.y + 10);
-          ctx.stroke();
-
-          // Paved center line flagstones with dark fantasy runic glow
-          ctx.strokeStyle = node.biome === 'volcano' ? '#f97316' : node.biome === 'abyss' ? '#a855f7' : '#94a3b8';
-          ctx.lineWidth = 2.0;
-          ctx.setLineDash([6, 12]);
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y + 10);
-          ctx.lineTo(p2.x, p2.y + 10);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-      });
-    });
+      // Paved center line flagstones
+      ctx.strokeStyle = seg.dashColor;
+      ctx.lineWidth = 2.0;
+      ctx.setLineDash([6, 12]);
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1 + 10);
+      ctx.lineTo(seg.x2, seg.y2 + 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
 
   private renderPathBreadcrumbs(ctx: CanvasRenderingContext2D, nodes: BoardNode[]) {
     if (this.previewPathNodeIds.length < 2) return;
 
-    // Glowing cyan / gold stepping beam along chosen path
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
@@ -248,16 +301,15 @@ export class IsometricRenderer {
     ctx.shadowBlur = 12;
 
     ctx.beginPath();
-    this.previewPathNodeIds.forEach((nodeId, idx) => {
-      const node = nodes.find(n => n.id === nodeId);
-      if (!node) return;
-      const p = this.toScreen(node.gx, node.gy, node.gz);
+    for (let idx = 0; idx < this.previewPathNodeIds.length; idx++) {
+      const nodeId = this.previewPathNodeIds[idx];
+      const p = this.nodeScreenCache.get(nodeId) || (nodes.find(n => n.id === nodeId) ? this.toScreen(nodes.find(n => n.id === nodeId)!.gx, nodes.find(n => n.id === nodeId)!.gy, nodes.find(n => n.id === nodeId)!.gz) : null);
+      if (!p) continue;
       if (idx === 0) ctx.moveTo(p.x, p.y);
       else ctx.lineTo(p.x, p.y);
-    });
+    }
     ctx.stroke();
-
-    ctx.shadowBlur = 0; // Reset
+    ctx.shadowBlur = 0;
   }
 
   private renderDepthSortedWorld(
@@ -266,6 +318,10 @@ export class IsometricRenderer {
     players: Player[],
     activePlayer: Player | null,
     highlightedNodes: number[],
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
     time: number
   ) {
     interface Renderable {
@@ -275,16 +331,26 @@ export class IsometricRenderer {
 
     const renderList: Renderable[] = [];
 
-    // 1. Add Isometric Blocks
-    nodes.forEach(node => {
-      const p = this.toScreen(node.gx, node.gy, node.gz);
+    // 1. Add Isometric Blocks & Props within viewport
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const pos = this.nodeScreenCache.get(node.id);
+      const px = pos ? pos.x : this.toScreen(node.gx, node.gy, node.gz).x;
+      const py = pos ? pos.y : this.toScreen(node.gx, node.gy, node.gz).y;
+
+      // View frustum culling
+      if (px < minX - 120 || px > maxX + 120 || py < minY - 150 || py > maxY + 150) {
+        continue;
+      }
+
       const isHighlighted = highlightedNodes.includes(node.id);
       const isHovered = this.hoveredNodeId === node.id;
+      const depth = pos ? pos.depth : (node.gx + node.gy) * 1000 + node.gz * 100;
 
       renderList.push({
-        depth: (node.gx + node.gy) * 1000 + node.gz * 100,
+        depth,
         draw: () => {
-          this.drawIsometricBlock(ctx, p.x, p.y, node, isHighlighted, isHovered, time);
+          this.drawIsometricBlock(ctx, px, py, node, isHighlighted, isHovered, time);
         }
       });
 
@@ -300,36 +366,68 @@ export class IsometricRenderer {
         node.type === 'vault'
       ) {
         renderList.push({
-          depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 40,
+          depth: depth + 40,
           draw: () => {
             const ownerColor = node.townData?.ownerId
               ? players.find(pl => pl.id === node.townData!.ownerId)?.color || null
               : null;
 
             const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
-            ctx.drawImage(bld, p.x - 48, p.y - 74, 96, 96);
+            ctx.drawImage(bld, px - 48, py - 74, 96, 96);
 
-            // Clean, non-cluttering town crest badge
+            // Town crest & monster last-hit indicator
             if (node.type === 'town') {
-              // Compact level star crest
-              ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-              ctx.beginPath();
-              ctx.roundRect(p.x - 14, p.y - 74, 28, 14, 4);
-              ctx.fill();
-              ctx.strokeStyle = ownerColor || '#64748b';
-              ctx.lineWidth = 1.2;
-              ctx.stroke();
+              if (node.townData?.isOccupiedByMonster) {
+                const curHp = node.townData.monsterHp;
+                const maxHp = node.townData.monsterMaxHp || curHp;
+                const hpPct = Math.max(0, Math.min(1, curHp / maxHp));
+                const isWeakened = hpPct < 1.0;
+                const badgeW = isWeakened ? 84 : 64;
 
-              ctx.fillStyle = ownerColor || '#f8fafc';
-              ctx.font = '8px Silkscreen';
-              ctx.textAlign = 'center';
-              ctx.fillText(`★${node.townData?.level || 1}`, p.x, p.y - 64);
+                ctx.fillStyle = isWeakened ? 'rgba(69, 10, 10, 0.95)' : 'rgba(15, 23, 42, 0.9)';
+                ctx.beginPath();
+                ctx.roundRect(px - badgeW / 2, py - 80, badgeW, isWeakened ? 26 : 15, 4);
+                ctx.fill();
+                ctx.strokeStyle = isWeakened ? '#ef4444' : '#f59e0b';
+                ctx.lineWidth = isWeakened ? 2.0 : 1.2;
+                ctx.stroke();
 
-              // Full Town Banner ONLY appears when hovered or highlighted (crystal clear map!)
+                ctx.fillStyle = isWeakened ? '#fca5a5' : '#fbbf24';
+                ctx.font = '7px Silkscreen';
+                ctx.textAlign = 'center';
+                ctx.fillText(isWeakened ? `💀 LAST HIT!` : `👾 MONSTER`, px, py - (isWeakened ? 70 : 69));
+
+                if (isWeakened) {
+                  const barW = badgeW - 12;
+                  ctx.fillStyle = '#0f172a';
+                  ctx.fillRect(px - barW / 2, py - 66, barW, 4);
+                  ctx.fillStyle = hpPct < 0.35 ? '#ef4444' : '#f59e0b';
+                  ctx.fillRect(px - barW / 2, py - 66, barW * hpPct, 4);
+
+                  ctx.fillStyle = '#ffffff';
+                  ctx.font = '6px Silkscreen';
+                  ctx.fillText(`${curHp}/${maxHp}`, px, py - 58);
+                }
+              } else {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.beginPath();
+                ctx.roundRect(px - 14, py - 74, 28, 14, 4);
+                ctx.fill();
+                ctx.strokeStyle = ownerColor || '#64748b';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                ctx.fillStyle = ownerColor || '#f8fafc';
+                ctx.font = '8px Silkscreen';
+                ctx.textAlign = 'center';
+                ctx.fillText(`★${node.townData?.level || 1}`, px, py - 64);
+              }
+
+              // Full Town Banner ONLY appears when hovered or highlighted
               if (isHovered || isHighlighted) {
                 ctx.fillStyle = 'rgba(2, 6, 23, 0.95)';
                 ctx.beginPath();
-                ctx.roundRect(p.x - 52, p.y - 96, 104, 18, 4);
+                ctx.roundRect(px - 52, py - 96, 104, 18, 4);
                 ctx.fill();
                 ctx.strokeStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
                 ctx.lineWidth = 1.5;
@@ -338,17 +436,30 @@ export class IsometricRenderer {
                 ctx.fillStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
                 ctx.font = '8px Silkscreen';
                 ctx.textAlign = 'center';
-                ctx.fillText(`${node.name} (LV ${node.townData?.level || 1})`, p.x, p.y - 84);
+                ctx.fillText(`${node.name} (LV ${node.townData?.level || 1})`, px, py - 84);
               }
+            } else if (node.type === 'boss') {
+              ctx.fillStyle = 'rgba(69, 10, 10, 0.95)';
+              ctx.beginPath();
+              ctx.roundRect(px - 45, py - 82, 90, 16, 4);
+              ctx.fill();
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+
+              ctx.fillStyle = '#fca5a5';
+              ctx.font = '7px Silkscreen';
+              ctx.textAlign = 'center';
+              ctx.fillText(`👑 DRAGON OVERLORD`, px, py - 71);
             }
           }
         });
       }
 
-      // Foliage / Tree Props (Terraria-style zero-lag static cached Dark Fantasy foliage)
+      // Foliage / Tree Props
       if (node.id % 2 === 0) {
         renderList.push({
-          depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 20,
+          depth: depth + 20,
           draw: () => {
             const treeType =
               node.biome === 'snow'
@@ -359,21 +470,21 @@ export class IsometricRenderer {
                 ? 'ash_thorn'
                 : 'blood_willow';
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
-            ctx.drawImage(tree, p.x + 20, p.y - 68, 64, 84);
+            ctx.drawImage(tree, px + 20, py - 68, 64, 84);
           }
         });
       }
 
-      // Dark Fantasy Biome Atmospheric Props (Totems, Crystals, Campfire, Rocks)
+      // Dark Fantasy Biome Props
       if (node.id % 3 === 0) {
         renderList.push({
-          depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 15,
+          depth: depth + 15,
           draw: () => {
-            this.drawDarkFantasyBiomeProp(ctx, p.x - 38, p.y - 42, node.biome, node.id, time);
+            this.drawDarkFantasyBiomeProp(ctx, px - 38, py - 42, node.biome, node.id, time);
           }
         });
       }
-    });
+    }
 
     // 2. Add Animated Players
     players.forEach(player => {

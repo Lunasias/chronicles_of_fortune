@@ -63,6 +63,14 @@ export class GameState {
     this.weekCounter = 1;
     this.phase = 'BOARD_TURN';
 
+    this.allNodes.forEach(n => {
+      if (n.townData && n.townData.isOccupiedByMonster) {
+        if (!n.townData.monsterMaxHp) {
+          n.townData.monsterMaxHp = n.townData.monsterHp;
+        }
+      }
+    });
+
     this.addLog(`⚔️ The Grand Dokapon Expedition begins across 52 provinces!`, 'level');
     this.startTurn();
   }
@@ -195,7 +203,7 @@ export class GameState {
     return totalRoll;
   }
 
-  // Calculate all reachable destination nodes for the exact roll
+  // Calculate all reachable destination nodes for ANY distance <= remainingMoves (1 to remainingMoves steps)
   updateReachableHighlights() {
     if (this.remainingMoves <= 0) {
       this.highlightedNodes = [];
@@ -209,8 +217,11 @@ export class GameState {
 
     while (queue.length > 0) {
       const curr = queue.shift()!;
-      if (curr.movesLeft === 0) {
+      if (curr.nodeId !== this.activePlayer.nodeId) {
         reachable.add(curr.nodeId);
+      }
+
+      if (curr.movesLeft === 0) {
         continue;
       }
 
@@ -230,7 +241,7 @@ export class GameState {
     this.highlightedNodes = Array.from(reachable);
   }
 
-  // Pathfinding: Find exact route from current position to target node of length 'steps'
+  // Pathfinding: Find shortest valid route from current position to target node with length <= remainingMoves
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
 
@@ -242,10 +253,12 @@ export class GameState {
       const { path, prevId } = queue.shift()!;
       const currentId = path[path.length - 1];
 
-      if (path.length - 1 === this.remainingMoves) {
-        if (currentId === targetNodeId) {
-          return path;
-        }
+      // Reached target within remainingMoves
+      if (currentId === targetNodeId && path.length > 1) {
+        return path;
+      }
+
+      if (path.length - 1 >= this.remainingMoves) {
         continue;
       }
 
@@ -258,7 +271,9 @@ export class GameState {
       }
 
       for (const nextId of neighbors) {
-        queue.push({ path: [...path, nextId], prevId: currentId });
+        if (!path.includes(nextId)) {
+          queue.push({ path: [...path, nextId], prevId: currentId });
+        }
       }
     }
 

@@ -22,6 +22,7 @@ export interface TownData {
   isOccupiedByMonster: boolean;
   monsterName: string;
   monsterHp: number;
+  monsterMaxHp?: number;
   monsterAtk: number;
   monsterDef: number;
 }
