@@ -248,6 +248,17 @@
   <!-- FLOATING DAMAGE / NOTICE CONTAINER (z-30) -->
   <div id="floatingTextContainer" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
 
+  <!-- TURN START CINEMATIC ANNOUNCEMENT BANNER (z-25) -->
+  <div id="turnStartBanner" class="hidden pointer-events-none absolute top-20 left-1/2 -translate-x-1/2 z-25 flex flex-col items-center justify-center transition-all duration-300 opacity-0 scale-95">
+    <div class="pixel-box-gold px-6 py-2 flex items-center gap-3 shadow-2xl bg-gradient-to-r from-amber-950/95 via-slate-900/95 to-amber-950/95 border-amber-500 rounded">
+      <span id="turnBannerIcon" class="text-2xl animate-bounce">⚔️</span>
+      <div class="flex flex-col items-center text-center">
+        <span id="turnBannerTitle" class="text-amber-300 font-bold text-xs md:text-sm tracking-widest uppercase">YOUR TURN!</span>
+        <span id="turnBannerSubtitle" class="text-[9px] text-slate-300">Camera focused on hero</span>
+      </div>
+    </div>
+  </div>
+
   <!-- TOP HUD BAR (z-20) -->
   <div id="topHUD" class="hidden absolute top-2 left-2 right-2 z-20 flex flex-wrap justify-between items-start gap-2 pointer-events-none">
     <!-- Active Player Card -->

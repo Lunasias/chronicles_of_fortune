@@ -345,12 +345,19 @@ export class IsometricRenderer {
         });
       }
 
-      // Foliage / Tree Props (Terraria-style zero-lag static cached)
+      // Foliage / Tree Props (Terraria-style zero-lag static cached Dark Fantasy foliage)
       if (node.id % 2 === 0) {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 20,
           draw: () => {
-            const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
+            const treeType =
+              node.biome === 'snow'
+                ? 'frost_pine'
+                : node.biome === 'forest' || node.biome === 'abyss'
+                ? 'gloom_spore'
+                : node.biome === 'volcano' || node.biome === 'desert' || node.biome === 'cavern'
+                ? 'ash_thorn'
+                : 'blood_willow';
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
             ctx.drawImage(tree, p.x + 20, p.y - 68, 64, 84);
           }
@@ -717,5 +724,18 @@ export class IsometricRenderer {
     const p = this.toScreen(gx, gy, gz);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
+  }
+
+  // Smooth cinematic camera focus and zoom onto player at turn start
+  focusOnPlayer(gx: number, gy: number, gz: number, zoom = 1.22) {
+    const p = this.toScreen(gx, gy, gz);
+    this.camera.targetX = p.x;
+    this.camera.targetY = p.y;
+    this.camera.targetZoom = zoom;
+  }
+
+  // Reset to default comfortable tactical board zoom
+  resetTacticalZoom(targetZoom = 1.0) {
+    this.camera.targetZoom = targetZoom;
   }
 }

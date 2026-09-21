@@ -17,6 +17,65 @@ export class BattleUI {
   public isExecutingRound = false;
   public isScoutOpen = false;
 
+  // Cinematic Combat Cutscene State
+  public cutscene = {
+    active: false,
+    phase: 'idle' as 'idle' | 'dash' | 'impact' | 'leap_back',
+    phaseStartTime: 0,
+    phaseDuration: 0,
+    startX: 0,
+    startY: 0,
+    targetX: 0,
+    targetY: 0,
+    attackerOffsetX: 0,
+    attackerOffsetY: 0,
+    defenderStartX: 0,
+    defenderStartY: 0,
+    defenderTargetX: 0,
+    defenderTargetY: 0,
+    defenderOffsetX: 0,
+    defenderOffsetY: 0,
+    zoomFactor: 1.0,
+    targetZoom: 1.0,
+    ghostTrails: [] as Array<{
+      x: number;
+      y: number;
+      sprite: HTMLCanvasElement;
+      w: number;
+      h: number;
+      alpha: number;
+      decay: number;
+    }>,
+    lastGhostTime: 0,
+    bannerText: '',
+    bannerSubtext: '',
+    bannerColor: '#f59e0b',
+    bannerAlpha: 0,
+    targetBannerAlpha: 0
+  };
+
+  startCutscenePhase(
+    phase: 'dash' | 'impact' | 'leap_back',
+    durationMs: number,
+    targetOffsetX: number = 0,
+    targetOffsetY: number = 0,
+    defenderTargetOffsetX: number = 0,
+    defenderTargetOffsetY: number = 0
+  ) {
+    this.cutscene.active = true;
+    this.cutscene.phase = phase;
+    this.cutscene.phaseStartTime = performance.now();
+    this.cutscene.phaseDuration = durationMs;
+    this.cutscene.startX = this.cutscene.attackerOffsetX;
+    this.cutscene.startY = this.cutscene.attackerOffsetY;
+    this.cutscene.targetX = targetOffsetX;
+    this.cutscene.targetY = targetOffsetY;
+    this.cutscene.defenderStartX = this.cutscene.defenderOffsetX;
+    this.cutscene.defenderStartY = this.cutscene.defenderOffsetY;
+    this.cutscene.defenderTargetX = defenderTargetOffsetX;
+    this.cutscene.defenderTargetY = defenderTargetOffsetY;
+  }
+
   constructor(game: GameState) {
     this.game = game;
     this.canvas = document.getElementById('battleCanvas') as HTMLCanvasElement;
@@ -260,53 +319,162 @@ export class BattleUI {
 
     this.isExecutingRound = true;
 
-    // Trigger animated action pose
-    this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'attack';
-    this.defenderAnim = defAction === 'counter' ? 'counter' : 'idle';
-
-    // Center positions for 3x3 tactical grid dioramas
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const px = w * 0.29;
-    const py = h * 0.62;
-    const ex = w * 0.71;
-    const ey = h * 0.46;
+    const arenaCX = w * 0.50;
+    const arenaCY = h * 0.56;
+    const arenaW = Math.min(w * 0.88, 880);
+    const arenaH = arenaW * 0.48;
 
-    // Spawn Dynamic Combat VFX on Monster / Defender!
+    const pxCenter = arenaCX - arenaW * 0.22;
+    const pyCenter = arenaCY + arenaH * 0.12;
+    const exCenter = arenaCX + arenaW * 0.22;
+    const eyCenter = arenaCY - arenaH * 0.12;
+
+    const isPAtk = b.isPlayerAttacking;
+
+    // Vector from Attacker to Defender
+    const atkBaseX = isPAtk ? pxCenter : exCenter;
+    const atkBaseY = isPAtk ? pyCenter : eyCenter;
+    const defBaseX = isPAtk ? exCenter : pxCenter;
+    const defBaseY = isPAtk ? eyCenter : pyCenter;
+
+    const fullDX = defBaseX - atkBaseX;
+    const fullDY = defBaseY - atkBaseY;
+
+    // 1. Setup Cutscene Banner
+    let actionTitle = '';
+    let actionSub = '';
+    let bannerColor = '#f59e0b';
+
+    if (atkAction === 'strike') {
+      actionTitle = '⚡ CRITICAL STRIKE! ⚡';
+      actionSub = `${b.attacker.name} charges with devastating power!`;
+      bannerColor = '#ef4444';
+    } else if (atkAction === 'magic') {
+      actionTitle = '🔮 ARCANE EVOCATION! 🔮';
+      actionSub = `${b.attacker.name} chants forbidden dark incantations!`;
+      bannerColor = '#a855f7';
+    } else if (atkAction === 'skill') {
+      actionTitle = `⚔️ ${b.attacker.skillName || 'SPECIAL SKILL'} ⚔️`;
+      actionSub = `${b.attacker.name} initiates secret hero technique!`;
+      bannerColor = '#06b6d4';
+    } else {
+      actionTitle = `⚔️ ${b.attacker.name.toUpperCase()} LUNGES!`;
+      actionSub = `Steel clash initiated!`;
+      bannerColor = '#f59e0b';
+    }
+
+    if (defAction === 'counter') {
+      actionSub += ` ⚡ ${b.defender.name} prepares PARRY COUNTER!`;
+    } else if (defAction === 'magic_guard') {
+      actionSub += ` 🛡️ Magic Barrier erected!`;
+    }
+
+    this.cutscene.bannerText = actionTitle;
+    this.cutscene.bannerSubtext = actionSub;
+    this.cutscene.bannerColor = bannerColor;
+    this.cutscene.targetBannerAlpha = 1.0;
+
+    // 2. Determine target dash positions
+    let targetAtkDX = 0;
+    let targetAtkDY = 0;
+    let targetDefDX = 0;
+    let targetDefDY = 0;
+
+    const isCounterStrikeClash = atkAction === 'strike' && defAction === 'counter';
+
+    if (isCounterStrikeClash) {
+      // DRAMATIC MID-FIELD CLASH! Both surge forward to meet at the center!
+      targetAtkDX = fullDX * 0.48;
+      targetAtkDY = fullDY * 0.48;
+      targetDefDX = -fullDX * 0.48;
+      targetDefDY = -fullDY * 0.48;
+    } else if (atkAction === 'magic') {
+      targetAtkDX = fullDX * 0.22;
+      targetAtkDY = fullDY * 0.22;
+    } else {
+      // Dash directly into defender's face
+      const margin = isPAtk ? 55 : -55;
+      targetAtkDX = fullDX - margin;
+      targetAtkDY = fullDY - (isPAtk ? 15 : -15);
+    }
+
+    // Set dash animation pose
+    this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
+    this.defenderAnim = defAction === 'counter' ? 'counter' : 'idle';
+
+    // Start Phase 1: Dash forward across the arena! (340ms)
+    this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+
+    if (atkAction === 'strike' || isCounterStrikeClash) {
+      audio.fanfare();
+    } else {
+      audio.click();
+    }
+
+    // Phase 2: Impact & Combat Resolution (after dash completes at 340ms)
     setTimeout(() => {
       const result = b.resolveRound(atkAction, defAction);
       document.getElementById('battleNarration')!.innerText = result.narration;
 
-      if (b.isPlayerAttacking) {
-        if (result.isCounterSuccess) {
-          // Counter parry clash & reverse damage to player
-          combatVFX.spawnCounterHit((px + ex) / 2, (py + ey) / 2, px, py);
-        } else if (atkAction === 'skill') {
-          // Trigger Cinematic Isometric Skill Cutscene
+      // Micro-zoom punch
+      this.cutscene.targetZoom = 1.14;
+      this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'attack';
+
+      if (result.isCounterSuccess) {
+        // Counter parry successful!
+        this.defenderAnim = 'counter';
+        this.attackerAnim = 'hurt';
+        combatVFX.triggerScreenShake(18);
+        combatVFX.triggerHitstop(6);
+        combatVFX.spawnCounterHit(
+          atkBaseX + this.cutscene.attackerOffsetX,
+          atkBaseY + this.cutscene.attackerOffsetY,
+          atkBaseX,
+          atkBaseY
+        );
+        this.startCutscenePhase('impact', 480, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
+      } else {
+        if (result.damageToDefender > 0) {
+          this.defenderAnim = 'hurt';
+          targetDefDX += isPAtk ? 30 : -30;
+          targetDefDY -= 8;
+        }
+        combatVFX.triggerScreenShake(atkAction === 'strike' ? 18 : 12);
+        combatVFX.triggerHitstop(5);
+        this.startCutscenePhase('impact', 480, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+
+        const hitX = defBaseX + targetDefDX;
+        const hitY = defBaseY + targetDefDY;
+
+        if (atkAction === 'skill') {
           combatVFX.triggerSkillCutscene(
             b.attacker.skillName || 'DARK CLEAVE',
-            px, py, ex, ey,
+            atkBaseX + targetAtkDX,
+            atkBaseY + targetAtkDY,
+            hitX,
+            hitY,
             b.attacker.classKey || 'warrior',
             b.attacker.playerRef?.isDarkling || false
           );
         } else if (result.isStrikeSuccess) {
-          // Earth-Shatter Ground Crater & Flying Debris on Monster
-          combatVFX.spawnStrikeHit(ex, ey);
+          combatVFX.spawnStrikeHit(hitX, hitY);
         } else if (atkAction === 'magic') {
-          // Runic Summoning Ring & Elemental Explosion on Monster
-          combatVFX.spawnMagicHit(ex, ey, this.game.activePlayer.classKey === 'cleric');
+          combatVFX.spawnMagicHit(hitX, hitY, b.attacker.classKey === 'cleric');
         } else {
-          // Luminous Slash Arc & Spark Burst on Monster
-          combatVFX.spawnAttackHit(ex, ey);
-        }
-      } else {
-        // Monster is attacking the player!
-        if (result.isCounterSuccess) {
-          // Player counter parries and slashes the monster!
-          combatVFX.spawnCounterHit((px + ex) / 2, (py + ey) / 2, ex, ey);
-        } else {
-          // Monster strikes player with ferocious claws, spells, or breath!
-          combatVFX.spawnMonsterAttack(ex, ey, px, py, b.attacker.name, atkAction);
+          if (isPAtk) {
+            combatVFX.spawnAttackHit(hitX, hitY);
+          } else {
+            combatVFX.spawnMonsterAttack(
+              atkBaseX + targetAtkDX,
+              atkBaseY + targetAtkDY,
+              hitX,
+              hitY,
+              b.attacker.name,
+              atkAction
+            );
+          }
         }
       }
 
@@ -314,58 +482,61 @@ export class BattleUI {
       if (b.attacker.playerRef) b.attacker.playerRef.hp = b.attacker.hp;
       if (b.defender.playerRef) b.defender.playerRef.hp = b.defender.hp;
 
-      // Spawn Bouncing Floating Combat Text & Hitstop
-      const defTargetX = b.isPlayerAttacking ? ex : px;
-      const defTargetY = (b.isPlayerAttacking ? ey : py) - 45;
-      const atkTargetX = b.isPlayerAttacking ? px : ex;
-      const atkTargetY = (b.isPlayerAttacking ? py : ey) - 45;
+      // Floating Combat Text
+      const defFloatX = defBaseX + targetDefDX;
+      const defFloatY = defBaseY + targetDefDY - 45;
+      const atkFloatX = atkBaseX + targetAtkDX;
+      const atkFloatY = atkBaseY + targetAtkDY - 45;
 
       if (result.isCounterSuccess) {
-        combatVFX.spawnFloatingCombatText(atkTargetX, atkTargetY, `PARRY! -${result.damageToAttacker}`, 'counter');
+        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `PARRY! -${result.damageToAttacker}`, 'counter');
       } else if (result.isStrikeSuccess) {
-        combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `CRITICAL! -${result.damageToDefender}`, 'crit');
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `CRITICAL! -${result.damageToDefender}`, 'crit');
       } else if (atkAction === 'magic') {
         if (result.isMagicBlocked) {
-          combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `BLOCKED! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `BLOCKED! -${result.damageToDefender}`, 'magic');
         } else {
-          combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `MAGIC! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `MAGIC! -${result.damageToDefender}`, 'magic');
         }
       } else if (result.damageToDefender > 0) {
-        combatVFX.spawnFloatingCombatText(defTargetX, defTargetY, `-${result.damageToDefender}`, 'normal');
-      }
-
-      // Hurt reactions
-      if (result.damageToDefender > 0) {
-        this.defenderAnim = 'hurt';
-      }
-      if (result.damageToAttacker > 0) {
-        this.attackerAnim = 'hurt';
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'normal');
       }
 
       this.updateUI();
 
+      // Phase 3: Airborne backdash leap returning to dais (after 480ms impact)
       setTimeout(() => {
-        this.attackerAnim = 'idle';
-        this.defenderAnim = 'idle';
-        this.isExecutingRound = false;
+        this.cutscene.targetZoom = 1.0;
+        this.cutscene.targetBannerAlpha = 0;
+        this.attackerAnim = 'run';
+        this.startCutscenePhase('leap_back', 450, 0, 0, 0, 0);
 
-        // Check for Battle Conclusion
-        if (b.defender.hp <= 0 || result.isGiveUp) {
-          setTimeout(() => this.concludeBattle(b.attacker, b.defender), 800);
-          return;
-        }
-        if (b.attacker.hp <= 0) {
-          setTimeout(() => this.concludeBattle(b.defender, b.attacker), 800);
-          return;
-        }
+        // Phase 4: Settle & Turn Swap (after 450ms leap)
+        setTimeout(() => {
+          this.cutscene.active = false;
+          this.cutscene.phase = 'idle';
+          this.attackerAnim = 'idle';
+          this.defenderAnim = 'idle';
+          this.isExecutingRound = false;
 
-        // Swap turns for next round
-        b.swapTurns();
-        this.updateUI();
-        this.updateCommandMenu();
-        this.checkAITurn();
-      }, 950);
-    }, 450);
+          // Check for Battle Conclusion
+          if (b.defender.hp <= 0 || result.isGiveUp) {
+            setTimeout(() => this.concludeBattle(b.attacker, b.defender), 600);
+            return;
+          }
+          if (b.attacker.hp <= 0) {
+            setTimeout(() => this.concludeBattle(b.defender, b.attacker), 600);
+            return;
+          }
+
+          // Swap turns for next round
+          b.swapTurns();
+          this.updateUI();
+          this.updateCommandMenu();
+          this.checkAITurn();
+        }, 460);
+      }, 480);
+    }, 340);
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
@@ -406,11 +577,60 @@ export class BattleUI {
     // Update VFX Engine
     combatVFX.update();
 
+    // -----------------------------------------------------------------------
+    // Update Cutscene Tweens (60 FPS Silky Smooth)
+    // -----------------------------------------------------------------------
+    const now = performance.now();
+    if (this.cutscene.active) {
+      const elapsed = now - this.cutscene.phaseStartTime;
+      const p = Math.min(1.0, Math.max(0, elapsed / Math.max(1, this.cutscene.phaseDuration)));
+
+      if (this.cutscene.phase === 'dash') {
+        const ease = 1 - Math.pow(1 - p, 3);
+        this.cutscene.attackerOffsetX = this.cutscene.startX + (this.cutscene.targetX - this.cutscene.startX) * ease;
+        this.cutscene.attackerOffsetY = this.cutscene.startY + (this.cutscene.targetY - this.cutscene.startY) * ease;
+        this.cutscene.defenderOffsetX = this.cutscene.defenderStartX + (this.cutscene.defenderTargetX - this.cutscene.defenderStartX) * ease;
+        this.cutscene.defenderOffsetY = this.cutscene.defenderStartY + (this.cutscene.defenderTargetY - this.cutscene.defenderStartY) * ease;
+      } else if (this.cutscene.phase === 'impact') {
+        this.cutscene.attackerOffsetX = this.cutscene.targetX + (Math.random() - 0.5) * 2;
+        this.cutscene.attackerOffsetY = this.cutscene.targetY + (Math.random() - 0.5) * 2;
+      } else if (this.cutscene.phase === 'leap_back') {
+        const arc = Math.sin(p * Math.PI) * -35;
+        this.cutscene.attackerOffsetX = this.cutscene.startX + (0 - this.cutscene.startX) * p;
+        this.cutscene.attackerOffsetY = this.cutscene.startY + (0 - this.cutscene.startY) * p + arc;
+        this.cutscene.defenderOffsetX += (0 - this.cutscene.defenderOffsetX) * 0.15;
+        this.cutscene.defenderOffsetY += (0 - this.cutscene.defenderOffsetY) * 0.15;
+      }
+
+      this.cutscene.zoomFactor += (this.cutscene.targetZoom - this.cutscene.zoomFactor) * 0.12;
+      this.cutscene.bannerAlpha += (this.cutscene.targetBannerAlpha - this.cutscene.bannerAlpha) * 0.15;
+    } else {
+      this.cutscene.attackerOffsetX = 0;
+      this.cutscene.attackerOffsetY = 0;
+      this.cutscene.defenderOffsetX = 0;
+      this.cutscene.defenderOffsetY = 0;
+      this.cutscene.zoomFactor += (1.0 - this.cutscene.zoomFactor) * 0.1;
+      this.cutscene.bannerAlpha += (0 - this.cutscene.bannerAlpha) * 0.15;
+    }
+
     ctx.clearRect(0, 0, w, h);
 
     ctx.save();
     // Dynamic Screen Shake on Heavy Impacts
     ctx.translate(combatVFX.screenShakeX, combatVFX.screenShakeY);
+
+    const arenaCX = w * 0.50;
+    const arenaCY = h * 0.56;
+    const arenaW = Math.min(w * 0.88, 880);
+    const arenaH = arenaW * 0.48;
+    const arenaDrop = 36;
+
+    // Camera micro-zoom punch around arena center during impact
+    if (Math.abs(this.cutscene.zoomFactor - 1.0) > 0.005) {
+      ctx.translate(arenaCX, arenaCY);
+      ctx.scale(this.cutscene.zoomFactor, this.cutscene.zoomFactor);
+      ctx.translate(-arenaCX, -arenaCY);
+    }
 
     // -----------------------------------------------------------------------
     // 1. DARK FANTASY GOTHIC ISOMETRIC ARENA BACKDROP
@@ -420,13 +640,6 @@ export class BattleUI {
     // -----------------------------------------------------------------------
     // 2. GRAND EXPANSIVE 2.5D ISOMETRIC COLOSSEUM ARENA FLOOR
     // -----------------------------------------------------------------------
-    const arenaCX = w * 0.50;
-    const arenaCY = h * 0.56;
-    const arenaW = Math.min(w * 0.88, 880);
-    const arenaH = arenaW * 0.48;
-    const arenaDrop = 36;
-
-    // Grand stone arena floor with flagstone paving and torch braziers
     this.drawGrandIsometricColosseumFloor(ctx, arenaCX, arenaCY, arenaW, arenaH, arenaDrop, time);
 
     const pxCenter = arenaCX - arenaW * 0.22;
@@ -466,71 +679,210 @@ export class BattleUI {
     );
 
     // -----------------------------------------------------------------------
-    // 3. PLAYER HERO (STRICT 1v1 - Facing NE towards Enemy)
+    // 3. PREPARE DYNAMIC COMBATANT COORDINATES & SPRITES
     // -----------------------------------------------------------------------
-    const p = this.game.activePlayer;
-    const pAnim = b.isPlayerAttacking ? this.attackerAnim : this.defenderAnim;
-    const pFrame = Math.floor(time * 0.005);
+    const isPlayerAtk = b.isPlayerAttacking;
 
-    const px = pxCenter + combatVFX.heroStaggerX;
-    const py = pyCenter + Math.sin(time * 0.005) * 3;
-    this.drawUnitTeamRing(ctx, px, py, '#06b6d4', 0.9, true);
+    const px =
+      pxCenter +
+      (isPlayerAtk ? this.cutscene.attackerOffsetX : this.cutscene.defenderOffsetX) +
+      combatVFX.heroStaggerX;
+    const py =
+      pyCenter +
+      (isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
+      Math.sin(time * 0.005) * 3;
+
+    const ex =
+      exCenter +
+      (!isPlayerAtk ? this.cutscene.attackerOffsetX : this.cutscene.defenderOffsetX) +
+      combatVFX.monsterStaggerX;
+    const ey =
+      eyCenter +
+      (!isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
+      combatVFX.monsterStaggerY +
+      Math.sin(time * 0.005 + 1) * 3;
+
+    const p = this.game.activePlayer;
+    const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
+    const pFrame = Math.floor(time * 0.005);
 
     const heroSprite = pixelSprites.getHeroSprite(
       p.classKey,
-      'NE', // Facing up-right along isometric diagonal
+      'NE',
       pAnim,
       pFrame,
       p.equipment,
       p.isDarkling,
       p.prank
     );
-    ctx.drawImage(heroSprite, px - 60, py - 70, 120, 120);
 
-    // -----------------------------------------------------------------------
-    // 4. ENEMY DUELIST / BOSS (STRICT 1v1 - Facing SW towards Player)
-    // -----------------------------------------------------------------------
-    const enemyCombatant = b.isPlayerAttacking ? b.defender : b.attacker;
-    const eAnim = b.isPlayerAttacking ? this.defenderAnim : this.attackerAnim;
-    const ex = exCenter + combatVFX.monsterStaggerX;
-    const ey = eyCenter + combatVFX.monsterStaggerY + Math.sin(time * 0.005 + 1) * 3;
+    const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
+    const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
-    ctx.save();
-    if (combatVFX.monsterFlashAlpha > 0) {
-      ctx.shadowColor = combatVFX.monsterFlashColor;
-      ctx.shadowBlur = 28;
-    }
+    let enemySprite: HTMLCanvasElement;
+    let enemyW = 140;
+    let enemyH = 140;
 
     if (enemyCombatant.isBoss) {
-      // Massive Boss Dragon Overlord
-      this.drawUnitTeamRing(ctx, ex, ey, '#ef4444', 1.0, true);
-      const boss = pixelSprites.getDragonOverlordSprite(Math.floor(time * 0.003));
-      ctx.drawImage(boss, ex - 120, ey - 118, 240, 240);
+      enemySprite = pixelSprites.getDragonOverlordSprite(Math.floor(time * 0.003));
+      enemyW = 240;
+      enemyH = 240;
     } else if (enemyCombatant.playerRef) {
-      // Rival Player Hero (1v1 duel)
-      const rivalSprite = pixelSprites.getHeroSprite(
+      enemySprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
-        'SW', // Facing down-left along isometric diagonal
+        'SW',
         eAnim,
         pFrame,
         enemyCombatant.playerRef.equipment,
         enemyCombatant.playerRef.isDarkling,
         enemyCombatant.playerRef.prank
       );
-      this.drawUnitTeamRing(ctx, ex, ey, '#f43f5e', 0.9, true);
-      ctx.drawImage(rivalSprite, ex - 60, ey - 70, 120, 120);
+      enemyW = 120;
+      enemyH = 120;
     } else {
-      // Monster Target (1v1 duel)
-      this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);
-      const monster = pixelSprites.getMonsterSprite(enemyCombatant.name, 'SW', eAnim, pFrame);
-      ctx.drawImage(monster, ex - 70, ey - 70, 140, 140);
+      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, 'SW', eAnim, pFrame);
     }
-    ctx.restore();
 
     // -----------------------------------------------------------------------
-    // 5. RENDER COMBAT VFX (Arcs, Runic Circles, Craters, Skill Cutscenes)
+    // 4. MOTION GHOST AFTERIMAGE TRAILS
+    // -----------------------------------------------------------------------
+    if (this.cutscene.active && (this.cutscene.phase === 'dash' || this.cutscene.phase === 'leap_back')) {
+      if (now - this.cutscene.lastGhostTime > 40) {
+        this.cutscene.lastGhostTime = now;
+        if (isPlayerAtk) {
+          this.cutscene.ghostTrails.push({
+            x: px,
+            y: py,
+            sprite: heroSprite,
+            w: 120,
+            h: 120,
+            alpha: 0.6,
+            decay: 0.045
+          });
+        } else {
+          this.cutscene.ghostTrails.push({
+            x: ex,
+            y: ey,
+            sprite: enemySprite,
+            w: enemyW,
+            h: enemyH,
+            alpha: 0.6,
+            decay: 0.045
+          });
+        }
+      }
+    }
+
+    for (let i = this.cutscene.ghostTrails.length - 1; i >= 0; i--) {
+      const gt = this.cutscene.ghostTrails[i];
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, gt.alpha);
+      ctx.drawImage(gt.sprite, gt.x - gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
+      ctx.restore();
+      gt.alpha -= gt.decay;
+      if (gt.alpha <= 0) {
+        this.cutscene.ghostTrails.splice(i, 1);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. DRAW COMBATANTS (DEPTH-SORTED SO FOREGROUND UNIT OVERLAPS ACCURATELY)
+    // -----------------------------------------------------------------------
+    const drawHero = () => {
+      this.drawUnitTeamRing(ctx, px, py, '#06b6d4', 0.9, true);
+      ctx.drawImage(heroSprite, px - 60, py - 70, 120, 120);
+    };
+
+    const drawEnemy = () => {
+      ctx.save();
+      if (combatVFX.monsterFlashAlpha > 0) {
+        ctx.shadowColor = combatVFX.monsterFlashColor;
+        ctx.shadowBlur = 28;
+      }
+
+      if (enemyCombatant.isBoss) {
+        this.drawUnitTeamRing(ctx, ex, ey, '#ef4444', 1.0, true);
+        ctx.drawImage(enemySprite, ex - 120, ey - 118, 240, 240);
+      } else if (enemyCombatant.playerRef) {
+        this.drawUnitTeamRing(ctx, ex, ey, '#f43f5e', 0.9, true);
+        ctx.drawImage(enemySprite, ex - 60, ey - 70, 120, 120);
+      } else {
+        this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);
+        ctx.drawImage(enemySprite, ex - 70, ey - 70, 140, 140);
+      }
+      ctx.restore();
+    };
+
+    // Isometric Depth sorting: smaller Y drawn first (background), larger Y drawn second (foreground)
+    if (py <= ey) {
+      drawHero();
+      drawEnemy();
+    } else {
+      drawEnemy();
+      drawHero();
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. RENDER COMBAT VFX (Arcs, Runic Circles, Craters, Skill Cutscenes)
     // -----------------------------------------------------------------------
     combatVFX.render(ctx, w, h);
+
+    // -----------------------------------------------------------------------
+    // 7. CINEMATIC ACTION CUTSCENE BANNER
+    // -----------------------------------------------------------------------
+    if (this.cutscene.bannerAlpha > 0.01) {
+      this.drawCinematicCutsceneBanner(ctx, w, h);
+    }
+
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // HELPER: CINEMATIC COMBAT ACTION CUTSCENE BANNER
+  // =========================================================================
+  private drawCinematicCutsceneBanner(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    const alpha = Math.min(1.0, Math.max(0, this.cutscene.bannerAlpha));
+    if (alpha <= 0.01) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    const by = h * 0.13;
+    const bh = 54;
+    const bw = Math.min(w * 0.74, 580);
+    const bx = (w - bw) / 2;
+
+    // Dark gothic translucent box
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 6);
+    ctx.fill();
+
+    // Glowing border in bannerColor
+    ctx.strokeStyle = this.cutscene.bannerColor;
+    ctx.lineWidth = 2.0;
+    ctx.shadowColor = this.cutscene.bannerColor;
+    ctx.shadowBlur = 14;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Speed-lines / slash accent ribbons
+    ctx.fillStyle = this.cutscene.bannerColor;
+    ctx.fillRect(bx + 12, by + 10, 4, bh - 20);
+    ctx.fillRect(bx + bw - 16, by + 10, 4, bh - 20);
+
+    // Title text
+    ctx.font = 'bold 13px Silkscreen';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = this.cutscene.bannerColor;
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 4;
+    ctx.fillText(this.cutscene.bannerText, w / 2, by + 24);
+
+    // Subtitle text
+    ctx.font = '9px Silkscreen';
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(this.cutscene.bannerSubtext, w / 2, by + 42);
 
     ctx.restore();
   }

@@ -228,11 +228,11 @@ class DokaponApp {
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
     });
 
-    // Center on Hero
+    // Center & Zoom on Hero
     document.getElementById('btnCenterCam')?.addEventListener('click', () => {
       audio.click();
       const p = this.game.activePlayer;
-      this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+      this.renderer.focusOnPlayer(p.gridX, p.gridY, p.gridZ, 1.25);
     });
 
     // World Map Atlas
@@ -400,16 +400,17 @@ class DokaponApp {
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
 
-    const p = this.game.activePlayer;
-    this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
-    this.hud.update();
+    this.onTurnStarted();
 
-    if (p.isAI) {
-      setTimeout(() => this.triggerDiceRoll(), 800);
+    if (this.game.activePlayer.isAI) {
+      setTimeout(() => this.triggerDiceRoll(), 1200);
     }
   }
 
   private triggerDiceRoll() {
+    // Smoothly ease camera zoom out to comfortable tactical viewing level
+    this.renderer.resetTacticalZoom(1.05);
+
     const totalRoll = this.game.rollMovementDice();
 
     const diceModal = document.getElementById('diceRollModal')!;
@@ -690,17 +691,60 @@ class DokaponApp {
         // Announce King Rico's Royal Decree for the new week!
         this.openRoyalDecreeModal(() => {
           this.game.startTurn();
-          this.hud.update();
+          this.onTurnStarted();
           if (this.game.activePlayer.isAI) {
-            setTimeout(() => this.triggerDiceRoll(), 800);
+            setTimeout(() => this.triggerDiceRoll(), 1200);
           }
         });
       });
     });
 
-    if (this.game.activePlayer.isAI && this.game.phase === 'BOARD_TURN') {
-      setTimeout(() => this.triggerDiceRoll(), 800);
+    if (this.game.phase === 'BOARD_TURN') {
+      this.onTurnStarted();
+      if (this.game.activePlayer.isAI) {
+        setTimeout(() => this.triggerDiceRoll(), 1200);
+      }
     }
+  }
+
+  private turnBannerTimeout: any = null;
+
+  private onTurnStarted() {
+    const p = this.game.activePlayer;
+    // 1. Smoothly center camera and zoom in onto active player
+    this.renderer.focusOnPlayer(p.gridX, p.gridY, p.gridZ, 1.25);
+    this.hud.update();
+
+    // 2. Display Turn Start Banner
+    const banner = document.getElementById('turnStartBanner');
+    const titleEl = document.getElementById('turnBannerTitle');
+    const subEl = document.getElementById('turnBannerSubtitle');
+    const iconEl = document.getElementById('turnBannerIcon');
+    if (!banner || !titleEl) return;
+
+    if (this.turnBannerTimeout) clearTimeout(this.turnBannerTimeout);
+
+    if (p.isAI) {
+      if (iconEl) iconEl.innerText = '🤖';
+      titleEl.innerText = `${p.displayName.toUpperCase()}'S TURN`;
+      if (subEl) subEl.innerText = 'AI Bot Strategizing...';
+    } else {
+      if (iconEl) iconEl.innerText = p.isDarkling ? '😈' : '⚔️';
+      titleEl.innerText = p.isDarkling ? 'DARKLING LORD TURN!' : 'YOUR TURN!';
+      if (subEl) subEl.innerText = `${p.displayName} - Roll dice or cast magic!`;
+    }
+
+    banner.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      banner.classList.remove('opacity-0', 'scale-95');
+      banner.classList.add('opacity-100', 'scale-100');
+    });
+
+    this.turnBannerTimeout = setTimeout(() => {
+      banner.classList.remove('opacity-100', 'scale-100');
+      banner.classList.add('opacity-0', 'scale-95');
+      setTimeout(() => banner.classList.add('hidden'), 350);
+    }, 1500);
   }
 
   private openRoyalDecreeModal(onClose?: () => void) {
