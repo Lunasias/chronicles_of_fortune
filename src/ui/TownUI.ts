@@ -102,8 +102,13 @@ export class TownUI {
     p.gold -= cost;
     p.hp = p.maxHp;
     p.mp = p.maxMp;
+    p.rustTurns = 0;
+    if (p.prank.hasGraffiti) {
+      p.prank.hasGraffiti = false;
+      p.prank.turnsRemaining = 0;
+    }
     audio.levelUp();
-    this.game.addLog(`🛏️ ${p.displayName} rested at the Inn! HP & MP fully restored!`);
+    this.game.addLog(`🛏️ ${p.displayName} rested at the Inn! HP & MP fully restored, and status ailments cured!`);
   }
 
   private handleInvest() {

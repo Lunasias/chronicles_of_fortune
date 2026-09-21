@@ -140,6 +140,30 @@ export const FIELD_SPELLS: Record<string, FieldSpellData> = {
   }
 };
 
+export interface FoodBuff {
+  name: string;
+  icon: string;
+  turnsRemaining: number;
+  atkBoost?: number;
+  defBoost?: number;
+  magBoost?: number;
+  spdBoost?: number;
+  lukBoost?: number;
+  mpRegen?: number;
+}
+
+export interface GuildQuest {
+  id: string;
+  title: string;
+  rank: 'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+  desc: string;
+  targetType: 'monster' | 'town' | 'boss';
+  currentProgress: number;
+  targetCount: number;
+  rewardGold: number;
+  rewardXp: number;
+}
+
 export class Player {
   public id: number;
   public name: string;
@@ -148,7 +172,7 @@ export class Player {
 
   public level = 1;
   public xp = 0;
-  public xpNeeded = 75;
+  public xpNeeded = 100;
 
   public maxHp: number;
   public hp: number;
@@ -191,6 +215,12 @@ export class Player {
   public inventory: EquipmentItem[] = [];
   public fieldSpells: string[] = [];
   public rustTurns: number = 0;
+
+  // Active Food & Adventurer Guild Quest
+  public foodBuff: FoodBuff | null = null;
+  public activeGuildQuest: GuildQuest | null = null;
+  public guildRank: 'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S' = 'F';
+  public completedQuestsCount = 0;
 
   // The Darkling Form
   public isDarkling = false;
@@ -266,6 +296,14 @@ export class Player {
     Object.values(this.equipment).forEach(item => {
       if (item && item[stat]) val += item[stat]!;
     });
+    // Active Isekai Food Buff
+    if (this.foodBuff) {
+      if (stat === 'atk' && this.foodBuff.atkBoost) val += this.foodBuff.atkBoost;
+      if (stat === 'def' && this.foodBuff.defBoost) val += this.foodBuff.defBoost;
+      if (stat === 'mag' && this.foodBuff.magBoost) val += this.foodBuff.magBoost;
+      if (stat === 'spd' && this.foodBuff.spdBoost) val += this.foodBuff.spdBoost;
+      if (stat === 'luk' && this.foodBuff.lukBoost) val += this.foodBuff.lukBoost;
+    }
     // Curse of Rust reduces physical attack and defense by 30%
     if (this.rustTurns > 0 && (stat === 'atk' || stat === 'def')) {
       val = Math.max(1, Math.floor(val * 0.7));

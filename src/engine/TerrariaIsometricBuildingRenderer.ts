@@ -42,6 +42,18 @@ export class TerrariaIsometricBuildingRenderer {
       case 'shop_item':
         this.renderIsometricGeneralGoods(ctx, cx, cy);
         break;
+      case 'tavern':
+        this.renderIsometricTavernInn(ctx, cx, cy);
+        break;
+      case 'guild':
+        this.renderIsometricGuildHall(ctx, cx, cy);
+        break;
+      case 'fishing':
+        this.renderIsometricFishingPier(ctx, cx, cy);
+        break;
+      case 'isekai_event':
+        this.renderIsometricIsekaiShrine(ctx, cx, cy);
+        break;
       case 'dark_gate':
       case 'boss':
         this.renderIsometricDarkPortal(ctx, cx, cy);
@@ -504,6 +516,225 @@ export class TerrariaIsometricBuildingRenderer {
     // Keyhole
     ctx.fillStyle = '#451a03';
     ctx.fillRect(cx + 9, cy + 11, 2, 3);
+  }
+
+  // -------------------------------------------------------------------------
+  // 8. ISOMETRIC TAVERN & INN (Cozy Wooden Lodge with Smoking Chimney & Beer Sign)
+  // -------------------------------------------------------------------------
+  private renderIsometricTavernInn(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Warm Wooden Walls
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 28, 26, '#713f12', '#451a03', '#854d0e');
+    this.drawIsoWallRight(ctx, cx, cy + 14, 28, 26, '#854d0e', '#713f12', '#a16207');
+
+    // 3. Glowing Amber Windows
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(cx - 18, cy + 2, 6, 8);
+    ctx.fillRect(cx + 12, cy + 2, 6, 8);
+
+    // Window crossframes
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx - 16, cy + 2, 2, 8);
+    ctx.fillRect(cx + 14, cy + 2, 2, 8);
+
+    // 4. Cozy Terracotta Shingle Roof
+    this.drawIsoPitchedRoof(ctx, cx, cy - 12, 32, 32, 16, '#991b1b', '#7f1d1d', '#b91c1c', '#f87171');
+
+    // 5. Stone Chimney with Smoke Puffs on Left Side
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 18, cy - 28, 6, 16);
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(cx - 19, cy - 30, 8, 3);
+
+    // White/Grey Smoke Puffs
+    ctx.fillStyle = 'rgba(226, 232, 240, 0.65)';
+    ctx.beginPath();
+    ctx.arc(cx - 15, cy - 36, 4, 0, Math.PI * 2);
+    ctx.arc(cx - 12, cy - 43, 6, 0, Math.PI * 2);
+    ctx.arc(cx - 8, cy - 51, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 6. Hanging Wooden Tavern Signboard
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(cx + 18, cy + 4, 3, 10);
+    ctx.fillRect(cx + 14, cy + 14, 11, 8);
+    // Beer mug icon on sign
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx + 17, cy + 16, 5, 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx + 16, cy + 15, 7, 2); // White beer foam
+  }
+
+  // -------------------------------------------------------------------------
+  // 9. ISOMETRIC ADVENTURER'S GUILD (Grand Stone Hall with Crossed Swords & Quest Board)
+  // -------------------------------------------------------------------------
+  private renderIsometricGuildHall(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 40, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Chiseled Granite Walls
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 30, 28, '#334155', '#1e293b', '#475569');
+    this.drawIsoWallRight(ctx, cx, cy + 14, 30, 28, '#475569', '#334155', '#64748b');
+
+    // 3. Royal Blue Hip Roof
+    this.drawIsoPitchedRoof(ctx, cx, cy - 14, 34, 34, 18, '#1e3a8a', '#172554', '#1d4ed8', '#38bdf8');
+
+    // 4. Arched Oak Entrance
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(cx + 8, cy + 8, 6, Math.PI, 0);
+    ctx.rect(cx + 2, cy + 8, 12, 12);
+    ctx.fill();
+
+    // 5. Guild Crest Banner Above Door (Gold & Red with Crossed Swords)
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(cx + 4, cy - 2, 8, 8);
+    ctx.fillStyle = '#facc15';
+    // Miniature crossed swords
+    ctx.fillRect(cx + 5, cy + 1, 6, 2);
+    ctx.fillRect(cx + 7, cy - 1, 2, 6);
+
+    // 6. Wooden Notice / Quest Board Outside
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(cx - 20, cy + 10, 2, 12);
+    ctx.fillRect(cx - 10, cy + 10, 2, 12);
+    ctx.fillRect(cx - 22, cy + 6, 14, 10);
+    // Pinned parchment notes
+    ctx.fillStyle = '#fef3c7';
+    ctx.fillRect(cx - 20, cy + 8, 4, 3);
+    ctx.fillRect(cx - 14, cy + 8, 4, 4);
+    ctx.fillRect(cx - 18, cy + 12, 5, 3);
+  }
+
+  // -------------------------------------------------------------------------
+  // 10. ISOMETRIC FISHING PIER (Boardwalk on Water with Mooring Post & Rod)
+  // -------------------------------------------------------------------------
+  private renderIsometricFishingPier(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Water Ripples & Blue Shadow
+    ctx.fillStyle = 'rgba(2, 132, 199, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 20, 36, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 20, 24, 10, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 2. Wooden Boardwalk Pilings (Stilts)
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx - 16, cy + 8, 4, 14);
+    ctx.fillRect(cx, cy + 12, 4, 14);
+    ctx.fillRect(cx + 16, cy + 8, 4, 14);
+
+    // 3. Horizontal Boardwalk Planks
+    this.drawIsoTopDiamond(ctx, cx, cy + 8, 34, 18, '#92400e', '#b45309');
+
+    // 4. Mooring Post with Brass Lantern
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(cx + 14, cy - 2, 4, 12);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(cx + 15, cy - 6, 3, 5);
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx + 14, cy - 7, 5, 2);
+
+    // 5. Fishing Bucket & Tackle Box
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(cx - 10, cy + 4, 6, 6);
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(cx - 9, cy + 5, 4, 2); // Water inside bucket
+
+    // 6. Angled Fishing Rod Over Water
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy + 6);
+    ctx.lineTo(cx + 2, cy - 14);
+    ctx.stroke();
+
+    // Slender fishing line dipping into water
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx + 2, cy - 14);
+    ctx.lineTo(cx + 12, cy + 22);
+    ctx.stroke();
+
+    // Tiny red bobber float
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(cx + 12, cy + 22, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // -------------------------------------------------------------------------
+  // 11. ISOMETRIC ISEKAI MYSTERY SHRINE (Runic Obelisk with Celestial Rings)
+  // -------------------------------------------------------------------------
+  private renderIsometricIsekaiShrine(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Magic Aura Shadow
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 32, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Tiered Runic Marble Pedestal
+    this.drawIsoTopDiamond(ctx, cx, cy + 14, 30, 16, '#cbd5e1', '#e2e8f0');
+    this.drawIsoTopDiamond(ctx, cx, cy + 8, 22, 12, '#e2e8f0', '#f8fafc');
+
+    // 3. Tall Runic Obelisk Pillar
+    this.drawIsoWallLeft(ctx, cx, cy + 8, 12, 34, '#94a3b8', '#64748b', '#cbd5e1');
+    this.drawIsoWallRight(ctx, cx, cy + 8, 12, 34, '#cbd5e1', '#94a3b8', '#f1f5f9');
+
+    // Glowing Ancient Arcane Runes
+    ctx.fillStyle = '#a855f7';
+    ctx.fillRect(cx - 4, cy - 4, 2, 4);
+    ctx.fillRect(cx - 3, cy - 14, 3, 2);
+    ctx.fillRect(cx + 2, cy - 8, 2, 6);
+    ctx.fillRect(cx + 3, cy - 18, 3, 3);
+
+    // 4. Floating Celestial Star / Crystal Gem at Apex
+    ctx.fillStyle = '#f0abfc';
+    ctx.shadowColor = '#d946ef';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 36);
+    ctx.lineTo(cx + 6, cy - 30);
+    ctx.lineTo(cx, cy - 24);
+    ctx.lineTo(cx - 6, cy - 30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 5. Orbiting Celestial Ring
+    ctx.strokeStyle = 'rgba(232, 121, 249, 0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 30, 14, 6, -0.3, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   // =========================================================================

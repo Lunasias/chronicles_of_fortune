@@ -6,6 +6,7 @@ import { TownUI } from './ui/TownUI';
 import { ShopUI } from './ui/ShopUI';
 import { PrankUI } from './ui/PrankUI';
 import { WeeklyReportUI } from './ui/WeeklyReportUI';
+import { IsekaiEventUI } from './ui/IsekaiEventUI';
 import { HERO_CLASSES, Player, FIELD_SPELLS } from './game/Player';
 import { BoardNode } from './game/BoardMap';
 import { Combatant } from './game/BattleEngine';
@@ -14,6 +15,9 @@ import { darklingSystem } from './game/DarklingSystem';
 import { aiSystem } from './game/AISystem';
 import { audio } from './engine/AudioSynthesizer';
 import { royalDecreeSystem } from './game/RoyalDecreeSystem';
+import { isekaiEventManager } from './game/IsekaiEventManager';
+import { worldCalamitySystem } from './game/WorldCalamitySystem';
+import { ecosystemSystem } from './game/EcosystemSystem';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -25,6 +29,7 @@ class DokaponApp {
   private shopUI: ShopUI;
   private prankUI: PrankUI;
   private weeklyReportUI: WeeklyReportUI;
+  private isekaiEventUI: IsekaiEventUI;
 
   private isDragging = false;
   private dragStartX = 0;
@@ -44,6 +49,7 @@ class DokaponApp {
     this.shopUI = new ShopUI(this.game);
     this.prankUI = new PrankUI(this.game);
     this.weeklyReportUI = new WeeklyReportUI(this.game);
+    this.isekaiEventUI = new IsekaiEventUI(this.game);
 
     this.initCanvasResize();
     this.bindDOMEvents();
@@ -559,9 +565,38 @@ class DokaponApp {
         this.initiateBossBattle();
         break;
 
+      case 'tavern':
+        this.isekaiEventUI.openTavern(p, () => this.advanceTurn());
+        break;
+
+      case 'guild':
+        this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
+        break;
+
+      case 'fishing':
+        this.isekaiEventUI.openFishing(
+          p,
+          () => this.advanceTurn(),
+          monsterName => this.initiateFishCombat(monsterName)
+        );
+        break;
+
+      case 'isekai_event':
+        this.isekaiEventUI.openShrine(p, () => this.advanceTurn());
+        break;
+
       case 'empty':
       default:
-        this.initiateRandomEncounter(tile);
+        // 25% chance of Highway Bandit Ambush on open roads!
+        if (Math.random() < 0.25) {
+          this.isekaiEventUI.openBanditAmbush(
+            p,
+            () => this.advanceTurn(),
+            () => this.initiateBanditCombat()
+          );
+        } else {
+          this.initiateRandomEncounter(tile);
+        }
         break;
     }
   }
@@ -623,6 +658,7 @@ class DokaponApp {
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
         const rewards = townManager.liberateTown(townNode, winner.playerRef);
+        isekaiEventManager.onGameAction(winner.playerRef, 'town');
         this.game.addLog(`👑 TOWN LIBERATED! ${winner.playerRef.displayName} freed ${townNode.name} (+${rewards.goldReward}G, +${rewards.xpReward} XP)!`, 'level');
       } else {
         // Monster survived! Persist remaining HP for last-hit opportunity
@@ -679,7 +715,59 @@ class DokaponApp {
         const goldWon = 40 + Math.floor(Math.random() * 40);
         winner.playerRef.gold += goldWon;
         winner.playerRef.gainXP(50);
+        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated ${pickedName} (+${goldWon}G, +50 XP)!`);
+      }
+      this.advanceTurn();
+    });
+  }
+
+  private initiateFishCombat(monsterName: string) {
+    const krakenCombatant: Combatant = {
+      name: monsterName,
+      hp: 115,
+      maxHp: 115,
+      mp: 40,
+      maxMp: 40,
+      atk: 17,
+      def: 11,
+      mag: 12,
+      spd: 10,
+      luk: 6
+    };
+
+    this.battleUI.startBattle(krakenCombatant, (winner, loser) => {
+      if (winner.playerRef) {
+        winner.playerRef.gold += 120;
+        winner.playerRef.gainXP(80);
+        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated ${monsterName} (+120G, +80 XP)!`);
+      }
+      this.advanceTurn();
+    });
+  }
+
+  private initiateBanditCombat() {
+    const banditCombatant: Combatant = {
+      name: 'Bandit Chief Garak',
+      hp: 125,
+      maxHp: 125,
+      mp: 30,
+      maxMp: 30,
+      atk: 19,
+      def: 12,
+      mag: 8,
+      spd: 12,
+      luk: 8
+    };
+
+    this.battleUI.startBattle(banditCombatant, (winner, loser) => {
+      if (winner.playerRef) {
+        const stolenGold = 160 + Math.floor(Math.random() * 80);
+        winner.playerRef.gold += stolenGold;
+        winner.playerRef.gainXP(90);
+        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated Bandit Chief Garak and seized ${stolenGold}G (+90 XP)!`);
       }
       this.advanceTurn();
     });
@@ -705,6 +793,7 @@ class DokaponApp {
     this.battleUI.startBattle(bossCombatant, (winner, loser) => {
       if (winner.playerRef) {
         this.bossCurrentHp = 0;
+        isekaiEventManager.onGameAction(winner.playerRef, 'boss');
         this.game.addLog(`👑 ${winner.playerRef.displayName} SLAYED THE DRAGON OVERLORD! ETERNAL GLORY!`, 'level');
         this.game.phase = 'VICTORY';
         this.triggerVictoryModal(winner.playerRef, 'Slayed Dragon King Ignis');
@@ -718,7 +807,47 @@ class DokaponApp {
   }
 
   private advanceTurn() {
+    // 1. Process active Food Buff expiration
+    const curP = this.game.activePlayer;
+    if (curP.foodBuff) {
+      curP.foodBuff.turnsRemaining--;
+      if (curP.foodBuff.turnsRemaining <= 0) {
+        this.game.addLog(`🍽️ ${curP.displayName}'s "${curP.foodBuff.name}" feast buff has subsided.`);
+        curP.foodBuff = null;
+      }
+    }
+
+    // 2. Advance Living Day / Night Cycle & Ecosystem
+    const timeRes = ecosystemSystem.advanceTime();
+    if (timeRes.timeChanged) {
+      const tInfo = ecosystemSystem.getTimeDisplay();
+      this.game.addLog(`⌛ TIME PASSES: It is now ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
+    }
+    if (timeRes.weatherChanged) {
+      this.game.addLog(`🌦️ CONTINENTAL WEATHER SHIFT: Clouds and winds shift across the four realms!`);
+    }
+
     this.hud.update();
+
+    // 3. Check for Grand World Calamity triggers
+    const calamity = worldCalamitySystem.checkCalamityTriggers(
+      this.game.dayCounter,
+      this.game.weekCounter,
+      this.game.allNodes,
+      this.game.players
+    );
+    if (calamity) {
+      this.game.addLog(calamity.headline, 'battle');
+      this.isekaiEventUI.openCalamityModal(calamity, () => {
+        this.finishAdvanceTurn();
+      });
+      return;
+    }
+
+    this.finishAdvanceTurn();
+  }
+
+  private finishAdvanceTurn() {
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!

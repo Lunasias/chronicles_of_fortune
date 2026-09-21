@@ -2,6 +2,7 @@ import { BoardNode } from '../game/BoardMap';
 import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
+import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 
 export interface Camera2D {
   x: number;
@@ -236,10 +237,24 @@ export class IsometricRenderer {
     // 6. Running Dust Particles
     this.renderDustPuffs(ctx);
 
-    // 7. Weather & Light Flares
-    this.renderWeatherParticles(ctx);
+    // 7. Regional Weather Particles & Living Ecosystem
+    const activeNode = activePlayer ? nodes.find(n => n.id === activePlayer.nodeId) || nodes[0] : nodes[0];
+    const localWeather = ecosystemSystem.getNodeWeather(activeNode);
+    this.renderRegionalWeather(ctx, localWeather, time);
+
+    // 8. Night Glows for Town Torches & Player Lanterns (inside world space)
+    const lighting = ecosystemSystem.getLightingOverlay();
+    if (lighting.isNight) {
+      this.renderNightLanternGlows(ctx, nodes, players, minX, maxX, minY, maxY);
+    }
 
     ctx.restore();
+
+    // 9. Day/Night Screen Ambient Tint Overlay
+    if (lighting.alpha > 0) {
+      ctx.fillStyle = lighting.color;
+      ctx.fillRect(0, 0, w, h);
+    }
   }
 
   private renderIsometricRoads(
@@ -363,7 +378,11 @@ export class IsometricRenderer {
         node.type === 'church' ||
         node.type === 'dark_gate' ||
         node.type === 'boss' ||
-        node.type === 'vault'
+        node.type === 'vault' ||
+        node.type === 'tavern' ||
+        node.type === 'guild' ||
+        node.type === 'fishing' ||
+        node.type === 'isekai_event'
       ) {
         renderList.push({
           depth: depth + 40,
@@ -573,6 +592,26 @@ export class IsometricRenderer {
       leftColor = '#200505';
       rightColor = '#100202';
       icon = '🐉';
+    } else if (node.type === 'tavern') {
+      topColor = '#854d0e';
+      leftColor = '#713f12';
+      rightColor = '#422006';
+      icon = '🍺';
+    } else if (node.type === 'guild') {
+      topColor = '#b45309';
+      leftColor = '#92400e';
+      rightColor = '#451a03';
+      icon = '📜';
+    } else if (node.type === 'fishing') {
+      topColor = '#0284c7';
+      leftColor = '#0369a1';
+      rightColor = '#075985';
+      icon = '🎣';
+    } else if (node.type === 'isekai_event') {
+      topColor = '#a855f7';
+      leftColor = '#7e22ce';
+      rightColor = '#581c87';
+      icon = '⚡';
     }
 
     // 0. 3D Cliff Pedestal for elevated spaces (gz > 0)
@@ -818,17 +857,129 @@ export class IsometricRenderer {
     }
   }
 
-  private renderWeatherParticles(ctx: CanvasRenderingContext2D) {
-    this.particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.y > 1600) p.y = -1600;
-      if (p.x > 1600) p.x = -1600;
-      if (p.x < -1600) p.x = 1600;
+  private renderNightLanternGlows(
+    ctx: CanvasRenderingContext2D,
+    nodes: BoardNode[],
+    players: Player[],
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number
+  ) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
 
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, p.size, p.size);
+    // Warm radial torchlight glows on towns, inns, taverns
+    nodes.forEach(n => {
+      if (
+        n.type === 'town' ||
+        n.type === 'tavern' ||
+        n.type === 'guild' ||
+        n.type === 'church' ||
+        n.type === 'shop_item' ||
+        n.type === 'shop_weapon' ||
+        n.type === 'shop_magic'
+      ) {
+        const p = this.toScreen(n.gx, n.gy, n.gz);
+        if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
+          const grad = ctx.createRadialGradient(p.x, p.y - 25, 5, p.x, p.y - 25, 95);
+          grad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+          grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.2)');
+          grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y - 25, 95, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     });
+
+    // Warm player lantern glow
+    players.forEach(pl => {
+      const p = this.toScreen(pl.gridX, pl.gridY, pl.gridZ);
+      const grad = ctx.createRadialGradient(p.x, p.y - 20, 5, p.x, p.y - 20, 80);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 0.55)');
+      grad.addColorStop(0.6, 'rgba(251, 191, 36, 0.2)');
+      grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - 20, 80, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.restore();
+  }
+
+  private renderRegionalWeather(ctx: CanvasRenderingContext2D, weather: WeatherType, time: number) {
+    if (weather === 'rain') {
+      // Slanting rain streaks + water splash ripples
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      this.particles.forEach(p => {
+        p.x += p.vx * 1.5;
+        p.y += p.vy * 2.5 + 4;
+        if (p.y > 1600) p.y = -1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - 3, p.y + 12);
+      });
+      ctx.stroke();
+    } else if (weather === 'snow') {
+      // Gently fluttering snowflakes
+      ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+      this.particles.forEach(p => {
+        p.x += Math.sin(time * 0.002 + p.size) * 0.8;
+        p.y += p.vy * 0.6 + 0.5;
+        if (p.y > 1600) p.y = -1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else if (weather === 'heatwave') {
+      // Golden shimmering sun motes
+      this.particles.forEach(p => {
+        p.x += p.vx * 0.4;
+        p.y -= p.vy * 0.5;
+        if (p.y < -1600) p.y = 1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.55)';
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+    } else if (weather === 'miasma') {
+      // Purple spore motes & dark crimson embers
+      this.particles.forEach((p, idx) => {
+        p.x += Math.sin(time * 0.001 + idx) * 0.5;
+        p.y -= p.vy * 0.4;
+        if (p.y < -1600) p.y = 1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = idx % 2 === 0 ? 'rgba(168, 85, 247, 0.6)' : 'rgba(244, 63, 94, 0.5)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else {
+      // Clear Skies / Sunny: Gentle golden pollen / leaf motes
+      this.particles.forEach(p => {
+        p.x += p.vx * 0.5;
+        p.y += p.vy * 0.4;
+        if (p.y > 1600) p.y = -1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+    }
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {

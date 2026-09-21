@@ -1,5 +1,6 @@
 import { GameState } from '../game/GameState';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
+import { ecosystemSystem } from '../game/EcosystemSystem';
 
 export class HUD {
   private game: GameState;
@@ -49,6 +50,45 @@ export class HUD {
 
     document.getElementById('hudDayCount')!.innerText = `${this.game.dayCounter}`;
     document.getElementById('hudWeekCount')!.innerText = `${this.game.weekCounter}`;
+
+    // Day / Night Indicator
+    const timeInfo = ecosystemSystem.getTimeDisplay();
+    const timeIconEl = document.getElementById('hudTimeIcon');
+    const timeTextEl = document.getElementById('hudTimeText');
+    if (timeIconEl) timeIconEl.innerText = timeInfo.icon;
+    if (timeTextEl) timeTextEl.innerText = timeInfo.name.toUpperCase();
+
+    // Regional Weather Indicator
+    const activeNode = this.game.allNodes.find(n => n.id === p.nodeId) || this.game.allNodes[0];
+    const localWeather = ecosystemSystem.getNodeWeather(activeNode);
+    const weatherEffect = ecosystemSystem.getWeatherCombatModifier(localWeather);
+    const weatherIconEl = document.getElementById('hudWeatherIcon');
+    const weatherTextEl = document.getElementById('hudWeatherText');
+    if (weatherIconEl) weatherIconEl.innerText = weatherEffect.icon;
+    if (weatherTextEl) weatherTextEl.innerText = `${activeNode.realmName ? activeNode.realmName.split(' ')[0] : 'SOLARIA'} • ${weatherEffect.icon}`;
+
+    // Food Buff Badge
+    const foodBadge = document.getElementById('hudFoodBuffBadge');
+    if (foodBadge) {
+      if (p.foodBuff && p.foodBuff.turnsRemaining > 0) {
+        document.getElementById('hudFoodBuffIcon')!.innerText = p.foodBuff.icon;
+        document.getElementById('hudFoodBuffText')!.innerText = `${p.foodBuff.name} (${p.foodBuff.turnsRemaining}T)`;
+        foodBadge.classList.remove('hidden');
+      } else {
+        foodBadge.classList.add('hidden');
+      }
+    }
+
+    // Guild Quest Badge
+    const questBadge = document.getElementById('hudGuildQuestBadge');
+    if (questBadge) {
+      if (p.activeGuildQuest) {
+        document.getElementById('hudGuildQuestText')!.innerText = `[${p.activeGuildQuest.rank}] ${p.activeGuildQuest.title} (${p.activeGuildQuest.currentProgress}/${p.activeGuildQuest.targetCount})`;
+        questBadge.classList.remove('hidden');
+      } else {
+        questBadge.classList.add('hidden');
+      }
+    }
 
     // Render Avatar
     this.renderAvatar();

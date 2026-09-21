@@ -284,6 +284,17 @@
             <span id="hudMPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold tracking-tight">30/30</span>
           </div>
         </div>
+        <!-- Active Food Buff & Guild Quest Badges -->
+        <div class="flex items-center gap-2 mt-1">
+          <div id="hudFoodBuffBadge" class="hidden text-[8px] bg-amber-950/80 border border-amber-500 text-amber-300 px-1.5 py-0.5 rounded flex items-center gap-1">
+            <span id="hudFoodBuffIcon">🍖</span>
+            <span id="hudFoodBuffText">Buff (3)</span>
+          </div>
+          <div id="hudGuildQuestBadge" class="hidden text-[8px] bg-indigo-950/80 border border-indigo-500 text-indigo-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+            <span>📜</span>
+            <span id="hudGuildQuestText">Quest Active</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -306,6 +317,16 @@
         <div class="border-l border-slate-700 pl-2.5 flex flex-col text-[9px] text-slate-400">
           <span>DAY: <strong id="hudDayCount" class="text-white">1</strong></span>
           <span>WEEK: <strong id="hudWeekCount" class="text-amber-300">1</strong></span>
+        </div>
+        <!-- Day / Night Indicator -->
+        <div id="hudTimeOfDayBadge" class="border-l border-slate-700 pl-2.5 flex items-center gap-1 text-[10px] text-amber-300 font-bold" title="Time of Day">
+          <span id="hudTimeIcon" class="text-sm">☀️</span>
+          <span id="hudTimeText">NOON</span>
+        </div>
+        <!-- Regional Weather Indicator -->
+        <div id="hudWeatherBadge" class="border-l border-slate-700 pl-2.5 flex items-center gap-1 text-[10px] text-sky-300 font-bold" title="Regional Weather Ecosystem">
+          <span id="hudWeatherIcon" class="text-sm">🌤️</span>
+          <span id="hudWeatherText">CLEAR</span>
         </div>
         <button id="btnToggleBgm" class="pixel-btn px-2 py-1 text-xs text-amber-300 hover:text-white" title="Toggle Chiptune BGM">
           🎵
@@ -635,6 +656,190 @@
           APPLY HUMILIATION!
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ISEKAI TAVERN & INN MODAL (z-40) -->
+  <div id="tavernModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-lg w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-amber-950/90 to-slate-950">
+      <div class="flex items-center justify-between border-b border-amber-500/40 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🍺</span>
+          <div>
+            <h3 class="text-sm font-bold text-amber-300">ADVENTURER'S TAVERN & INN</h3>
+            <p class="text-[10px] text-slate-300">Rest, feast on hearty meals, or listen to adventurer rumors</p>
+          </div>
+        </div>
+        <span id="tavernPlayerGold" class="text-xs font-bold text-amber-400">300G</span>
+      </div>
+
+      <!-- Actions: Rest at Inn, Hear Rumors -->
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btnTavernRestInn" class="pixel-btn pixel-btn-green p-2.5 flex items-center justify-center gap-2 text-xs">
+          <span>🛌</span>
+          <div class="text-left">
+            <div class="font-bold">REST AT INN</div>
+            <div class="text-[9px] text-emerald-200">Full HP/MP, Cure Status (25G)</div>
+          </div>
+        </button>
+        <button id="btnTavernListenRumors" class="pixel-btn pixel-btn-blue p-2.5 flex items-center justify-center gap-2 text-xs">
+          <span>💬</span>
+          <div class="text-left">
+            <div class="font-bold">HEAR RUMORS</div>
+            <div class="text-[9px] text-sky-200">Gossip & Lore (Free)</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Notice Box for Feedback / Rumors -->
+      <div id="tavernNoticeText" class="hidden pixel-box p-2.5 bg-slate-900/95 border-amber-500/50 text-[11px] text-amber-200 text-center animate-pulse"></div>
+
+      <!-- Menu of Meals -->
+      <div>
+        <div class="text-[11px] font-bold text-amber-300 mb-1.5 flex items-center gap-1.5">
+          <span>🍽️</span>
+          <span>HEARTY ADVENTURER'S FEAST (STAT BUFFS FOR 3 TURNS):</span>
+        </div>
+        <div id="tavernMealList" class="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1"></div>
+      </div>
+
+      <button id="btnCloseTavern" class="pixel-btn p-2 text-xs text-slate-300 hover:text-white bg-slate-800 border-slate-600 mt-1">
+        LEAVE TAVERN
+      </button>
+    </div>
+  </div>
+
+  <!-- ISEKAI ADVENTURER'S GUILD MODAL (z-40) -->
+  <div id="guildModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box max-w-lg w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-slate-900 to-indigo-950 border-indigo-500">
+      <div class="flex items-center justify-between border-b border-indigo-500/40 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📜</span>
+          <div>
+            <h3 class="text-sm font-bold text-indigo-300">ADVENTURER'S GUILD HALL</h3>
+            <p class="text-[10px] text-slate-300">Accept bounties, slay beasts, and raise your adventurer rank</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span id="guildPlayerRank" class="text-xs font-bold text-amber-300">RANK F</span>
+          <div id="guildCompletedCount" class="text-[9px] text-slate-400">0 Quests Completed</div>
+        </div>
+      </div>
+
+      <!-- Guild Girl Receptionist Dialog Box -->
+      <div class="pixel-box p-2.5 bg-slate-950/80 border-indigo-500/30 flex items-center gap-3">
+        <span class="text-2xl">👩‍💼</span>
+        <p class="text-[11px] text-indigo-200">
+          "Welcome to the Guild! Select a quest from the notice board below. Complete your assignment to receive gold bounties and advance your Hunter Rank!"
+        </p>
+      </div>
+
+      <!-- Quest Board List -->
+      <div class="flex flex-col gap-2">
+        <div class="text-[11px] font-bold text-amber-300">NOTICE BOARD BOUNTIES:</div>
+        <div id="guildQuestList" class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1"></div>
+      </div>
+
+      <button id="btnCloseGuild" class="pixel-btn p-2 text-xs text-slate-300 hover:text-white bg-slate-800 border-slate-600 mt-1">
+        LEAVE GUILD HALL
+      </button>
+    </div>
+  </div>
+
+  <!-- ISEKAI FISHING SPOT MODAL (z-40) -->
+  <div id="fishingModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box max-w-md w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-sky-950/90 to-slate-950 border-sky-500 text-center">
+      <div class="flex items-center justify-center gap-2">
+        <span class="text-3xl animate-bounce">🎣</span>
+        <h3 class="text-sm font-bold text-sky-300">SPARKLING FISHING HAVEN</h3>
+      </div>
+
+      <!-- Prompt State -->
+      <div id="fishingPromptState" class="flex flex-col items-center gap-3 my-2">
+        <p class="text-xs text-slate-200">
+          The clear waters ripple with exotic fish and sunken relics. Cast your fishing line into the deep waters?
+        </p>
+        <button id="btnCastRod" class="pixel-btn pixel-btn-blue px-6 py-2.5 text-sm font-bold flex items-center gap-2">
+          <span>🎣</span>
+          <span>CAST LINE!</span>
+        </button>
+      </div>
+
+      <!-- Result State -->
+      <div id="fishingResultState" class="hidden flex flex-col items-center gap-2 my-2">
+        <span id="fishingCatchIcon" class="text-4xl animate-pulse">🐟</span>
+        <h4 id="fishingCatchTitle" class="text-sm font-bold text-amber-300">RAINBOW TROUT!</h4>
+        <p id="fishingCatchDesc" class="text-xs text-slate-200">You pulled up a prize catch!</p>
+        <button id="btnFishingContinue" class="pixel-btn pixel-btn-gold mt-2 px-6 py-1.5 text-xs font-bold text-amber-950">
+          CONTINUE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISEKAI BANDIT AMBUSH MODAL (z-40) -->
+  <div id="banditAmbushModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-md w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-red-950 to-slate-950 text-center">
+      <div class="text-3xl animate-pulse">🗡️👺</div>
+      <h3 class="text-sm font-bold text-red-400 tracking-wider">HIGHWAY BANDIT AMBUSH!</h3>
+      <p class="text-xs text-slate-200">
+        "Halt, traveler! Hand over your coin purse, or we'll turn your guts into vulture feed!"
+      </p>
+
+      <!-- 3 Choices -->
+      <div id="banditChoicesBox" class="flex flex-col gap-2 mt-2">
+        <button id="btnBanditFight" class="pixel-btn pixel-btn-red p-2.5 text-xs font-bold flex items-center justify-center gap-2">
+          <span>⚔️</span>
+          <span>DRAW STEEL & FIGHT! (Duel Bandit Chief)</span>
+        </button>
+        <button id="btnBanditBribe" class="pixel-btn pixel-btn-gold p-2.5 text-xs font-bold flex items-center justify-center gap-2 text-amber-950">
+          <span>🪙</span>
+          <span>TOSS 40G BRIBE (Pass Peacefully)</span>
+        </button>
+        <button id="btnBanditTrick" class="pixel-btn pixel-btn-purple p-2.5 text-xs font-bold flex items-center justify-center gap-2">
+          <span>🎭✨</span>
+          <span>CAST ILLUSION / INTIMIDATE (MAG or SPD Check)</span>
+        </button>
+      </div>
+
+      <!-- Outcome Message -->
+      <div id="banditOutcomeBox" class="hidden flex flex-col items-center gap-3 mt-2">
+        <p id="banditOutcomeText" class="text-xs text-slate-200 bg-slate-900 p-3 rounded border border-slate-700"></p>
+        <button id="btnBanditDismiss" class="pixel-btn pixel-btn-blue px-5 py-1.5 text-xs font-bold">
+          CONTINUE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISEKAI GODDESS SHRINE MODAL (z-40) -->
+  <div id="shrineModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box max-w-md w-full p-5 shadow-2xl flex flex-col items-center gap-3 bg-gradient-to-b from-purple-950 to-slate-950 border-purple-400 text-center">
+      <span id="shrineIcon" class="text-4xl animate-bounce">✨</span>
+      <h3 id="shrineTitle" class="text-sm font-bold text-purple-300">SHRINE OF LUMINA</h3>
+      <p id="shrineDesc" class="text-xs text-slate-200">The celestial goddess bestows a miracle upon your journey.</p>
+      <button id="btnCloseShrine" class="pixel-btn pixel-btn-gold px-6 py-1.5 text-xs font-bold text-amber-950 mt-2">
+        ACCEPT BLESSING
+      </button>
+    </div>
+  </div>
+
+  <!-- GRAND WORLD CALAMITY ALERT MODAL (z-45) -->
+  <div id="calamityModal" class="hidden absolute inset-0 z-45 bg-red-950/90 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-lg">
+    <div class="pixel-box-gold max-w-lg w-full p-6 shadow-2xl flex flex-col items-center gap-3 bg-gradient-to-b from-slate-950 via-red-950 to-slate-950 border-red-500 text-center animate-pulse">
+      <span id="calamityIcon" class="text-5xl">👹</span>
+      <h2 id="calamityTitle" class="text-base md:text-lg font-bold text-red-400 tracking-widest uppercase">
+        GRAND CALAMITY STRIKES!
+      </h2>
+      <p id="calamityDesc" class="text-xs text-slate-200 leading-relaxed my-2">
+        The Overlord's dreaded commander has besieged a peaceful town!
+      </p>
+      <div id="calamityReward" class="text-xs font-bold text-amber-300 bg-amber-950/60 px-3 py-1 rounded border border-amber-500">
+        Royal Bounty: 800G
+      </div>
+      <button id="btnDismissCalamity" class="pixel-btn pixel-btn-red mt-3 px-8 py-2 text-xs font-bold tracking-wider">
+        TO ARMS!
+      </button>
     </div>
   </div>
 
