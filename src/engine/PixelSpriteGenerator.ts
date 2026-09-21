@@ -1,4 +1,5 @@
 import { trpgAssets } from './TRPGAssetLoader';
+import { customIsometricHeroRenderer } from './CustomIsometricHeroRenderer';
 
 export interface EquipmentItem {
   id: string;
@@ -462,7 +463,7 @@ export class PixelSpriteGenerator {
   }
 
   // =========================================================================
-  // 1. TRUE 2.5D ISOMETRIC DARK FANTASY HEROES (96x96 HD)
+  // 1. TRUE 2.5D ISOMETRIC CUSTOM-BUILT HEROES (96x96 HD)
   // =========================================================================
   getHeroSprite(
     classKey: string,
@@ -473,77 +474,15 @@ export class PixelSpriteGenerator {
     isDarkling: boolean = false,
     prank?: PrankState
   ): HTMLCanvasElement {
-    const prankKey = prank?.hasGraffiti ? `${prank.graffitiType || 'c'}_${prank.hasAfro ? 'afro' : 'na'}` : 'none';
-    const key = `dark_iso_${classKey}_${dir}_${animState}_${frame % 6}_${equipment.weapon?.id || 'nw'}_${equipment.armor?.id || 'na'}_${isDarkling ? 'dark' : 'norm'}_${prankKey}`;
-    if (this.cache.has(key)) return this.cache.get(key)!;
-
-    const { canvas, ctx } = this.makeCanvas(96, 96);
-
-    // Animation displacement
-    let bob = 0;
-    let stepX = 0;
-    let stepY = 0;
-    let lean = 0;
-
-    if (animState === 'idle') {
-      bob = Math.sin((frame % 6) * (Math.PI / 3)) * 2;
-    } else if (animState === 'run') {
-      const stride = [0, -4, -2, 0, 4, 2];
-      const bobs = [-3, 0, -4, -3, 0, -4];
-      const s = stride[frame % 6];
-      bob = bobs[frame % 6];
-      // Diagonal isometric stride
-      if (dir === 'NE') {
-        stepX = s * 0.8;
-        stepY = -s * 0.4;
-      } else if (dir === 'SW') {
-        stepX = -s * 0.8;
-        stepY = s * 0.4;
-      } else if (dir === 'SE') {
-        stepX = s * 0.8;
-        stepY = s * 0.4;
-      } else {
-        stepX = -s * 0.8;
-        stepY = -s * 0.4;
-      }
-      lean = dir === 'SE' || dir === 'NE' ? 2 : -2;
-    } else if (animState === 'attack') {
-      const lunge = [0, 10, 20, 6][frame % 4];
-      if (dir === 'NE') {
-        stepX = lunge * 0.9;
-        stepY = -lunge * 0.5;
-      } else {
-        stepX = -lunge * 0.9;
-        stepY = lunge * 0.5;
-      }
-      bob = 1;
-    } else if (animState === 'strike') {
-      const jumps = [0, -22, -30, 4];
-      bob = jumps[frame % 4];
-    } else if (animState === 'magic') {
-      bob = -6 + Math.sin(frame * 0.8) * 4;
-    } else if (animState === 'hurt') {
-      stepX = dir === 'NE' ? -12 : 12;
-      stepY = dir === 'NE' ? 6 : -6;
-      bob = -4;
-    }
-
-    if (trpgAssets.isLoaded) {
-      const entityKey = isDarkling ? 'darkling' : classKey;
-      const entitySprite = trpgAssets.getEntitySprite(entityKey, dir, animState, frame, 96, 96);
-      ctx.drawImage(entitySprite, stepX, bob + stepY);
-    } else if (isDarkling) {
-      this.renderDarklingSprite(ctx, dir, animState, bob, stepX, lean, frame);
-    } else {
-      this.renderDarkFantasyHero(ctx, classKey, dir, animState, bob, stepX, stepY, lean, frame, equipment);
-    }
-
-    if (prank?.hasGraffiti && !isDarkling) {
-      this.renderPrankOverlay(ctx, dir, bob, prank);
-    }
-
-    this.cache.set(key, canvas);
-    return canvas;
+    return customIsometricHeroRenderer.getHeroSprite(
+      classKey,
+      dir,
+      animState,
+      frame,
+      equipment,
+      isDarkling,
+      prank
+    );
   }
 
   private renderDarkFantasyHero(

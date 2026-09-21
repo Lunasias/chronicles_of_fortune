@@ -719,19 +719,19 @@ export class IsometricRenderer {
       player.isDarkling,
       player.prank
     );
-    ctx.drawImage(sprite, px - 40, py - 56, 80, 80);
+    ctx.drawImage(sprite, px - 48, py - 68, 96, 96);
 
     // 4. Name Tag
     ctx.fillStyle = '#030712';
-    ctx.fillRect(px - 32, py - 68, 64, 15);
+    ctx.fillRect(px - 34, py - 78, 68, 16);
     ctx.strokeStyle = player.isDarkling ? '#c084fc' : player.color;
     ctx.lineWidth = 1.2;
-    ctx.strokeRect(px - 32, py - 68, 64, 15);
+    ctx.strokeRect(px - 34, py - 78, 68, 16);
 
     ctx.fillStyle = player.isDarkling ? '#f43f5e' : player.color;
     ctx.font = '8px Silkscreen';
     ctx.textAlign = 'center';
-    ctx.fillText(player.displayName.substring(0, 8), px, py - 57);
+    ctx.fillText(player.displayName.substring(0, 8), px, py - 66);
   }
 
   private renderDustPuffs(ctx: CanvasRenderingContext2D) {
