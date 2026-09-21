@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dokapon Kingdom: 2.5D Isometric Pixel RPG</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Pixel Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #030712;
+      color: #f8fafc;
+      font-family: 'Silkscreen', 'Press Start 2P', monospace;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    /* Dokapon Retro Boxes */
+    .pixel-box {
+      background: #111827;
+      border: 4px solid #030712;
+      box-shadow: 
+        inset -4px -4px 0px 0px #020617,
+        inset 4px 4px 0px 0px #374151,
+        0 8px 0 0 rgba(0,0,0,0.6);
+      border-radius: 4px;
+    }
+
+    .pixel-box-gold {
+      background: #251c11;
+      border: 4px solid #0f0b06;
+      box-shadow: 
+        inset -4px -4px 0px 0px #4d3307,
+        inset 4px 4px 0px 0px #fbbf24,
+        0 8px 0 0 rgba(0,0,0,0.7);
+      border-radius: 4px;
+    }
+
+    .pixel-box-red {
+      background: #2b1111;
+      border: 4px solid #140404;
+      box-shadow: 
+        inset -4px -4px 0px 0px #5c1414,
+        inset 4px 4px 0px 0px #f87171,
+        0 8px 0 0 rgba(0,0,0,0.7);
+      border-radius: 4px;
+    }
+
+    .pixel-box-darkling {
+      background: #190524;
+      border: 4px solid #0a0110;
+      box-shadow: 
+        inset -4px -4px 0px 0px #4a044e,
+        inset 4px 4px 0px 0px #c084fc,
+        0 8px 0 0 rgba(168, 85, 247, 0.4);
+      border-radius: 4px;
+    }
+
+    /* Tactile Dokapon Buttons */
+    .pixel-btn {
+      position: relative;
+      background: #1f2937;
+      border: 3px solid #030712;
+      box-shadow: 
+        inset -3px -3px 0px 0px #111827,
+        inset 3px 3px 0px 0px #4b5563,
+        0 4px 0 0 #030712;
+      transition: transform 0.05s ease, background-color 0.1s ease;
+      cursor: pointer;
+    }
+
+    .pixel-btn:hover {
+      background: #374151;
+      transform: translateY(-2px);
+      box-shadow: 
+        inset -3px -3px 0px 0px #1f2937,
+        inset 3px 3px 0px 0px #6b7280,
+        0 6px 0 0 #030712;
+    }
+
+    .pixel-btn:active {
+      transform: translateY(3px);
+      box-shadow: 
+        inset -2px -2px 0px 0px #4b5563,
+        inset 2px 2px 0px 0px #111827,
+        0 1px 0 0 #030712;
+    }
+
+    .pixel-btn-gold {
+      background: #d97706;
+      box-shadow: 
+        inset -3px -3px 0px 0px #854d0e,
+        inset 3px 3px 0px 0px #fde68a,
+        0 4px 0 0 #451a03;
+    }
+    .pixel-btn-gold:hover {
+      background: #f59e0b;
+    }
+
+    .pixel-btn-red {
+      background: #b91c1c;
+      box-shadow: 
+        inset -3px -3px 0px 0px #7f1d1d,
+        inset 3px 3px 0px 0px #fca5a5,
+        0 4px 0 0 #450a0a;
+    }
+    .pixel-btn-red:hover {
+      background: #dc2626;
+    }
+
+    .pixel-btn-green {
+      background: #15803d;
+      box-shadow: 
+        inset -3px -3px 0px 0px #14532d,
+        inset 3px 3px 0px 0px #86efac,
+        0 4px 0 0 #052e16;
+    }
+    .pixel-btn-green:hover {
+      background: #16a34a;
+    }
+
+    .pixel-btn-blue {
+      background: #1d4ed8;
+      box-shadow: 
+        inset -3px -3px 0px 0px #1e3a8a,
+        inset 3px 3px 0px 0px #93c5fd,
+        0 4px 0 0 #0f172a;
+    }
+    .pixel-btn-blue:hover {
+      background: #2563eb;
+    }
+
+    .pixel-btn-purple {
+      background: #7e22ce;
+      box-shadow: 
+        inset -3px -3px 0px 0px #581c87,
+        inset 3px 3px 0px 0px #e9d5ff,
+        0 4px 0 0 #3b0764;
+    }
+    .pixel-btn-purple:hover {
+      background: #9333ea;
+    }
+
+    /* Dokapon Command Card Buttons */
+    .command-card {
+      position: relative;
+      border: 4px solid #030712;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: all 0.1s ease;
+      cursor: pointer;
+    }
+    .command-card:hover {
+      transform: scale(1.05) translateY(-3px);
+      filter: brightness(1.2);
+    }
+    .command-card:active {
+      transform: scale(0.97) translateY(2px);
+    }
+
+    /* Floating FX */
+    @keyframes floatUpFade {
+      0% { transform: translateY(0) scale(0.85); opacity: 1; }
+      50% { transform: translateY(-30px) scale(1.25); opacity: 1; }
+      100% { transform: translateY(-60px) scale(1); opacity: 0; }
+    }
+    .damage-popup {
+      animation: floatUpFade 1.1s forwards ease-out;
+      pointer-events: none;
+    }
+
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 6px); }
+      40% { transform: translate(8px, -6px); }
+      60% { transform: translate(-6px, -4px); }
+      80% { transform: translate(6px, 4px); }
+    }
+    .screen-shake {
+      animation: screenShake 0.35s ease-in-out;
+    }
+
+    @keyframes diceSpin {
+      0% { transform: scale(0.8) rotate(0deg); }
+      25% { transform: scale(1.2) rotate(90deg); }
+      50% { transform: scale(0.9) rotate(180deg); }
+      75% { transform: scale(1.15) rotate(270deg); }
+      100% { transform: scale(1.0) rotate(360deg); }
+    }
+    .dice-rolling {
+      animation: diceSpin 0.4s infinite ease-in-out;
+    }
+
+    /* Dokapon Scanlines effect */
+    .scanlines {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.03),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.03)
+      );
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #030712;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen relative bg-slate-950 flex flex-col items-center justify-center select-none overflow-hidden">
+
+  <!-- Scanlines overlay (z-35) -->
+  <div id="scanlineOverlay" class="scanlines absolute inset-0 z-35 pointer-events-none opacity-30"></div>
+
+  <!-- MAIN 2.5D ISOMETRIC VIEWPORT (z-0) -->
+  <div id="canvasWrapper" class="relative w-full h-full flex items-center justify-center overflow-hidden z-0">
+    <canvas id="gameCanvas" class="block w-full h-full bg-[#080d1a] cursor-grab active:cursor-grabbing"></canvas>
+  </div>
+
+  <!-- FLOATING DAMAGE / NOTICE CONTAINER (z-30) -->
+  <div id="floatingTextContainer" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
+
+  <!-- TOP HUD BAR (z-20) -->
+  <div id="topHUD" class="hidden absolute top-2 left-2 right-2 z-20 flex flex-wrap justify-between items-start gap-2 pointer-events-none">
+    <!-- Active Player Card -->
+    <div class="pixel-box pointer-events-auto px-3.5 py-2 flex items-center gap-3 bg-slate-900/95 border-slate-700 shadow-xl backdrop-blur-xs">
+      <div id="hudPlayerAvatarWrapper" class="w-12 h-12 border-2 border-amber-400 bg-slate-950 rounded flex items-center justify-center overflow-hidden shadow relative">
+        <canvas id="hudAvatarCanvas" width="48" height="48" class="image-pixelated"></canvas>
+        <span id="hudDarklingBadge" class="hidden absolute top-0 right-0 text-[9px] bg-purple-700 text-white font-bold px-1 rounded-bl">DEVIL</span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span id="hudPlayerName" class="font-bold text-amber-300 text-sm tracking-wider">Hero 1</span>
+          <span id="hudPlayerClass" class="text-[10px] text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">Warrior</span>
+          <span id="hudPlayerLevel" class="text-[10px] text-emerald-400 font-bold">LV. 1</span>
+        </div>
+        <!-- Health & Mana Bars -->
+        <div class="flex items-center gap-2 mt-1.5">
+          <div class="w-28 bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative shadow-inner">
+            <div id="hudHPBar" class="bg-gradient-to-r from-red-600 to-rose-400 h-full transition-all duration-300" style="width: 100%;"></div>
+            <span id="hudHPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold tracking-tight">100/100</span>
+          </div>
+          <div class="w-20 bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative shadow-inner">
+            <div id="hudMPBar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-300" style="width: 100%;"></div>
+            <span id="hudMPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold tracking-tight">30/30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dokapon Match Status & Minimap -->
+    <div class="flex flex-col items-end gap-2 pointer-events-auto">
+      <!-- Status Box -->
+      <div class="pixel-box px-3 py-1.5 flex items-center gap-3 bg-slate-900/95 border-slate-700 shadow-xl text-xs">
+        <div class="flex items-center gap-1 text-amber-400 font-bold">
+          <span class="text-sm">🪙</span>
+          <span id="hudPlayerGold">300G</span>
+        </div>
+        <div class="flex items-center gap-1 text-emerald-400 font-bold" title="Net Worth (Cash + Towns + Gear)">
+          <span class="text-sm">💎</span>
+          <span id="hudPlayerNetWorth">300G</span>
+        </div>
+        <div class="flex items-center gap-1 text-indigo-300 font-bold">
+          <span class="text-sm">🚩</span>
+          <span id="hudPlayerTowns">0 Towns</span>
+        </div>
+        <div class="border-l border-slate-700 pl-2.5 flex flex-col text-[9px] text-slate-400">
+          <span>DAY: <strong id="hudDayCount" class="text-white">1</strong></span>
+          <span>WEEK: <strong id="hudWeekCount" class="text-amber-300">1</strong></span>
+        </div>
+        <button id="btnSettings" class="pixel-btn px-2 py-1 text-xs text-slate-300 hover:text-white" title="Options & Rules">
+          ⚙️
+        </button>
+      </div>
+
+      <!-- Live Isometric Radar Minimap -->
+      <div id="minimapBox" class="pixel-box p-1 bg-slate-950/90 border-slate-700 shadow-2xl relative">
+        <canvas id="minimapCanvas" width="130" height="130" class="block bg-slate-900 cursor-pointer rounded"></canvas>
+        <div class="absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 rounded text-slate-400 pointer-events-none">2.5D RADAR</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM ACTION BAR (z-20) -->
+  <div id="bottomBar" class="hidden absolute bottom-3 left-0 right-0 z-20 flex justify-center items-center gap-2 px-3 pointer-events-none">
+    <div class="pixel-box pointer-events-auto px-4 py-2 flex flex-wrap justify-center items-center gap-2.5 bg-slate-900/95 border-slate-700 shadow-2xl backdrop-blur-md">
+      <!-- Roll Dice / Spinner Button -->
+      <button id="btnRollDice" class="pixel-btn pixel-btn-gold px-5 py-2.5 text-xs font-bold text-slate-950 flex items-center gap-2">
+        <span class="text-base">🎲</span>
+        <span id="btnRollText">ROLL DICE</span>
+      </button>
+
+      <!-- Multi-Spinner / Item Spinner Menu -->
+      <button id="btnUseSpinner" class="pixel-btn pixel-btn-purple px-3 py-2 text-xs text-white flex items-center gap-1.5" title="Use 2-Spinner or 3-Spinner">
+        <span>🌀</span>
+        <span class="hidden sm:inline">SPINNER</span>
+      </button>
+      
+      <!-- Inventory & Magic Deck Button -->
+      <button id="btnInventory" class="pixel-btn pixel-btn-blue px-3.5 py-2 text-xs text-white flex items-center gap-1.5">
+        <span>🎒</span>
+        <span>BAG</span>
+      </button>
+
+      <!-- Field Magic Button -->
+      <button id="btnFieldMagic" class="pixel-btn pixel-btn-purple px-3.5 py-2 text-xs text-white flex items-center gap-1.5">
+        <span>✨</span>
+        <span>MAGIC</span>
+      </button>
+
+      <!-- Center Camera Button -->
+      <button id="btnCenterCam" class="pixel-btn px-3 py-2 text-xs text-slate-200 flex items-center gap-1.5" title="Focus Active Hero">
+        <span>🎯</span>
+        <span class="hidden sm:inline">HERO</span>
+      </button>
+
+      <!-- Full Continent Map Viewer Button -->
+      <button id="btnWorldMap" class="pixel-btn px-3 py-2 text-xs text-amber-300 flex items-center gap-1.5" title="View Full Continent Atlas">
+        <span>🗺️</span>
+        <span class="hidden sm:inline">ATLAS</span>
+      </button>
+
+      <!-- Zoom Controls -->
+      <div class="flex items-center gap-1 border-l border-r border-slate-700 px-2">
+        <button id="btnZoomOut" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="Zoom Out">-</button>
+        <span id="zoomLabel" class="text-[10px] text-slate-400 font-bold px-1">1.0x</span>
+        <button id="btnZoomIn" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="Zoom In">+</button>
+      </div>
+
+      <!-- Action Log Toggle -->
+      <button id="btnToggleLog" class="pixel-btn px-2.5 py-2 text-xs text-slate-300 flex items-center gap-1">
+        <span>📜</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- INTERSECTION ROUTE CHOOSER MODAL (z-40) -->
+  <div id="intersectionModal" class="hidden absolute inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto">
+    <div class="pixel-box-gold max-w-md w-full p-5 text-center shadow-2xl">
+      <h3 class="text-base text-amber-300 font-bold mb-1.5 tracking-wide flex items-center justify-center gap-2">
+        <span>🧭</span> CHOOSE STRATEGIC DIRECTION <span>🧭</span>
+      </h3>
+      <p class="text-xs text-slate-300 mb-3">
+        Crossroad reached! Remaining movement: <span id="choiceMovesLeft" class="text-amber-400 font-bold">3</span>
+      </p>
+      <div id="choiceButtonsContainer" class="grid grid-cols-1 gap-2 my-2"></div>
+    </div>
+  </div>
+
+  <!-- DICE / SPINNER ROLLING MODAL (z-40) -->
+  <div id="diceRollModal" class="hidden absolute inset-0 z-40 bg-black/50 flex items-center justify-center pointer-events-none">
+    <div class="pixel-box-gold p-6 flex flex-col items-center justify-center shadow-2xl scale-110">
+      <div id="diceCube" class="w-16 h-16 bg-amber-100 border-4 border-amber-800 rounded-lg flex items-center justify-center text-3xl font-bold text-slate-900 shadow-inner">
+        🎲
+      </div>
+      <div id="diceResultText" class="mt-3 text-amber-300 font-bold text-sm tracking-widest uppercase">
+        ROLLING...
+      </div>
+    </div>
+  </div>
+
+  <!-- DOKAPON ROCK-PAPER-SCISSORS BATTLE SCREEN (z-40) -->
+  <div id="battleScreen" class="hidden absolute inset-0 z-40 bg-slate-950 flex flex-col pointer-events-auto">
+    <!-- Battle Canvas / Arena Viewport -->
+    <div class="relative flex-1 bg-slate-900 flex items-center justify-center overflow-hidden border-b-4 border-slate-800">
+      <canvas id="battleCanvas" class="w-full h-full block"></canvas>
+      
+      <!-- Top Battle Status Bars -->
+      <div class="absolute top-3 left-3 right-3 flex justify-between items-start pointer-events-none">
+        <!-- Player Status -->
+        <div class="pixel-box p-2.5 bg-slate-900/95 border-blue-500/60 max-w-xs w-full shadow-lg">
+          <div class="flex justify-between text-xs font-bold text-blue-300 mb-1">
+            <span id="battlePlayerName">Galahad</span>
+            <span id="battlePlayerRoleBadge" class="text-[10px] bg-blue-900 px-1 rounded text-cyan-300">ATTACKER</span>
+          </div>
+          <div class="w-full bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative mb-1">
+            <div id="battlePlayerHP" class="bg-gradient-to-r from-red-600 to-rose-400 h-full transition-all duration-300" style="width: 100%"></div>
+            <span id="battlePlayerHPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold">120/120</span>
+          </div>
+          <div class="w-full bg-slate-950 h-2.5 rounded border border-slate-700 overflow-hidden relative">
+            <div id="battlePlayerMP" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-300" style="width: 100%"></div>
+            <span id="battlePlayerMPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold">30/30</span>
+          </div>
+        </div>
+
+        <!-- Enemy Status -->
+        <div class="pixel-box p-2.5 bg-slate-900/95 border-red-500/60 max-w-xs w-full shadow-lg text-right">
+          <div class="flex justify-between text-xs font-bold text-red-300 mb-1">
+            <span id="battleEnemyRoleBadge" class="text-[10px] bg-red-900 px-1 rounded text-rose-300">DEFENDER</span>
+            <span id="battleEnemyName">Forest Goblin</span>
+          </div>
+          <div class="w-full bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative">
+            <div id="battleEnemyHP" class="bg-gradient-to-r from-emerald-600 to-green-400 h-full transition-all duration-300" style="width: 100%"></div>
+            <span id="battleEnemyHPText" class="absolute inset-0 text-[8px] text-white flex items-center justify-center font-bold">60/60</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn Phase & Mindgame Banner -->
+      <div id="battleTurnBanner" class="absolute bottom-3 inset-x-0 flex justify-center pointer-events-none">
+        <span id="battleTurnText" class="pixel-box px-4 py-1.5 text-xs text-amber-300 bg-slate-900/95 shadow-lg border-amber-500">
+          CHOOSE YOUR ACTION!
+        </span>
+      </div>
+    </div>
+
+    <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
+    <div class="h-48 bg-slate-900 p-3 flex flex-col md:flex-row gap-3 border-t-2 border-slate-800">
+      
+      <!-- Attacker 4-Choice Cards -->
+      <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+        <!-- Attack -->
+        <button id="btnCmdAttack" class="command-card pixel-btn-red p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">⚔️</span>
+          <span class="text-xs font-bold">ATTACK</span>
+          <span class="text-[8px] opacity-80 text-rose-200">Basic Phys</span>
+        </button>
+        <!-- Strike -->
+        <button id="btnCmdStrike" class="command-card pixel-btn-gold p-2 flex flex-col items-center justify-center text-slate-950">
+          <span class="text-xl mb-0.5">⚡💥</span>
+          <span class="text-xs font-bold">STRIKE</span>
+          <span class="text-[8px] text-amber-950 font-bold">Pierces Def!</span>
+        </button>
+        <!-- Magic -->
+        <button id="btnCmdMagic" class="command-card pixel-btn-blue p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">🔮</span>
+          <span class="text-xs font-bold">MAGIC</span>
+          <span class="text-[8px] opacity-80 text-cyan-200">Cast Spell</span>
+        </button>
+        <!-- Skill -->
+        <button id="btnCmdSkill" class="command-card pixel-btn-purple p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">🌟</span>
+          <span class="text-xs font-bold" id="battleSkillLabel">SKILL</span>
+          <span class="text-[8px] opacity-80 text-purple-200">Class Spec</span>
+        </button>
+      </div>
+
+      <!-- Defender 4-Choice Cards -->
+      <div id="defenderCommandGroup" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+        <!-- Defend -->
+        <button id="btnCmdDefend" class="command-card pixel-btn-blue p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">🛡️</span>
+          <span class="text-xs font-bold">DEFEND</span>
+          <span class="text-[8px] text-cyan-200">Halves Attack</span>
+        </button>
+        <!-- Counter -->
+        <button id="btnCmdCounter" class="command-card pixel-btn-red p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">⚔️↩️</span>
+          <span class="text-xs font-bold">COUNTER</span>
+          <span class="text-[8px] text-amber-300 font-bold">Punishes Strike!</span>
+        </button>
+        <!-- Magic Guard -->
+        <button id="btnCmdMagicGuard" class="command-card pixel-btn-purple p-2 flex flex-col items-center justify-center text-white">
+          <span class="text-xl mb-0.5">✨🛡️</span>
+          <span class="text-xs font-bold">M-GUARD</span>
+          <span class="text-[8px] text-purple-200">Blocks Spells</span>
+        </button>
+        <!-- Give Up -->
+        <button id="btnCmdGiveUp" class="command-card pixel-btn p-2 flex flex-col items-center justify-center text-slate-300">
+          <span class="text-xl mb-0.5">🏳️</span>
+          <span class="text-xs font-bold">GIVE UP</span>
+          <span class="text-[8px] text-slate-400">Surrender</span>
+        </button>
+      </div>
+
+      <!-- Narration & RPS Hint Box -->
+      <div class="flex-1 pixel-box p-3 bg-slate-950 flex flex-col justify-between text-xs text-slate-300 border-slate-700">
+        <div id="battleNarration" class="overflow-y-auto max-h-20 pr-1 leading-relaxed text-[11px]">
+          Simultaneous Dokapon Duel! Strike crushes Defend, Counter obliterates Strike!
+        </div>
+        <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between">
+          <span>⚔️ Attack &gt; Counter</span>
+          <span>💥 Strike &gt; Defend</span>
+          <span>↩️ Counter &gt; Strike</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PVP VICTORY SPOILS & HUMILIATION / PRANK MODAL (z-40) -->
+  <div id="pvpSpoilsModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-lg w-full p-5 text-center shadow-2xl">
+      <div class="text-3xl mb-1">👑😈</div>
+      <h3 class="text-base text-amber-300 font-bold mb-1">VICTORY OVER RIVAL!</h3>
+      <p id="pvpDefeatedPlayerDesc" class="text-xs text-slate-300 mb-3">
+        You crushed Jax! Choose your spoils of war or exact sweet humiliating revenge:
+      </p>
+
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button id="btnSpoilsGold" class="pixel-btn pixel-btn-gold p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">💰</span>
+          <span class="font-bold">ROB POCKET GOLD</span>
+          <span id="spoilsGoldAmount" class="text-[9px] text-amber-950 font-bold">Take 250G</span>
+        </button>
+        <button id="btnSpoilsEquip" class="pixel-btn pixel-btn-blue p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">⚔️</span>
+          <span class="font-bold">STEAL EQUIPMENT</span>
+          <span class="text-[9px] text-blue-200">Take Weapon or Armor</span>
+        </button>
+        <button id="btnSpoilsTown" class="pixel-btn pixel-btn-green p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">🚩</span>
+          <span class="font-bold">TAKE TOWN DEED</span>
+          <span class="text-[9px] text-emerald-200">Seize 1 Territory</span>
+        </button>
+        <button id="btnSpoilsPrank" class="pixel-btn pixel-btn-purple p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">🎨🤪</span>
+          <span class="font-bold">PRANK & HUMILIATE</span>
+          <span class="text-[9px] text-purple-200">Draw Graffiti / Rename!</span>
+        </button>
+      </div>
+
+      <!-- Sub-menu for Graffiti Canvas -->
+      <div id="prankCanvasContainer" class="hidden pixel-box p-3 bg-slate-950 border-purple-500 mb-3 flex flex-col items-center">
+        <p class="text-xs text-purple-300 font-bold mb-2">SCRIBBLE ON VICTIM'S FACE!</p>
+        <div class="relative w-32 h-32 border-2 border-purple-400 bg-slate-900 rounded mb-2">
+          <canvas id="graffitiCanvas" width="128" height="128" class="block w-full h-full cursor-crosshair"></canvas>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnClearGraffiti" class="pixel-btn px-2 py-1 text-[10px] text-slate-300">CLEAR</button>
+          <button id="btnApplyMustache" class="pixel-btn px-2 py-1 text-[10px] text-amber-300">MUSTACHE</button>
+          <button id="btnApplySwirl" class="pixel-btn px-2 py-1 text-[10px] text-rose-300">SWIRL EYES</button>
+        </div>
+        <div class="mt-2 flex items-center gap-2 w-full">
+          <span class="text-[10px] text-slate-300">Rename:</span>
+          <input id="inputPrankName" type="text" maxlength="10" placeholder="e.g. Poophead" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 text-white rounded flex-1">
+        </div>
+        <button id="btnConfirmPrank" class="pixel-btn pixel-btn-purple mt-3 px-4 py-1.5 text-xs font-bold text-white w-full">
+          APPLY HUMILIATION!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE DARKLING TRANSFORMATION PACT MODAL (z-40) -->
+  <div id="darklingPactModal" class="hidden absolute inset-0 z-40 bg-black/90 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-lg">
+    <div class="pixel-box-darkling max-w-lg w-full p-6 text-center shadow-2xl animate-pulse">
+      <div class="text-4xl mb-2">😈🔥⚡</div>
+      <h2 class="text-base text-purple-300 font-bold mb-1 tracking-widest">PACT WITH OVERLORD RICO</h2>
+      <p class="text-xs text-slate-300 mb-3 leading-relaxed">
+        You are lagging far behind the other lords! The Overlord offers you demonic power.
+        Sacrifice all your current towns, gold, and gear to become <strong class="text-red-400">THE DARKLING</strong>!
+      </p>
+      <div class="pixel-box p-3 bg-purple-950/60 border-purple-800 text-left text-xs space-y-1 mb-4 text-purple-200">
+        <div>• 🎲 Roll <strong class="text-amber-300">3 DICE</strong> every turn!</div>
+        <div>• ⚔️ Base Stats Multiplied by <strong class="text-rose-400">3X</strong>!</div>
+        <div>• 👾 Cast global calamities: Summon monsters to take over towns!</div>
+        <div>• ⏳ Transformation lasts for <strong class="text-amber-300">14 TURNS</strong>!</div>
+      </div>
+      <div class="flex gap-3 justify-center">
+        <button id="btnAcceptDarkling" class="pixel-btn pixel-btn-purple flex-1 py-2.5 text-xs font-bold text-white tracking-wider">
+          ACCEPT DARK PACT! 😈
+        </button>
+        <button id="btnRejectDarkling" class="pixel-btn flex-1 py-2.5 text-xs font-bold text-slate-400 hover:text-white">
+          DECLINE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DARKLING FIELD CALAMITY MODAL (z-40) -->
+  <div id="darklingSpellsModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box-darkling max-w-md w-full p-5 text-center">
+      <h3 class="text-sm font-bold text-purple-300 mb-2">⚡ DARKLING CALAMITIES ⚡</h3>
+      <div class="space-y-2 mb-3">
+        <button id="btnCalamityInvade" class="pixel-btn pixel-btn-purple w-full p-2 text-xs flex justify-between items-center text-white">
+          <span>👾 SUMMON INVADERS</span>
+          <span class="text-[9px] text-purple-200">Reclaims towns with monsters</span>
+        </button>
+        <button id="btnCalamityPlague" class="pixel-btn pixel-btn-red w-full p-2 text-xs flex justify-between items-center text-white">
+          <span>💀 GLOBAL PLAGUE</span>
+          <span class="text-[9px] text-rose-200">Halves stats of all rivals</span>
+        </button>
+        <button id="btnCalamityWarp" class="pixel-btn pixel-btn-gold w-full p-2 text-xs flex justify-between items-center text-slate-950 font-bold">
+          <span>🎯 DEMON WARP</span>
+          <span class="text-[9px] text-amber-950">Warps near the 1st place player</span>
+        </button>
+      </div>
+      <button id="btnCloseDarklingSpells" class="pixel-btn px-4 py-1 text-xs text-slate-400">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- KING'S WEEKLY REPORT & NET WORTH CEREMONY MODAL (z-40) -->
+  <div id="weeklyReportModal" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-xl w-full p-6 text-center shadow-2xl">
+      <div class="text-4xl mb-1 animate-bounce">👑🏰🎺</div>
+      <h2 class="text-base text-amber-300 font-bold mb-1 tracking-wider">ROYAL WEEKLY REPORT</h2>
+      <p id="weeklyWeekTitle" class="text-xs text-slate-300 mb-4 font-bold">End of Week 1 Ceremony</p>
+      
+      <div id="weeklyRankingsTable" class="pixel-box p-3 bg-slate-900 border-slate-800 space-y-2 mb-4 text-xs text-left">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <p id="weeklyKingSpeech" class="text-xs text-amber-200 italic mb-4">
+        "Work harder, heroes! The Kingdom demands prosperity and slain monsters!"
+      </p>
+
+      <button id="btnDismissWeeklyReport" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
+        PROCEED TO NEXT WEEK ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- TOWN & TERRITORY MODAL (z-40) -->
+  <div id="townModal" class="hidden absolute inset-0 z-40 bg-black/70 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box-gold max-w-lg w-full p-5 relative">
+      <div class="flex items-center justify-between border-b-2 border-amber-600/40 pb-2 mb-3">
+        <div>
+          <h2 id="townName" class="text-base font-bold text-amber-300 tracking-wider">Oaktown</h2>
+          <span id="townBiome" class="text-[10px] text-slate-400">Verdant Plains Level 1</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[9px] text-slate-400 block">JURISDICTION</span>
+          <span id="townOwnerText" class="text-xs font-bold text-emerald-400">Neutral</span>
+        </div>
+      </div>
+
+      <p id="townDesc" class="text-xs text-slate-300 mb-3 leading-relaxed">
+        A prosperous merchant settlement. Rest your party, invest in infrastructure, or collect taxes!
+      </p>
+
+      <div class="grid grid-cols-2 gap-2.5 mb-3">
+        <button id="btnTownInn" class="pixel-btn pixel-btn-green p-2.5 text-xs flex flex-col items-center text-center gap-1">
+          <span class="text-base">🛏️</span>
+          <span class="font-bold">REST AT INN</span>
+          <span class="text-[9px] text-emerald-100">Full HP & MP (30G)</span>
+        </button>
+        <button id="btnTownInvest" class="pixel-btn pixel-btn-gold p-2.5 text-xs flex flex-col items-center text-center gap-1">
+          <span class="text-base">📈</span>
+          <span class="font-bold">INVEST GOLD</span>
+          <span id="townInvestCostText" class="text-[9px] text-amber-950 font-bold">Upgrade Town (150G)</span>
+        </button>
+        <button id="btnTownCollect" class="pixel-btn pixel-btn-blue p-2.5 text-xs flex flex-col items-center text-center gap-1">
+          <span class="text-base">🪙</span>
+          <span class="font-bold">COLLECT TAX</span>
+          <span class="text-[9px] text-blue-100">Gather Local Funds</span>
+        </button>
+        <button id="btnTownRob" class="pixel-btn pixel-btn-red p-2.5 text-xs flex flex-col items-center text-center gap-1">
+          <span class="text-base">🏴‍☠️</span>
+          <span class="font-bold">ROB TOWN</span>
+          <span class="text-[9px] text-rose-200">Fight Town Guards</span>
+        </button>
+      </div>
+
+      <div class="flex justify-end">
+        <button id="btnLeaveTown" class="pixel-btn px-5 py-1.5 text-xs font-bold text-slate-300 hover:text-white">
+          DEPART ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOP MODAL (z-40) -->
+  <div id="shopModal" class="hidden absolute inset-0 z-40 bg-black/75 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box max-w-2xl w-full p-5 border-slate-700 flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🏪</span>
+          <h2 id="shopTitle" class="text-sm font-bold text-amber-300">KINGDOM MERCHANDISE</h2>
+        </div>
+        <div class="text-xs text-amber-400 font-bold flex items-center gap-1">
+          <span>GOLD:</span>
+          <span id="shopPlayerGold">300G</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mb-2.5">
+        <button id="btnShopTabBuy" class="pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950">
+          BUY GOODS
+        </button>
+        <button id="btnShopTabSell" class="pixel-btn px-3.5 py-1 text-xs text-slate-300">
+          SELL BAG
+        </button>
+      </div>
+
+      <div id="shopItemList" class="flex-1 overflow-y-auto space-y-2 pr-1 mb-3"></div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-800">
+        <button id="btnCloseShop" class="pixel-btn px-5 py-1.5 text-xs font-bold text-slate-300 hover:text-white">
+          EXIT SHOP
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTORY & GEAR MODAL (z-40) -->
+  <div id="inventoryModal" class="hidden absolute inset-0 z-40 bg-black/75 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box max-w-2xl w-full p-5 border-slate-700 flex flex-col max-h-[85vh]">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="text-lg">🎒</span>
+          <div>
+            <h2 id="invHeroName" class="text-sm font-bold text-amber-300">Hero's Bag</h2>
+            <span id="invHeroStatsSummary" class="text-[10px] text-slate-400">LV 1 Warrior</span>
+          </div>
+        </div>
+        <button id="btnCloseInventory" class="pixel-btn px-3 py-1 text-xs text-slate-300 hover:text-white">
+          ✖ CLOSE
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 overflow-y-auto">
+        <!-- Equipment Slots -->
+        <div class="pixel-box p-2.5 bg-slate-900 border-slate-800">
+          <h3 class="text-xs text-amber-400 font-bold border-b border-slate-800 pb-1 mb-2">EQUIPPED SLOTS</h3>
+          <div class="space-y-1.5 text-[10px]" id="equippedSlotsList"></div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 space-y-1" id="statBreakdownList"></div>
+        </div>
+
+        <!-- Satchel Bag Items -->
+        <div class="md:col-span-2 pixel-box p-2.5 bg-slate-900 border-slate-800 flex flex-col">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-1 mb-2">
+            <h3 class="text-xs text-blue-300 font-bold">ADVENTURER SATCHEL</h3>
+            <span id="invCapacityCount" class="text-[10px] text-slate-400">1/12 Items</span>
+          </div>
+          <div id="satchelItemsList" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN CONTINENT WORLD MAP MODAL (z-40) -->
+  <div id="worldMapModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
+    <div class="pixel-box-gold max-w-4xl w-full p-5 flex flex-col max-h-[92vh]">
+      <div class="flex justify-between items-center border-b border-amber-600/40 pb-2 mb-3">
+        <div>
+          <h2 class="text-base font-bold text-amber-300">CONTINENT OF FORTUNA 2.5D ATLAS</h2>
+          <p class="text-[10px] text-slate-400">Isometric strategic map of all 5 continental realms, towns, and dark gates.</p>
+        </div>
+        <button id="btnCloseWorldMap" class="pixel-btn px-3 py-1 text-xs text-slate-300 hover:text-white">
+          ✖ CLOSE
+        </button>
+      </div>
+      <div class="flex-1 relative bg-slate-950 rounded border-2 border-amber-900/60 overflow-hidden flex items-center justify-center">
+        <canvas id="worldMapCanvas" class="block w-full h-full max-h-[65vh]"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANDOM EVENT MODAL (z-40) -->
+  <div id="eventModal" class="hidden absolute inset-0 z-40 bg-black/75 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box-gold max-w-md w-full p-5 text-center">
+      <div id="eventIcon" class="text-3xl mb-2">🎁</div>
+      <h3 id="eventTitle" class="text-sm text-amber-300 font-bold mb-1.5">Mysterious Encounter</h3>
+      <p id="eventDescription" class="text-xs text-slate-300 leading-relaxed mb-4">
+        An event takes place on the path ahead.
+      </p>
+      <div id="eventOptionsContainer" class="flex flex-col gap-2"></div>
+    </div>
+  </div>
+
+  <!-- LEVEL UP MODAL (z-40) -->
+  <div id="levelUpModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-sm">
+    <div class="pixel-box-gold max-w-sm w-full p-5 text-center">
+      <div class="text-3xl animate-bounce mb-1">⭐</div>
+      <h2 class="text-base text-amber-400 font-bold mb-1 tracking-widest">LEVEL ADVANCEMENT!</h2>
+      <p id="lvlUpPlayerName" class="text-xs text-emerald-300 font-bold mb-2">Hero reached Level 2!</p>
+      <div id="lvlUpStatIncreases" class="pixel-box p-2.5 bg-slate-900 border-slate-800 text-xs text-left space-y-1 mb-3 text-slate-300"></div>
+      <button id="btnDismissLevelUp" class="pixel-btn pixel-btn-gold px-5 py-2 text-xs font-bold text-slate-950 w-full">
+        CONTINUE EXPEDITION ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- VICTORY RECAP MODAL (z-40) -->
+  <div id="victoryModal" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4 pointer-events-auto">
+    <div class="pixel-box-gold max-w-md w-full p-6 text-center shadow-2xl">
+      <div class="text-4xl mb-2">👑🏆👑</div>
+      <h1 class="text-lg text-amber-300 font-bold mb-1 tracking-widest">GRAND MONARCH OF DOKAPON!</h1>
+      <p id="victorySubtitle" class="text-xs text-emerald-400 mb-4 font-bold">Player 1 reigns supreme!</p>
+      <div id="victoryStatsSummary" class="pixel-box p-3 bg-slate-900 border-slate-800 text-xs text-left mb-4 space-y-1.5 text-slate-300"></div>
+      <button id="btnPlayAgain" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
+        PLAY AGAIN
+      </button>
+    </div>
+  </div>
+
+  <!-- SETTINGS & GUIDE MODAL (z-40) -->
+  <div id="settingsModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
+    <div class="pixel-box max-w-md w-full p-5 border-slate-700">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+        <h3 class="text-xs font-bold text-amber-300">GAME RULES & SETTINGS</h3>
+        <button id="btnCloseSettings" class="text-slate-400 hover:text-white text-xs">✖</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 mb-4">
+        <div>
+          <h4 class="text-amber-400 font-bold mb-1">🎮 DOKAPON COMBAT RULES</h4>
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            • <strong>Attacker</strong> picks: Attack, Strike, Magic, or Skill.<br>
+            • <strong>Defender</strong> picks: Defend, Counter, Magic Guard, or Give Up.<br>
+            • <strong>Strike vs Defend:</strong> Pierces defense for 2.5x fatal damage!<br>
+            • <strong>Counter vs Strike:</strong> Perfect parry & counter-kills the attacker!<br>
+            • <strong>Magic Guard:</strong> Blocks spells completely!<br>
+            • <strong>PvP Defeat:</strong> Loser gets robbed, town stolen, or face scribbled with graffiti!
+          </p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span>Synthesized 8-Bit Audio:</span>
+            <input type="checkbox" id="checkSound" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Screen Shake:</span>
+            <input type="checkbox" id="checkShake" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Retro Scanline Filter:</span>
+            <input type="checkbox" id="checkScanlines" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button id="btnConfirmSettings" class="pixel-btn pixel-btn-blue px-5 py-1.5 text-xs font-bold text-white">
+          CONFIRM
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME CHRONICLE LOG DRAWER (z-40) -->
+  <div id="gameLogDrawer" class="hidden absolute top-14 right-4 z-40 max-w-sm w-full pixel-box p-3 bg-slate-900/95 shadow-2xl border-slate-700 pointer-events-auto max-h-72 flex flex-col">
+    <div class="flex justify-between items-center pb-1.5 border-b border-slate-800 mb-2">
+      <span class="text-xs text-amber-400 font-bold">DOKAPON EXPEDITION CHRONICLE</span>
+      <button id="btnCloseLog" class="text-slate-400 hover:text-white text-xs px-1">✖</button>
+    </div>
+    <div id="logMessagesList" class="flex-1 overflow-y-auto space-y-1 text-[10px] text-slate-300 pr-1"></div>
+  </div>
+
+  <!-- TITLE SCREEN & CHARACTER SELECT (Initial State z-40) -->
+  <div id="titleScreen" class="absolute inset-0 z-40 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 pointer-events-auto">
+    <div class="text-center mb-6">
+      <div class="inline-block px-3 py-1 rounded bg-amber-500/20 text-amber-400 text-[10px] tracking-widest font-bold mb-2 border border-amber-500/40">
+        2.5D ISOMETRIC PIXEL BOARD RPG
+      </div>
+      <h1 class="text-3xl md:text-5xl text-amber-300 font-extrabold tracking-wider drop-shadow-md">
+        DOKAPON
+      </h1>
+      <h2 class="text-xl md:text-3xl text-amber-500 font-bold tracking-widest mt-1">
+        CHRONICLES
+      </h2>
+      <p class="text-[11px] text-slate-400 mt-2 max-w-sm mx-auto">
+        A brutal friend-ruining tactical adventure across a living 2.5D diagonal continent!
+      </p>
+    </div>
+
+    <!-- Main Title Menu Options -->
+    <div id="titleButtonsBlock" class="flex flex-col gap-2.5 w-64 max-w-full">
+      <button id="btnStartAdventure" class="pixel-btn pixel-btn-gold py-3 text-xs font-bold text-slate-950 tracking-wider flex items-center justify-center gap-2">
+        <span>⚔️</span>
+        <span>NEW GAME</span>
+      </button>
+      <button id="btnTitleLoadGame" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
+        CONTINUE EXPEDITION
+      </button>
+      <button id="btnHowToPlay" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
+        RULES & RPS GUIDE
+      </button>
+    </div>
+
+    <!-- Character Setup Screen -->
+    <div id="playerSetupBlock" class="hidden pixel-box-gold max-w-xl w-full p-5 flex flex-col gap-3">
+      <div class="flex justify-between items-center border-b border-amber-600/40 pb-2">
+        <h3 class="text-xs font-bold text-amber-300">ADVENTURER ROSTER</h3>
+        <span class="text-[10px] text-slate-300">2 to 4 Players</span>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-300">
+        <span>Party Size:</span>
+        <div class="flex gap-2">
+          <button class="player-count-btn pixel-btn px-3 py-1 text-xs text-slate-300" data-count="2">2P</button>
+          <button class="player-count-btn pixel-btn pixel-btn-gold px-3 py-1 text-xs text-slate-950 font-bold" data-count="3">3P</button>
+          <button class="player-count-btn pixel-btn px-3 py-1 text-xs text-slate-300" data-count="4">4P</button>
+        </div>
+      </div>
+
+      <div id="playerSetupRoster" class="grid grid-cols-1 md:grid-cols-2 gap-2.5"></div>
+
+      <div class="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
+        <span>Victory Goal:</span>
+        <select id="selectWinGoal" class="bg-slate-950 border border-slate-700 text-amber-300 rounded px-2 py-1 text-xs outline-none">
+          <option value="networth">Highest Net Worth (4 Weeks)</option>
+          <option value="towns">Liberate 4 Towns</option>
+          <option value="boss">Defeat Dragon Overlord</option>
+          <option value="gold">First to 3,000 Gold</option>
+        </select>
+      </div>
+
+      <div class="flex justify-between items-center pt-2">
+        <button id="btnBackToMenu" class="pixel-btn px-4 py-1.5 text-xs text-slate-400 hover:text-white">
+          ◀ BACK
+        </button>
+        <button id="btnBeginGame" class="pixel-btn pixel-btn-gold px-6 py-2 text-xs font-bold text-slate-950">
+          ENTER REALM ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
