@@ -1,3 +1,5 @@
+import { trpgAssets } from './TRPGAssetLoader';
+
 export interface EquipmentItem {
   id: string;
   name: string;
@@ -526,7 +528,11 @@ export class PixelSpriteGenerator {
       bob = -4;
     }
 
-    if (isDarkling) {
+    if (trpgAssets.isLoaded) {
+      const entityKey = isDarkling ? 'darkling' : classKey;
+      const entitySprite = trpgAssets.getEntitySprite(entityKey, dir, animState, frame, 96, 96);
+      ctx.drawImage(entitySprite, stepX, bob + stepY);
+    } else if (isDarkling) {
       this.renderDarklingSprite(ctx, dir, animState, bob, stepX, lean, frame);
     } else {
       this.renderDarkFantasyHero(ctx, classKey, dir, animState, bob, stepX, stepY, lean, frame, equipment);
@@ -875,6 +881,20 @@ export class PixelSpriteGenerator {
 
     const cx = 70 + lungeX;
     const cy = 68 + lungeY + bob;
+
+    if (trpgAssets.isLoaded) {
+      const entitySprite = trpgAssets.getEntitySprite(
+        monsterKey,
+        dir,
+        animState as CharacterAnimState,
+        frame,
+        130,
+        138
+      );
+      ctx.drawImage(entitySprite, cx - 65, cy - 65);
+      this.cache.set(key, canvas);
+      return canvas;
+    }
 
     // 1. 2.5D Ground Drop Shadow with Depth Blur
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -1227,6 +1247,14 @@ export class PixelSpriteGenerator {
     if (this.cache.has(key)) return this.cache.get(key)!;
 
     const { canvas, ctx } = this.makeCanvas(240, 240);
+
+    if (trpgAssets.isLoaded) {
+      const boss = trpgAssets.getEntitySprite('demon', 'SW', 'idle', frame, 220, 234);
+      ctx.drawImage(boss, 10, 3);
+      this.cache.set(key, canvas);
+      return canvas;
+    }
+
     const cx = 120;
     const cy = 125;
     const wingFlap = [0, -10, -18, -8][frame % 4];
@@ -1974,6 +2002,13 @@ export class PixelSpriteGenerator {
   getTreeSprite(type: string = 'oak', wind: number = 0): HTMLCanvasElement {
     const key = `dark_tree_${type}_${Math.floor(wind)}`;
     if (this.cache.has(key)) return this.cache.get(key)!;
+
+    if (trpgAssets.isLoaded) {
+      const propKey = type === 'snow_pine' ? 'pine_tree' : type === 'magic' ? 'crystals' : 'bush';
+      const prop = trpgAssets.getPropCanvas(propKey, 64, 80);
+      this.cache.set(key, prop);
+      return prop;
+    }
 
     const { canvas, ctx } = this.makeCanvas(64, 80);
     const wx = Math.sin(wind) * 3;

@@ -4,6 +4,7 @@ import { pixelSprites, CharacterAnimState } from '../engine/PixelSpriteGenerator
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX } from '../engine/CombatVFXEngine';
+import { trpgAssets } from '../engine/TRPGAssetLoader';
 
 export class BattleUI {
   private game: GameState;
@@ -421,7 +422,7 @@ export class BattleUI {
     const c2x = pxCenter + tileW / 2;
     const c2y = pyCenter;
     this.drawUnitTeamRing(ctx, c2x, c2y, '#4ade80', 0.5);
-    const rangerSprite = pixelSprites.getHeroSprite('thief', 'NE', 'idle', pFrame);
+    const rangerSprite = pixelSprites.getHeroSprite('ranger', 'NE', 'idle', pFrame);
     ctx.drawImage(rangerSprite, c2x - 45, c2y - 52, 90, 90);
 
     // Companion 3: Mage (Flank row: col 1, row 0)
@@ -484,30 +485,45 @@ export class BattleUI {
       const rComp = pixelSprites.getHeroSprite('warrior', 'SW', 'idle', pFrame);
       ctx.drawImage(rComp, ex + tileW / 2 - 45, ey - 52, 90, 90);
     } else {
-      // BROWN DUST 2 ELEMENTAL SLIME CLUSTER (Exact party formation from screenshot!)
-      // Slime Companion 1: Frost Slime (Tile col 0, row 1)
+      const eName = enemyCombatant.name.toLowerCase();
+      const isGoblin = eName.includes('goblin');
+      const isUndead = eName.includes('spider') || eName.includes('bat') || eName.includes('ghost') || eName.includes('skeleton');
+
+      // Enemy Minion 1 (Tile col 0, row 1)
       const ec1x = exCenter - tileW / 2;
       const ec1y = eyCenter;
-      const frostSlime = pixelSprites.getBrownDust2Slime('ice', pFrame, 'SW');
-      ctx.drawImage(frostSlime, ec1x - 50, ec1y - 52, 100, 100);
+      const m1Key = isGoblin ? 'goblin_mage' : isUndead ? 'spider' : 'slime';
+      const m1 = trpgAssets.isLoaded
+        ? trpgAssets.getEntitySprite(m1Key, 'SW', 'idle', pFrame, 95, 100)
+        : pixelSprites.getBrownDust2Slime('ice', pFrame, 'SW');
+      ctx.drawImage(m1, ec1x - 48, ec1y - 50, 96, 100);
 
-      // Slime Companion 2: Sun / Volt Slime (Tile col 2, row 1)
+      // Enemy Minion 2 (Tile col 2, row 1)
       const ec2x = exCenter + tileW / 2;
       const ec2y = eyCenter;
-      const sunSlime = pixelSprites.getBrownDust2Slime('sun', pFrame, 'SW');
-      ctx.drawImage(sunSlime, ec2x - 50, ec2y - 52, 100, 100);
+      const m2Key = isGoblin ? 'goblin_spear' : isUndead ? 'bat' : 'slime';
+      const m2 = trpgAssets.isLoaded
+        ? trpgAssets.getEntitySprite(m2Key, 'SW', 'idle', pFrame, 95, 100)
+        : pixelSprites.getBrownDust2Slime('sun', pFrame, 'SW');
+      ctx.drawImage(m2, ec2x - 48, ec2y - 50, 96, 100);
 
-      // Slime Companion 3: Blossom Slime (Tile col 1, row 0)
+      // Enemy Minion 3 (Tile col 1, row 0)
       const ec3x = exCenter;
       const ec3y = eyCenter - tileH;
-      const blossomSlime = pixelSprites.getBrownDust2Slime('blossom', pFrame, 'SW');
-      ctx.drawImage(blossomSlime, ec3x - 50, ec3y - 52, 100, 100);
+      const m3Key = isGoblin ? 'goblin_archer' : isUndead ? 'ghost' : 'slime';
+      const m3 = trpgAssets.isLoaded
+        ? trpgAssets.getEntitySprite(m3Key, 'SW', 'idle', pFrame, 95, 100)
+        : pixelSprites.getBrownDust2Slime('blossom', pFrame, 'SW');
+      ctx.drawImage(m3, ec3x - 48, ec3y - 50, 96, 100);
 
-      // Slime Companion 4: Golden King Slime (Tile col 1, row 2)
+      // Enemy Minion 4 (Tile col 1, row 2)
       const ec4x = exCenter;
       const ec4y = eyCenter + tileH;
-      const goldSlime = pixelSprites.getBrownDust2Slime('gold', pFrame, 'SW');
-      ctx.drawImage(goldSlime, ec4x - 50, ec4y - 52, 100, 100);
+      const m4Key = isGoblin ? 'goblin' : isUndead ? 'skeleton' : 'slime';
+      const m4 = trpgAssets.isLoaded
+        ? trpgAssets.getEntitySprite(m4Key, 'SW', 'idle', pFrame, 95, 100)
+        : pixelSprites.getBrownDust2Slime('gold', pFrame, 'SW');
+      ctx.drawImage(m4, ec4x - 48, ec4y - 50, 96, 100);
 
       // Primary Target Enemy (Center tile col 1, row 1)
       this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);

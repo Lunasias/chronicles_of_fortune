@@ -2,6 +2,7 @@ import { BoardNode } from '../game/BoardMap';
 import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
+import { trpgAssets } from './TRPGAssetLoader';
 
 export interface Camera2D {
   x: number;
@@ -478,9 +479,29 @@ export class IsometricRenderer {
       ctx.fill();
     }
 
-    // 1. Draw Authentic Dark Fantasy Isometric Terrain Slab
-    const isoTerrain = pixelSprites.getTerrainBlock(node.biome, node.id, this.tileWidth, 64);
-    ctx.drawImage(isoTerrain, cx - hw, cy - hh, this.tileWidth, 64);
+    // 1. Draw Authentic Isometric Terrain Slab
+    if (trpgAssets.isLoaded) {
+      let tileType = 'grass';
+      if (node.type === 'town') tileType = 'castle_brick';
+      else if (node.type === 'shop_weapon') tileType = 'stone';
+      else if (node.type === 'shop_magic') tileType = 'castle_brick';
+      else if (node.type === 'church') tileType = 'castle_brick';
+      else if (node.type === 'dark_gate' || node.type === 'boss') tileType = 'lava';
+      else if (node.type === 'vault') tileType = 'sand';
+      else if (node.biome === 'snow') tileType = 'snow';
+      else if (node.biome === 'volcano') tileType = 'lava';
+      else if (node.biome === 'desert') tileType = 'sand';
+      else if (node.biome === 'cavern') tileType = 'stone';
+      else if (node.biome === 'coral') tileType = 'water';
+      else if (node.biome === 'abyss') tileType = 'poison';
+      else tileType = node.id % 2 === 0 ? 'grass' : 'dirt';
+
+      const isoTerrain = trpgAssets.getTileCanvas(tileType, this.tileWidth, 74);
+      ctx.drawImage(isoTerrain, cx - hw, cy - hh - 6, this.tileWidth, 74);
+    } else {
+      const isoTerrain = pixelSprites.getTerrainBlock(node.biome, node.id, this.tileWidth, 64);
+      ctx.drawImage(isoTerrain, cx - hw, cy - hh, this.tileWidth, 64);
+    }
 
     // 2. Dokapon Signature Node Medallion Plate in Center
     ctx.save();
@@ -499,43 +520,67 @@ export class IsometricRenderer {
     ctx.fillText(icon, cx, cy + 1);
     ctx.restore();
 
-    // 4. Outer Diamond Border Highlight / Hover (Bright Light Blue for Reachable Destination Spaces!)
+    // 4. Outer Diamond Border Highlight / Hover (Reachable Destination Spaces!)
     if (isHovered || isHighlighted) {
-      // Luminous Bright Light Blue overlay across the top diamond face
-      ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.35)' : 'rgba(0, 240, 255, 0.40)';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx - hw, cy);
-      ctx.closePath();
-      ctx.fill();
+      if (trpgAssets.isLoaded) {
+        // Authentic TRPG Map Indicator Target Ring
+        const ringKey = isHovered ? 'ring_gold' : 'ring_cyan';
+        const ringCanvas = trpgAssets.getIndicatorCanvas(ringKey, 64, 34);
+        ctx.drawImage(ringCanvas, cx - 32, cy - 17);
 
-      // Sharp bright light blue boundary stroke
-      ctx.strokeStyle = isHovered ? '#38bdf8' : '#00f0ff';
-      ctx.lineWidth = isHovered ? 3.5 : 3.0;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx - hw, cy);
-      ctx.closePath();
-      ctx.stroke();
+        // Luminous highlight overlay across top diamond
+        ctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.25)' : 'rgba(56, 189, 248, 0.30)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - hh);
+        ctx.lineTo(cx + hw, cy);
+        ctx.lineTo(cx, cy + hh);
+        ctx.lineTo(cx - hw, cy);
+        ctx.closePath();
+        ctx.fill();
 
-      // Holographic Pulsing Target Ring in bright light blue
-      const pulse = Math.sin(time * 0.008) * 4;
-      ctx.strokeStyle = isHovered ? 'rgba(56, 189, 248, 0.8)' : 'rgba(0, 240, 255, 0.85)';
-      ctx.lineWidth = 2.0;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, hw + pulse, hh + pulse * 0.5, 0, 0, Math.PI * 2);
-      ctx.stroke();
+        ctx.strokeStyle = isHovered ? '#fbbf24' : '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
 
-      // Floating bright light blue diamond indicator beacon with glowing pulse
-      ctx.fillStyle = isHovered ? '#38bdf8' : '#00f0ff';
-      ctx.shadowColor = isHovered ? '#38bdf8' : '#00f0ff';
-      ctx.shadowBlur = 14;
-      this.drawDiamond(ctx, cx, cy - hh - 16 + Math.sin(time * 0.006) * 4, 16, 20);
-      ctx.shadowBlur = 0;
+        // Authentic TRPG Map Indicator Diamond Beacon
+        const indKey = isHovered ? 'yellow' : 'blue';
+        const indCanvas = trpgAssets.getIndicatorCanvas(indKey, 28, 14);
+        const floatY = Math.sin(time * 0.006) * 4;
+        ctx.drawImage(indCanvas, cx - 14, cy - hh - 20 + floatY);
+      } else {
+        // Fallback procedural indicator
+        ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.35)' : 'rgba(0, 240, 255, 0.40)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - hh);
+        ctx.lineTo(cx + hw, cy);
+        ctx.lineTo(cx, cy + hh);
+        ctx.lineTo(cx - hw, cy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = isHovered ? '#38bdf8' : '#00f0ff';
+        ctx.lineWidth = isHovered ? 3.5 : 3.0;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - hh);
+        ctx.lineTo(cx + hw, cy);
+        ctx.lineTo(cx, cy + hh);
+        ctx.lineTo(cx - hw, cy);
+        ctx.closePath();
+        ctx.stroke();
+
+        const pulse = Math.sin(time * 0.008) * 4;
+        ctx.strokeStyle = isHovered ? 'rgba(56, 189, 248, 0.8)' : 'rgba(0, 240, 255, 0.85)';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, hw + pulse, hh + pulse * 0.5, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = isHovered ? '#38bdf8' : '#00f0ff';
+        ctx.shadowColor = isHovered ? '#38bdf8' : '#00f0ff';
+        ctx.shadowBlur = 14;
+        this.drawDiamond(ctx, cx, cy - hh - 16 + Math.sin(time * 0.006) * 4, 16, 20);
+        ctx.shadowBlur = 0;
+      }
     }
   }
 
