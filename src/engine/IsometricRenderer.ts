@@ -2,7 +2,6 @@ import { BoardNode } from '../game/BoardMap';
 import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
-import { trpgAssets } from './TRPGAssetLoader';
 
 export interface Camera2D {
   x: number;
@@ -351,14 +350,9 @@ export class IsometricRenderer {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 20,
           draw: () => {
-            if (trpgAssets.isLoaded && (node.biome === 'snow' || node.biome === 'forest')) {
-              const pine = trpgAssets.getPropCanvas('pine_tree', 48, 87);
-              ctx.drawImage(pine, p.x + 28, p.y - 74, 48, 87);
-            } else {
-              const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
-              const tree = pixelSprites.getTreeSprite(treeType, time * 0.002 + node.id);
-              ctx.drawImage(tree, p.x + 32, p.y - 64, 52, 72);
-            }
+            const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
+            const tree = pixelSprites.getTreeSprite(treeType, time * 0.002 + node.id);
+            ctx.drawImage(tree, p.x + 32, p.y - 64, 52, 72);
           }
         });
       }
@@ -368,15 +362,7 @@ export class IsometricRenderer {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 15,
           draw: () => {
-            if (trpgAssets.isLoaded && node.biome === 'abyss') {
-              const crystal = trpgAssets.getPropCanvas('crystals', 36, 38);
-              ctx.drawImage(crystal, p.x - 36, p.y - 42, 36, 38);
-            } else if (trpgAssets.isLoaded && node.biome === 'desert') {
-              const boulder = trpgAssets.getPropCanvas('boulder', 32, 34);
-              ctx.drawImage(boulder, p.x - 34, p.y - 36, 32, 34);
-            } else {
-              this.drawDarkFantasyBiomeProp(ctx, p.x - 38, p.y - 42, node.biome, node.id, time);
-            }
+            this.drawDarkFantasyBiomeProp(ctx, p.x - 38, p.y - 42, node.biome, node.id, time);
           }
         });
       }
@@ -493,29 +479,9 @@ export class IsometricRenderer {
       ctx.fill();
     }
 
-    // 1. Draw Authentic Isometric Terrain Slab
-    if (trpgAssets.isLoaded) {
-      let tileType = 'grass';
-      if (node.type === 'town') tileType = 'castle_brick';
-      else if (node.type === 'shop_weapon') tileType = 'stone';
-      else if (node.type === 'shop_magic') tileType = 'castle_brick';
-      else if (node.type === 'church') tileType = 'castle_brick';
-      else if (node.type === 'dark_gate' || node.type === 'boss') tileType = 'lava';
-      else if (node.type === 'vault') tileType = 'sand';
-      else if (node.biome === 'snow') tileType = 'snow';
-      else if (node.biome === 'volcano') tileType = 'lava';
-      else if (node.biome === 'desert') tileType = 'sand';
-      else if (node.biome === 'cavern') tileType = 'stone';
-      else if (node.biome === 'coral') tileType = 'water';
-      else if (node.biome === 'abyss') tileType = 'poison';
-      else tileType = node.id % 2 === 0 ? 'grass' : 'dirt';
-
-      const isoTerrain = trpgAssets.getTileCanvas(tileType, this.tileWidth, 74);
-      ctx.drawImage(isoTerrain, cx - hw, cy - hh - 6, this.tileWidth, 74);
-    } else {
-      const isoTerrain = pixelSprites.getTerrainBlock(node.biome, node.id, this.tileWidth, 64);
-      ctx.drawImage(isoTerrain, cx - hw, cy - hh, this.tileWidth, 64);
-    }
+    // 1. Draw Authentic 2.5D Isometric Terrain Slab
+    const isoTerrain = pixelSprites.getTerrainBlock(node.biome, node.id, this.tileWidth, 64);
+    ctx.drawImage(isoTerrain, cx - hw, cy - hh, this.tileWidth, 64);
 
     // 2. Dokapon Signature Node Medallion Plate in Center
     ctx.save();
@@ -534,67 +500,51 @@ export class IsometricRenderer {
     ctx.fillText(icon, cx, cy + 1);
     ctx.restore();
 
-    // 4. Outer Diamond Border Highlight / Hover (Reachable Destination Spaces!)
+    // 4. Outer Diamond Border Highlight / Hover (Reachable Destination Spaces - Bright Cyan!)
     if (isHovered || isHighlighted) {
-      if (trpgAssets.isLoaded) {
-        // Authentic TRPG Map Indicator Target Ring
-        const ringKey = isHovered ? 'ring_gold' : 'ring_cyan';
-        const ringCanvas = trpgAssets.getIndicatorCanvas(ringKey, 64, 34);
-        ctx.drawImage(ringCanvas, cx - 32, cy - 17);
+      const ringColor = isHovered ? '#fde047' : '#00f0ff';
+      const fillGlow = isHovered ? 'rgba(251, 191, 36, 0.35)' : 'rgba(0, 240, 255, 0.40)';
 
-        // Luminous highlight overlay across top diamond
-        ctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.25)' : 'rgba(56, 189, 248, 0.30)';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - hh);
-        ctx.lineTo(cx + hw, cy);
-        ctx.lineTo(cx, cy + hh);
-        ctx.lineTo(cx - hw, cy);
-        ctx.closePath();
-        ctx.fill();
+      // Glowing pulsing tile footprint
+      ctx.fillStyle = fillGlow;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - hh);
+      ctx.lineTo(cx + hw, cy);
+      ctx.lineTo(cx, cy + hh);
+      ctx.lineTo(cx - hw, cy);
+      ctx.closePath();
+      ctx.fill();
 
-        ctx.strokeStyle = isHovered ? '#fbbf24' : '#38bdf8';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
+      // Sharp glowing border
+      ctx.save();
+      ctx.strokeStyle = ringColor;
+      ctx.shadowColor = ringColor;
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = isHovered ? 3.5 : 3.0;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - hh);
+      ctx.lineTo(cx + hw, cy);
+      ctx.lineTo(cx, cy + hh);
+      ctx.lineTo(cx - hw, cy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
 
-        // Authentic TRPG Map Indicator Diamond Beacon
-        const indKey = isHovered ? 'yellow' : 'blue';
-        const indCanvas = trpgAssets.getIndicatorCanvas(indKey, 28, 14);
-        const floatY = Math.sin(time * 0.006) * 4;
-        ctx.drawImage(indCanvas, cx - 14, cy - hh - 20 + floatY);
-      } else {
-        // Fallback procedural indicator
-        ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.35)' : 'rgba(0, 240, 255, 0.40)';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - hh);
-        ctx.lineTo(cx + hw, cy);
-        ctx.lineTo(cx, cy + hh);
-        ctx.lineTo(cx - hw, cy);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = isHovered ? '#38bdf8' : '#00f0ff';
-        ctx.lineWidth = isHovered ? 3.5 : 3.0;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - hh);
-        ctx.lineTo(cx + hw, cy);
-        ctx.lineTo(cx, cy + hh);
-        ctx.lineTo(cx - hw, cy);
-        ctx.closePath();
-        ctx.stroke();
-
-        const pulse = Math.sin(time * 0.008) * 4;
-        ctx.strokeStyle = isHovered ? 'rgba(56, 189, 248, 0.8)' : 'rgba(0, 240, 255, 0.85)';
-        ctx.lineWidth = 2.0;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, hw + pulse, hh + pulse * 0.5, 0, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = isHovered ? '#38bdf8' : '#00f0ff';
-        ctx.shadowColor = isHovered ? '#38bdf8' : '#00f0ff';
-        ctx.shadowBlur = 14;
-        this.drawDiamond(ctx, cx, cy - hh - 16 + Math.sin(time * 0.006) * 4, 16, 20);
-        ctx.shadowBlur = 0;
-      }
+      // Floating Diamond Beacon above tile
+      const floatY = Math.sin(time * 0.006) * 4;
+      const beaconY = cy - hh - 18 + floatY;
+      ctx.save();
+      ctx.fillStyle = ringColor;
+      ctx.shadowColor = ringColor;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(cx, beaconY - 8);
+      ctx.lineTo(cx + 6, beaconY);
+      ctx.lineTo(cx, beaconY + 8);
+      ctx.lineTo(cx - 6, beaconY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
   }
 

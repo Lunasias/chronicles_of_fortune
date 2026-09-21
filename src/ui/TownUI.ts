@@ -2,7 +2,7 @@ import { GameState } from '../game/GameState';
 import { BoardNode } from '../game/BoardMap';
 import { townManager } from '../game/TownManager';
 import { audio } from '../engine/AudioSynthesizer';
-import { trpgAssets } from '../engine/TRPGAssetLoader';
+import { pixelSprites } from '../engine/PixelSpriteGenerator';
 
 export class TownUI {
   private game: GameState;
@@ -68,7 +68,7 @@ export class TownUI {
     const canvas = document.getElementById('townDioramaCanvas') as HTMLCanvasElement;
     if (canvas) {
       const ownerColor = owner?.color || null;
-      trpgAssets.renderTownPlazaDiorama(canvas, townNode.name, townNode.townData?.level || 1, ownerColor);
+      this.renderTownPlazaDiorama(canvas, townNode.name, townNode.townData?.level || 1, ownerColor);
     }
 
     modal.classList.remove('hidden');
@@ -146,5 +146,78 @@ export class TownUI {
     if (this.onTownLeaveCallback) {
       this.onTownLeaveCallback();
     }
+  }
+
+  // =========================================================================
+  // PROCEDURAL 2.5D ISOMETRIC TOWN PLAZA DIORAMA
+  // =========================================================================
+  private renderTownPlazaDiorama(
+    canvas: HTMLCanvasElement,
+    townName: string,
+    townLevel: number,
+    ownerColor: string | null
+  ) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Sky & Atmospheric Backdrop Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#060a14');
+    bgGrad.addColorStop(0.5, '#0f172a');
+    bgGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. 2.5D Isometric Flagstone Ground Paving
+    const tw = 48;
+    const th = 24;
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 12; col++) {
+        const cx = (col - row) * (tw / 2) + w * 0.35;
+        const cy = (col + row) * (th / 2) + 20;
+
+        ctx.fillStyle = (row + col) % 2 === 0 ? '#1e293b' : '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - th / 2);
+        ctx.lineTo(cx + tw / 2, cy);
+        ctx.lineTo(cx, cy + th / 2);
+        ctx.lineTo(cx - tw / 2, cy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    // 3. Central Town Citadel Fortress
+    const citadel = pixelSprites.getBuildingSprite('town', ownerColor);
+    ctx.drawImage(citadel, w * 0.44 - 40, h * 0.48 - 40, 80, 80);
+
+    // 4. City Watch Guard (Hero sprite)
+    const guard = pixelSprites.getHeroSprite('warrior', 'SE', 'idle', 0);
+    ctx.drawImage(guard, w * 0.22, h * 0.35, 60, 60);
+
+    // 5. Merchant Traveler (Hero sprite)
+    const merchant = pixelSprites.getHeroSprite('thief', 'SW', 'idle', 0);
+    ctx.drawImage(merchant, w * 0.72, h * 0.35, 60, 60);
+
+    // 6. Town Nameplate Ribbon
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.strokeStyle = ownerColor || '#fbbf24';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(14, 10, 220, 26, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = ownerColor || '#fde047';
+    ctx.font = 'bold 9px Silkscreen, sans-serif';
+    ctx.fillText(`🏰 ${townName} (LV ${townLevel})`, 22, 26);
   }
 }

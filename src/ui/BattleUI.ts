@@ -4,7 +4,6 @@ import { pixelSprites, CharacterAnimState } from '../engine/PixelSpriteGenerator
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX } from '../engine/CombatVFXEngine';
-import { trpgAssets } from '../engine/TRPGAssetLoader';
 
 export class BattleUI {
   private game: GameState;
@@ -95,12 +94,17 @@ export class BattleUI {
       ? 'text-[10px] bg-blue-900 px-1 rounded text-cyan-300'
       : 'text-[10px] bg-slate-800 px-1 rounded text-slate-300';
 
-    const pHpPct = Math.max(0, (pCombatant.hp / pCombatant.maxHp) * 100);
-    const pMpPct = Math.max(0, (pCombatant.mp / pCombatant.maxMp) * 100);
+    const curPHP = Math.max(0, Math.ceil(pCombatant.hp));
+    const maxPHP = Math.max(1, Math.ceil(pCombatant.maxHp));
+    const curPMP = Math.max(0, Math.ceil(pCombatant.mp));
+    const maxPMP = Math.max(1, Math.ceil(pCombatant.maxMp));
+
+    const pHpPct = Math.min(100, Math.max(0, (curPHP / maxPHP) * 100));
+    const pMpPct = Math.min(100, Math.max(0, (curPMP / maxPMP) * 100));
     document.getElementById('battlePlayerHP')!.style.width = `${pHpPct}%`;
-    document.getElementById('battlePlayerHPText')!.innerText = `${pCombatant.hp}/${pCombatant.maxHp}`;
+    document.getElementById('battlePlayerHPText')!.innerText = `${curPHP}/${maxPHP}`;
     document.getElementById('battlePlayerMP')!.style.width = `${pMpPct}%`;
-    document.getElementById('battlePlayerMPText')!.innerText = `${pCombatant.mp}/${pCombatant.maxMp}`;
+    document.getElementById('battlePlayerMPText')!.innerText = `${curPMP}/${maxPMP}`;
 
     document.getElementById('battleEnemyName')!.innerText = eCombatant.name;
     document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ATTACKER' : 'DEFENDER';
@@ -108,9 +112,11 @@ export class BattleUI {
       ? 'text-[10px] bg-red-900 px-1 rounded text-rose-300'
       : 'text-[10px] bg-slate-800 px-1 rounded text-slate-300';
 
-    const eHpPct = Math.max(0, (eCombatant.hp / eCombatant.maxHp) * 100);
+    const curEHP = Math.max(0, Math.ceil(eCombatant.hp));
+    const maxEHP = Math.max(1, Math.ceil(eCombatant.maxHp));
+    const eHpPct = Math.min(100, Math.max(0, (curEHP / maxEHP) * 100));
     document.getElementById('battleEnemyHP')!.style.width = `${eHpPct}%`;
-    document.getElementById('battleEnemyHPText')!.innerText = `${eCombatant.hp}/${eCombatant.maxHp}`;
+    document.getElementById('battleEnemyHPText')!.innerText = `${curEHP}/${maxEHP}`;
   }
 
   private updateCommandMenu() {
@@ -324,115 +330,54 @@ export class BattleUI {
     ctx.translate(combatVFX.screenShakeX, combatVFX.screenShakeY);
 
     // -----------------------------------------------------------------------
-    // 1. LUSH ENCHANTED MUSHROOM FOREST BACKDROP (Brown Dust 2 Aesthetic)
+    // 1. DARK FANTASY GOTHIC ISOMETRIC ARENA BACKDROP
     // -----------------------------------------------------------------------
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#04160e');     // Deep emerald twilight canopy
-    bgGrad.addColorStop(0.35, '#0b291a');  // Mystical woodland green
-    bgGrad.addColorStop(0.70, '#153822');  // Vibrant mossy forest bank
-    bgGrad.addColorStop(1, '#0e2014');     // Rich dark loam soil
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Distant Ancient Enchanted Tree Trunks & Hanging Foliage
-    ctx.fillStyle = 'rgba(7, 26, 17, 0.75)';
-    const trunkWidth = 38;
-    for (let i = 0; i < 5; i++) {
-      const tx = i * (w / 4) + 20;
-      ctx.fillRect(tx - trunkWidth / 2, 0, trunkWidth, h * 0.45);
-      // Flared mossy root bases
-      ctx.beginPath();
-      ctx.moveTo(tx - trunkWidth / 2 - 14, h * 0.45);
-      ctx.lineTo(tx + trunkWidth / 2 + 14, h * 0.45);
-      ctx.lineTo(tx + trunkWidth / 2, h * 0.28);
-      ctx.lineTo(tx - trunkWidth / 2, h * 0.28);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Distant Hanging Vine Tendrils
-    ctx.strokeStyle = 'rgba(21, 128, 61, 0.4)';
-    ctx.lineWidth = 2;
-    for (let v = 0; v < 8; v++) {
-      const vx = v * (w / 7) + 30;
-      ctx.beginPath();
-      ctx.moveTo(vx, 0);
-      ctx.bezierCurveTo(vx + 10, h * 0.12, vx - 10, h * 0.22, vx + 4, h * 0.32);
-      ctx.stroke();
-    }
+    this.drawDarkFantasyArenaBackdrop(ctx, w, h, time);
 
     // -----------------------------------------------------------------------
-    // 2. GIANT FANTASY MUSHROOMS (Red Fly Agaric, Blue, Yellow, Purple)
+    // 2. 2.5D ISOMETRIC STONE DUELING PLATFORMS (DAISES)
     // -----------------------------------------------------------------------
-    // Upper-Left: Iconic Red Polka-Dot Fly Agaric Mushroom (Exact match from screenshot!)
-    const giantRedShroom = pixelSprites.getGiantMushroom('red', 200, 170);
-    ctx.drawImage(giantRedShroom, w * 0.04, h * 0.12);
+    const pxCenter = w * 0.28;
+    const pyCenter = h * 0.60;
+    const exCenter = w * 0.72;
+    const eyCenter = h * 0.48;
 
-    // Mid-Left: Sapphire Blue Spore Mushroom
-    const giantBlueShroom = pixelSprites.getGiantMushroom('blue', 125, 110);
-    ctx.drawImage(giantBlueShroom, -10, h * 0.36);
+    // Elevated 2.5D Isometric Stone Slabs with glowing runic borders
+    // Player Dais (Cyan/Azure Mystic Rune Trim)
+    this.drawIsometricStoneDais(
+      ctx,
+      pxCenter,
+      pyCenter,
+      180,
+      94,
+      24,
+      '#06b6d4',
+      '#1e293b',
+      '#0f172a',
+      '#38bdf8'
+    );
 
-    // Upper-Right: Golden Yellow Ochre Mushroom
-    const giantYellowShroom = pixelSprites.getGiantMushroom('yellow', 140, 125);
-    ctx.drawImage(giantYellowShroom, w * 0.79, h * 0.14);
-
-    // Mid-Right: Royal Violet Glowing Mushroom
-    const giantPurpleShroom = pixelSprites.getGiantMushroom('purple', 105, 95);
-    ctx.drawImage(giantPurpleShroom, w * 0.89, h * 0.36);
-
-    // -----------------------------------------------------------------------
-    // 3. DIAGONAL PRISMATIC GOD-RAY RAINBOW BEAM & FLOATING SPORES
-    // -----------------------------------------------------------------------
-    this.drawPrismaticGodRay(ctx, w, h, time);
-    this.drawFloatingSpores(ctx, w, h, time);
-
-    // -----------------------------------------------------------------------
-    // 4. 2.5D ISOMETRIC 3x3 TACTICAL DIORAMA PLATFORMS
-    // -----------------------------------------------------------------------
-    const pxCenter = w * 0.29;
-    const pyCenter = h * 0.62;
-    const exCenter = w * 0.71;
-    const eyCenter = h * 0.46;
-    const tileW = 56;
-    const tileH = 28;
-
-    // 4a. 3D Diorama Earthen Platform Slabs (Mossy turf + stone drop edge + roots)
-    this.drawDioramaPlatform(ctx, pxCenter, pyCenter, 210, 108, 22, '#15803d', '#14532d', '#1c1917');
-    this.drawDioramaPlatform(ctx, exCenter, eyCenter, 210, 108, 22, '#166534', '#14532d', '#1c1917');
-
-    // 4b. Render 3x3 Tactical Grids with Crisp White Corner Brackets [ ]
-    this.drawTacticalGrid(ctx, pxCenter, pyCenter, tileW, tileH, true);
-    this.drawTacticalGrid(ctx, exCenter, eyCenter, tileW, tileH, false);
+    // Enemy Dais (Crimson/Abyssal Flame Rune Trim)
+    this.drawIsometricStoneDais(
+      ctx,
+      exCenter,
+      eyCenter,
+      180,
+      94,
+      24,
+      '#f43f5e',
+      '#1f1722',
+      '#110c14',
+      '#fb7185'
+    );
 
     // -----------------------------------------------------------------------
-    // 5. PLAYER PARTY FORMATION ON 3x3 GRID (Facing NE towards Enemy)
+    // 3. PLAYER HERO (STRICT 1v1 - Facing NE towards Enemy)
     // -----------------------------------------------------------------------
     const p = this.game.activePlayer;
     const pAnim = b.isPlayerAttacking ? this.attackerAnim : this.defenderAnim;
     const pFrame = Math.floor(time * 0.005);
 
-    // Companion 1: Priestess / Cleric (Back row: col 0, row 1)
-    const c1x = pxCenter - tileW / 2;
-    const c1y = pyCenter;
-    this.drawUnitTeamRing(ctx, c1x, c1y, '#38bdf8', 0.5);
-    const priestessSprite = pixelSprites.getHeroSprite('cleric', 'NE', 'idle', pFrame);
-    ctx.drawImage(priestessSprite, c1x - 45, c1y - 52, 90, 90);
-
-    // Companion 2: Ranger / Archer (Front row: col 2, row 1)
-    const c2x = pxCenter + tileW / 2;
-    const c2y = pyCenter;
-    this.drawUnitTeamRing(ctx, c2x, c2y, '#4ade80', 0.5);
-    const rangerSprite = pixelSprites.getHeroSprite('ranger', 'NE', 'idle', pFrame);
-    ctx.drawImage(rangerSprite, c2x - 45, c2y - 52, 90, 90);
-
-    // Companion 3: Mage (Flank row: col 1, row 0)
-    const c3x = pxCenter;
-    const c3y = pyCenter - tileH;
-    this.drawUnitTeamRing(ctx, c3x, c3y, '#c084fc', 0.5);
-    const mageSprite = pixelSprites.getHeroSprite('mage', 'NE', 'idle', pFrame);
-    ctx.drawImage(mageSprite, c3x - 45, c3y - 52, 90, 90);
-
-    // Active Player Hero (Center tile: col 1, row 1)
     const px = pxCenter + combatVFX.heroStaggerX;
     const py = pyCenter + Math.sin(time * 0.005) * 3;
     this.drawUnitTeamRing(ctx, px, py, '#06b6d4', 0.9, true);
@@ -446,10 +391,10 @@ export class BattleUI {
       p.isDarkling,
       p.prank
     );
-    ctx.drawImage(heroSprite, px - 55, py - 62, 110, 110);
+    ctx.drawImage(heroSprite, px - 60, py - 70, 120, 120);
 
     // -----------------------------------------------------------------------
-    // 6. ENEMY SQUAD FORMATION ON 3x3 GRID (Facing SW towards Player)
+    // 4. ENEMY DUELIST / BOSS (STRICT 1v1 - Facing SW towards Player)
     // -----------------------------------------------------------------------
     const enemyCombatant = b.isPlayerAttacking ? b.defender : b.attacker;
     const eAnim = b.isPlayerAttacking ? this.defenderAnim : this.attackerAnim;
@@ -463,12 +408,12 @@ export class BattleUI {
     }
 
     if (enemyCombatant.isBoss) {
-      // Massive Boss Dragon Overlord dominating the platform
+      // Massive Boss Dragon Overlord
       this.drawUnitTeamRing(ctx, ex, ey, '#ef4444', 1.0, true);
       const boss = pixelSprites.getDragonOverlordSprite(Math.floor(time * 0.003));
       ctx.drawImage(boss, ex - 120, ey - 118, 240, 240);
     } else if (enemyCombatant.playerRef) {
-      // Rival Player & Mercenaries
+      // Rival Player Hero (1v1 duel)
       const rivalSprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
         'SW', // Facing down-left along isometric diagonal
@@ -479,173 +424,135 @@ export class BattleUI {
         enemyCombatant.playerRef.prank
       );
       this.drawUnitTeamRing(ctx, ex, ey, '#f43f5e', 0.9, true);
-      ctx.drawImage(rivalSprite, ex - 55, ey - 62, 110, 110);
-
-      // Rival companion
-      const rComp = pixelSprites.getHeroSprite('warrior', 'SW', 'idle', pFrame);
-      ctx.drawImage(rComp, ex + tileW / 2 - 45, ey - 52, 90, 90);
+      ctx.drawImage(rivalSprite, ex - 60, ey - 70, 120, 120);
     } else {
-      const eName = enemyCombatant.name.toLowerCase();
-      const isGoblin = eName.includes('goblin');
-      const isUndead = eName.includes('spider') || eName.includes('bat') || eName.includes('ghost') || eName.includes('skeleton');
-
-      // Enemy Minion 1 (Tile col 0, row 1)
-      const ec1x = exCenter - tileW / 2;
-      const ec1y = eyCenter;
-      const m1Key = isGoblin ? 'goblin_mage' : isUndead ? 'spider' : 'slime';
-      const m1 = trpgAssets.isLoaded
-        ? trpgAssets.getEntitySprite(m1Key, 'SW', 'idle', pFrame, 95, 100)
-        : pixelSprites.getBrownDust2Slime('ice', pFrame, 'SW');
-      ctx.drawImage(m1, ec1x - 48, ec1y - 50, 96, 100);
-
-      // Enemy Minion 2 (Tile col 2, row 1)
-      const ec2x = exCenter + tileW / 2;
-      const ec2y = eyCenter;
-      const m2Key = isGoblin ? 'goblin_spear' : isUndead ? 'bat' : 'slime';
-      const m2 = trpgAssets.isLoaded
-        ? trpgAssets.getEntitySprite(m2Key, 'SW', 'idle', pFrame, 95, 100)
-        : pixelSprites.getBrownDust2Slime('sun', pFrame, 'SW');
-      ctx.drawImage(m2, ec2x - 48, ec2y - 50, 96, 100);
-
-      // Enemy Minion 3 (Tile col 1, row 0)
-      const ec3x = exCenter;
-      const ec3y = eyCenter - tileH;
-      const m3Key = isGoblin ? 'goblin_archer' : isUndead ? 'ghost' : 'slime';
-      const m3 = trpgAssets.isLoaded
-        ? trpgAssets.getEntitySprite(m3Key, 'SW', 'idle', pFrame, 95, 100)
-        : pixelSprites.getBrownDust2Slime('blossom', pFrame, 'SW');
-      ctx.drawImage(m3, ec3x - 48, ec3y - 50, 96, 100);
-
-      // Enemy Minion 4 (Tile col 1, row 2)
-      const ec4x = exCenter;
-      const ec4y = eyCenter + tileH;
-      const m4Key = isGoblin ? 'goblin' : isUndead ? 'skeleton' : 'slime';
-      const m4 = trpgAssets.isLoaded
-        ? trpgAssets.getEntitySprite(m4Key, 'SW', 'idle', pFrame, 95, 100)
-        : pixelSprites.getBrownDust2Slime('gold', pFrame, 'SW');
-      ctx.drawImage(m4, ec4x - 48, ec4y - 50, 96, 100);
-
-      // Primary Target Enemy (Center tile col 1, row 1)
+      // Monster Target (1v1 duel)
       this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);
       const monster = pixelSprites.getMonsterSprite(enemyCombatant.name, 'SW', eAnim, pFrame);
-      ctx.drawImage(monster, ex - 65, ey - 65, 130, 130);
+      ctx.drawImage(monster, ex - 70, ey - 70, 140, 140);
     }
     ctx.restore();
 
     // -----------------------------------------------------------------------
-    // 7. RENDER COMBAT VFX (Arcs, Runic Circles, Craters, Skill Cutscenes)
+    // 5. RENDER COMBAT VFX (Arcs, Runic Circles, Craters, Skill Cutscenes)
     // -----------------------------------------------------------------------
     combatVFX.render(ctx, w, h);
 
-    // -----------------------------------------------------------------------
-    // 8. BROWN DUST 2 SIDE QUEUE HUD & TACTICAL BUTTONS
-    // -----------------------------------------------------------------------
-    this.drawBrownDust2HUD(ctx, w, h, b, time);
-
     ctx.restore();
   }
 
   // =========================================================================
-  // HELPER: PRISMATIC RAINBOW GOD-RAY LIGHT BEAM
+  // HELPER: DARK FANTASY GOTHIC ARENA BACKDROP WITH TORCHES & MIST
   // =========================================================================
-  private drawPrismaticGodRay(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
+  private drawDarkFantasyArenaBackdrop(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    time: number
+  ) {
+    // 1. Abyssal Atmospheric Vignette Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#030712');    // Abyssal black
+    bgGrad.addColorStop(0.35, '#0b1329'); // Deep midnight gothic slate
+    bgGrad.addColorStop(0.70, '#111827'); // Chiseled stone arena floor
+    bgGrad.addColorStop(1.0, '#030712');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
 
-    const x1 = w * 0.06;
-    const y1 = -50;
-    const x2 = w * 0.94;
-    const y2 = h + 50;
-    const beamWidth = 220;
+    // 2. Distant Gothic Stone Pillars & Wall Buttresses
+    const pillarCount = 5;
+    const pWidth = 34;
+    ctx.fillStyle = '#090d1a';
+    for (let i = 0; i < pillarCount; i++) {
+      const px = (i + 0.5) * (w / pillarCount);
+      // Main pillar shaft
+      ctx.fillRect(px - pWidth / 2, 0, pWidth, h * 0.52);
 
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len = Math.hypot(dx, dy);
-    const nx = -dy / len;
-    const ny = dx / len;
+      // Capital & base moulding
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - pWidth / 2 - 4, h * 0.50, pWidth + 8, 8);
+      ctx.fillRect(px - pWidth / 2 - 3, 0, pWidth + 6, 8);
 
-    const gx1 = w * 0.45 - nx * (beamWidth / 2);
-    const gy1 = h * 0.45 - ny * (beamWidth / 2);
-    const gx2 = w * 0.45 + nx * (beamWidth / 2);
-    const gy2 = h * 0.45 + ny * (beamWidth / 2);
+      // Iron Torch Sconce on alternate pillars
+      if (i % 2 === 1) {
+        const ty = h * 0.28;
+        // Iron bracket
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - 2, ty, 4, 12);
+        ctx.fillRect(px - 6, ty - 2, 12, 4);
 
-    const pulse = 0.85 + Math.sin(time * 0.002) * 0.15;
-    const grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-    grad.addColorStop(0.00, 'rgba(244, 63, 94, 0)');
-    grad.addColorStop(0.14, `rgba(244, 63, 94, ${0.09 * pulse})`);  // Rose
-    grad.addColorStop(0.30, `rgba(249, 115, 22, ${0.11 * pulse})`);  // Orange
-    grad.addColorStop(0.48, `rgba(234, 179, 8, ${0.14 * pulse})`);   // Sun Gold
-    grad.addColorStop(0.66, `rgba(34, 197, 94, ${0.12 * pulse})`);   // Emerald
-    grad.addColorStop(0.82, `rgba(6, 182, 212, ${0.12 * pulse})`);   // Cyan
-    grad.addColorStop(0.93, `rgba(168, 85, 247, ${0.09 * pulse})`);  // Violet
-    grad.addColorStop(1.00, 'rgba(168, 85, 247, 0)');
-
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.moveTo(x1 - nx * (beamWidth / 2), y1 - ny * (beamWidth / 2));
-    ctx.lineTo(x1 + nx * (beamWidth / 2), y1 + ny * (beamWidth / 2));
-    ctx.lineTo(x2 + nx * (beamWidth / 2), y2 + ny * (beamWidth / 2));
-    ctx.lineTo(x2 - nx * (beamWidth / 2), y2 - ny * (beamWidth / 2));
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  // =========================================================================
-  // HELPER: FLOATING GOLDEN-GREEN SPORES & FIREFLIES
-  // =========================================================================
-  private drawFloatingSpores(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    ctx.save();
-    const count = 28;
-    for (let i = 0; i < count; i++) {
-      const seed = i * 137.5;
-      const speed = 0.025 + (i % 5) * 0.008;
-      const sx = (seed * 37 + Math.sin(time * 0.0018 + i) * 32) % w;
-      const sy = (h + 40) - ((time * speed * 26 + seed * 19) % (h + 80));
-      const size = 2 + (i % 3) * 1.6;
-      const alpha = 0.35 + Math.sin(time * 0.003 + i) * 0.35;
-
-      const isFirefly = i % 4 === 0;
-      if (isFirefly) {
-        ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
-        ctx.shadowColor = '#84cc16';
-        ctx.shadowBlur = 9;
+        // Torch flame glow aura
+        const flamePulse = 0.8 + Math.sin(time * 0.008 + i * 2) * 0.2;
+        const flameGrad = ctx.createRadialGradient(px, ty - 6, 2, px, ty - 6, 36 * flamePulse);
+        flameGrad.addColorStop(0, 'rgba(251, 146, 60, 0.7)');
+        flameGrad.addColorStop(0.4, 'rgba(234, 88, 12, 0.3)');
+        flameGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+        ctx.fillStyle = flameGrad;
         ctx.beginPath();
-        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+        ctx.arc(px, ty - 6, 36 * flamePulse, 0, Math.PI * 2);
         ctx.fill();
-      } else {
-        ctx.fillStyle = i % 2 === 0 ? `rgba(187, 247, 208, ${alpha * 0.7})` : `rgba(254, 240, 138, ${alpha * 0.7})`;
-        ctx.shadowColor = '#38bdf8';
-        ctx.shadowBlur = 4;
+
+        // Core flame
+        ctx.fillStyle = '#fef08a';
         ctx.beginPath();
-        ctx.arc(sx, sy, size * 0.8, 0, Math.PI * 2);
+        ctx.arc(px, ty - 6, 3, 0, Math.PI * 2);
         ctx.fill();
+
+        // Floating sparks / embers drifting upward
+        for (let s = 0; s < 3; s++) {
+          const sparkY = ty - 8 - ((time * 0.04 + s * 14) % 40);
+          const sparkX = px + Math.sin(time * 0.005 + s + i) * 6;
+          ctx.fillStyle = 'rgba(253, 186, 116, 0.7)';
+          ctx.fillRect(sparkX, sparkY, 1.8, 1.8);
+        }
       }
+      ctx.fillStyle = '#090d1a';
+    }
+
+    // 3. Low Creeping Arena Fog / Ground Mist
+    ctx.save();
+    for (let f = 0; f < 6; f++) {
+      const fogX = ((time * 0.02 * (f + 1) * 8 + f * 140) % (w + 200)) - 100;
+      const fogY = h * 0.65 + (f % 3) * 22;
+      const fogGrad = ctx.createRadialGradient(fogX, fogY, 10, fogX, fogY, 110);
+      fogGrad.addColorStop(0, 'rgba(56, 189, 248, 0.04)');
+      fogGrad.addColorStop(0.5, 'rgba(30, 41, 59, 0.07)');
+      fogGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+      ctx.fillStyle = fogGrad;
+      ctx.beginPath();
+      ctx.ellipse(fogX, fogY, 110, 30, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.restore();
   }
 
   // =========================================================================
-  // HELPER: 3D VOLUMETRIC DIORAMA PLATFORM SLAB
+  // HELPER: 2.5D ISOMETRIC CARVED STONE DUELING DAIS WITH RUNIC TRIM
   // =========================================================================
-  private drawDioramaPlatform(
+  private drawIsometricStoneDais(
     ctx: CanvasRenderingContext2D,
     cx: number,
     cy: number,
     width: number,
     height: number,
     dropHeight: number,
-    mossColor: string,
-    cliffFaceColor: string,
-    bedrockColor: string
+    runeColor: string,
+    topColor: string,
+    sideColor: string,
+    rimColor: string
   ) {
     ctx.save();
     const hw = width / 2;
     const hh = height / 2;
 
-    // 1. 3D Cliff Foundation Drop Skirt
-    ctx.fillStyle = bedrockColor;
+    // 1. Drop Shadow under Dais
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + dropHeight + 8, hw + 14, (hh + dropHeight) * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Left Cliff Drop Face (Shadowed)
+    ctx.fillStyle = sideColor;
     ctx.beginPath();
     ctx.moveTo(cx - hw, cy);
     ctx.lineTo(cx, cy + hh);
@@ -654,7 +561,19 @@ export class BattleUI {
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = cliffFaceColor;
+    // Left Masonry Texture Lines
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy + dropHeight * 0.5);
+    ctx.lineTo(cx, cy + hh + dropHeight * 0.5);
+    ctx.stroke();
+
+    // 3. Right Cliff Drop Face (Lighted side)
+    const rightSideGrad = ctx.createLinearGradient(cx, cy, cx + hw, cy + dropHeight);
+    rightSideGrad.addColorStop(0, sideColor);
+    rightSideGrad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = rightSideGrad;
     ctx.beginPath();
     ctx.moveTo(cx, cy + hh);
     ctx.lineTo(cx + hw, cy);
@@ -663,20 +582,23 @@ export class BattleUI {
     ctx.closePath();
     ctx.fill();
 
-    // Hanging Vine Tendrils along the platform cliff
-    ctx.strokeStyle = '#22c55e';
-    ctx.lineWidth = 1.5;
-    for (let r = -3; r <= 3; r++) {
-      const rx = cx + r * 24;
-      const ry = cy + hh + (r % 2 === 0 ? 4 : -2);
-      ctx.beginPath();
-      ctx.moveTo(rx, ry);
-      ctx.quadraticCurveTo(rx + (r > 0 ? 4 : -4), ry + 12, rx + (r % 2), ry + 18);
-      ctx.stroke();
-    }
+    // Right Masonry Texture Lines
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + hh + dropHeight * 0.5);
+    ctx.lineTo(cx + hw, cy + dropHeight * 0.5);
+    ctx.stroke();
 
-    // 2. Top Mossy Turf Flagstone Surface
-    ctx.fillStyle = mossColor;
+    // 4. Stepped Lower Border Rim (Drop Depth accent)
+    ctx.strokeStyle = rimColor;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy + dropHeight);
+    ctx.lineTo(cx, cy + hh + dropHeight);
+    ctx.lineTo(cx + hw, cy + dropHeight);
+    ctx.stroke();
+
+    // 5. Top Diamond Stone Flagstone Surface
+    ctx.fillStyle = topColor;
     ctx.beginPath();
     ctx.moveTo(cx, cy - hh);
     ctx.lineTo(cx + hw, cy);
@@ -685,107 +607,43 @@ export class BattleUI {
     ctx.closePath();
     ctx.fill();
 
-    // Soft Turf Border
-    ctx.strokeStyle = '#4ade80';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // =========================================================================
-  // HELPER: 3x3 TACTICAL ISOMETRIC GRID WITH WHITE CORNER BRACKETS [ ]
-  // =========================================================================
-  private drawTacticalGrid(
-    ctx: CanvasRenderingContext2D,
-    gridCX: number,
-    gridCY: number,
-    tileW: number,
-    tileH: number,
-    isPlayerGrid: boolean
-  ) {
-    ctx.save();
-
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        // Tile center relative to grid center (col 1, row 1 is center)
-        const tcx = gridCX + (col - row) * (tileW / 2);
-        const tcy = gridCY + (col + row - 2) * (tileH / 2);
-
-        // Tile Rhombus Polygon
-        ctx.beginPath();
-        ctx.moveTo(tcx, tcy - tileH / 2);
-        ctx.lineTo(tcx + tileW / 2, tcy);
-        ctx.lineTo(tcx, tcy + tileH / 2);
-        ctx.lineTo(tcx - tileW / 2, tcy);
-        ctx.closePath();
-
-        // Translucent Tile Fill
-        ctx.fillStyle = isPlayerGrid
-          ? 'rgba(56, 189, 248, 0.12)'  // Luminous cyan tint
-          : 'rgba(244, 63, 94, 0.12)';  // Luminous rose tint
-        ctx.fill();
-
-        // Subtle Tile Grid Line
-        ctx.strokeStyle = isPlayerGrid ? 'rgba(186, 230, 253, 0.28)' : 'rgba(254, 205, 211, 0.28)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Signature White Corner Brackets [ ] at 4 diamond vertices
-        this.drawTileCornerBrackets(ctx, tcx, tcy, tileW, tileH);
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // =========================================================================
-  // HELPER: SIGNATURE BROWN DUST 2 CORNER BRACKET MARKERS [ ] ON TILE
-  // =========================================================================
-  private drawTileCornerBrackets(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    tw: number,
-    th: number
-  ) {
-    const hw = tw / 2;
-    const hh = th / 2;
-    const arm = 6.5; // Bracket arm length
-
-    ctx.save();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.5;
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 4;
-
-    // Top Vertex Bracket ∧
+    // Top Flagstone Grid Chisel Lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx - arm, cy - hh + arm * 0.5);
-    ctx.lineTo(cx, cy - hh);
-    ctx.lineTo(cx + arm, cy - hh + arm * 0.5);
-    ctx.stroke();
-
-    // Bottom Vertex Bracket ∨
-    ctx.beginPath();
-    ctx.moveTo(cx - arm, cy + hh - arm * 0.5);
+    // Diagonal seams
+    ctx.moveTo(cx, cy - hh);
     ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx + arm, cy + hh - arm * 0.5);
-    ctx.stroke();
-
-    // Left Vertex Bracket <
-    ctx.beginPath();
-    ctx.moveTo(cx - hw + arm, cy - arm * 0.5);
-    ctx.lineTo(cx - hw, cy);
-    ctx.lineTo(cx - hw + arm, cy + arm * 0.5);
-    ctx.stroke();
-
-    // Right Vertex Bracket >
-    ctx.beginPath();
-    ctx.moveTo(cx + hw - arm, cy - arm * 0.5);
+    ctx.moveTo(cx - hw, cy);
     ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx + hw - arm, cy + arm * 0.5);
     ctx.stroke();
+
+    // 6. Glowing Inner Runic Diamond Border
+    const runePulse = 0.75 + Math.sin(Date.now() * 0.005) * 0.25;
+    ctx.save();
+    ctx.strokeStyle = runeColor;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = runeColor;
+    ctx.shadowBlur = 10 * runePulse;
+    ctx.globalAlpha = 0.85 * runePulse;
+
+    const innerHw = hw - 10;
+    const innerHh = hh - 5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - innerHh);
+    ctx.lineTo(cx + innerHw, cy);
+    ctx.lineTo(cx, cy + innerHh);
+    ctx.lineTo(cx - innerHw, cy);
+    ctx.closePath();
+    ctx.stroke();
+
+    // 4 Corner Runic Sigils
+    ctx.fillStyle = runeColor;
+    ctx.fillRect(cx - 2, cy - innerHh - 2, 4, 4);
+    ctx.fillRect(cx + innerHw - 2, cy - 2, 4, 4);
+    ctx.fillRect(cx - 2, cy + innerHh - 2, 4, 4);
+    ctx.fillRect(cx - innerHw - 2, cy - 2, 4, 4);
+    ctx.restore();
 
     ctx.restore();
   }
@@ -818,142 +676,6 @@ export class BattleUI {
     ctx.beginPath();
     ctx.ellipse(cx, cy + 12, r * 0.8, r * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.restore();
-  }
-
-  // =========================================================================
-  // HELPER: BROWN DUST 2 SIDE QUEUE HUD & TACTICAL PILL BUTTONS
-  // =========================================================================
-  private drawBrownDust2HUD(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    b: BattleEngine,
-    time: number
-  ) {
-    // Only render canvas HUD if width is comfortable
-    if (w < 600) return;
-
-    ctx.save();
-    const isPAtk = b.isPlayerAttacking;
-    const pCombatant = isPAtk ? b.attacker : b.defender;
-    const eCombatant = isPAtk ? b.defender : b.attacker;
-
-    // 1. Left Side: Player Party Queue (Vertical stack)
-    const partyMembers = [
-      { name: pCombatant.name, role: '⚔️ LEADER', hp: `${pCombatant.hp}/${pCombatant.maxHp}`, turn: '1st', active: true },
-      { name: 'Sylvia (Ranger)', role: '🏹 ARCHER', hp: '340/340', turn: '2nd', active: false },
-      { name: 'Celia (Cleric)', role: '✨ PRIEST', hp: '290/290', turn: '3rd', active: false },
-    ];
-
-    const cardW = 135;
-    const cardH = 34;
-    const qStartY = 75;
-
-    partyMembers.forEach((mem, idx) => {
-      const qy = qStartY + idx * (cardH + 6);
-
-      // Card Backing
-      ctx.fillStyle = mem.active ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.72)';
-      ctx.strokeStyle = mem.active ? '#38bdf8' : 'rgba(71, 85, 105, 0.5)';
-      ctx.lineWidth = mem.active ? 1.8 : 1;
-      ctx.beginPath();
-      ctx.roundRect(14, qy, cardW, cardH, 5);
-      ctx.fill();
-      ctx.stroke();
-
-      // Turn Order Badge
-      ctx.fillStyle = mem.active ? '#0284c7' : '#334155';
-      ctx.beginPath();
-      ctx.roundRect(18, qy + 6, 26, 12, 3);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 8px Silkscreen, sans-serif';
-      ctx.fillText(mem.turn, 21, qy + 15);
-
-      // Unit Name & Role
-      ctx.fillStyle = mem.active ? '#f8fafc' : '#94a3b8';
-      ctx.font = 'bold 9px Silkscreen, sans-serif';
-      ctx.fillText(mem.name.slice(0, 10), 48, qy + 14);
-
-      // HP Text
-      ctx.fillStyle = '#4ade80';
-      ctx.font = '8px Silkscreen, sans-serif';
-      ctx.fillText(mem.hp, 48, qy + 26);
-    });
-
-    // 2. Right Side: Enemy Target Queue (Vertical stack)
-    const enemyTargets = [
-      { name: eCombatant.name, role: '👾 TARGET', hp: `${eCombatant.hp}/${eCombatant.maxHp}`, active: true },
-      { name: 'Frost Slime', role: '❄️ MINION', hp: '280/280', active: false },
-      { name: 'Sun Slime', role: '⚡ MINION', hp: '310/310', active: false }
-    ];
-
-    enemyTargets.forEach((tgt, idx) => {
-      const eqy = qStartY + idx * (cardH + 6);
-      const eqx = w - cardW - 14;
-
-      ctx.fillStyle = tgt.active ? 'rgba(30, 10, 15, 0.92)' : 'rgba(20, 10, 12, 0.72)';
-      ctx.strokeStyle = tgt.active ? '#f43f5e' : 'rgba(120, 53, 60, 0.5)';
-      ctx.lineWidth = tgt.active ? 1.8 : 1;
-      ctx.beginPath();
-      ctx.roundRect(eqx, eqy, cardW, cardH, 5);
-      ctx.fill();
-      ctx.stroke();
-
-      // Badge
-      ctx.fillStyle = tgt.active ? '#be123c' : '#450a0a';
-      ctx.beginPath();
-      ctx.roundRect(eqx + cardW - 38, eqy + 6, 32, 12, 3);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 8px Silkscreen, sans-serif';
-      ctx.fillText('ENEMY', eqx + cardW - 35, eqy + 15);
-
-      // Name & HP
-      ctx.fillStyle = tgt.active ? '#fff1f2' : '#fca5a5';
-      ctx.font = 'bold 9px Silkscreen, sans-serif';
-      ctx.fillText(tgt.name.slice(0, 10), eqx + 8, eqy + 14);
-
-      ctx.fillStyle = '#fb7185';
-      ctx.font = '8px Silkscreen, sans-serif';
-      ctx.fillText(tgt.hp, eqx + 8, eqy + 26);
-    });
-
-    // 3. Bottom Right: "BATTLE START >>" Tactical Pill Button (Exact match from screenshot!)
-    const btnW = 145;
-    const btnH = 32;
-    const bx = w - btnW - 18;
-    const by = h - btnH - 14;
-
-    const btnGrad = ctx.createLinearGradient(bx, by, bx + btnW, by + btnH);
-    btnGrad.addColorStop(0, '#dc2626'); // Crimson
-    btnGrad.addColorStop(0.5, '#ea580c'); // Flame orange
-    btnGrad.addColorStop(1, '#f59e0b'); // Amber gold
-
-    ctx.fillStyle = btnGrad;
-    ctx.shadowColor = '#f97316';
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, btnW, btnH, 16);
-    ctx.fill();
-
-    ctx.strokeStyle = '#fef08a';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Button Text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px Silkscreen, sans-serif';
-    ctx.fillText('BATTLE START', bx + 16, by + 20);
-
-    // Animated Chevrons >>
-    const chevronPulse = Math.sin(time * 0.008) * 3;
-    ctx.fillStyle = '#fef08a';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('>>', bx + 115 + chevronPulse, by + 21);
 
     ctx.restore();
   }

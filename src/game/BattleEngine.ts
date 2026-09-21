@@ -95,9 +95,9 @@ export class BattleEngine {
       // Counter Punishes Strike!
       isCounterSuccess = true;
       audio.counterParry();
-      const rawCounter = d.atk * 2.8 - Math.floor(a.def * 0.4);
-      damageToAttacker = Math.max(25, rawCounter + Math.floor(Math.random() * 8));
-      a.hp = Math.max(0, a.hp - damageToAttacker);
+      const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
+      damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(Math.random() * 8)));
+      a.hp = Math.round(Math.max(0, a.hp - damageToAttacker));
       narration = `💥 PERFECT COUNTER! ${d.name} parried ${a.name}'s Strike and crushed them for ${damageToAttacker} reverse damage!`;
       return {
         attackerAction: atkAction,
@@ -117,9 +117,9 @@ export class BattleEngine {
       isStrikeSuccess = true;
       audio.strikeHit();
       // Strike ignores defense!
-      const rawStrike = a.atk * 2.6 + Math.floor(Math.random() * 12);
-      damageToDefender = Math.max(20, rawStrike);
-      d.hp = Math.max(0, d.hp - damageToDefender);
+      const rawStrike = Math.round(a.atk * 2.6 + Math.floor(Math.random() * 12));
+      damageToDefender = Math.round(Math.max(20, rawStrike));
+      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
 
       if (defAction === 'defend') {
         narration = `⚡ STRIKE SHATTERS DEFENSE! ${a.name}'s overhead strike pierced ${d.name}'s guard for ${damageToDefender} devastating damage!`;
@@ -162,9 +162,9 @@ export class BattleEngine {
     // 5. Resolve Magic vs Defend / Counter
     if (atkAction === 'magic') {
       audio.magicCast();
-      const spellDmg = Math.floor(a.mag * 2.8 + 12 + Math.random() * 6);
-      damageToDefender = Math.max(15, spellDmg);
-      d.hp = Math.max(0, d.hp - damageToDefender);
+      const spellDmg = Math.round(a.mag * 2.8 + 12 + Math.random() * 6);
+      damageToDefender = Math.round(Math.max(15, spellDmg));
+      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
       narration = `🔮 ARCANE INFERNO! Physical defense couldn't stop ${a.name}'s magic! ${d.name} burned for ${damageToDefender} damage!`;
 
       return {
@@ -183,9 +183,9 @@ export class BattleEngine {
     // 6. Resolve Skill
     if (atkAction === 'skill') {
       audio.magicCast();
-      const skillDmg = Math.floor(a.atk * 1.8 + a.mag * 1.2);
-      damageToDefender = Math.max(12, skillDmg);
-      d.hp = Math.max(0, d.hp - damageToDefender);
+      const skillDmg = Math.round(a.atk * 1.8 + a.mag * 1.2);
+      damageToDefender = Math.round(Math.max(12, skillDmg));
+      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
 
       if (a.classKey === 'thief' && a.playerRef && d.playerRef) {
         const stolen = Math.min(d.playerRef.gold, 50);
@@ -193,7 +193,7 @@ export class BattleEngine {
         a.playerRef.gold += stolen;
         narration = `🗡️ PICKPOCKET! ${a.name} dealt ${damageToDefender} damage and stole ${stolen}G from ${d.name}!`;
       } else if (a.classKey === 'cleric') {
-        a.hp = Math.min(a.maxHp, a.hp + 25);
+        a.hp = Math.round(Math.min(a.maxHp, a.hp + 25));
         narration = `✨ HOLY SMITE! ${a.name} struck for ${damageToDefender} damage and restored 25 HP!`;
       } else {
         narration = `🌟 CLASS SKILL! ${a.name} unleashed ${a.skillName || 'Skill'} dealing ${damageToDefender} damage!`;
@@ -214,21 +214,21 @@ export class BattleEngine {
 
     // 7. Resolve Attack
     audio.attackHit();
-    const rawAtk = a.atk * 2 - Math.floor(d.def * 0.7);
-    let finalDmg = Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2));
+    const rawAtk = Math.round(a.atk * 2 - d.def * 0.7);
+    let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2)));
 
     if (defAction === 'defend') {
-      finalDmg = Math.max(3, Math.floor(finalDmg * 0.45));
+      finalDmg = Math.round(Math.max(3, finalDmg * 0.45));
       narration = `🛡️ DEFEND BLOCKS! ${d.name} cushioned the blow, taking only ${finalDmg} damage.`;
     } else if (defAction === 'counter') {
       // Counter failed! Full damage
-      finalDmg = Math.floor(finalDmg * 1.2);
+      finalDmg = Math.round(finalDmg * 1.2);
       narration = `⚔️ COUNTER WHIFFED! ${d.name} anticipated a Strike, but took a direct Attack for ${finalDmg} damage!`;
     } else {
       narration = `⚔️ ${a.name} struck with standard weapon dealing ${finalDmg} damage to ${d.name}!`;
     }
 
-    d.hp = Math.max(0, d.hp - finalDmg);
+    d.hp = Math.round(Math.max(0, d.hp - finalDmg));
     damageToDefender = finalDmg;
 
     return {
