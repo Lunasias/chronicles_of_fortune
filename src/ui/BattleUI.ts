@@ -335,12 +335,23 @@ export class BattleUI {
     this.drawDarkFantasyArenaBackdrop(ctx, w, h, time);
 
     // -----------------------------------------------------------------------
-    // 2. 2.5D ISOMETRIC STONE DUELING PLATFORMS (DAISES)
+    // 2. GRAND EXPANSIVE 2.5D ISOMETRIC COLOSSEUM ARENA FLOOR
     // -----------------------------------------------------------------------
-    const pxCenter = w * 0.28;
-    const pyCenter = h * 0.60;
-    const exCenter = w * 0.72;
-    const eyCenter = h * 0.48;
+    const arenaCX = w * 0.50;
+    const arenaCY = h * 0.56;
+    const arenaW = Math.min(w * 0.88, 880);
+    const arenaH = arenaW * 0.48;
+    const arenaDrop = 36;
+
+    // Grand stone arena floor with flagstone paving and torch braziers
+    this.drawGrandIsometricColosseumFloor(ctx, arenaCX, arenaCY, arenaW, arenaH, arenaDrop, time);
+
+    const pxCenter = arenaCX - arenaW * 0.22;
+    const pyCenter = arenaCY + arenaH * 0.12;
+    const exCenter = arenaCX + arenaW * 0.22;
+    const eyCenter = arenaCY - arenaH * 0.12;
+    const zoneW = arenaW * 0.36;
+    const zoneH = arenaH * 0.36;
 
     // Elevated 2.5D Isometric Stone Slabs with glowing runic borders
     // Player Dais (Cyan/Azure Mystic Rune Trim)
@@ -348,9 +359,9 @@ export class BattleUI {
       ctx,
       pxCenter,
       pyCenter,
-      180,
-      94,
-      24,
+      zoneW,
+      zoneH,
+      18,
       '#06b6d4',
       '#1e293b',
       '#0f172a',
@@ -362,9 +373,9 @@ export class BattleUI {
       ctx,
       exCenter,
       eyCenter,
-      180,
-      94,
-      24,
+      zoneW,
+      zoneH,
+      18,
       '#f43f5e',
       '#1f1722',
       '#110c14',
@@ -523,6 +534,306 @@ export class BattleUI {
       ctx.ellipse(fogX, fogY, 110, 30, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // HELPER: GRAND EXPANSIVE 2.5D ISOMETRIC COLOSSEUM ARENA FLOOR
+  // =========================================================================
+  private drawGrandIsometricColosseumFloor(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    drop: number,
+    time: number
+  ) {
+    ctx.save();
+    const hw = w / 2;
+    const hh = h / 2;
+
+    // 1. Massive Colosseum Shadow Base
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + drop + 16, hw + 24, (hh + drop) * 0.46, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Foundation Cliff Wall - Left Shaded Face
+    const leftGrad = ctx.createLinearGradient(cx - hw, cy, cx, cy + hh + drop);
+    leftGrad.addColorStop(0, '#090d16');
+    leftGrad.addColorStop(1, '#05070d');
+    ctx.fillStyle = leftGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy);
+    ctx.lineTo(cx, cy + hh);
+    ctx.lineTo(cx, cy + hh + drop);
+    ctx.lineTo(cx - hw, cy + drop);
+    ctx.closePath();
+    ctx.fill();
+
+    // Left Foundation Masonry Courses (Horizontal brick seams)
+    ctx.strokeStyle = '#020408';
+    ctx.lineWidth = 1.5;
+    for (let l = 1; l <= 3; l++) {
+      const frac = l / 4;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw, cy + drop * frac);
+      ctx.lineTo(cx, cy + hh + drop * frac);
+      ctx.stroke();
+    }
+
+    // 3. Foundation Cliff Wall - Right Lit Face
+    const rightGrad = ctx.createLinearGradient(cx, cy + hh, cx + hw, cy + drop);
+    rightGrad.addColorStop(0, '#111827');
+    rightGrad.addColorStop(1, '#0b1120');
+    ctx.fillStyle = rightGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + hh);
+    ctx.lineTo(cx + hw, cy);
+    ctx.lineTo(cx + hw, cy + drop);
+    ctx.lineTo(cx, cy + hh + drop);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right Foundation Masonry Courses
+    ctx.strokeStyle = '#030712';
+    ctx.lineWidth = 1.5;
+    for (let l = 1; l <= 3; l++) {
+      const frac = l / 4;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + hh + drop * frac);
+      ctx.lineTo(cx + hw, cy + drop * frac);
+      ctx.stroke();
+    }
+
+    // Bottom Base Trim (Chiseled Rock Edge)
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy + drop);
+    ctx.lineTo(cx, cy + hh + drop);
+    ctx.lineTo(cx + hw, cy + drop);
+    ctx.stroke();
+
+    // 4. Main Grand Isometric Flagstone Floor (Terraria-style dark slate flagstones)
+    const floorGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, hw * 0.9);
+    floorGrad.addColorStop(0, '#1f293d');
+    floorGrad.addColorStop(0.5, '#161f30');
+    floorGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = floorGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - hh);
+    ctx.lineTo(cx + hw, cy);
+    ctx.lineTo(cx, cy + hh);
+    ctx.lineTo(cx - hw, cy);
+    ctx.closePath();
+    ctx.fill();
+
+    // Chiseled Flagstone Rim Border
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // 5. Authentic Isometric Flagstone Paving Grid
+    const gridSteps = 6;
+    ctx.strokeStyle = 'rgba(2, 6, 23, 0.45)';
+    ctx.lineWidth = 1.2;
+
+    // NW-to-SE lines
+    for (let i = 1; i < gridSteps; i++) {
+      const t = i / gridSteps;
+      const x1 = (cx - hw) + (cx - (cx - hw)) * t;
+      const y1 = cy + (cy - hh - cy) * t;
+      const x2 = cx + ((cx + hw) - cx) * t;
+      const y2 = (cy + hh) + (cy - (cy + hh)) * t;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // SW-to-NE lines
+    for (let i = 1; i < gridSteps; i++) {
+      const t = i / gridSteps;
+      const x1 = (cx - hw) + (cx - (cx - hw)) * t;
+      const y1 = cy + (cy + hh - cy) * t;
+      const x2 = cx + ((cx + hw) - cx) * t;
+      const y2 = (cy - hh) + (cy - (cy - hh)) * t;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // 6. Central Dueling Arena Ring & Golden Arcane Seal
+    const sealR = Math.min(w * 0.16, 95);
+    const sealPulse = 0.8 + Math.sin(time * 0.004) * 0.2;
+
+    // Outer faint rune ring
+    ctx.strokeStyle = `rgba(251, 191, 36, ${0.35 * sealPulse})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, sealR, sealR * 0.48, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner glowing ring
+    ctx.strokeStyle = `rgba(245, 158, 11, ${0.5 * sealPulse})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, sealR * 0.65, sealR * 0.65 * 0.48, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Central Dueling Cross / Star of Fortuna
+    ctx.strokeStyle = `rgba(253, 224, 71, ${0.4 * sealPulse})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - sealR * 0.45, cy);
+    ctx.lineTo(cx + sealR * 0.45, cy);
+    ctx.moveTo(cx, cy - sealR * 0.22);
+    ctx.lineTo(cx, cy + sealR * 0.22);
+    ctx.stroke();
+
+    // 7. Flanking Stone Torch Braziers on the Arena Wings
+    this.drawStoneTorchPillar(ctx, cx - hw * 0.82, cy - hh * 0.08, time, 0);
+    this.drawStoneTorchPillar(ctx, cx + hw * 0.82, cy - hh * 0.08, time, 2.5);
+
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // HELPER: ISOMETRIC CARVED STONE TORCH BRAZIER PILLAR
+  // =========================================================================
+  private drawStoneTorchPillar(
+    ctx: CanvasRenderingContext2D,
+    bx: number,
+    by: number,
+    time: number,
+    phase: number = 0
+  ) {
+    ctx.save();
+
+    // Pillar Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.beginPath();
+    ctx.ellipse(bx, by + 10, 18, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Isometric Stepped Stone Plinth (Base)
+    const baseW = 26;
+    const baseH = 12;
+    // Base Left Face
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(bx - baseW / 2, by);
+    ctx.lineTo(bx, by + baseH / 2);
+    ctx.lineTo(bx, by + baseH / 2 + 8);
+    ctx.lineTo(bx - baseW / 2, by + 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Base Right Face
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(bx, by + baseH / 2);
+    ctx.lineTo(bx + baseW / 2, by);
+    ctx.lineTo(bx + baseW / 2, by + 8);
+    ctx.lineTo(bx, by + baseH / 2 + 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Base Top Rhombus
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.moveTo(bx, by - baseH / 2);
+    ctx.lineTo(bx + baseW / 2, by);
+    ctx.lineTo(bx, by + baseH / 2);
+    ctx.lineTo(bx - baseW / 2, by);
+    ctx.closePath();
+    ctx.fill();
+
+    // Vertical Pillar Shaft
+    const pWidth = 14;
+    const pHeight = 36;
+    const py = by - pHeight;
+    // Left Shaded Side of shaft
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(bx - pWidth / 2, py, pWidth / 2, pHeight);
+    // Right Lit Side of shaft
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(bx, py, pWidth / 2, pHeight);
+
+    // Shaft Mortar seam
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(bx - pWidth / 2, py + pHeight * 0.5, pWidth, 1.5);
+
+    // Iron Brazier Basin / Sconce at top
+    const bowlY = py - 4;
+    ctx.fillStyle = '#090d16';
+    ctx.beginPath();
+    ctx.moveTo(bx - 12, bowlY);
+    ctx.lineTo(bx + 12, bowlY);
+    ctx.lineTo(bx + 8, bowlY + 8);
+    ctx.lineTo(bx - 8, bowlY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Glowing Charcoal Ember Bed
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(bx - 8, bowlY - 1, 16, 3);
+
+    // Roaring Brazier Fire (Terraria-style multi-tone pixel flame)
+    const flameFlicker = Math.sin(time * 0.012 + phase) * 4 + Math.cos(time * 0.018 + phase * 2) * 2;
+    const flameH = 22 + flameFlicker;
+
+    // Ambient Flame Radial Glow
+    const glowGrad = ctx.createRadialGradient(bx, bowlY - 8, 2, bx, bowlY - 8, 48);
+    glowGrad.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
+    glowGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.20)');
+    glowGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(bx, bowlY - 8, 48, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer Crimson Fire Tongue
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.moveTo(bx - 7, bowlY);
+    ctx.quadraticCurveTo(bx - 6, bowlY - flameH * 0.6, bx, bowlY - flameH);
+    ctx.quadraticCurveTo(bx + 6, bowlY - flameH * 0.6, bx + 7, bowlY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Mid Orange Flame
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.moveTo(bx - 5, bowlY);
+    ctx.quadraticCurveTo(bx - 4, bowlY - flameH * 0.5, bx, bowlY - flameH * 0.85);
+    ctx.quadraticCurveTo(bx + 4, bowlY - flameH * 0.5, bx + 5, bowlY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Core Bright Yellow Flame
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(bx - 3, bowlY);
+    ctx.quadraticCurveTo(bx - 2, bowlY - flameH * 0.4, bx, bowlY - flameH * 0.65);
+    ctx.quadraticCurveTo(bx + 2, bowlY - flameH * 0.4, bx + 3, bowlY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Rising Embers / Sparks
+    for (let s = 0; s < 3; s++) {
+      const sparkY = bowlY - 12 - ((time * 0.05 + s * 16 + phase * 10) % 35);
+      const sparkX = bx + Math.sin(time * 0.007 + s + phase) * 8;
+      ctx.fillStyle = s % 2 === 0 ? '#fed7aa' : '#fb923c';
+      ctx.fillRect(sparkX, sparkY, 2, 2);
+    }
+
     ctx.restore();
   }
 

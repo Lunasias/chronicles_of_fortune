@@ -1,0 +1,827 @@
+// ===========================================================================
+// TERRARIA-STYLE 2.5D ISOMETRIC BUILDING RENDERER
+// True 2:1 Dimetric Isometric Projection with Hand-Crafted Terraria Pixel Art
+// ===========================================================================
+
+export class TerrariaIsometricBuildingRenderer {
+  private cache = new Map<string, HTMLCanvasElement>();
+
+  private makeCanvas(w = 96, h = 96): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    return { canvas, ctx };
+  }
+
+  public getBuildingSprite(type: string, ownerColor: string | null = null): HTMLCanvasElement {
+    const cacheKey = `terraria_iso_bld_${type}_${ownerColor || 'none'}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+
+    const { canvas, ctx } = this.makeCanvas(96, 96);
+    const cx = 48;
+    const cy = 56;
+
+    switch (type) {
+      case 'town':
+      case 'capital':
+        this.renderIsometricCastleCitadel(ctx, cx, cy, ownerColor);
+        break;
+      case 'shop_weapon':
+        this.renderIsometricBlacksmithForge(ctx, cx, cy);
+        break;
+      case 'shop_magic':
+        this.renderIsometricArcaneSpire(ctx, cx, cy);
+        break;
+      case 'church':
+        this.renderIsometricGothicCathedral(ctx, cx, cy);
+        break;
+      case 'shop_item':
+        this.renderIsometricGeneralGoods(ctx, cx, cy);
+        break;
+      case 'dark_gate':
+      case 'boss':
+        this.renderIsometricDarkPortal(ctx, cx, cy);
+        break;
+      case 'vault':
+        this.renderIsometricTreasureVault(ctx, cx, cy);
+        break;
+      default:
+        this.renderIsometricCastleCitadel(ctx, cx, cy, ownerColor);
+        break;
+    }
+
+    this.cache.set(cacheKey, canvas);
+    return canvas;
+  }
+
+  // -------------------------------------------------------------------------
+  // 1. ISOMETRIC CASTLE CITADEL (Fortified Keep with 2.5D Towers & Battlements)
+  // -------------------------------------------------------------------------
+  private renderIsometricCastleCitadel(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    ownerColor: string | null
+  ) {
+    const bannerColor = ownerColor || '#38bdf8';
+    const bannerAccent = ownerColor || '#7dd3fc';
+
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Central Keep - Isometric Walls
+    // Left Wall (SW facing - Deep Shadow Stone Bricks)
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 28, 32, '#1e293b', '#0f172a', '#334155');
+    // Right Wall (SE facing - Sunlit Stone Bricks)
+    this.drawIsoWallRight(ctx, cx, cy + 14, 28, 32, '#334155', '#1e293b', '#64748b');
+
+    // 3. Arched Iron Portcullis & Timber Gate (SE Wall)
+    this.drawIsoDoorway(ctx, cx + 10, cy + 4, 10, 16, '#020617', '#451a03', '#78350f', '#fbbf24');
+
+    // 4. Crenelated Battlements on Central Keep
+    this.drawIsoBattlements(ctx, cx, cy - 18, 28, 28, 8, '#475569', '#334155', '#1e293b');
+
+    // 5. Left Isometric Watchtower (SW Corner)
+    const t1x = cx - 22;
+    const t1y = cy + 3;
+    this.drawIsoTower(ctx, t1x, t1y, 14, 38, '#1e293b', '#0f172a', '#334155', '#020617');
+
+    // 6. Right Isometric Watchtower (SE Corner)
+    const t2x = cx + 22;
+    const t2y = cy + 3;
+    this.drawIsoTower(ctx, t2x, t2y, 14, 38, '#334155', '#1e293b', '#64748b', '#fde047');
+
+    // 7. Castle Banner & Flagpole (Terraria-style wind banner)
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(cx - 1, cy - 42, 3, 24);
+    // Gold finial sphere
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(cx - 2, cy - 44, 5, 4);
+
+    // Flowing Flag Banner in Player/Territory Color
+    ctx.fillStyle = bannerColor;
+    ctx.beginPath();
+    ctx.moveTo(cx + 2, cy - 42);
+    ctx.lineTo(cx + 20, cy - 38);
+    ctx.lineTo(cx + 14, cy - 30);
+    ctx.lineTo(cx + 20, cy - 24);
+    ctx.lineTo(cx + 2, cy - 28);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = bannerAccent;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Heraldic Crown Sigil on Banner
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx + 6, cy - 36, 4, 3);
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. ISOMETRIC BLACKSMITH FORGE (Iron & Slate Smithy with Glowing Chimney)
+  // -------------------------------------------------------------------------
+  private renderIsometricBlacksmithForge(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 36, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Stone Walls
+    // Left Wall (SW - Shadow Stone)
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 26, 26, '#1e293b', '#0f172a', '#334155');
+    // Right Wall (SE - Warm Forge Light)
+    this.drawIsoWallRight(ctx, cx, cy + 14, 26, 26, '#334155', '#1e293b', '#475569');
+
+    // 3. Terracotta Pitched Shingle Roof (Terraria-style layered roof tiles)
+    this.drawIsoPitchedRoof(ctx, cx, cy - 12, 30, 30, 16, '#991b1b', '#7f1d1d', '#b91c1c', '#ef4444');
+
+    // 4. Stone Chimney with Molten Embers & Smoke
+    const chx = cx - 14;
+    const chy = cy - 26;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(chx, chy, 8, 18);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(chx - 1, chy - 2, 10, 4);
+    // Molten Chimney Glow
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(chx + 1, chy - 1, 6, 2);
+    // Smoke puffs
+    ctx.fillStyle = 'rgba(203, 213, 225, 0.6)';
+    ctx.fillRect(chx + 2, chy - 8, 4, 4);
+    ctx.fillRect(chx + 4, chy - 14, 6, 5);
+
+    // 5. Open Forge Hearth with Glowing Magma Fire (Right side)
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(cx + 6, cy + 4, 12, 12);
+    // Magma Hearth
+    ctx.fillStyle = '#ea580c';
+    ctx.shadowColor = '#f97316';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(cx + 8, cy + 8, 8, 8);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx + 10, cy + 11, 4, 4);
+    ctx.shadowBlur = 0;
+
+    // 6. Blacksmith Anvil on Wooden Stump (Foreground SE)
+    const ax = cx + 22;
+    const ay = cy + 16;
+    // Stump
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(ax - 5, ay - 2, 10, 8);
+    // Steel Anvil
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(ax - 8, ay - 6, 16, 5);
+    ctx.fillStyle = '#94a3b8'; // Horn highlight
+    ctx.fillRect(ax - 9, ay - 5, 4, 2);
+  }
+
+  // -------------------------------------------------------------------------
+  // 3. ISOMETRIC ARCANE SPIRE (Wizard Observatory with Floating Crystals)
+  // -------------------------------------------------------------------------
+  private renderIsometricArcaneSpire(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Rune Circle & Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 32, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing Arcane Rune Ring at base
+    ctx.strokeStyle = '#c084fc';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 16, 26, 12, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 2. Tower Body (Deep Arcane Slate Octagonal Structure)
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 22, 42, '#2e1065', '#1e0845', '#3b0764');
+    this.drawIsoWallRight(ctx, cx, cy + 14, 22, 42, '#4c1d95', '#3b0764', '#581c87');
+
+    // 3. Arched Stained Glass Window with Mystic Cyan Light
+    this.drawIsoArchedWindow(ctx, cx + 8, cy - 2, 7, 14, '#06b6d4', '#38bdf8', '#00f0ff');
+
+    // 4. Conical Steep Wizard Roof (Purple Slate Tiles)
+    ctx.fillStyle = '#581c87';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 54);
+    ctx.lineTo(cx - 16, cy - 28);
+    ctx.lineTo(cx, cy - 20);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#7e22ce';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 54);
+    ctx.lineTo(cx, cy - 20);
+    ctx.lineTo(cx + 16, cy - 28);
+    ctx.closePath();
+    ctx.fill();
+
+    // Terraria-style Roof Shingle Ridges
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 54);
+    ctx.lineTo(cx, cy - 20);
+    ctx.stroke();
+
+    // 5. Floating Levitating Mana Crystals Orbiting the Spire Tip
+    const crystalColors = ['#38bdf8', '#c084fc', '#f43f5e'];
+    for (let i = 0; i < 3; i++) {
+      const angle = (i * Math.PI * 2) / 3;
+      const ox = cx + Math.cos(angle) * 16;
+      const oy = cy - 52 + Math.sin(angle) * 7;
+
+      ctx.fillStyle = crystalColors[i];
+      ctx.shadowColor = crystalColors[i];
+      ctx.shadowBlur = 10;
+      this.drawPixelDiamond(ctx, ox, oy, 6, 10);
+      ctx.shadowBlur = 0;
+    }
+
+    // Top Apex Crystal
+    ctx.fillStyle = '#fde047';
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 12;
+    this.drawPixelDiamond(ctx, cx, cy - 60, 7, 12);
+    ctx.shadowBlur = 0;
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. ISOMETRIC GOTHIC CATHEDRAL (Cathedral with Bell Spire & Rose Window)
+  // -------------------------------------------------------------------------
+  private renderIsometricGothicCathedral(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Main Nave Walls
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 26, 32, '#1e293b', '#0f172a', '#334155');
+    this.drawIsoWallRight(ctx, cx, cy + 14, 26, 32, '#334155', '#1e293b', '#64748b');
+
+    // 3. High Gothic Gable Roof
+    this.drawIsoPitchedRoof(ctx, cx, cy - 18, 30, 30, 18, '#334155', '#1e293b', '#475569', '#94a3b8');
+
+    // 4. Central Spire & Belfry
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(cx - 6, cy - 44, 12, 18);
+    // Spire Pyramid Roof
+    ctx.fillStyle = '#475569';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 58);
+    ctx.lineTo(cx - 7, cy - 44);
+    ctx.lineTo(cx + 7, cy - 44);
+    ctx.closePath();
+    ctx.fill();
+
+    // Golden Cross on Spire Apex
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(cx - 1, cy - 68, 3, 11);
+    ctx.fillRect(cx - 4, cy - 65, 9, 3);
+
+    // 5. Glowing Stained-Glass Rose Window (SE Facade)
+    const rwx = cx + 11;
+    const rwy = cy + 2;
+    ctx.fillStyle = '#f59e0b';
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(rwx, rwy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // Cross leading in window
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(rwx - 1, rwy - 5, 2, 10);
+    ctx.fillRect(rwx - 5, rwy - 1, 10, 2);
+    ctx.shadowBlur = 0;
+
+    // 6. Flying Buttresses on SW Wall
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 24, cy + 2, 4, 18);
+    ctx.fillRect(cx - 14, cy + 8, 4, 18);
+  }
+
+  // -------------------------------------------------------------------------
+  // 5. ISOMETRIC GENERAL STORE (Timber Apothecary with Striped Awning)
+  // -------------------------------------------------------------------------
+  private renderIsometricGeneralGoods(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 36, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Half-Timber Medieval House Walls
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 26, 26, '#451a03', '#290e02', '#78350f');
+    this.drawIsoWallRight(ctx, cx, cy + 14, 26, 26, '#78350f', '#451a03', '#92400e');
+
+    // Timber cross-beams (Terraria wood styling)
+    ctx.strokeStyle = '#290e02';
+    ctx.lineWidth = 1.5;
+    // Diagonal timbers on left wall
+    ctx.beginPath();
+    ctx.moveTo(cx - 24, cy - 4);
+    ctx.lineTo(cx, cy + 14);
+    ctx.stroke();
+
+    // 3. Cozy Forest Green Shingle Roof
+    this.drawIsoPitchedRoof(ctx, cx, cy - 12, 30, 30, 16, '#14532d', '#052e16', '#166534', '#22c55e');
+
+    // 4. Striped Merchant Awning over Market Stall (SE Wall)
+    const awX = cx + 8;
+    const awY = cy + 6;
+    for (let s = 0; s < 4; s++) {
+      ctx.fillStyle = s % 2 === 0 ? '#dc2626' : '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(awX + s * 4, awY);
+      ctx.lineTo(awX + (s + 1) * 4, awY + 2);
+      ctx.lineTo(awX + (s + 1) * 4 - 4, awY + 8);
+      ctx.lineTo(awX + s * 4 - 4, awY + 6);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 5. Potion Bottles & Barrels in Stall
+    ctx.fillStyle = '#ef4444'; // Red potion
+    ctx.fillRect(awX - 1, awY + 9, 3, 5);
+    ctx.fillStyle = '#38bdf8'; // Mana potion
+    ctx.fillRect(awX + 4, awY + 11, 3, 5);
+    // Oak Barrel
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(cx + 22, cy + 13, 7, 9);
+    ctx.strokeStyle = '#451a03';
+    ctx.strokeRect(cx + 22, cy + 13, 7, 9);
+  }
+
+  // -------------------------------------------------------------------------
+  // 6. ISOMETRIC DARK PORTAL (Abyssal Nether Gate with Horned Monoliths)
+  // -------------------------------------------------------------------------
+  private renderIsometricDarkPortal(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Lava / Abyss Ground Crater & Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Molten Lava Glow
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 16, 30, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Twin Obsidian Demonic Spire Horns (Left & Right)
+    // Left Spire
+    ctx.fillStyle = '#0f071a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 24, cy + 16);
+    ctx.lineTo(cx - 16, cy - 38);
+    ctx.lineTo(cx - 8, cy + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Right Spire
+    ctx.fillStyle = '#1e0e33';
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy + 8);
+    ctx.lineTo(cx + 16, cy - 38);
+    ctx.lineTo(cx + 24, cy + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 3. Swirling Abyssal Nether Vortex (Portal Opening)
+    const portalGrad = ctx.createRadialGradient(cx, cy - 4, 3, cx, cy - 4, 22);
+    portalGrad.addColorStop(0, '#ffffff');
+    portalGrad.addColorStop(0.3, '#c084fc');
+    portalGrad.addColorStop(0.7, '#7e22ce');
+    portalGrad.addColorStop(1, '#0f071a');
+
+    ctx.fillStyle = portalGrad;
+    ctx.shadowColor = '#c084fc';
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 4, 16, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Glowing Nether Energy Ring
+    ctx.strokeStyle = '#f43f5e';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Demon Eye Sigil at top of Portal
+    ctx.fillStyle = '#fde047';
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(cx - 4, cy - 34, 8, 5);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(cx - 1, cy - 33, 2, 3);
+    ctx.shadowBlur = 0;
+  }
+
+  // -------------------------------------------------------------------------
+  // 7. ISOMETRIC TREASURE VAULT (Stepped Sandstone Pyramid Shrine)
+  // -------------------------------------------------------------------------
+  private renderIsometricTreasureVault(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Stepped Isometric Sandstone Tiers (Terraria Desert Pyramid)
+    // Tier 1 (Base)
+    this.drawIsoWallLeft(ctx, cx, cy + 16, 32, 10, '#78350f', '#451a03', '#92400e');
+    this.drawIsoWallRight(ctx, cx, cy + 16, 32, 10, '#b45309', '#78350f', '#d97706');
+    this.drawIsoTopDiamond(ctx, cx, cy + 6, 32, 16, '#d97706', '#f59e0b');
+
+    // Tier 2 (Mid)
+    this.drawIsoWallLeft(ctx, cx, cy + 4, 24, 10, '#78350f', '#451a03', '#92400e');
+    this.drawIsoWallRight(ctx, cx, cy + 4, 24, 10, '#b45309', '#78350f', '#d97706');
+    this.drawIsoTopDiamond(ctx, cx, cy - 6, 24, 12, '#d97706', '#f59e0b');
+
+    // Tier 3 (Shrine Apex)
+    this.drawIsoWallLeft(ctx, cx, cy - 8, 16, 12, '#78350f', '#451a03', '#92400e');
+    this.drawIsoWallRight(ctx, cx, cy - 8, 16, 12, '#b45309', '#78350f', '#d97706');
+    this.drawIsoTopDiamond(ctx, cx, cy - 20, 16, 8, '#f59e0b', '#fde047');
+
+    // 3. Gilded Gold Ingot / Golden Scarab on Apex
+    ctx.fillStyle = '#fde047';
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 10;
+    this.drawPixelDiamond(ctx, cx, cy - 26, 10, 10);
+    ctx.shadowBlur = 0;
+
+    // 4. Golden Vault Doorway (SE Face)
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(cx + 6, cy + 6, 8, 12);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(cx + 7, cy + 7, 6, 10);
+    // Keyhole
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx + 9, cy + 11, 2, 3);
+  }
+
+  // =========================================================================
+  // GEOMETRIC ISOMETRIC DRAWING PRIMITIVES (2:1 Dimetric Perspective)
+  // =========================================================================
+
+  private drawIsoWallLeft(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    baseColor: string,
+    shadowColor: string,
+    outlineColor: string
+  ) {
+    const hw = w / 2;
+    const hh = w / 4;
+
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy - h);
+    ctx.lineTo(cx - hw, cy - hh - h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Terraria-style Brick Course Lines
+    ctx.strokeStyle = shadowColor;
+    ctx.lineWidth = 1;
+    const courses = 4;
+    for (let c = 1; c < courses; c++) {
+      const ch = (h / courses) * c;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw, cy - hh - ch);
+      ctx.lineTo(cx, cy - ch);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = outlineColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  private drawIsoWallRight(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    baseColor: string,
+    shadowColor: string,
+    outlineColor: string
+  ) {
+    const hw = w / 2;
+    const hh = w / 4;
+
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + hw, cy - hh);
+    ctx.lineTo(cx + hw, cy - hh - h);
+    ctx.lineTo(cx, cy - h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Terraria-style Brick Course Lines
+    ctx.strokeStyle = shadowColor;
+    ctx.lineWidth = 1;
+    const courses = 4;
+    for (let c = 1; c < courses; c++) {
+      const ch = (h / courses) * c;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - ch);
+      ctx.lineTo(cx + hw, cy - hh - ch);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = outlineColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  private drawIsoTopDiamond(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    baseColor: string,
+    highlightColor: string
+  ) {
+    const hw = w / 2;
+    const hh = h / 2;
+
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - hh);
+    ctx.lineTo(cx + hw, cy);
+    ctx.lineTo(cx, cy + hh);
+    ctx.lineTo(cx - hw, cy);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = highlightColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  private drawIsoPitchedRoof(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    ridgeHeight: number,
+    leftShingle: string,
+    leftShadow: string,
+    rightShingle: string,
+    rightHighlight: string
+  ) {
+    const hw = (w / 2) + 2;
+    const hh = (h / 4) + 1;
+
+    // Ridge runs SW to NE
+    // Left Roof Slope (Shadowed)
+    ctx.fillStyle = leftShingle;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy - ridgeHeight);
+    ctx.lineTo(cx - hw, cy - hh - ridgeHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    // Left Slope Shingle Lines
+    ctx.strokeStyle = leftShadow;
+    ctx.lineWidth = 1;
+    for (let s = 1; s <= 3; s++) {
+      const sh = (ridgeHeight / 4) * s;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw, cy - hh - sh);
+      ctx.lineTo(cx, cy - sh);
+      ctx.stroke();
+    }
+
+    // Right Roof Slope (Sunlit)
+    ctx.fillStyle = rightShingle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + hw, cy - hh);
+    ctx.lineTo(cx + hw, cy - hh - ridgeHeight);
+    ctx.lineTo(cx, cy - ridgeHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right Slope Shingle Lines
+    ctx.strokeStyle = rightHighlight;
+    ctx.lineWidth = 1;
+    for (let s = 1; s <= 3; s++) {
+      const sh = (ridgeHeight / 4) * s;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - sh);
+      ctx.lineTo(cx + hw, cy - hh - sh);
+      ctx.stroke();
+    }
+
+    // Front Gable Triangle
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy - ridgeHeight);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  private drawIsoTower(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    leftColor: string,
+    shadowColor: string,
+    rightColor: string,
+    windowColor: string
+  ) {
+    const hw = w / 2;
+    const hh = w / 4;
+
+    // Left tower face
+    ctx.fillStyle = leftColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy - h);
+    ctx.lineTo(cx - hw, cy - hh - h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right tower face
+    ctx.fillStyle = rightColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + hw, cy - hh);
+    ctx.lineTo(cx + hw, cy - hh - h);
+    ctx.lineTo(cx, cy - h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tower Crenelated Top
+    ctx.fillStyle = rightColor;
+    ctx.fillRect(cx - hw - 1, cy - h - 6, w + 2, 6);
+    ctx.fillStyle = shadowColor;
+    ctx.fillRect(cx - 2, cy - h - 6, 4, 3); // Embrasures
+
+    // Tower Arrow-slit Window
+    ctx.fillStyle = windowColor;
+    ctx.fillRect(cx + 2, cy - h + 14, 2, 6);
+  }
+
+  private drawIsoBattlements(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    d: number,
+    h: number,
+    topColor: string,
+    frontColor: string,
+    backColor: string
+  ) {
+    const hw = w / 2;
+    const hh = d / 4;
+
+    ctx.fillStyle = frontColor;
+    // Front-left parapet
+    ctx.fillRect(cx - hw, cy - hh - h, hw, h);
+    // Front-right parapet
+    ctx.fillStyle = topColor;
+    ctx.fillRect(cx, cy - hh - h, hw, h);
+
+    // Notch cutouts
+    ctx.fillStyle = backColor;
+    ctx.fillRect(cx - hw / 2 - 2, cy - hh - h, 4, 4);
+    ctx.fillRect(cx + hw / 2 - 2, cy - hh - h, 4, 4);
+  }
+
+  private drawIsoDoorway(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    shadowColor: string,
+    woodColor: string,
+    beamColor: string,
+    knobColor: string
+  ) {
+    ctx.fillStyle = shadowColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + w, cy - w * 0.5);
+    ctx.lineTo(cx + w, cy - w * 0.5 - h);
+    ctx.lineTo(cx, cy - h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wood planks
+    ctx.fillStyle = woodColor;
+    ctx.fillRect(cx + 1, cy - h + 2, w - 2, h - 2);
+
+    // Iron Hinges & Handle
+    ctx.fillStyle = beamColor;
+    ctx.fillRect(cx + 1, cy - h + 4, w - 2, 2);
+    ctx.fillRect(cx + 1, cy - 4, w - 2, 2);
+
+    // Brass Knob
+    ctx.fillStyle = knobColor;
+    ctx.fillRect(cx + 3, cy - h / 2, 2, 2);
+  }
+
+  private drawIsoArchedWindow(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+    glassColor: string,
+    lightColor: string,
+    glowColor: string
+  ) {
+    ctx.fillStyle = glassColor;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 6;
+    ctx.fillRect(cx, cy, w, h);
+    ctx.fillStyle = lightColor;
+    ctx.fillRect(cx + 1, cy + 1, w - 2, h - 2);
+    ctx.shadowBlur = 0;
+  }
+
+  private drawPixelDiamond(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    w: number,
+    h: number
+  ) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h / 2);
+    ctx.lineTo(cx + w / 2, cy);
+    ctx.lineTo(cx, cy + h / 2);
+    ctx.lineTo(cx - w / 2, cy);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+export const terrariaIsometricBuildingRenderer = new TerrariaIsometricBuildingRenderer();

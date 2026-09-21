@@ -1,5 +1,7 @@
 import { customIsometricHeroRenderer } from './CustomIsometricHeroRenderer';
 import { customIsometricMonsterRenderer } from './CustomIsometricMonsterRenderer';
+import { terrariaIsometricBuildingRenderer } from './TerrariaIsometricBuildingRenderer';
+import { terrariaIsometricFoliageRenderer } from './TerrariaIsometricFoliageRenderer';
 
 export interface EquipmentItem {
   id: string;
@@ -1300,142 +1302,21 @@ export class PixelSpriteGenerator {
   }
 
   // =========================================================================
-  // 4. COMPACT DARK FANTASY ISOMETRIC ARCHITECTURE (FITS NEATLY ON TILE!)
+  // 4. TERRARIA-STYLE 2.5D ISOMETRIC ARCHITECTURE
   // =========================================================================
   getBuildingSprite(type: string, ownerColor: string | null = null): HTMLCanvasElement {
-    const key = `dark_bld_compact_${type}_${ownerColor || 'none'}`;
-    if (this.cache.has(key)) return this.cache.get(key)!;
-
-    // Compact 80x80 canvas to NEVER block adjacent tiles or roads!
-    const { canvas, ctx } = this.makeCanvas(80, 80);
-    const cx = 40;
-    const cy = 40;
-
-    if (type === 'town' || type === 'capital') {
-      // Gothic Dark Castle Citadel with fortified portcullis & owner banner
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(cx - 22, cy - 10, 44, 42);
-
-      // Battlements
-      for (let i = 0; i < 4; i++) {
-        ctx.fillRect(cx - 22 + i * 12, cy - 18, 8, 8);
-      }
-
-      // Corner Watchtowers
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(cx - 26, cy - 22, 10, 54);
-      ctx.fillRect(cx + 16, cy - 22, 10, 54);
-
-      // Pointed Roofs on Towers
-      ctx.fillStyle = '#881337';
-      this.drawTriangle(ctx, cx - 21, cy - 30, 14, 16);
-      this.drawTriangle(ctx, cx + 21, cy - 30, 14, 16);
-
-      // Portcullis Gate
-      ctx.fillStyle = '#020617';
-      ctx.fillRect(cx - 7, cy + 12, 14, 20);
-
-      // Owner Crest / Flag on Center Mast
-      ctx.strokeStyle = ownerColor || '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - 12);
-      ctx.lineTo(cx, cy - 36);
-      ctx.stroke();
-
-      ctx.fillStyle = ownerColor || '#fbbf24';
-      ctx.fillRect(cx, cy - 36, 12, 8);
-    } else if (type === 'shop_item') {
-      // Dark Alchemist Apothecary Tent
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(cx - 18, cy + 2, 36, 28);
-      ctx.fillStyle = '#15803d';
-      this.drawTriangle(ctx, cx, cy - 16, 44, 24);
-
-      // Glowing Potion Kettle
-      ctx.fillStyle = '#06b6d4';
-      ctx.shadowColor = '#06b6d4';
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.arc(cx, cy + 14, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    } else if (type === 'shop_weapon') {
-      // Netherforge Blacksmith
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(cx - 18, cy, 36, 30);
-      ctx.fillStyle = '#991b1b';
-      this.drawTriangle(ctx, cx, cy - 18, 42, 22);
-
-      // Chimney & Molten Sparks
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(cx + 10, cy - 28, 8, 16);
-      ctx.fillStyle = '#f97316';
-      ctx.fillRect(cx + 11, cy - 32, 6, 4);
-    } else if (type === 'shop_magic') {
-      // Arcane Observatory Spire
-      ctx.fillStyle = '#2e1065';
-      ctx.fillRect(cx - 14, cy - 4, 28, 34);
-      ctx.fillStyle = '#581c87';
-      this.drawTriangle(ctx, cx, cy - 26, 36, 26);
-
-      // Floating Void Crystal on Spire Peak
-      ctx.fillStyle = '#c084fc';
-      ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 10;
-      this.drawDiamond(ctx, cx, cy - 32, 10, 14);
-      ctx.shadowBlur = 0;
-    } else if (type === 'church') {
-      // Desecrated Gothic Cathedral with Rose Window
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(cx - 18, cy - 2, 36, 32);
-      ctx.fillStyle = '#1e293b';
-      this.drawTriangle(ctx, cx, cy - 22, 40, 24);
-
-      // Gothic Rose Window
-      ctx.fillStyle = '#fde047';
-      ctx.beginPath();
-      ctx.arc(cx, cy - 4, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Cross
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(cx - 1.5, cy - 32, 3, 12);
-      ctx.fillRect(cx - 5, cy - 28, 10, 3);
-    } else if (type === 'dark_gate') {
-      // Abyssal Portal to Rico's Dark Throne
-      ctx.fillStyle = '#090514';
-      ctx.fillRect(cx - 20, cy - 10, 40, 40);
-
-      // Horned Pillars
-      ctx.fillStyle = '#581c87';
-      this.drawTriangle(ctx, cx - 18, cy - 26, 12, 28);
-      this.drawTriangle(ctx, cx + 18, cy - 26, 12, 28);
-
-      // Swirling Purple Abyss Vortex
-      ctx.fillStyle = '#c084fc';
-      ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 14;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 8, 12, 18, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    } else if (type === 'boss') {
-      // Dragon Skull Fortress
-      ctx.fillStyle = '#450a0a';
-      ctx.fillRect(cx - 22, cy - 8, 44, 38);
-      ctx.fillStyle = '#7f1d1d';
-      this.drawTriangle(ctx, cx, cy - 26, 48, 24);
-      ctx.fillStyle = '#f97316';
-      ctx.fillRect(cx - 6, cy + 8, 12, 22);
-    }
-
-    this.cache.set(key, canvas);
-    return canvas;
+    return terrariaIsometricBuildingRenderer.getBuildingSprite(type, ownerColor);
   }
 
   // =========================================================================
-  // 5. CLEAN DARK FANTASY ISOMETRIC TERRAIN SLABS
+  // 5. TERRARIA-STYLE 2.5D ISOMETRIC FOLIAGE & TREES (ZERO-LAG STATIC CACHED)
+  // =========================================================================
+  getTreeSprite(type: string = 'oak', variant: number = 0): HTMLCanvasElement {
+    return terrariaIsometricFoliageRenderer.getTreeSprite(type, variant);
+  }
+
+  // =========================================================================
+  // 6. TERRARIA-STYLE 2.5D ISOMETRIC TERRAIN SLABS
   // =========================================================================
   getTerrainBlock(
     biome: string,
@@ -1443,7 +1324,7 @@ export class PixelSpriteGenerator {
     width = 96,
     height = 64
   ): HTMLCanvasElement {
-    const key = `dark_iso_terrain_${biome}_${seed % 2}_${width}_${height}`;
+    const key = `dark_iso_terrain_${biome}_${seed % 4}_${width}_${height}`;
     if (this.cache.has(key)) return this.cache.get(key)!;
 
     const { canvas, ctx } = this.makeCanvas(width, height);
@@ -1513,6 +1394,15 @@ export class PixelSpriteGenerator {
     ctx.closePath();
     ctx.fill();
 
+    // Terraria-style subtle masonry layers on cliff sides
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, hh + blockHeight * 0.5);
+    ctx.lineTo(hw, hh * 2 + blockHeight * 0.5);
+    ctx.lineTo(width, hh + blockHeight * 0.5);
+    ctx.stroke();
+
     // Top Rhombus Face
     ctx.fillStyle = topColor;
     ctx.beginPath();
@@ -1550,38 +1440,6 @@ export class PixelSpriteGenerator {
     ctx.lineTo(cx - w / 2, cy);
     ctx.closePath();
     ctx.fill();
-  }
-
-  getTreeSprite(type: string = 'oak', wind: number = 0): HTMLCanvasElement {
-    const key = `dark_tree_${type}_${Math.floor(wind)}`;
-    if (this.cache.has(key)) return this.cache.get(key)!;
-
-    const { canvas, ctx } = this.makeCanvas(64, 80);
-    const wx = Math.sin(wind) * 3;
-
-    ctx.fillStyle = '#0f172a'; // Deadwood trunk
-    ctx.fillRect(29, 38, 6, 38);
-
-    if (type === 'snow_pine') {
-      ctx.fillStyle = '#1e293b';
-      this.drawTriangle(ctx, 32 + wx * 0.4, 18, 32, 28);
-      this.drawTriangle(ctx, 32 + wx * 0.7, 34, 42, 32);
-      ctx.fillStyle = '#93c5fd';
-      ctx.fillRect(22, 34, 20, 3);
-    } else if (type === 'magic') {
-      ctx.fillStyle = '#3b0764';
-      ctx.beginPath();
-      ctx.arc(32 + wx, 28, 22, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = '#14532d';
-      ctx.beginPath();
-      ctx.arc(32 + wx, 28, 24, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    this.cache.set(key, canvas);
-    return canvas;
   }
 }
 

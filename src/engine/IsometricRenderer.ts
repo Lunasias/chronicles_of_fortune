@@ -307,7 +307,7 @@ export class IsometricRenderer {
               : null;
 
             const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
-            ctx.drawImage(bld, p.x - 40, p.y - 68, 80, 80);
+            ctx.drawImage(bld, p.x - 48, p.y - 74, 96, 96);
 
             // Clean, non-cluttering town crest badge
             if (node.type === 'town') {
@@ -345,14 +345,14 @@ export class IsometricRenderer {
         });
       }
 
-      // Swaying Foliage / Tree Props
+      // Foliage / Tree Props (Terraria-style zero-lag static cached)
       if (node.id % 2 === 0) {
         renderList.push({
           depth: (node.gx + node.gy) * 1000 + node.gz * 100 + 20,
           draw: () => {
             const treeType = node.biome === 'snow' ? 'snow_pine' : node.biome === 'forest' ? 'magic' : 'oak';
-            const tree = pixelSprites.getTreeSprite(treeType, time * 0.002 + node.id);
-            ctx.drawImage(tree, p.x + 32, p.y - 64, 52, 72);
+            const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
+            ctx.drawImage(tree, p.x + 20, p.y - 68, 64, 84);
           }
         });
       }
@@ -571,53 +571,53 @@ export class IsometricRenderer {
       // Weeping Gloomwood: Gnarled black root with bioluminescent violet mushroom
       ctx.fillStyle = '#1e1b4b';
       ctx.fillRect(px - 3, py - 18, 6, 20);
-      const glow = Math.sin(time * 0.006 + seed) * 3;
       ctx.fillStyle = '#c084fc';
-      ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(px, py - 20, 8 + glow * 0.5, 0, Math.PI, true);
+      ctx.arc(px, py - 20, 8, 0, Math.PI, true);
       ctx.fill();
+      // Pixel mushroom cap spots
+      ctx.fillStyle = '#f0abfc';
+      ctx.fillRect(px - 4, py - 24, 2, 2);
+      ctx.fillRect(px + 2, py - 23, 2, 2);
     } else if (biome === 'volcano') {
       // Brimstone Caldera: Obsidian chimney with glowing magma embers
       ctx.fillStyle = '#1c0407';
       ctx.fillRect(px - 6, py - 22, 12, 24);
       ctx.fillStyle = '#f97316';
-      ctx.shadowColor = '#ef4444';
-      ctx.shadowBlur = 12;
-      ctx.fillRect(px - 3, py - 24, 6, 4);
+      ctx.fillRect(px - 4, py - 24, 8, 4);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px - 2, py - 23, 4, 2);
     } else if (biome === 'snow') {
       // Frostbitten Crypts: Ice spire with frozen blue soul
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(px - 4, py - 20, 8, 22);
-      ctx.fillStyle = '#38bdf8';
-      ctx.shadowColor = '#0284c7';
-      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#0284c7';
       ctx.beginPath();
       ctx.arc(px, py - 24, 5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 2, py - 26, 3, 3);
     } else if (biome === 'desert') {
       // Blighted Dunes: Weathered sandstone tombstone / obelisk
       ctx.fillStyle = '#78350f';
       ctx.fillRect(px - 5, py - 26, 10, 28);
       ctx.fillStyle = '#d97706';
-      ctx.fillRect(px - 2, py - 20, 4, 16);
+      ctx.fillRect(px - 2, py - 22, 4, 18);
     } else if (biome === 'cavern') {
       // Netherforge / Catacombs: Black iron lantern on spike
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(px - 2, py - 24, 4, 26);
       ctx.fillRect(px - 7, py - 26, 14, 4);
-      ctx.fillStyle = '#fde047';
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#f59e0b';
       ctx.fillRect(px - 4, py - 22, 8, 8);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px - 2, py - 20, 4, 4);
     } else if (biome === 'abyss') {
       // The Void: Levitating dark void crystal
-      const floatY = Math.sin(time * 0.005 + seed) * 6;
       ctx.fillStyle = '#3b0764';
-      ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 14;
-      this.drawDiamond(ctx, px, py - 26 + floatY, 14, 22);
+      this.drawDiamond(ctx, px, py - 24, 14, 22);
+      ctx.fillStyle = '#c084fc';
+      this.drawDiamond(ctx, px, py - 24, 8, 12);
     } else {
       // Ashen Kingdom: Ruined gothic headstone
       ctx.fillStyle = '#334155';
