@@ -80,8 +80,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 5
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": true
   },
@@ -95,11 +95,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       0,
-      2
+      2,
+      15
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -113,13 +114,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       1,
-      3
+      3,
+      18,
+      131
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 3,
@@ -131,11 +134,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       2,
-      4
+      4,
+      19
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -150,6 +154,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       3,
       5,
+      20,
       22
     ],
     "townData": {
@@ -165,10 +170,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 6
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 5,
@@ -180,11 +185,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       4,
-      6
+      6,
+      17
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -198,11 +204,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       5,
-      7
+      7,
+      14
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -216,11 +223,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       6,
-      8
+      8,
+      13
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -234,13 +242,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       7,
-      9
+      9,
+      12,
+      30
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 9,
@@ -252,11 +262,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       8,
-      10
+      10,
+      11
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -270,7 +281,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       9,
-      11
+      11,
+      45
     ],
     "townData": {
       "name": "Riverdale Borough",
@@ -285,10 +297,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 7
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 11,
@@ -299,12 +311,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Clover Field",
     "biome": "grass",
     "neighbors": [
+      9,
       10,
       12
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -317,13 +330,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Royal Crossroad",
     "biome": "grass",
     "neighbors": [
+      8,
       11,
       13,
+      43,
       86
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": true
   },
@@ -336,12 +351,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Goddess Lumina Shrine",
     "biome": "grass",
     "neighbors": [
+      7,
       12,
       14
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -354,14 +370,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Plains Mystic Tent",
     "biome": "grass",
     "neighbors": [
+      6,
       13,
-      15
+      15,
+      90
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 15,
@@ -372,12 +390,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Briar Trench",
     "biome": "grass",
     "neighbors": [
+      1,
       14,
       16
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -407,8 +426,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 7
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": true
   },
@@ -421,12 +440,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Greenway Trail",
     "biome": "grass",
     "neighbors": [
+      5,
       16,
       18
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -439,14 +459,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Village Chapel",
     "biome": "grass",
     "neighbors": [
+      2,
       17,
-      19
+      19,
+      40
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 19,
@@ -457,12 +479,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Orchard Spring",
     "biome": "grass",
     "neighbors": [
+      3,
       18,
       20
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -475,12 +498,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Pasture Hill",
     "biome": "grass",
     "neighbors": [
+      4,
       19,
       21
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -493,12 +517,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Capital Southgate",
     "biome": "grass",
     "neighbors": [
-      20,
-      0
+      0,
+      20
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Crown Capital Plains",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -512,13 +536,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       4,
-      23
+      23,
+      42
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 23,
@@ -530,11 +555,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       22,
-      24
+      24,
+      41
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -548,11 +574,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       23,
-      25
+      25,
+      40
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -567,6 +594,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       24,
       26,
+      39,
       65
     ],
     "townData": {
@@ -582,8 +610,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 8
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": true
   },
@@ -597,11 +625,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       25,
-      27
+      27,
+      38
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -615,11 +644,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       26,
-      28
+      28,
+      37
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -633,11 +663,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       27,
-      29
+      29,
+      36
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -651,11 +682,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       28,
-      30
+      30,
+      33
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -668,8 +700,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mystic Pond Fishing Spot",
     "biome": "forest",
     "neighbors": [
+      8,
       29,
-      31
+      31,
+      34
     ],
     "townData": {
       "name": "Deepwood Haven",
@@ -684,10 +718,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 8
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 31,
@@ -702,8 +736,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       32
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -720,8 +754,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       33
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -734,12 +768,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Elven Spire Vault",
     "biome": "forest",
     "neighbors": [
+      29,
       32,
       34
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -752,12 +787,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Woodsman Bowyer",
     "biome": "forest",
     "neighbors": [
+      30,
       33,
       35
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -771,13 +807,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       34,
-      36
+      36,
+      71
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 36,
@@ -788,6 +825,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Fairy Reincarnation Grove",
     "biome": "forest",
     "neighbors": [
+      28,
       35,
       37
     ],
@@ -804,8 +842,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 11
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -818,12 +856,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Poison Spore Bog",
     "biome": "forest",
     "neighbors": [
+      27,
       36,
       38
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -836,12 +875,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sacred Pool",
     "biome": "forest",
     "neighbors": [
+      26,
       37,
       39
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -854,12 +894,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Hollow",
     "biome": "forest",
     "neighbors": [
+      25,
       38,
       40
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -872,14 +913,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Moon Temple",
     "biome": "forest",
     "neighbors": [
+      18,
+      24,
       39,
       41
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 41,
@@ -890,6 +933,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Elderwood Spire",
     "biome": "forest",
     "neighbors": [
+      23,
       40,
       42,
       43
@@ -907,8 +951,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 10
     },
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": true
   },
@@ -921,12 +965,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mystic Sylvan Cache",
     "biome": "forest",
     "neighbors": [
-      41,
-      22
+      22,
+      41
     ],
     "realmId": "solaria",
-    "realmName": "Kingdom of Solaria",
-    "subRegionName": "Whispering Emerald Canopy",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
     "isGrandBridge": false
   },
@@ -939,12 +983,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frostfall Incline",
     "biome": "snow",
     "neighbors": [
+      12,
       41,
-      44
+      44,
+      64
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": true
   },
@@ -958,11 +1004,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       43,
-      45
+      45,
+      62
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -975,14 +1022,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Alpine Outpost",
     "biome": "snow",
     "neighbors": [
+      10,
       44,
-      46
+      46,
+      61
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 46,
@@ -994,11 +1043,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       45,
-      47
+      47,
+      63
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1012,7 +1062,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       46,
-      48
+      48,
+      59
     ],
     "townData": {
       "name": "Glacier Citadel",
@@ -1027,8 +1078,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 12
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1042,11 +1093,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       47,
-      49
+      49,
+      58
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1060,11 +1112,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       48,
-      50
+      50,
+      57
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1081,8 +1134,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       51
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1096,11 +1149,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       50,
-      52
+      52,
+      55
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1114,7 +1168,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       51,
-      53
+      53,
+      56
     ],
     "townData": {
       "name": "Highpeak Sanctuary",
@@ -1129,8 +1184,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 14
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1147,8 +1202,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       54
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1165,8 +1220,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       55
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1179,12 +1234,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icebreak Fishing Hole",
     "biome": "snow",
     "neighbors": [
+      51,
       54,
       56
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1197,12 +1253,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frost Rune Hut",
     "biome": "snow",
     "neighbors": [
+      52,
       55,
       57
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1215,12 +1272,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Snowy Steps",
     "biome": "snow",
     "neighbors": [
+      49,
       56,
       58
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1233,8 +1291,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frostfall Castle",
     "biome": "snow",
     "neighbors": [
+      48,
       57,
-      59
+      59,
+      115
     ],
     "townData": {
       "name": "Frostfall Castle",
@@ -1249,10 +1309,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 15
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 59,
@@ -1263,12 +1323,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Glacial Vault",
     "biome": "snow",
     "neighbors": [
+      47,
       58,
       60
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1285,8 +1346,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       61
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1299,12 +1360,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "St. Nicholas Abbey",
     "biome": "snow",
     "neighbors": [
+      45,
       60,
       62
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1317,12 +1379,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icefall Cliff",
     "biome": "snow",
     "neighbors": [
+      44,
       61,
       63
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1335,6 +1398,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icebound Bastion",
     "biome": "snow",
     "neighbors": [
+      46,
       62,
       64,
       107
@@ -1352,8 +1416,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 16
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
     "isGrandBridge": true
   },
@@ -1366,14 +1430,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Glacier Causeway",
     "biome": "snow",
     "neighbors": [
+      43,
       63,
-      43
+      154
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Frostveil Ice Shelf",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 65,
@@ -1385,11 +1450,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       25,
-      66
+      66,
+      85
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": true
   },
@@ -1403,11 +1469,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       65,
-      67
+      67,
+      84
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1421,11 +1488,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       66,
-      68
+      68,
+      83
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1439,7 +1507,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       67,
-      69
+      69,
+      81
     ],
     "townData": {
       "name": "Duneport Haven",
@@ -1454,8 +1523,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 9
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1469,11 +1538,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       68,
-      70
+      70,
+      79
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1487,11 +1557,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       69,
-      71
+      71,
+      80
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1504,14 +1575,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Scorpion Oasis Saloon",
     "biome": "desert",
     "neighbors": [
+      35,
       70,
       72
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 72,
@@ -1523,11 +1595,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       71,
-      73
+      73,
+      76
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1541,11 +1614,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       72,
-      74
+      74,
+      77
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1559,7 +1633,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       73,
-      75
+      75,
+      78
     ],
     "townData": {
       "name": "Mirage Citadel",
@@ -1574,8 +1649,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 12
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1592,8 +1667,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       76
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1606,12 +1681,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Canyon Passage",
     "biome": "desert",
     "neighbors": [
+      72,
       75,
       77
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1624,14 +1700,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sandstorm Maw",
     "biome": "desert",
     "neighbors": [
+      73,
       76,
-      78
+      78,
+      138
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 78,
@@ -1642,12 +1720,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Pyramid Hieroglyph Spire",
     "biome": "desert",
     "neighbors": [
+      74,
       77,
       79
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1660,12 +1739,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Emerald Oasis",
     "biome": "desert",
     "neighbors": [
+      69,
       78,
       80
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1678,6 +1758,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Wandering Isekai Merchant",
     "biome": "desert",
     "neighbors": [
+      70,
       79,
       81
     ],
@@ -1694,8 +1775,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 13
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1708,12 +1789,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sunfire Trail",
     "biome": "desert",
     "neighbors": [
+      68,
       80,
       82
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1730,8 +1812,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       83
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1744,14 +1826,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Pharaoh Vault",
     "biome": "desert",
     "neighbors": [
+      67,
       82,
-      84
+      84,
+      143
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 84,
@@ -1762,12 +1846,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Cactus Labyrinth",
     "biome": "desert",
     "neighbors": [
+      66,
       83,
       85
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1780,12 +1865,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Desert Perimeter",
     "biome": "desert",
     "neighbors": [
-      84,
-      65
+      65,
+      84
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Sunfire Golden Dunes",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
     "isGrandBridge": false
   },
@@ -1799,11 +1884,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       12,
-      87
+      87,
+      106
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": true
   },
@@ -1820,8 +1906,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       88
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1835,11 +1921,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       87,
-      89
+      89,
+      104
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1853,7 +1940,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       88,
-      90
+      90,
+      103
     ],
     "townData": {
       "name": "Ironcrag Citadel",
@@ -1868,8 +1956,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 16
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1882,14 +1970,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Chasm Collapse",
     "biome": "cavern",
     "neighbors": [
+      14,
       89,
       91
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 91,
@@ -1901,11 +1990,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       90,
-      92
+      92,
+      101
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1919,11 +2009,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       91,
-      93
+      93,
+      100
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1937,11 +2028,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       92,
-      94
+      94,
+      105
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1955,11 +2047,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       93,
-      95
+      95,
+      98
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -1973,7 +2066,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       94,
-      96
+      96,
+      99
     ],
     "townData": {
       "name": "Forgepost Hold",
@@ -1988,8 +2082,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 15
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2006,8 +2100,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       97
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2024,8 +2118,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       98
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2038,14 +2132,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Runic Cavern Altar",
     "biome": "cavern",
     "neighbors": [
+      94,
       97,
-      99
+      99,
+      110
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 99,
@@ -2056,12 +2152,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Geothermal Vent",
     "biome": "cavern",
     "neighbors": [
+      95,
       98,
       100
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2074,12 +2171,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Crystal Cascade",
     "biome": "cavern",
     "neighbors": [
+      92,
       99,
       101
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2092,6 +2190,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mithril Gate Citadel",
     "biome": "cavern",
     "neighbors": [
+      91,
       100,
       102
     ],
@@ -2108,8 +2207,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 18
     },
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2126,8 +2225,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       103
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2140,12 +2239,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dwarven Tunnel",
     "biome": "cavern",
     "neighbors": [
+      89,
       102,
       104
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2158,12 +2258,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Dwarf Cache",
     "biome": "cavern",
     "neighbors": [
+      88,
       103,
       105
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2176,12 +2277,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Underground Steps",
     "biome": "cavern",
     "neighbors": [
+      93,
       104,
       106
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2194,12 +2296,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Crystal Echo Cave",
     "biome": "cavern",
     "neighbors": [
-      105,
-      86
+      86,
+      105
     ],
     "realmId": "frostpeak",
-    "realmName": "Frostpeak Dominion",
-    "subRegionName": "Ironcrag Dwarven Forges",
+    "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
+    "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
     "isGrandBridge": false
   },
@@ -2213,11 +2315,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       63,
-      108
+      108,
+      128
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": true
   },
@@ -2234,8 +2337,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       109
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2249,11 +2352,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       108,
-      110
+      110,
+      125
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2266,14 +2370,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ashen Spring",
     "biome": "volcano",
     "neighbors": [
+      98,
       109,
-      111
+      111,
+      126
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 111,
@@ -2285,7 +2391,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       110,
-      112
+      112,
+      123
     ],
     "townData": {
       "name": "Brimstone Bastion",
@@ -2300,8 +2407,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 16
     },
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2315,11 +2422,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       111,
-      113
+      113,
+      122
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2333,11 +2441,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       112,
-      114
+      114,
+      121
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2354,8 +2463,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       115
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2368,14 +2477,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Dragon Obelisk",
     "biome": "volcano",
     "neighbors": [
+      58,
       114,
-      116
+      116,
+      119
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 116,
@@ -2387,11 +2498,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       115,
-      117
+      117,
+      120
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2420,8 +2532,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 18
     },
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2438,8 +2550,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       119
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2452,12 +2564,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Volcanic Fissure",
     "biome": "volcano",
     "neighbors": [
+      115,
       118,
       120
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2470,12 +2583,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Hellfire Arcana",
     "biome": "volcano",
     "neighbors": [
+      116,
       119,
       121
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2488,12 +2602,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Smoldering Bridge",
     "biome": "volcano",
     "neighbors": [
+      113,
       120,
       122
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2506,12 +2621,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon Hoard Vault",
     "biome": "volcano",
     "neighbors": [
+      112,
       121,
       123
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2524,6 +2640,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Obsidian Citadel",
     "biome": "volcano",
     "neighbors": [
+      111,
       122,
       124
     ],
@@ -2540,8 +2657,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 19
     },
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2558,8 +2675,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       125
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2572,12 +2689,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon Horn Crest",
     "biome": "volcano",
     "neighbors": [
+      109,
       124,
       126
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2590,12 +2708,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ignis Geyser",
     "biome": "volcano",
     "neighbors": [
+      110,
       125,
       127
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2612,8 +2731,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       128
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -2626,14 +2745,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon King Ignis Keep",
     "biome": "volcano",
     "neighbors": [
+      107,
       127,
-      107
+      150
     ],
     "realmId": "abyss",
-    "realmName": "Nether Caldera",
-    "subRegionName": "Brimstone Lava Crags",
+    "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
+    "subRegionName": "ผาหินลาวาพิโรธ",
     "weather": "miasma",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 129,
@@ -2645,11 +2765,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       16,
-      130
+      130,
+      145
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": true
   },
@@ -2663,11 +2784,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       129,
-      131
+      131,
+      144
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2680,14 +2802,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Lagoon Angler Pier",
     "biome": "coral",
     "neighbors": [
+      2,
       130,
-      132
+      132,
+      143
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 132,
@@ -2699,7 +2823,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       131,
-      133
+      133,
+      142
     ],
     "townData": {
       "name": "Coral Bay Port",
@@ -2714,8 +2839,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 11
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2729,11 +2854,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       132,
-      134
+      134,
+      141
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2747,11 +2873,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       133,
-      135
+      135,
+      140
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2765,11 +2892,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       134,
-      136
+      136,
+      139
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2783,11 +2911,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       135,
-      137
+      137,
+      138
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2804,8 +2933,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       138
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2818,6 +2947,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Siren Rock Citadel",
     "biome": "coral",
     "neighbors": [
+      77,
+      136,
       137,
       139
     ],
@@ -2834,10 +2965,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 12
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 139,
@@ -2848,12 +2979,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Deepsea Fishing Jetty",
     "biome": "coral",
     "neighbors": [
+      135,
       138,
       140
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2866,12 +2998,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Coral Walkway",
     "biome": "coral",
     "neighbors": [
+      134,
       139,
       141
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2884,12 +3017,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Tide Arcana Hut",
     "biome": "coral",
     "neighbors": [
+      133,
       140,
       142
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2902,12 +3036,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Bioluminescent Pool",
     "biome": "coral",
     "neighbors": [
+      132,
       141,
       143
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2920,14 +3055,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Kraken Whirlpool",
     "biome": "coral",
     "neighbors": [
+      83,
+      131,
       142,
       144
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 144,
@@ -2938,6 +3075,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Kraken Point Haven",
     "biome": "coral",
     "neighbors": [
+      130,
       143,
       145
     ],
@@ -2954,8 +3092,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 14
     },
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2968,12 +3106,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Shoal Highway",
     "biome": "coral",
     "neighbors": [
-      144,
-      129
+      129,
+      144
     ],
     "realmId": "sunfire",
-    "realmName": "Sunfire Sultanate",
-    "subRegionName": "Coral Bay & Pirate Atolls",
+    "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
+    "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
     "isGrandBridge": false
   },
@@ -2987,11 +3125,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       0,
-      147
+      147,
+      150,
+      154
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": true
   },
@@ -3005,11 +3145,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       146,
-      148
+      148,
+      153
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3023,7 +3164,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       147,
-      149
+      149,
+      152
     ],
     "townData": {
       "name": "Nether Watch Citadel",
@@ -3038,8 +3180,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 17
     },
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3053,11 +3195,12 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       148,
-      150
+      150,
+      151
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3070,14 +3213,16 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Altar of Rico (Darkling Throne)",
     "biome": "abyss",
     "neighbors": [
+      128,
+      146,
       149,
       151
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 151,
@@ -3088,12 +3233,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Abyssal Trap",
     "biome": "abyss",
     "neighbors": [
+      149,
       150,
       152
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3106,12 +3252,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Nether Shrine",
     "biome": "abyss",
     "neighbors": [
+      148,
       151,
       153
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3124,6 +3271,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Void Gate Citadel",
     "biome": "abyss",
     "neighbors": [
+      147,
       152,
       154
     ],
@@ -3140,8 +3288,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterDef": 18
     },
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": false
   },
@@ -3154,13 +3302,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Rico Secret Vault",
     "biome": "abyss",
     "neighbors": [
-      153,
-      146
+      64,
+      146,
+      153
     ],
     "realmId": "abyss",
-    "realmName": "Nether Abyss",
-    "subRegionName": "Abyssal Void of Rico",
+    "realmName": "ห้วงอเวจีแห่งริโก้",
+    "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
-    "isGrandBridge": false
+    "isGrandBridge": true
   }
 ];

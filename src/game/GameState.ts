@@ -71,7 +71,7 @@ export class GameState {
       }
     });
 
-    this.addLog(`⚔️ The Grand Dokapon Expedition begins across 52 provinces!`, 'level');
+    this.addLog(`⚔️ The Grand Dokapon Expedition เริ่มต้นขึ้นแล้วทั้ง 52 จังหวัด!`, 'level');
     this.startTurn();
   }
 
@@ -88,10 +88,10 @@ export class GameState {
     // Collect daily town tax
     const taxEarned = townManager.collectTurnRevenue(p, this.allNodes);
     if (taxEarned > 0) {
-      this.addLog(`🚩 ${p.displayName} received ${taxEarned}G tax from governed territories!`, 'gold');
+      this.addLog(`🚩 ${p.displayName} ได้รับภาษี ${taxEarned}G จากเมืองที่ปกครอง!`, 'gold');
     }
 
-    this.addLog(`It is now ${p.displayName}'s turn (${p.isAI ? 'AI Bot' : 'Player'}).`);
+    this.addLog(`ถึงเทิร์นของ ${p.displayName} แล้ว (${p.isAI ? 'AI Bot' : 'Player'}).`);
   }
 
   // Cast Field Magic Grimoire Spell on the board
@@ -125,8 +125,8 @@ export class GameState {
     if (spellKey === 'zap' && target) {
       const dmg = Math.round(25 + caster.getTotalStat('mag') * 1.5);
       target.hp = Math.max(1, target.hp - dmg);
-      this.addLog(`⚡ ${caster.displayName} cast Thunderbolt on ${target.displayName} for ${dmg} damage!`, 'battle');
-      return { success: true, message: `⚡ Thunderbolt struck ${target.displayName} for ${dmg} damage!` };
+      this.addLog(`⚡ ${caster.displayName} ร่ายเวท Thunderbolt ใส่ ${target.displayName} โดนดาเมจ ${dmg}!`, 'battle');
+      return { success: true, message: `⚡ Thunderbolt ฟาดใส่ ${target.displayName} โดนดาเมจ ${dmg}!` };
     }
 
     if (spellKey === 'swap' && target) {
@@ -145,8 +145,8 @@ export class GameState {
       target.gridY = tempGy;
       target.gridZ = tempGz;
 
-      this.addLog(`🔄 ${caster.displayName} cast Dimension Swap, switching places with ${target.displayName}!`, 'level');
-      return { success: true, message: `🔄 Swapped locations with ${target.displayName}!` };
+      this.addLog(`🔄 ${caster.displayName} ร่ายเวท Dimension Swap สลับตำแหน่งกับ ${target.displayName}!`, 'level');
+      return { success: true, message: `🔄 สลับตำแหน่งกับ ${target.displayName}!` };
     }
 
     if (spellKey === 'tax_audit' && target) {
@@ -154,21 +154,21 @@ export class GameState {
       target.gold -= stolen;
       caster.gold += stolen;
       audio.coin();
-      this.addLog(`🧲 ${caster.displayName} audited ${target.displayName}, seizing ${stolen}G!`, 'gold');
-      return { success: true, message: `🧲 Royal Audit seized ${stolen}G from ${target.displayName}!` };
+      this.addLog(`🧲 ${caster.displayName} ตรวจสอบบัญชี ${target.displayName} ยึดเงิน ${stolen}G!`, 'gold');
+      return { success: true, message: `🧲 Royal Audit ยึดเงิน ${stolen}G จาก ${target.displayName}!` };
     }
 
     if (spellKey === 'curse_rust' && target) {
       target.rustTurns = 3;
-      this.addLog(`🩸 ${caster.displayName} inflicted Curse of Rust on ${target.displayName}! (ATK & DEF reduced 30% for 3 turns)`, 'darkling');
-      return { success: true, message: `🩸 ${target.displayName}'s equipment rusted! ATK & DEF reduced 30% for 3 turns.` };
+      this.addLog(`🩸 ${caster.displayName} สาป Curse of Rust ใส่ ${target.displayName}! (ATK & DEF ลดลง 30% เป็นเวลา 3 เทิร์น)`, 'darkling');
+      return { success: true, message: `🩸 อุปกรณ์ของ ${target.displayName} ขึ้นสนิม! ATK & DEF ลดลง 30% เป็นเวลา 3 เทิร์น` };
     }
 
     if (spellKey === 'holy_sanctuary') {
       caster.hp = caster.maxHp;
       caster.rustTurns = 0;
-      this.addLog(`🕊️ ${caster.displayName} cast Holy Sanctuary! Fully restored HP and cleansed all curses!`, 'level');
-      return { success: true, message: `🕊️ Holy Sanctuary cast! Fully restored HP and cleansed all debuffs.` };
+      this.addLog(`🕊️ ${caster.displayName} ร่ายเวท Holy Sanctuary! ฟื้นฟู HP เต็มและล้างคำสาปทั้งหมด!`, 'level');
+      return { success: true, message: `🕊️ ร่าย Holy Sanctuary! ฟื้นฟู HP เต็มและล้างดีบัฟทั้งหมด` };
     }
 
     if (spellKey === 'castle_warp') {
@@ -177,8 +177,8 @@ export class GameState {
       caster.gridX = castleNode.gx;
       caster.gridY = castleNode.gy;
       caster.gridZ = castleNode.gz;
-      this.addLog(`🚪 ${caster.displayName} cast Castle Recall and warped to Dokapon Castle!`, 'level');
-      return { success: true, message: `🚪 Warped safely to Dokapon Castle!` };
+      this.addLog(`🚪 ${caster.displayName} ร่ายเวท Castle Recall วาร์ปกลับไปยัง Dokapon Castle!`, 'level');
+      return { success: true, message: `🚪 วาร์ปกลับไปยัง Dokapon Castle อย่างปลอดภัย!` };
     }
 
     return { success: false, message: 'Spell effect failed.' };
@@ -376,7 +376,7 @@ export class GameState {
       if (this.dayCounter % 7 === 1 && this.dayCounter > 1) {
         this.weekCounter++;
         royalDecreeSystem.generateWeeklyDecree(this.weekCounter, this.allNodes, this.players);
-        this.addLog(`📜 ROYAL DECREE: ${royalDecreeSystem.activeDecree.headline}`, 'gold');
+        this.addLog(`📜 พระราชกฤษฎีกา: ${royalDecreeSystem.activeDecree.headline}`, 'gold');
         this.phase = 'WEEKLY_REPORT';
         if (onWeeklyReportCallback) {
           onWeeklyReportCallback();

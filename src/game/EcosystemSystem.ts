@@ -77,7 +77,7 @@ export class EcosystemSystem {
     switch (weather) {
       case 'rain':
         return {
-          title: 'Gentle Rainstorm',
+          title: 'ฝนตก',
           desc: 'Water & Healing Spells +20% potency, fire spells dampened.',
           icon: '🌧️',
           magicBonus: 3,
@@ -86,7 +86,7 @@ export class EcosystemSystem {
         };
       case 'snow':
         return {
-          title: 'Glacial Blizzard',
+          title: 'พายุหิมะ',
           desc: 'Freezing winds enhance defense +3, movement chilled.',
           icon: '❄️',
           magicBonus: 1,
@@ -95,7 +95,7 @@ export class EcosystemSystem {
         };
       case 'heatwave':
         return {
-          title: 'Scorching Sunlight',
+          title: 'คลื่นความร้อน',
           desc: 'Solar heat ignites fighting spirit! Physical ATK +3.',
           icon: '☀️',
           magicBonus: 0,
@@ -104,7 +104,7 @@ export class EcosystemSystem {
         };
       case 'miasma':
         return {
-          title: 'Abyssal Miasma',
+          title: 'หมอกพิษ',
           desc: 'Demonic essence thick in the air! Darkling & Boss damage +25%.',
           icon: '🔮',
           magicBonus: 4,
@@ -114,7 +114,7 @@ export class EcosystemSystem {
       case 'sunny':
       default:
         return {
-          title: 'Clear Skies',
+          title: 'แจ่มใส',
           desc: 'Ideal adventuring weather. Balanced conditions.',
           icon: '🌤️',
           magicBonus: 0,
@@ -145,13 +145,13 @@ export class EcosystemSystem {
   public getTimeDisplay(): { icon: string; name: string; desc: string } {
     switch (this.timeOfDay) {
       case 'DAWN':
-        return { icon: '🌅', name: 'Dawn', desc: 'Guild quests updated' };
+        return { icon: '🌅', name: 'รุ่งอรุณ', desc: 'Guild quests updated' };
       case 'DAY':
-        return { icon: '☀️', name: 'Noon', desc: 'Bustling markets' };
+        return { icon: '☀️', name: 'เที่ยง', desc: 'Bustling markets' };
       case 'DUSK':
-        return { icon: '🌇', name: 'Dusk', desc: 'Taverns opening' };
+        return { icon: '🌇', name: 'พลบค่ำ', desc: 'Taverns opening' };
       case 'NIGHT':
-        return { icon: '🌙', name: 'Night', desc: 'Monsters prowling' };
+        return { icon: '🌙', name: 'กลางคืน', desc: 'Monsters prowling' };
     }
   }
 }

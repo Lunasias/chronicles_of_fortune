@@ -36,9 +36,9 @@ export class TownUI {
     const p = this.game.activePlayer;
 
     const townLvl = townNode.townData?.level || 1;
-    const tierTitle = townLvl >= 3 ? '🏰 GRAND CITADEL' : townLvl >= 2 ? '🛡️ FORTRESS TOWN' : '🏘️ HAMLET';
+    const tierTitle = townLvl >= 3 ? '🏰 มหานครป้อมปราการ' : townLvl >= 2 ? '🛡️ เมืองป้อมปราการ' : '🏘️ หมู่บ้านชนบท';
     document.getElementById('townName')!.innerText = townNode.name;
-    document.getElementById('townBiome')!.innerText = `${townNode.biome.toUpperCase()} REALM • ${tierTitle} (LEVEL ${townLvl})`;
+    document.getElementById('townBiome')!.innerText = `แคว้น${townNode.biome.toUpperCase()} • ${tierTitle} (เลเวล ${townLvl})`;
 
     const ownerId = townNode.townData?.ownerId;
     const owner = this.game.players.find(pl => pl.id === ownerId);
@@ -55,16 +55,16 @@ export class TownUI {
         const toll = townManager.calculateToll(townNode);
         p.gold = Math.max(0, p.gold - toll);
         owner.gold += toll;
-        this.game.addLog(`🪙 ${p.displayName} paid ${toll}G toll tax to town owner ${owner.displayName}!`, 'gold');
+        this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!`, 'gold');
         audio.coin();
       }
     } else {
-      ownerText.innerText = 'Neutral (Unclaimed)';
+      ownerText.innerText = 'เป็นกลาง (ยังไม่มีเจ้าของ)';
       ownerText.style.color = '#86efac';
     }
 
     const investCost = 150 * (townNode.townData?.level || 1);
-    investCostText.innerText = `Invest ${investCost}G (Upgrade)`;
+    investCostText.innerText = `ลงทุน ${investCost}G (อัปเกรด)`;
 
     // Render 2.5D Isometric Town Plaza Diorama
     const canvas = document.getElementById('townDioramaCanvas') as HTMLCanvasElement;
@@ -95,7 +95,7 @@ export class TownUI {
     const cost = isOwner ? 0 : 30;
 
     if (p.gold < cost) {
-      this.game.addLog(`${p.displayName} doesn't have enough coin for the Inn!`);
+      this.game.addLog(`${p.displayName} มีทองไม่พอสำหรับค่าโรงแรมพักผ่อน!`);
       return;
     }
 
@@ -108,7 +108,7 @@ export class TownUI {
       p.prank.turnsRemaining = 0;
     }
     audio.levelUp();
-    this.game.addLog(`🛏️ ${p.displayName} rested at the Inn! HP & MP fully restored, and status ailments cured!`);
+    this.game.addLog(`🛏️ ${p.displayName} พักผ่อนที่โรงแรม! ฟื้นฟู HP และ MP เต็มเปี่ยม พร้อมลบล้างสถานะผิดปกติ!`);
   }
 
   private handleInvest() {
@@ -117,10 +117,10 @@ export class TownUI {
 
     const res = townManager.investInTown(this.currentTown, p);
     if (res.success) {
-      this.game.addLog(`📈 ${p.displayName} invested in ${this.currentTown.name}! Upgraded to ${res.tierName} (Level ${res.newLevel})!`, 'level');
+      this.game.addLog(`📈 ${p.displayName} ลงทุนพัฒนาเมือง ${this.currentTown.name}! อัปเกรดเป็น ${res.tierName} (เลเวล ${res.newLevel})!`, 'level');
       this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
     } else {
-      this.game.addLog(`Cannot invest in this town (Must be owner with sufficient funds).`);
+      this.game.addLog(`ไม่สามารถลงทุนได้ (ต้องเป็นเจ้าของเมืองและมีเงินทองเพียงพอ)`);
     }
   }
 
@@ -132,9 +132,9 @@ export class TownUI {
       const tax = this.currentTown.townData.taxYield;
       p.gold += tax;
       audio.coin();
-      this.game.addLog(`🪙 Collected ${tax}G emergency tax from ${this.currentTown.name}!`, 'gold');
+      this.game.addLog(`🪙 เก็บภาษีฉุกเฉินได้ ${tax}G จากเมือง ${this.currentTown.name}!`, 'gold');
     } else {
-      this.game.addLog(`You do not own this territory!`);
+      this.game.addLog(`ท่านไม่ได้เป็นเจ้าของดินแดนนี้!`);
     }
   }
 

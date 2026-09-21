@@ -63,8 +63,8 @@ export class WorldCalamitySystem {
     const calamity: CalamityEvent = {
       id: 'demon_incursion_1',
       type: 'demon_incursion',
-      headline: '⚠️ GRAND CALAMITY: DEMON GENERAL MALAKOR BESIEGES ' + targetTown.name.toUpperCase() + '!',
-      loreDescription: `The sky bleeds crimson! The Overlord's dreaded commander, Demon General Malakor, has descended upon ${targetTown.name} with an abyssal legion! King Rico offers a royal bounty of 800G and eternal honor to whichever hero liberates the settlement!`,
+      headline: '⚠️ มหันตภัยระดับโลก: ขุนพลปีศาจมาลาคอร์ เข้าปิดล้อม ' + targetTown.name + '!',
+      loreDescription: `ท้องฟ้าแปรเปลี่ยนเป็นสีเลือดฉาน! ขุนพลเอกแห่งจอมมาร 'มาลาคอร์' นำทัพอสูรจากอเวจีเข้าปิดล้อม ${targetTown.name}! กษัตริย์ริโก้ประกาศตั้งค่าหัว 800G และเกียรติยศสูงสุดแก่ฮีโร่ผู้ปลดปล่อยเมืองสำเร็จ!`,
       bannerIcon: '👹',
       affectedTownNames: [targetTown.name],
       bountyReward: 800
@@ -86,7 +86,7 @@ export class WorldCalamitySystem {
     besiegedTowns.forEach(t => {
       if (t.townData) {
         t.townData.isOccupiedByMonster = true;
-        t.townData.monsterName = 'Feral Behemoth Pack';
+        t.townData.monsterName = 'ฝูงอสูรคลั่งบีฮีมอธ';
         t.townData.monsterHp = 130;
         t.townData.monsterMaxHp = 130;
         t.townData.monsterAtk = 18;
@@ -99,8 +99,8 @@ export class WorldCalamitySystem {
     const calamity: CalamityEvent = {
       id: 'monster_stampede_1',
       type: 'monster_stampede',
-      headline: '🚨 CONTINENTAL CRISIS: WILD MONSTER STAMPEDE ASSAULTS 3 TOWNS!',
-      loreDescription: `A ferocious migration of wild beasts from the Brimstone Wastes has swarmed across the realm! ${affectedNames.join(', ')} are currently under heavy siege! King Rico declares Double Gold Rewards for all towns liberated during this crisis!`,
+      headline: '🚨 วิกฤตการณ์ทวีป: ฝูงสัตว์อสูรคลั่งบุกถล่ม 3 หัวเมือง!',
+      loreDescription: `การอพยพอย่างบ้าคลั่งของสัตว์อสูรจากดินแดนภูเขาไฟเนเธอร์ ได้บุกเข้าโจมตีอาณาจักร! เมือง ${affectedNames.join(', ')} กำลังตกอยู่ใต้การปิดล้อมอย่างหนัก! กษัตริย์ริโก้ประกาศมอบเงินรางวัลสองเท่าแก่ผู้ปลดปล่อยเมืองในช่วงวิกฤตนี้!`,
       bannerIcon: '🐺',
       affectedTownNames: affectedNames,
       bountyReward: 600
@@ -117,10 +117,10 @@ export class WorldCalamitySystem {
     const calamity: CalamityEvent = {
       id: 'golden_goblin_1',
       type: 'golden_goblin',
-      headline: '✨ GOLDEN BOOM: GOLDEN GOBLIN CARAVAN ROAMS THE CONTINENT!',
-      loreDescription: `A nomadic caravan of wealthy Golden Goblins has been sighted traveling through all four realms! Any adventurer who lands on an empty space will discover shimmering gold treasures!`,
+      headline: '✨ เทศกาลแห่งความมั่งคั่ง: กองคาราวานก็อบลินทองคำท่องทวีป!',
+      loreDescription: `มีผู้พบเห็นกองคาราวานก็อบลินทองคำผู้ร่ำรวยเดินทางข้ามทั้ง 4 ดินแดน! นักผจญภัยที่เดินตกช่องว่างจะมีโอกาสพบสมบัติเหรียญทองระยิบระยับ!`,
       bannerIcon: '💰',
-      affectedTownNames: ['All Realms'],
+      affectedTownNames: ['ทุกทวีปทั่วโลก'],
       bountyReward: 350
     };
 

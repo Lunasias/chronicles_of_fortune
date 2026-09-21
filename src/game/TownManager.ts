@@ -30,12 +30,12 @@ export class TownManager {
 
   // Invest in town to upgrade its level (Hamlet -> Fortress -> Citadel)
   investInTown(townNode: BoardNode, player: Player): { success: boolean; newLevel: number; tierName: string } {
-    if (!townNode.townData) return { success: false, newLevel: 1, tierName: 'Hamlet' };
-    if (townNode.townData.ownerId !== player.id) return { success: false, newLevel: townNode.townData.level, tierName: 'Hamlet' };
-    if (townNode.townData.level >= 5) return { success: false, newLevel: townNode.townData.level, tierName: 'Grand Citadel' };
+    if (!townNode.townData) return { success: false, newLevel: 1, tierName: 'หมู่บ้านเล็ก' };
+    if (townNode.townData.ownerId !== player.id) return { success: false, newLevel: townNode.townData.level, tierName: 'หมู่บ้านเล็ก' };
+    if (townNode.townData.level >= 5) return { success: false, newLevel: townNode.townData.level, tierName: 'มหานคร' };
 
     const cost = 150 * townNode.townData.level;
-    if (player.gold < cost) return { success: false, newLevel: townNode.townData.level, tierName: 'Hamlet' };
+    if (player.gold < cost) return { success: false, newLevel: townNode.townData.level, tierName: 'หมู่บ้านเล็ก' };
 
     player.gold -= cost;
     townNode.townData.level++;
@@ -43,9 +43,9 @@ export class TownManager {
     townNode.townData.taxYield = Math.floor(townNode.townData.taxYield * 1.4);
 
     const newLevel = townNode.townData.level;
-    let tierName = 'Hamlet';
+    let tierName = 'หมู่บ้านเล็ก';
     if (newLevel === 2) {
-      tierName = 'Fortress Town';
+      tierName = 'เมือง';
       // Gift owner Town Specialty Potion
       player.inventory.push({
         id: 'fortress_tonic',
@@ -56,7 +56,7 @@ export class TownManager {
         icon: '🍷'
       });
     } else if (newLevel >= 3) {
-      tierName = 'Grand Citadel';
+      tierName = 'ป้อมปราการ';
       // Gift owner Grand 3-Spinner
       player.inventory.push({
         id: 'spin_3',

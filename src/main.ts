@@ -182,14 +182,14 @@ class DokaponApp {
       const p = this.game.activePlayer;
       const spinners = p.inventory.filter(i => i.type === 'spinner');
       if (spinners.length === 0) {
-        this.game.addLog(`No Multi-Spinners in bag! Buy them at Item Shops.`);
+        this.game.addLog(`ไม่มี Multi-Spinners ในกระเป๋า! ซื้อได้ที่ร้านค้า`);
         return;
       }
       const spin = spinners[0];
       p.activeSpinnerMultiplier = spin.id === 'spin_3' ? 3 : 2;
       p.inventory.splice(p.inventory.indexOf(spin), 1);
       audio.coin();
-      this.game.addLog(`🌀 Used ${spin.name}! Next roll will roll ${p.activeSpinnerMultiplier} dice!`, 'level');
+      this.game.addLog(`🌀 ใช้ ${spin.name}! การทอยครั้งหน้าจะใช้ลูกเต๋า ${p.activeSpinnerMultiplier} ลูก!`, 'level');
     });
 
     // Toggle Chiptune BGM
@@ -197,7 +197,7 @@ class DokaponApp {
       const isEnabled = audio.toggleBgm();
       const btn = document.getElementById('btnToggleBgm')!;
       btn.innerText = isEnabled ? '🎵' : '🔇';
-      this.game.addLog(isEnabled ? '🎵 Chiptune BGM unmuted.' : '🔇 Chiptune BGM muted.');
+      this.game.addLog(isEnabled ? '🎵 เปิดเสียง BGM' : '🔇 ปิดเสียง BGM');
     });
 
     // Field Magic / Darkling Calamity button
@@ -438,7 +438,7 @@ class DokaponApp {
 
     diceModal.classList.remove('hidden');
     diceCube.classList.add('dice-rolling');
-    diceResultText.innerText = 'ROLLING...';
+    diceResultText.innerText = 'กำลังทอย...';
 
     let count = 0;
     const interval = setInterval(() => {
@@ -450,7 +450,7 @@ class DokaponApp {
         clearInterval(interval);
         diceCube.classList.remove('dice-rolling');
         diceCube.innerText = `${totalRoll}`;
-        diceResultText.innerText = `YOU ROLLED A ${totalRoll}!`;
+        diceResultText.innerText = `คุณทอยได้ ${totalRoll}!`;
         audio.coin();
 
         setTimeout(() => {
@@ -474,7 +474,7 @@ class DokaponApp {
               );
             }
           } else {
-            this.game.addLog(`👉 CLICK on any glowing destination tile on the map to move there!`, 'level');
+            this.game.addLog(`👉 คลิกที่จุดหมายปลายทางที่สว่างบนแผนที่เพื่อเดินไปที่นั่น!`, 'level');
           }
         }, 800);
       }
@@ -490,7 +490,7 @@ class DokaponApp {
 
   private handleTileArrival(tile: BoardNode) {
     const p = this.game.activePlayer;
-    this.game.addLog(`${p.displayName} stepped on ${tile.name} (${tile.type.toUpperCase()}).`);
+    this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
 
     // 1. Check for PvP Collision!
     const rival = this.game.players.find(other => other.id !== p.id && other.nodeId === p.nodeId);
@@ -523,7 +523,7 @@ class DokaponApp {
         const bonus = 45 + Math.floor(Math.random() * 60);
         p.gold += bonus;
         audio.coin();
-        this.game.addLog(`🪙 LUCKY TILE! ${p.displayName} received a fortune blessing (+${bonus}G)!`, 'gold');
+        this.game.addLog(`🪙 ช่องโชคดี! ${p.displayName} ได้รับพรแห่งโชคลาภ (+${bonus}G)!`, 'gold');
         this.advanceTurn();
         break;
 
@@ -532,7 +532,7 @@ class DokaponApp {
         p.gold -= penalty;
         p.hp = Math.max(10, p.hp - 15);
         audio.hurt();
-        this.game.addLog(`💀 HAZARD TILE! ${p.displayName} triggered a spike ambush (-${penalty}G, -15 HP)!`);
+        this.game.addLog(`💀 ช่องอันตราย! ${p.displayName} โดนกับดักหนาม (-${penalty}G, -15 HP)!`);
         this.advanceTurn();
         break;
 
@@ -540,7 +540,7 @@ class DokaponApp {
         p.hp = p.maxHp;
         p.mp = p.maxMp;
         audio.levelUp();
-        this.game.addLog(`✨ SACRED CATHEDRAL! ${p.displayName} was cleansed and blessed (Full Recovery)!`);
+        this.game.addLog(`✨ วิหารศักดิ์สิทธิ์! ${p.displayName} ได้รับการชำระล้างและรับพร (ฟื้นฟูเต็มที่)!`);
         this.advanceTurn();
         break;
 
@@ -548,7 +548,7 @@ class DokaponApp {
         if (darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
           document.getElementById('darklingPactModal')?.classList.remove('hidden');
         } else {
-          this.game.addLog(`The Altar of Rico remains silent. Only the lowest lord may enter the Dark Pact.`);
+          this.game.addLog(`แท่นบูชาแห่ง Rico ยังคงเงียบงัน มีเพียงลอร์ดผู้ต่ำต้อยที่สุดเท่านั้นที่สามารถทำสัญญามืดได้`);
         }
         this.advanceTurn();
         break;
@@ -557,7 +557,7 @@ class DokaponApp {
         const loot = 90 + Math.floor(Math.random() * 110);
         p.gold += loot;
         audio.coin();
-        this.game.addLog(`🎁 ANCIENT VAULT! ${p.displayName} pried open the vault and claimed ${loot}G!`, 'gold');
+        this.game.addLog(`🎁 ห้องนิรภัยโบราณ! ${p.displayName} งัดห้องนิรภัยและได้เงิน ${loot}G!`, 'gold');
         this.advanceTurn();
         break;
 
@@ -602,7 +602,7 @@ class DokaponApp {
   }
 
   private initiatePvPDuel(challenger: Player, rival: Player) {
-    this.game.addLog(`⚔️ PVP COLLISION! ${challenger.displayName} crossed paths with ${rival.displayName}! DOKAPON DUEL!`, 'battle');
+    this.game.addLog(`⚔️ ปะทะ PVP! ${challenger.displayName} เผชิญหน้ากับ ${rival.displayName}! DOKAPON DUEL!`, 'battle');
 
     const rivalCombatant: Combatant = {
       name: rival.displayName,
@@ -632,7 +632,7 @@ class DokaponApp {
       loserPlayer.gridY = castleNode.gy;
       loserPlayer.gridZ = castleNode.gz;
       loserPlayer.hp = 1;
-      this.game.addLog(`🚑 ${loserPlayer.displayName} was knocked out and carried back to Dokapon Castle!`, 'battle');
+      this.game.addLog(`🚑 ${loserPlayer.displayName} ถูกน็อคและถูกพากลับไปที่ Dokapon Castle!`, 'battle');
 
       this.prankUI.open(loserPlayer, () => this.advanceTurn());
     });
@@ -640,7 +640,7 @@ class DokaponApp {
 
   private initiateTownLiberationBattle(townNode: BoardNode) {
     const data = townNode.townData!;
-    this.game.addLog(`⚔️ ${townNode.name} is besieged by ${data.monsterName}! Fight to liberate it!`, 'battle');
+    this.game.addLog(`⚔️ ${townNode.name} ถูกยึดครองโดย ${data.monsterName}! ต่อสู้เพื่อปลดปล่อยเมือง!`, 'battle');
 
     const monsterCombatant: Combatant = {
       name: data.monsterName,
@@ -659,11 +659,11 @@ class DokaponApp {
       if (winner.playerRef) {
         const rewards = townManager.liberateTown(townNode, winner.playerRef);
         isekaiEventManager.onGameAction(winner.playerRef, 'town');
-        this.game.addLog(`👑 TOWN LIBERATED! ${winner.playerRef.displayName} freed ${townNode.name} (+${rewards.goldReward}G, +${rewards.xpReward} XP)!`, 'level');
+        this.game.addLog(`👑 ปลดปล่อยเมืองสำเร็จ! ${winner.playerRef.displayName} ปลดปล่อย ${townNode.name} (+${rewards.goldReward}G, +${rewards.xpReward} XP)!`, 'level');
       } else {
         // Monster survived! Persist remaining HP for last-hit opportunity
         data.monsterHp = Math.max(1, Math.ceil(winner.hp));
-        this.game.addLog(`💀 LAST HIT OPPORTUNITY! ${data.monsterName} survived with ${data.monsterHp}/${monsterCombatant.maxHp} HP! Anyone can steal the kill!`, 'battle');
+        this.game.addLog(`💀 โอกาสลาสช็อต! ${data.monsterName} รอดตายโดยเหลือ ${data.monsterHp}/${monsterCombatant.maxHp} HP! ใครๆ ก็ขโมยคิลได้!`, 'battle');
       }
       this.advanceTurn();
     });
@@ -687,7 +687,7 @@ class DokaponApp {
       if (winner.playerRef) {
         const previousOwner = this.game.players.find(p => p.id === townNode.townData?.ownerId) || null;
         townManager.transferTownOwnership(townNode, winner.playerRef, previousOwner);
-        this.game.addLog(`🏴‍☠️ TOWN CONQUERED! ${winner.playerRef.displayName} crushed the garrison and seized ${townNode.name}!`, 'battle');
+        this.game.addLog(`🏴‍☠️ ยึดเมืองสำเร็จ! ${winner.playerRef.displayName} ทำลายกองกำลังป้อมปราการและยึด ${townNode.name}!`, 'battle');
       }
       this.advanceTurn();
     });
@@ -716,7 +716,7 @@ class DokaponApp {
         winner.playerRef.gold += goldWon;
         winner.playerRef.gainXP(50);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
-        this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated ${pickedName} (+${goldWon}G, +50 XP)!`);
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${pickedName} (+${goldWon}G, +50 EXP)!`);
       }
       this.advanceTurn();
     });
@@ -741,7 +741,7 @@ class DokaponApp {
         winner.playerRef.gold += 120;
         winner.playerRef.gainXP(80);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
-        this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated ${monsterName} (+120G, +80 XP)!`);
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${monsterName} (+120G, +80 EXP)!`);
       }
       this.advanceTurn();
     });
@@ -767,14 +767,14 @@ class DokaponApp {
         winner.playerRef.gold += stolenGold;
         winner.playerRef.gainXP(90);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
-        this.game.addLog(`🏆 ${winner.playerRef.displayName} defeated Bandit Chief Garak and seized ${stolenGold}G (+90 XP)!`);
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น Bandit Chief Garak และยึด ${stolenGold}G (+90 EXP)!`);
       }
       this.advanceTurn();
     });
   }
 
   private initiateBossBattle() {
-    this.game.addLog(`⚠️ ANCIENT DRAGON OVERLORD DESCENDS! COMBAT OF LEGENDS! (HP: ${this.bossCurrentHp}/${this.bossMaxHp})`, 'battle');
+    this.game.addLog(`⚠️ มังกรโบราณผู้ยิ่งใหญ่จุติลงมา! การต่อสู้แห่งตำนาน! (HP: ${this.bossCurrentHp}/${this.bossMaxHp})`, 'battle');
 
     const bossCombatant: Combatant = {
       name: 'Dragon King Ignis',
@@ -794,13 +794,13 @@ class DokaponApp {
       if (winner.playerRef) {
         this.bossCurrentHp = 0;
         isekaiEventManager.onGameAction(winner.playerRef, 'boss');
-        this.game.addLog(`👑 ${winner.playerRef.displayName} SLAYED THE DRAGON OVERLORD! ETERNAL GLORY!`, 'level');
+        this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารมังกรผู้ยิ่งใหญ่! ความรุ่งโรจน์นิรันดร์!`, 'level');
         this.game.phase = 'VICTORY';
-        this.triggerVictoryModal(winner.playerRef, 'Slayed Dragon King Ignis');
+        this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon King Ignis');
       } else {
         // Dragon survived! Persist remaining boss HP
         this.bossCurrentHp = Math.max(1, Math.ceil(winner.hp));
-        this.game.addLog(`🐉 Dragon King Ignis survived with ${this.bossCurrentHp}/${this.bossMaxHp} HP! Next challenger can finish him off!`, 'battle');
+        this.game.addLog(`🐉 Dragon King Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${this.bossMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากเขาได้!`, 'battle');
         this.advanceTurn();
       }
     });
@@ -812,7 +812,7 @@ class DokaponApp {
     if (curP.foodBuff) {
       curP.foodBuff.turnsRemaining--;
       if (curP.foodBuff.turnsRemaining <= 0) {
-        this.game.addLog(`🍽️ ${curP.displayName}'s "${curP.foodBuff.name}" feast buff has subsided.`);
+        this.game.addLog(`🍽️ บัฟอาหาร "${curP.foodBuff.name}" ของ ${curP.displayName} หมดฤทธิ์แล้ว`);
         curP.foodBuff = null;
       }
     }
@@ -821,10 +821,10 @@ class DokaponApp {
     const timeRes = ecosystemSystem.advanceTime();
     if (timeRes.timeChanged) {
       const tInfo = ecosystemSystem.getTimeDisplay();
-      this.game.addLog(`⌛ TIME PASSES: It is now ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
+      this.game.addLog(`⌛ เวลาผ่านไป: ตอนนี้เป็นเวลา ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
     }
     if (timeRes.weatherChanged) {
-      this.game.addLog(`🌦️ CONTINENTAL WEATHER SHIFT: Clouds and winds shift across the four realms!`);
+      this.game.addLog(`🌦️ สภาพอากาศในทวีปเปลี่ยนแปลง: เมฆและลมพัดผ่านทั้งสี่ดินแดน!`);
     }
 
     this.hud.update();
@@ -889,11 +889,11 @@ class DokaponApp {
     if (p.isAI) {
       if (iconEl) iconEl.innerText = '🤖';
       titleEl.innerText = `${p.displayName.toUpperCase()}'S TURN`;
-      if (subEl) subEl.innerText = 'AI Bot Strategizing...';
+      if (subEl) subEl.innerText = 'AI Bot กำลังวางแผน...';
     } else {
       if (iconEl) iconEl.innerText = p.isDarkling ? '😈' : '⚔️';
-      titleEl.innerText = p.isDarkling ? 'DARKLING LORD TURN!' : 'YOUR TURN!';
-      if (subEl) subEl.innerText = `${p.displayName} - Roll dice or cast magic!`;
+      titleEl.innerText = p.isDarkling ? 'เทิร์นของจอมมาร!' : 'เทิร์นของคุณ!';
+      if (subEl) subEl.innerText = `${p.displayName} - ทอยลูกเต๋า หรือ ร่ายเวท!`;
     }
 
     banner.classList.remove('hidden');
@@ -951,7 +951,7 @@ class DokaponApp {
       select.innerHTML = '';
       const opponents = this.game.players.filter(pl => pl.id !== p.id);
       if (opponents.length === 0) {
-        select.innerHTML = '<option value="">No opponents</option>';
+        select.innerHTML = '<option value="">ไม่มีคู่แข่ง</option>';
       } else {
         opponents.forEach(op => {
           const opt = document.createElement('option');
@@ -986,7 +986,7 @@ class DokaponApp {
             </div>
           </div>
           <button class="pixel-btn ${canCast ? 'pixel-btn-purple' : 'bg-slate-800'} px-2 py-0.5 text-[10px] text-white">
-            ${canCast ? 'CAST ➔' : 'NO MP'}
+            ${canCast ? 'ร่าย ➔' : 'MP ไม่พอ'}
           </button>
         </div>
         <p class="text-[9px] text-slate-300 leading-snug mt-1">${spell.desc}</p>
@@ -1021,12 +1021,12 @@ class DokaponApp {
   private triggerVictoryModal(winner: Player, feat: string) {
     audio.fanfare();
     const modal = document.getElementById('victoryModal')!;
-    document.getElementById('victorySubtitle')!.innerText = `${winner.displayName} reigns supreme!`;
+    document.getElementById('victorySubtitle')!.innerText = `${winner.displayName} ยิ่งใหญ่ที่สุด!`;
     document.getElementById('victoryStatsSummary')!.innerHTML = `
-      <div><strong>VICTORY FEAT:</strong> ${feat}</div>
-      <div><strong>FINAL NET WORTH:</strong> ${winner.getNetWorth(this.game.allNodes)} Gold</div>
-      <div><strong>TOWNS GOVERNED:</strong> ${winner.townsControlled} Territories</div>
-      <div><strong>HERO LEVEL:</strong> Level ${winner.level} (${winner.className})</div>
+      <div><strong>ผลงานแห่งชัยชนะ:</strong> ${feat}</div>
+      <div><strong>มูลค่าสุทธิสุดท้าย:</strong> ${winner.getNetWorth(this.game.allNodes)} Gold</div>
+      <div><strong>เมืองที่ปกครอง:</strong> ${winner.townsControlled} Territories</div>
+      <div><strong>เลเวลวีรบุรุษ:</strong> Level ${winner.level} (${winner.className})</div>
     `;
     modal.classList.remove('hidden');
   }
@@ -1034,20 +1034,20 @@ class DokaponApp {
   private openInventory() {
     const p = this.game.activePlayer;
     const modal = document.getElementById('inventoryModal')!;
-    document.getElementById('invHeroName')!.innerText = `${p.displayName}'s Gear`;
-    document.getElementById('invHeroStatsSummary')!.innerText = `LV ${p.level} ${p.className} • ${p.gold}G Cash`;
+    document.getElementById('invHeroName')!.innerText = `${p.displayName}อุปกรณ์`;
+    document.getElementById('invHeroStatsSummary')!.innerText = `LV ${p.level} ${p.className} • ${p.gold}G เงิน`;
 
     document.getElementById('equippedSlotsList')!.innerHTML = `
       <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>🗡️ Weapon:</span>
-        <span class="font-bold text-amber-300">${p.equipment.weapon?.name || 'None'}</span>
+        <span>🗡️ อาวุธ:</span>
+        <span class="font-bold text-amber-300">${p.equipment.weapon?.name || 'ไม่มี'}</span>
       </div>
       <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>🦺 Armor:</span>
-        <span class="font-bold text-amber-300">${p.equipment.armor?.name || 'None'}</span>
+        <span>🦺 เกราะ:</span>
+        <span class="font-bold text-amber-300">${p.equipment.armor?.name || 'ไม่มี'}</span>
       </div>
       <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>💍 Accessory:</span>
+        <span>💍 เครื่องประดับ:</span>
         <span class="font-bold text-amber-300">${p.equipment.accessory?.name || 'None'}</span>
       </div>
     `;
@@ -1076,7 +1076,7 @@ class DokaponApp {
           </div>
         </div>
         <button class="pixel-btn pixel-btn-blue px-2.5 py-1 text-[10px] font-bold text-white">
-          ${item.type === 'potion' || item.type === 'spinner' ? 'USE' : 'EQUIP'}
+          ${item.type === 'potion' || item.type === 'spinner' ? 'ใช้' : 'ใส่'}
         </button>
       `;
 
@@ -1095,7 +1095,7 @@ class DokaponApp {
           p.activeSpinnerMultiplier = item.id === 'spin_3' ? 3 : 2;
           p.inventory.splice(idx, 1);
           audio.coin();
-          this.game.addLog(`Laced up ${item.name}! Next roll will roll ${p.activeSpinnerMultiplier} dice!`);
+          this.game.addLog(`สวมใส่ ${item.name}! การทอยครั้งหน้าจะใช้ลูกเต๋า ${p.activeSpinnerMultiplier} ลูก!`);
           this.openInventory();
         } else if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
           const slot = item.type;

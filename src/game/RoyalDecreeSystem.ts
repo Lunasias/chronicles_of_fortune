@@ -17,50 +17,50 @@ export interface RoyalDecree {
 export const ROYAL_DECREES: RoyalDecree[] = [
   {
     id: 'ROYAL_BOUNTY',
-    title: 'THE KING\'S MONSTER BOUNTY',
+    title: 'พระราชโองการ: ค่าหัวสัตว์อสูรหลวง',
     icon: '👑⚔️',
     themeColor: '#eab308',
-    headline: 'King Rico decrees an emergency royal bounty!',
-    description: 'A terrifying Dire Abomination has besieged an outer province! The King will award a grand bounty of 3,500G and royal honors to the adventurer who liberates the town!',
-    perkSummary: 'Liberating the target town awards +3,500 Gold & Royal Honors!',
+    headline: 'กษัตริย์ริโก้ทรงประกาศระดมพลและตั้งค่าหัวอสูรเร่งด่วน!',
+    description: 'อสูรร้ายมหึมาเข้าปิดล้อมหัวเมืองชายแดน! องค์ราชาจะพระราชทานเงินรางวัล 3,500G และเกียรติยศชั้นขุนนางแก่นักผจญภัยที่ปลดปล่อยเมืองสำเร็จ!',
+    perkSummary: 'ปลดปล่อยเมืองเป้าหมายรับทอง +3,500G และเกียรติยศหลวง!',
     bountyTownId: 12,
     bountyRewardGold: 3500
   },
   {
     id: 'ECONOMIC_BOOM',
-    title: 'ROYAL ECONOMIC PROSPERITY',
+    title: 'พระราชโองการ: ยุคทองแห่งเศรษฐกิจ',
     icon: '💰📈',
     themeColor: '#22c55e',
-    headline: 'Dokapon Kingdom enters a golden economic boom!',
-    description: 'Bustling trade routes and high mercantile traffic have enriched the provinces. All governed town taxes and tolls are DOUBLED throughout the entire week!',
-    perkSummary: 'All town tax revenues & toll collections are increased by 100%!'
+    headline: 'อาณาจักรเข้าสู่ช่วงเวลาการค้าเฟื่องฟูสูงสุด!',
+    description: 'เส้นทางการค้าคึกคักและมีพ่อค้าต่างแดนหลั่งไหลเข้ามา ภาษีเมืองและค่าผ่านทางของทุกเมืองจะเพิ่มเป็น 2 เท่าตลอดสัปดาห์!',
+    perkSummary: 'รายได้ภาษีและค่าผ่านทางของทุกเมืองเพิ่มขึ้น 100%!'
   },
   {
     id: 'BLOOD_MOON',
-    title: 'THE CRIMSON BLOOD MOON',
+    title: 'พระราชโองการ: ปรากฏการณ์จันทราสีเลือด',
     icon: '🩸🌑',
     themeColor: '#ef4444',
-    headline: 'An ominous blood moon rises over the realm!',
-    description: 'The celestial veil thins and dark creatures emerge from the abyss. Monsters encountered on Red spaces become fierce champions, yielding 2.5x EXP and guaranteed rare drops!',
-    perkSummary: 'Monsters on Red tiles grant 2.5x EXP & rare treasure chests!'
+    headline: 'ดวงจันทร์สีเลือดสาดแสงลางร้ายเหนือผืนแผ่นดิน!',
+    description: 'ม่านมิติแห่งความมืดบางลง มอนสเตอร์ในช่องสีแดงจะกลายเป็นอสูรชั้นสูง มอบค่าประสบการณ์ EXP 2.5 เท่า และดรอปหีบสมบัติหายากแน่นอน!',
+    perkSummary: 'มอนสเตอร์ในช่องสีแดงให้ EXP 2.5 เท่า และดรอปสมบัติล้ำค่า!'
   },
   {
     id: 'TAX_HOLIDAY',
-    title: 'ROYAL CROWN STIMULUS',
+    title: 'พระราชโองการ: เงินขวัญถุงพระราชทาน',
     icon: '🪙✨',
     themeColor: '#38bdf8',
-    headline: 'King Rico announces a royal treasury stimulus!',
-    description: 'In celebration of the kingdom\'s prosperity, the royal treasury dispenses 250 Gold Coins directly into the coin pouches of all active adventurers!',
-    perkSummary: 'Every adventurer immediately receives a 250G royal grant!'
+    headline: 'กษัตริย์ริโก้ทรงพระราชทานเงินอุดหนุนแก่นักผจญภัย!',
+    description: 'เพื่อเฉลิมฉลองความเจริญรุ่งเรือง คลังหลวงได้แจกจ่ายเหรียญทอง 250G เข้ากระเป๋าของนักผจญภัยทุกคนทันที!',
+    perkSummary: 'นักผจญภัยทุกคนได้รับเงินพระราชทาน 250G ทันที!'
   },
   {
     id: 'SHADY_PEDDLER',
-    title: 'THE WANDERING SHADY MERCHANT',
+    title: 'พระราชโองการ: พ่อค้าลึกลับพเนจร',
     icon: '🧙‍♂️🎒',
     themeColor: '#a855f7',
-    headline: 'A mysterious cloaked peddler visits the board!',
-    description: 'Rumors spread of a hooded traveler carrying forbidden arcane spinners and forbidden dark grimoire scrolls. Seek out rare item spaces for miraculous relics!',
-    perkSummary: 'Item shops & treasure chests stock rare 3-Spinners & Arcane Grimoires!'
+    headline: 'พ่อค้าคลุมผ้าลึกลับเดินทางมาเยือนกระดานผจญภัย!',
+    description: 'มีข่าวลือเรื่องนักเดินทางลึกลับพกพาสปินเนอร์เวทมนตร์และคัมภีร์ต้องห้าม ค้นหาช่องไอเทมหายากเพื่อรับไอเทมมหัศจรรย์!',
+    perkSummary: 'ร้านค้าและหีบสมบัติมีโอกาสพบ 3-Spinner และคัมภีร์เวทขั้นสูง!'
   }
 ];
 

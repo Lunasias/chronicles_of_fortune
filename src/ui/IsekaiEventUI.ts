@@ -39,7 +39,7 @@ export class IsekaiEventUI {
             </div>
           </div>
           <button data-meal-id="${m.id}" class="btn-buy-meal pixel-btn px-3 py-1.5 text-xs text-amber-400 hover:text-white bg-amber-950/60 border border-amber-500 whitespace-nowrap">
-            Eat (${m.cost}G)
+            สั่งรับประทาน (${m.cost}G)
           </button>
         </div>
       `
@@ -84,8 +84,8 @@ export class IsekaiEventUI {
       btnRumor.onclick = () => {
         audio.click();
         const picked = isekaiEventManager.rumors[Math.floor(Math.random() * isekaiEventManager.rumors.length)];
-        this.showTavernNotice(`💬 Bartender: "${picked}"`);
-        this.game.addLog(`🍺 Tavern Rumor: "${picked}"`);
+        this.showTavernNotice(`💬 เจ้าของบาร์: "${picked}"`);
+        this.game.addLog(`🍺 ข่าวลือในโรงเตี๊ยม: "${picked}"`);
       };
     }
 
@@ -135,8 +135,8 @@ export class IsekaiEventUI {
       return;
     }
 
-    document.getElementById('guildPlayerRank')!.innerText = `RANK ${player.guildRank} ADVENTURER`;
-    document.getElementById('guildCompletedCount')!.innerText = `${player.completedQuestsCount} Quests Completed`;
+    document.getElementById('guildPlayerRank')!.innerText = `นักผจญภัย แรงค์ ${player.guildRank}`;
+    document.getElementById('guildCompletedCount')!.innerText = `สำเร็จแล้ว ${player.completedQuestsCount} เควสต์`;
 
     const questList = document.getElementById('guildQuestList');
     if (questList) {
@@ -145,13 +145,13 @@ export class IsekaiEventUI {
         questList.innerHTML = `
           <div class="pixel-box p-3 bg-amber-950/40 border-amber-500 flex flex-col gap-2">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-amber-300 text-xs">⭐ ACTIVE QUEST: [${q.title}]</span>
-              <span class="text-[10px] bg-amber-600 text-white font-bold px-1.5 py-0.5 rounded">RANK ${q.rank}</span>
+              <span class="font-bold text-amber-300 text-xs">⭐ เควสต์ที่กำลังทำ: [${q.title}]</span>
+              <span class="text-[10px] bg-amber-600 text-white font-bold px-1.5 py-0.5 rounded">แรงค์ ${q.rank}</span>
             </div>
             <div class="text-[11px] text-slate-200">${q.desc}</div>
             <div class="flex items-center justify-between text-[10px] text-slate-300 mt-1">
-              <span>Progress: <strong class="text-amber-400">${q.currentProgress}/${q.targetCount}</strong></span>
-              <span>Reward: <strong class="text-emerald-400">+${q.rewardGold}G, +${q.rewardXp} XP</strong></span>
+              <span>ความคืบหน้า: <strong class="text-amber-400">${q.currentProgress}/${q.targetCount}</strong></span>
+              <span>รางวัลตอบแทน: <strong class="text-emerald-400">+${q.rewardGold}G, +${q.rewardXp} XP</strong></span>
             </div>
           </div>
         `;
@@ -164,13 +164,13 @@ export class IsekaiEventUI {
             <div>
               <div class="flex items-center gap-2">
                 <span class="font-bold text-amber-300 text-xs">${q.title}</span>
-                <span class="text-[9px] bg-slate-800 text-amber-400 font-bold px-1 rounded">Rank ${q.rank}</span>
+                <span class="text-[9px] bg-slate-800 text-amber-400 font-bold px-1.5 py-0.5 rounded">แรงค์ ${q.rank}</span>
               </div>
-              <div class="text-[10px] text-slate-300">${q.desc}</div>
+              <div class="text-[10px] text-slate-300 mt-0.5">${q.desc}</div>
               <div class="text-[9px] text-emerald-400 font-bold mt-0.5">+${q.rewardGold}G • +${q.rewardXp} XP</div>
             </div>
-            <button data-quest-id="${q.id}" class="btn-accept-quest pixel-btn px-3 py-1.5 text-xs text-amber-300 hover:text-white bg-slate-800 border border-slate-600 whitespace-nowrap">
-              Accept
+            <button data-quest-id="${q.id}" class="btn-accept-quest pixel-btn px-3.5 py-1.5 text-xs text-amber-300 hover:text-white bg-slate-800 border border-slate-600 whitespace-nowrap font-bold">
+              รับเควสต์
             </button>
           </div>
         `
@@ -382,7 +382,7 @@ export class IsekaiEventUI {
     document.getElementById('calamityIcon')!.innerText = calamity.bannerIcon;
     document.getElementById('calamityTitle')!.innerText = calamity.headline;
     document.getElementById('calamityDesc')!.innerText = calamity.loreDescription;
-    document.getElementById('calamityReward')!.innerText = `Royal Bounty: ${calamity.bountyReward}G`;
+    document.getElementById('calamityReward')!.innerText = `เงินรางวัลนำจับจากราชสำนัก: ${calamity.bountyReward}G`;
 
     document.getElementById('btnDismissCalamity')!.onclick = () => {
       audio.click();

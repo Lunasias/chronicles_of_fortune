@@ -19,7 +19,7 @@ export interface HeroClassData {
 
 export const HERO_CLASSES: Record<string, HeroClassData> = {
   warrior: {
-    name: 'Warrior',
+    name: 'นักรบ (Warrior)',
     avatar: '🛡️',
     color: '#3b82f6',
     baseHp: 130,
@@ -29,12 +29,12 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 3,
     spd: 7,
     luk: 5,
-    skillName: 'Muscle Guard',
+    skillName: 'กล้ามเนื้อเหล็กไหล (Muscle Guard)',
     skillCost: 10,
-    skillDesc: 'Hardens body, boosting defense and dealing 1.3x physical damage.'
+    skillDesc: 'เกร็งกล้ามเนื้อดั่งเหล็กไหล เพิ่มพลังป้องกันและฟาดฟันกายภาพแรงขึ้น 1.3 เท่า'
   },
   magician: {
-    name: 'Magician',
+    name: 'จอมเวท (Magician)',
     avatar: '🔮',
     color: '#a855f7',
     baseHp: 85,
@@ -44,12 +44,12 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 19,
     spd: 10,
     luk: 8,
-    skillName: 'Mana Burn',
+    skillName: 'สูบกลืนมานา (Mana Burn)',
     skillCost: 18,
-    skillDesc: 'Drains 15 MP from rival and blasts elemental fire bypassing armor.'
+    skillDesc: 'สูบ 15 MP จากศัตรูพร้อมระเบิดเพลิงเวทมนตร์ทะลวงเกราะ'
   },
   thief: {
-    name: 'Thief',
+    name: 'จอมโจร (Thief)',
     avatar: '🗡️',
     color: '#10b981',
     baseHp: 100,
@@ -59,12 +59,12 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 6,
     spd: 17,
     luk: 16,
-    skillName: 'Pickpocket',
+    skillName: 'โจรกรรมฉับไว (Pickpocket)',
     skillCost: 12,
-    skillDesc: 'High critical chance; pilfers 40 Gold directly from the victim.'
+    skillDesc: 'โอกาสติดคริติคอลสูงมาก และฉกเงิน 40G จากกระเป๋าของเหยื่อทันที'
   },
   cleric: {
-    name: 'Cleric',
+    name: 'นักบวช (Cleric)',
     avatar: '✨',
     color: '#f59e0b',
     baseHp: 110,
@@ -74,9 +74,24 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 13,
     spd: 9,
     luk: 9,
-    skillName: 'Holy Smite',
+    skillName: 'แสงศักดิ์สิทธิ์พิฆาต (Holy Smite)',
     skillCost: 16,
-    skillDesc: 'Radiant holy damage and recovers 25 HP.'
+    skillDesc: 'ลำแสงศักดิ์สิทธิ์สร้างความเสียหายธาตุแสงรุนแรง และฟื้นฟู 25 HP'
+  },
+  spellblade: {
+    name: 'จอมดาบเวท (Spellblade)',
+    avatar: '⚔️✨',
+    color: '#ec4899',
+    baseHp: 115,
+    baseMp: 50,
+    atk: 14,
+    def: 10,
+    mag: 12,
+    spd: 11,
+    luk: 7,
+    skillName: 'ดาบมนตราสังหาร (Spell Slash)',
+    skillCost: 14,
+    skillDesc: 'ผสานพลังเวทลงสู่คมดาบ ฟันทะลวงเกราะและสร้างความเสียหายรุนแรง'
   }
 };
 
@@ -92,50 +107,50 @@ export interface FieldSpellData {
 export const FIELD_SPELLS: Record<string, FieldSpellData> = {
   zap: {
     id: 'zap',
-    name: 'Thunderbolt',
+    name: 'สายฟ้าฟาด (Thunderbolt)',
     icon: '⚡',
     mpCost: 15,
-    desc: 'Strikes any target player with lightning, dealing 25 + MAG*1.5 damage.',
+    desc: 'ฟาดสายฟ้าใส่ผู้เล่นเป้าหมาย สร้างดาเมจ 25 + MAG*1.5',
     requiresTarget: true
   },
   swap: {
     id: 'swap',
-    name: 'Dimension Swap',
+    name: 'สลับมิติ (Dimension Swap)',
     icon: '🔄',
     mpCost: 20,
-    desc: 'Instantly swaps board locations with any chosen player.',
+    desc: 'สลับตำแหน่งบนกระดานกับผู้เล่นเป้าหมายในพริบตา',
     requiresTarget: true
   },
   tax_audit: {
     id: 'tax_audit',
-    name: 'Royal Audit',
+    name: 'ตรวจสอบบัญชีหลวง (Royal Audit)',
     icon: '🧲',
     mpCost: 25,
-    desc: 'Audits target player, seizing 25% of their gold coin pouch.',
+    desc: 'ส่งเจ้าหน้าที่หลวงตรวจสอบ ยึดทอง 25% จากถุงเงินของผู้เล่นเป้าหมาย',
     requiresTarget: true
   },
   curse_rust: {
     id: 'curse_rust',
-    name: 'Curse of Rust',
+    name: 'คำสาปสนิมกัดกร่อน (Curse of Rust)',
     icon: '🩸',
     mpCost: 18,
-    desc: 'Corrodes target player weapons and armor, reducing ATK & DEF by 30% for 3 turns.',
+    desc: 'กัดกร่อนอาวุธและชุดเกราะ ลดพลัง ATK และ DEF ของเป้าหมาย 30% นาน 3 เทิร์น',
     requiresTarget: true
   },
   holy_sanctuary: {
     id: 'holy_sanctuary',
-    name: 'Holy Sanctuary',
+    name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)',
     icon: '🕊️',
     mpCost: 30,
-    desc: 'Blesses caster, fully recovering HP and curing all negative status.',
+    desc: 'อัญเชิญพรแห่งแสง ฟื้นฟู HP เต็มเปี่ยม และลบล้างสถานะผิดปกติทั้งหมด',
     requiresTarget: false
   },
   castle_warp: {
     id: 'castle_warp',
-    name: 'Castle Recall',
+    name: 'ประตูมิติกลับปราสาท (Castle Recall)',
     icon: '🚪',
     mpCost: 10,
-    desc: 'Opens an astral portal teleporting directly back to Dokapon Castle (Tile 0).',
+    desc: 'เปิดประตูมิติย้ายกลับสู่ปราสาทหลวง (โหนด 0) ทันที',
     requiresTarget: false
   }
 };
@@ -270,10 +285,10 @@ export class Player {
     // Starting basic bag & field grimoire
     this.inventory.push({
       id: 'pot_hp',
-      name: 'Life Potion',
+      name: 'น้ำยาฟื้นพลังชีวิต (Life Potion)',
       type: 'potion',
       cost: 35,
-      desc: 'Restores 50 HP',
+      desc: 'ฟื้นฟู 50 HP ทันที',
       icon: '🧪'
     });
 

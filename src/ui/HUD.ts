@@ -26,7 +26,7 @@ export class HUD {
     nameEl.innerText = p.displayName;
     nameEl.style.color = p.isDarkling ? '#f43f5e' : p.color;
 
-    document.getElementById('hudPlayerClass')!.innerText = p.isDarkling ? 'THE DARKLING' : p.className;
+    document.getElementById('hudPlayerClass')!.innerText = p.isDarkling ? 'จอมมาร' : p.className;
     document.getElementById('hudPlayerLevel')!.innerText = `LV. ${p.level}`;
 
     // Darkling badge
@@ -46,7 +46,7 @@ export class HUD {
     document.getElementById('hudPlayerGold')!.innerText = `${p.gold}G`;
     const netWorth = p.getNetWorth(this.game.allNodes);
     document.getElementById('hudPlayerNetWorth')!.innerText = `${netWorth}G`;
-    document.getElementById('hudPlayerTowns')!.innerText = `${p.townsControlled} Towns`;
+    document.getElementById('hudPlayerTowns')!.innerText = `${p.townsControlled} เมือง`;
 
     document.getElementById('hudDayCount')!.innerText = `${this.game.dayCounter}`;
     document.getElementById('hudWeekCount')!.innerText = `${this.game.weekCounter}`;

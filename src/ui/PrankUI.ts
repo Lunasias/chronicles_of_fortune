@@ -39,8 +39,8 @@ export class PrankUI {
     this.onFinishedCallback = onFinished;
 
     const modal = document.getElementById('pvpSpoilsModal')!;
-    document.getElementById('pvpDefeatedPlayerDesc')!.innerText = `You crushed ${victim.name}! Choose your spoils of war or exact sweet humiliating revenge:`;
-    document.getElementById('spoilsGoldAmount')!.innerText = `Take ${victim.gold}G`;
+    document.getElementById('pvpDefeatedPlayerDesc')!.innerText = `คุณบดขยี้ ${victim.name}! เลือกของรางวัลแห่งชัยชนะ หรือจะลงโทษให้ขายหน้าดี:`;
+    document.getElementById('spoilsGoldAmount')!.innerText = `ยึด ${victim.gold}G`;
 
     document.getElementById('prankCanvasContainer')?.classList.add('hidden');
     modal.classList.remove('hidden');
@@ -70,7 +70,7 @@ export class PrankUI {
     this.currentVictim.gold = 0;
     p.gold += amount;
     audio.coin();
-    this.game.addLog(`💰 ${p.displayName} robbed all ${amount}G from ${this.currentVictim.name}!`, 'gold');
+    this.game.addLog(`💰 ${p.displayName} ปล้น ${amount}G ทั้งหมดจาก ${this.currentVictim.name}!`, 'gold');
 
     this.close();
   }
@@ -84,14 +84,14 @@ export class PrankUI {
       const stolen = v.equipment.weapon;
       v.equipment.weapon = null;
       p.inventory.push(stolen);
-      this.game.addLog(`⚔️ ${p.displayName} stripped ${v.name}'s weapon (${stolen.name})!`, 'battle');
+      this.game.addLog(`⚔️ ${p.displayName} ริบอาวุธของ ${v.name} (${stolen.name})!`, 'battle');
     } else if (v.equipment.armor) {
       const stolen = v.equipment.armor;
       v.equipment.armor = null;
       p.inventory.push(stolen);
-      this.game.addLog(`🦺 ${p.displayName} stripped ${v.name}'s armor (${stolen.name})!`, 'battle');
+      this.game.addLog(`🦺 ${p.displayName} ริบชุดเกราะของ ${v.name} (${stolen.name})!`, 'battle');
     } else {
-      this.game.addLog(`${v.name} had no equipment to steal; took 50G instead.`);
+      this.game.addLog(`${v.name} ไม่มีอุปกรณ์ให้ขโมย ยึด 50G แทน`);
       const taken = Math.min(v.gold, 50);
       v.gold -= taken;
       p.gold += taken;
@@ -110,10 +110,10 @@ export class PrankUI {
       const townNode = this.game.allNodes.find(n => n.id === stolenTownId);
       if (townNode) {
         townManager.transferTownOwnership(townNode, p, v);
-        this.game.addLog(`🚩 ${p.displayName} seized ownership of ${townNode.name} from ${v.name}!`, 'level');
+        this.game.addLog(`🚩 ${p.displayName} ยึดการครอบครองเมือง ${townNode.name} จาก ${v.name}!`, 'level');
       }
     } else {
-      this.game.addLog(`${v.name} owns no territories! Robbed 60G instead.`);
+      this.game.addLog(`${v.name} ไม่มีดินแดน! ปล้น 60G แทน`);
       const taken = Math.min(v.gold, 60);
       v.gold -= taken;
       p.gold += taken;
@@ -135,7 +135,7 @@ export class PrankUI {
 
     this.currentVictim.applyPrank(this.selectedPrankType, sillyName, 14);
     audio.fanfare();
-    this.game.addLog(`🎨 PRANK APPLIED! ${p.displayName} scribbled on ${this.currentVictim.name}'s face and renamed them "${sillyName}" for 2 weeks!`, 'darkling');
+    this.game.addLog(`🎨 วาดหน้าสำเร็จ! ${p.displayName} วาดหน้า ${this.currentVictim.name} และเปลี่ยนชื่อเป็น "${sillyName}" เป็นเวลา 2 สัปดาห์!`, 'darkling');
 
     this.close();
   }

@@ -208,10 +208,10 @@ export class BattleUI {
     const eCombatant = isPAtk ? b.defender : b.attacker;
 
     document.getElementById('battlePlayerName')!.innerText = pCombatant.name;
-    document.getElementById('battlePlayerRoleBadge')!.innerText = isPAtk ? 'ATTACKER' : 'DEFENDER';
+    document.getElementById('battlePlayerRoleBadge')!.innerText = isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
     document.getElementById('battlePlayerRoleBadge')!.className = isPAtk
-      ? 'text-[10px] bg-blue-900 px-1 rounded text-cyan-300'
-      : 'text-[10px] bg-slate-800 px-1 rounded text-slate-300';
+      ? 'text-[10px] bg-blue-900 px-1.5 py-0.5 rounded text-cyan-300 font-bold'
+      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-bold';
 
     const curPHP = Math.max(0, Math.ceil(pCombatant.hp));
     const maxPHP = Math.max(1, Math.ceil(pCombatant.maxHp));
@@ -226,10 +226,10 @@ export class BattleUI {
     document.getElementById('battlePlayerMPText')!.innerText = `${curPMP}/${maxPMP}`;
 
     document.getElementById('battleEnemyName')!.innerText = eCombatant.name;
-    document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ATTACKER' : 'DEFENDER';
+    document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
     document.getElementById('battleEnemyRoleBadge')!.className = !isPAtk
-      ? 'text-[10px] bg-red-900 px-1 rounded text-rose-300'
-      : 'text-[10px] bg-slate-800 px-1 rounded text-slate-300';
+      ? 'text-[10px] bg-red-900 px-1.5 py-0.5 rounded text-rose-300 font-bold'
+      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-bold';
 
     const curEHP = Math.max(0, Math.ceil(eCombatant.hp));
     const maxEHP = Math.max(1, Math.ceil(eCombatant.maxHp));
@@ -248,11 +248,11 @@ export class BattleUI {
     if (b.isPlayerAttacking) {
       atkGroup.classList.remove('hidden');
       defGroup.classList.add('hidden');
-      document.getElementById('battleTurnText')!.innerText = 'YOU ARE ATTACKING! CHOOSE YOUR STRIKE!';
+      document.getElementById('battleTurnText')!.innerText = '⚔️ คุณเป็นฝ่ายโจมตี! เลือกคำสั่งรุกของคุณ!';
     } else {
       atkGroup.classList.add('hidden');
       defGroup.classList.remove('hidden');
-      document.getElementById('battleTurnText')!.innerText = 'YOU ARE DEFENDING! PREDICT ENEMY ATTACK!';
+      document.getElementById('battleTurnText')!.innerText = '🛡️ คุณเป็นฝ่ายตั้งรับ! คาดเดาและเลือกคำสั่งรับ!';
     }
   }
 
@@ -348,21 +348,21 @@ export class BattleUI {
     let bannerColor = '#f59e0b';
 
     if (atkAction === 'strike') {
-      actionTitle = '⚡ CRITICAL STRIKE! ⚡';
-      actionSub = `${b.attacker.name} charges with devastating power!`;
+      actionTitle = '⚡ ชาร์จฟันทะลวงเกราะ! ⚡';
+      actionSub = `${b.attacker.name} ชาร์จพลังทำลายล้างทะลวงการป้องกัน!`;
       bannerColor = '#ef4444';
     } else if (atkAction === 'magic') {
-      actionTitle = '🔮 ARCANE EVOCATION! 🔮';
-      actionSub = `${b.attacker.name} chants forbidden dark incantations!`;
+      actionTitle = '🔮 ร่ายมหาเวทมนตร์! 🔮';
+      actionSub = `${b.attacker.name} บริกรรมคาถาเพลิงเวทมนตร์โบราณ!`;
       bannerColor = '#a855f7';
     } else if (atkAction === 'skill') {
-      actionTitle = `⚔️ ${b.attacker.skillName || 'SPECIAL SKILL'} ⚔️`;
-      actionSub = `${b.attacker.name} initiates secret hero technique!`;
-      bannerColor = '#06b6d4';
+      actionTitle = `🌟 ท่าไม้ตาย: ${b.attacker.skillName || 'สกิลเฉพาะ'} 🌟`;
+      actionSub = `${b.attacker.name} ปลดปล่อยวิชาลับเฉพาะคลาส!`;
+      bannerColor = '#ec4899';
     } else {
-      actionTitle = `⚔️ ${b.attacker.name.toUpperCase()} LUNGES!`;
-      actionSub = `Steel clash initiated!`;
-      bannerColor = '#f59e0b';
+      actionTitle = '⚔️ บุกโจมตีประชิด! ⚔️';
+      actionSub = `${b.attacker.name} พุ่งทะยานฟันด้วยอาวุธคู่กาย!`;
+      bannerColor = '#3b82f6';
     }
 
     if (defAction === 'counter') {

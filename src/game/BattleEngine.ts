@@ -61,12 +61,12 @@ export class BattleEngine {
     if (combatant.isBoss) {
       return {
         name: combatant.name,
-        classOrType: 'DRACONIC OVERLORD',
+        classOrType: 'จอมราชันมังกร (DRACONIC OVERLORD)',
         tendencies: { attack: 25, strike: 45, magic: 20, skill: 10 },
-        weakness: 'Ice & Holy Spells, Piercing Attacks',
-        resistance: 'Fire & Physical Slashes',
-        recommendedCounter: '⚡ High Strike Tendency! Ready Counter!',
-        tacticalTip: 'The Dragon Overlord favors devastating Strikes. A successful Counter deals catastrophic reverse damage!'
+        weakness: 'เวทมนตร์น้ำแข็ง, เวทศักดิ์สิทธิ์, การแทงทะลุ',
+        resistance: 'ธาตุไฟ, การฟันกายภาพทั่วไป',
+        recommendedCounter: '⚡ มีแนวโน้มชาร์จฟันสูงมาก! เตรียมสวนกลับ (Counter)!',
+        tacticalTip: 'จอมราชันมังกรชอบใช้ท่าชาร์จฟันรุนแรง หากสวนกลับสำเร็จจะสะท้อนความเสียหายมหาศาล!'
       };
     }
 
@@ -75,42 +75,42 @@ export class BattleEngine {
       if (classKey === 'warrior') {
         return {
           name: p.displayName,
-          classOrType: 'WARRIOR JUGGERNAUT',
+          classOrType: 'นักรบเกราะเหล็ก (WARRIOR JUGGERNAUT)',
           tendencies: { attack: 40, strike: 35, magic: 10, skill: 15 },
-          weakness: 'Elemental Magic & Armor Piercing',
-          resistance: 'Physical Blunt & Defend Stance',
-          recommendedCounter: '🔮 Cast Magic to bypass ironclad defense!',
-          tacticalTip: 'High physical DEF. Physical attacks do chip damage, but Magic tears right through.'
+          weakness: 'เวทมนตร์ธาตุ, การโจมตีทะลวงเกราะ',
+          resistance: 'การโจมตีกายภาพ, ท่าตั้งการ์ดป้องกัน',
+          recommendedCounter: '🔮 ร่ายเวทมนตร์เพื่อทะลวงพลังป้องกันเหล็กไหล!',
+          tacticalTip: 'พลังป้องกันกายภาพสูงมาก การโจมตีธรรมดาทำดาเมจได้น้อย แต่แพ้ทางเวทมนตร์'
         };
       } else if (classKey === 'magician') {
         return {
           name: p.displayName,
-          classOrType: 'ARCANE EVOKER',
+          classOrType: 'จอมเวทมนตรา (ARCANE EVOKER)',
           tendencies: { attack: 15, strike: 15, magic: 50, skill: 20 },
-          weakness: 'Physical Rushdown & Critical Strike',
-          resistance: 'Magic Spells & Elemental Shields',
-          recommendedCounter: '⚔️ Rushdown with physical Attack; avoid Magic!',
-          tacticalTip: 'Has deadly offensive magic. Use Magic Guard to block spells, then retaliate with blade.'
+          weakness: 'การประชิดฟันกายภาพ, ท่าชาร์จฟัน',
+          resistance: 'เวทมนตร์, โล่ธาตุ',
+          recommendedCounter: '⚔️ บุกโจมตีกายภาพทันที หลีกเลี่ยงการสู้ด้วยเวท!',
+          tacticalTip: 'มีเวทมนตร์โจมตีรุนแรงมาก ใช้ท่าปัดเวท (Magic Guard) เพื่อสกัดกั้น แล้วโจมตีสวนด้วยดาบ'
         };
       } else if (classKey === 'thief') {
         return {
           name: p.displayName,
-          classOrType: 'SHADOW INFILTRATOR',
+          classOrType: 'จอมโจรเงาพราย (SHADOW INFILTRATOR)',
           tendencies: { attack: 35, strike: 45, magic: 5, skill: 15 },
-          weakness: 'Guarded Counter & High DEF',
-          resistance: 'High Evasion & Speed',
-          recommendedCounter: '🛡️ Counter their aggressive Strike pickpocket!',
-          tacticalTip: 'Speed demon who loves stealing gold via Strike. Predict their strike with Counter!'
+          weakness: 'การตั้งรับสวนกลับ, พลังป้องกันสูง',
+          resistance: 'ความเร็วสูง, การหลบหลีก',
+          recommendedCounter: '🛡️ ตั้งท่าสวนกลับเพื่อดักจับจอมโจรที่ชอบชาร์จฟันขโมยทอง!',
+          tacticalTip: 'เน้นความเร็วและชอบชาร์จฟันเพื่อปล้นเงิน คาดเดาจังหวะแล้วใช้สวนกลับ (Counter) ดัดหลัง'
         };
       } else if (classKey === 'cleric') {
         return {
           name: p.displayName,
-          classOrType: 'HOLY CRUSADER',
+          classOrType: 'อัศวินผู้พิทักษ์แสง (HOLY CRUSADER)',
           tendencies: { attack: 25, strike: 25, magic: 35, skill: 15 },
-          weakness: 'Heavy Burst Strike & Darkness',
-          resistance: 'Holy Light & Sustained Attrition',
-          recommendedCounter: '⚡ Burst them down with Strike before they heal!',
-          tacticalTip: 'Holy Smite heals HP while dealing damage. Do not let the duel drag out.'
+          weakness: 'การโจมตีหนักหน่วงรวดเร็ว, พลังความมืด',
+          resistance: 'แสงศักดิ์สิทธิ์, การต่อสู้ยืดเยื้อ',
+          recommendedCounter: '⚡ รีบเผด็จศึกด้วยชาร์จฟันก่อนที่นักบวชจะฟื้นฟูเลือด!',
+          tacticalTip: 'ท่าแสงศักดิ์สิทธิ์สามารถฟื้นเลือดพร้อมสร้างดาเมจ อย่าปล่อยให้การต่อสู้ยืดเยื้อ'
         };
       }
     }
@@ -119,63 +119,63 @@ export class BattleEngine {
     if (name.includes('slime')) {
       return {
         name: combatant.name,
-        classOrType: 'AMORPHOUS OOZE',
+        classOrType: 'อสูรสไลม์เมือกเหลว',
         tendencies: { attack: 55, strike: 20, magic: 20, skill: 5 },
-        weakness: 'Blunt Force & Fire',
-        resistance: 'Slash Blades',
-        recommendedCounter: '⚔️ Standard Attack is safest!',
-        tacticalTip: 'Predictable baseline monster. Rarely Counters.'
+        weakness: 'การทุบตีด้วยของหนัก, เวทมนตร์ไฟ',
+        resistance: 'การฟันด้วยดาบ',
+        recommendedCounter: '⚔️ โจมตีธรรมดาเป็นวิธีที่ปลอดภัยที่สุด!',
+        tacticalTip: 'มอนสเตอร์พื้นฐาน คาดเดาง่าย แทบไม่เคยใช้ท่าสวนกลับ'
       };
     } else if (name.includes('goblin') || name.includes('kobold')) {
       return {
         name: combatant.name,
-        classOrType: 'WRETCHED SCAVENGER',
+        classOrType: 'ก็อบลินคนเถื่อน',
         tendencies: { attack: 45, strike: 35, magic: 10, skill: 10 },
-        weakness: 'Holy Light & Magic',
-        resistance: 'Poisons',
-        recommendedCounter: '🛡️ Counter their wild club Strikes!',
-        tacticalTip: 'Goblins swing erratically with wild overhead strikes.'
+        weakness: 'แสงศักดิ์สิทธิ์, เวทมนตร์',
+        resistance: 'พิษ',
+        recommendedCounter: '🛡️ สวนกลับท่าทุบกระบองบ้าคลั่งของมัน!',
+        tacticalTip: 'ก็อบลินมักเหวี่ยงกระบองเหวี่ยงไปมาด้วยท่าชาร์จฟันอย่างบ้าคลั่ง'
       };
     } else if (name.includes('skeleton')) {
       return {
         name: combatant.name,
-        classOrType: 'CRYPT UNDEAD',
+        classOrType: 'โครงกระดูกคืนชีพ',
         tendencies: { attack: 40, strike: 35, magic: 10, skill: 15 },
-        weakness: 'Holy Smite & Crushing Hammers',
-        resistance: 'Piercing Arrows & Cold',
-        recommendedCounter: '🔮 Magic or Counter against sword swings.',
-        tacticalTip: 'Bony frame easily shattered by Holy and Magic.'
+        weakness: 'แสงศักดิ์สิทธิ์, ค้อนทุบกระดูก',
+        resistance: 'ลูกศรแทงทะลุ, ความเย็น',
+        recommendedCounter: '🔮 ใช้เวทมนตร์หรือสวนกลับการฟันดาบ',
+        tacticalTip: 'โครงกระดูกเปราะบางแตกหักง่ายเมื่อโดนค้อนหรือเวทศักดิ์สิทธิ์'
       };
     } else if (name.includes('spider') || name.includes('bat')) {
       return {
         name: combatant.name,
-        classOrType: 'ABYSSAL BEAST',
+        classOrType: 'อสูรราตรีแห่งความมืด',
         tendencies: { attack: 50, strike: 30, magic: 15, skill: 5 },
-        weakness: 'Fire Spells & Wide Slashes',
-        resistance: 'Earth & Darkness',
-        recommendedCounter: '⚔️ Strong Physical Slash or Magic Fire.',
-        tacticalTip: 'Fragile HP. High speed but low defense.'
+        weakness: 'เวทมนตร์ไฟ, ดาบฟันวงกว้าง',
+        resistance: 'ธาตุดิน, ความมืด',
+        recommendedCounter: '⚔️ ฟันกายภาพหนักๆ หรือใช้เวทไฟ',
+        tacticalTip: 'เลือดน้อย เคลื่อนไหวเร็วแต่พลังป้องกันต่ำมาก'
       };
     } else if (name.includes('wraith') || name.includes('specter')) {
       return {
         name: combatant.name,
-        classOrType: 'SPECTRAL APPARITION',
+        classOrType: 'วิญญาณอาฆาตลอยล่อง',
         tendencies: { attack: 15, strike: 15, magic: 60, skill: 10 },
-        weakness: 'Holy Magic & Silvered Weapons',
-        resistance: 'Immune to Normal Physical Damage',
-        recommendedCounter: '🔮 Use Magic or Magic Guard!',
-        tacticalTip: 'Phasing through reality. Defend against physical is useless; use Magic Guard!'
+        weakness: 'เวทศักดิ์สิทธิ์, อาวุธเงินบริสุทธิ์',
+        resistance: 'ไร้ผลต่อการโจมตีกายภาพธรรมดา',
+        recommendedCounter: '🔮 ใช้เวทมนตร์ หรือกดปัดเวท (Magic Guard)!',
+        tacticalTip: 'โปร่งใสทะลุกายภาพ การป้องกันธรรมดาไม่ได้ผล ให้ใช้ปัดเวทเท่านั้น!'
       };
     }
 
     return {
       name: combatant.name,
-      classOrType: 'ROVING FOE',
+      classOrType: 'ศัตรูไม่ทราบที่มา',
       tendencies: { attack: 45, strike: 30, magic: 15, skill: 10 },
-      weakness: 'Adaptive Tactics',
-      resistance: 'Standard',
-      recommendedCounter: '⚔️ Balanced Stance',
-      tacticalTip: 'Observe opponent attack patterns and punish overextensions.'
+      weakness: 'กลยุทธ์ยืดหยุ่น',
+      resistance: 'ทั่วไป',
+      recommendedCounter: '⚔️ ตั้งรับและดูเชิง',
+      tacticalTip: 'สังเกตรูปแบบการโจมตีของคู่ต่อสู้ แล้วลงทัณฑ์เมื่อศัตรูเปิดช่องว่าง'
     };
   }
 
@@ -216,7 +216,7 @@ export class BattleEngine {
     // 1. Give Up
     if (defAction === 'give_up') {
       isGiveUp = true;
-      narration = `${d.name} raised the white flag and surrendered!`;
+      narration = `${d.name} ยกธงขาวขอยอมจำนน!`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -238,7 +238,7 @@ export class BattleEngine {
       const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
       damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(Math.random() * 8)));
       a.hp = Math.round(Math.max(0, a.hp - damageToAttacker));
-      narration = `💥 PERFECT COUNTER! ${d.name} parried ${a.name}'s Strike and crushed them for ${damageToAttacker} reverse damage!`;
+      narration = `💥 สวนกลับสมบูรณ์แบบ! ${d.name} ปัดป้องท่าชาร์จฟันของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย!`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -262,9 +262,9 @@ export class BattleEngine {
       d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
 
       if (defAction === 'defend') {
-        narration = `⚡ STRIKE SHATTERS DEFENSE! ${a.name}'s overhead strike pierced ${d.name}'s guard for ${damageToDefender} devastating damage!`;
+        narration = `⚡ ชาร์จฟันทลายการป้องกัน! การฟาดฟันอันรุนแรงของ ${a.name} ทะลวงการตั้งการ์ดของ ${d.name} สร้างดาเมจมหาศาล ${damageToDefender} หน่วย!`;
       } else {
-        narration = `⚡ DIRECT STRIKE! ${a.name} obliterated ${d.name}'s barrier for ${damageToDefender} damage!`;
+        narration = `⚡ ชาร์จฟันเต็มแรง! ${a.name} ฟาดฟันทำลายบาเรียของ ${d.name} ได้รับดาเมจ ${damageToDefender} หน่วย!`;
       }
 
       return {
@@ -285,7 +285,7 @@ export class BattleEngine {
       isMagicBlocked = true;
       audio.magicGuardBlock();
       // Magic guard nullifies spell
-      narration = `✨ MAGIC GUARD! ${d.name}'s mystic barrier completely reflected ${a.name}'s spell! (0 Damage)`;
+      narration = `✨ ปัดเวทสำเร็จ! บาเรียมนตราของ ${d.name} สะท้อนเวทมนตร์ของ ${a.name} ออกไปจนหมดสิ้น! (0 ดาเมจ)`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -305,7 +305,7 @@ export class BattleEngine {
       const spellDmg = Math.round(a.mag * 2.8 + 12 + Math.random() * 6);
       damageToDefender = Math.round(Math.max(15, spellDmg));
       d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
-      narration = `🔮 ARCANE INFERNO! Physical defense couldn't stop ${a.name}'s magic! ${d.name} burned for ${damageToDefender} damage!`;
+      narration = `🔮 เพลิงเวทมนตร์แผดเผา! การป้องกันกายภาพไม่สามารถหยุดยั้งเวทของ ${a.name} ได้! ${d.name} ถูกเผาผลาญ ${damageToDefender} ดาเมจ!`;
 
       return {
         attackerAction: atkAction,
@@ -331,12 +331,12 @@ export class BattleEngine {
         const stolen = Math.min(d.playerRef.gold, 50);
         d.playerRef.gold -= stolen;
         a.playerRef.gold += stolen;
-        narration = `🗡️ PICKPOCKET! ${a.name} dealt ${damageToDefender} damage and stole ${stolen}G from ${d.name}!`;
+        narration = `🗡️ โจรกรรมฉับไว! ${a.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G จากกระเป๋าของ ${d.name}!`;
       } else if (a.classKey === 'cleric') {
         a.hp = Math.round(Math.min(a.maxHp, a.hp + 25));
-        narration = `✨ HOLY SMITE! ${a.name} struck for ${damageToDefender} damage and restored 25 HP!`;
+        narration = `✨ แสงศักดิ์สิทธิ์พิฆาต! ${a.name} ปลดปล่อยดาเมจแสง ${damageToDefender} หน่วย พร้อมฟื้นฟูเลือดตนเอง 25 HP!`;
       } else {
-        narration = `🌟 CLASS SKILL! ${a.name} unleashed ${a.skillName || 'Skill'} dealing ${damageToDefender} damage!`;
+        narration = `🌟 ท่าไม้ตายคลาส! ${a.name} ปลดปล่อย ${a.skillName || 'สกิล'} สร้างความเสียหาย ${damageToDefender} ดาเมจ!`;
       }
 
       return {
@@ -359,13 +359,13 @@ export class BattleEngine {
 
     if (defAction === 'defend') {
       finalDmg = Math.round(Math.max(3, finalDmg * 0.45));
-      narration = `🛡️ DEFEND BLOCKS! ${d.name} cushioned the blow, taking only ${finalDmg} damage.`;
+      narration = `🛡️ ป้องกันสำเร็จ! ${d.name} ลดทอนแรงปะทะ รับความเสียหายเพียง ${finalDmg} หน่วย`;
     } else if (defAction === 'counter') {
       // Counter failed! Full damage
       finalDmg = Math.round(finalDmg * 1.2);
-      narration = `⚔️ COUNTER WHIFFED! ${d.name} anticipated a Strike, but took a direct Attack for ${finalDmg} damage!`;
+      narration = `⚔️ สวนกลับพลาดเป้า! ${d.name} รอสวนกลับท่าชาร์จฟัน แต่โดนการโจมตีธรรมดาของ ${a.name} เต็มๆ ${finalDmg} ดาเมจ!`;
     } else {
-      narration = `⚔️ ${a.name} struck with standard weapon dealing ${finalDmg} damage to ${d.name}!`;
+      narration = `⚔️ ${a.name} โจมตีด้วยอาวุธ สร้างความเสียหาย ${finalDmg} ดาเมจแก่ ${d.name}!`;
     }
 
     d.hp = Math.round(Math.max(0, d.hp - finalDmg));

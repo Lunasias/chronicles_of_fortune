@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Dokapon Kingdom: 2.5D Isometric Pixel RPG</title>
+  <title>Chronicles of Fortune - ตำนานแห่งโชคชะตา</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Pixel Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -25,61 +25,52 @@
       padding: 0;
       background-color: #030712;
       color: #f8fafc;
-      font-family: 'Silkscreen', 'Press Start 2P', monospace;
+      font-family: 'Kanit', 'Prompt', 'Silkscreen', 'Press Start 2P', monospace;
       overflow: hidden;
       touch-action: manipulation;
     }
 
     /* Dokapon Retro Boxes */
     .pixel-box {
-      background: #111827;
-      border: 4px solid #030712;
-      box-shadow: 
-        inset -4px -4px 0px 0px #020617,
-        inset 4px 4px 0px 0px #374151,
-        0 8px 0 0 rgba(0,0,0,0.6);
-      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      background: rgba(17, 24, 39, 0.85);
+      border: 2px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+      border-radius: 12px;
     }
 
     .pixel-box-gold {
-      background: #251c11;
-      border: 4px solid #0f0b06;
-      box-shadow: 
-        inset -4px -4px 0px 0px #4d3307,
-        inset 4px 4px 0px 0px #fbbf24,
-        0 8px 0 0 rgba(0,0,0,0.7);
-      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      background: rgba(37, 28, 17, 0.9);
+      border: 2px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 8px 32px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(251, 191, 36, 0.1);
+      border-radius: 12px;
     }
 
     .pixel-box-red {
-      background: #2b1111;
-      border: 4px solid #140404;
-      box-shadow: 
-        inset -4px -4px 0px 0px #5c1414,
-        inset 4px 4px 0px 0px #f87171,
-        0 8px 0 0 rgba(0,0,0,0.7);
-      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      background: rgba(43, 17, 17, 0.9);
+      border: 2px solid rgba(248, 113, 113, 0.4);
+      box-shadow: 0 8px 32px rgba(248, 113, 113, 0.15), inset 0 1px 0 rgba(248, 113, 113, 0.1);
+      border-radius: 12px;
     }
 
     .pixel-box-darkling {
-      background: #190524;
-      border: 4px solid #0a0110;
-      box-shadow: 
-        inset -4px -4px 0px 0px #4a044e,
-        inset 4px 4px 0px 0px #c084fc,
-        0 8px 0 0 rgba(168, 85, 247, 0.4);
-      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      background: rgba(25, 5, 36, 0.9);
+      border: 2px solid rgba(192, 132, 252, 0.4);
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15), inset 0 1px 0 rgba(192, 132, 252, 0.1);
+      border-radius: 12px;
     }
 
     /* Tactile Dokapon Buttons */
     .pixel-btn {
       position: relative;
-      background: #1f2937;
-      border: 3px solid #030712;
-      box-shadow: 
-        inset -3px -3px 0px 0px #111827,
-        inset 3px 3px 0px 0px #4b5563,
-        0 4px 0 0 #030712;
+      background: rgba(31, 41, 55, 0.8);
+      border: 2px solid rgba(75, 85, 99, 0.5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
       transition: transform 0.05s ease, background-color 0.1s ease;
       cursor: pointer;
     }
@@ -160,7 +151,8 @@
     .command-card {
       position: relative;
       border: 4px solid #030712;
-      border-radius: 6px;
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
       font-weight: bold;
       transition: all 0.1s ease;
       cursor: pointer;
@@ -253,8 +245,8 @@
     <div class="pixel-box-gold px-6 py-2 flex items-center gap-3 shadow-2xl bg-gradient-to-r from-amber-950/95 via-slate-900/95 to-amber-950/95 border-amber-500 rounded">
       <span id="turnBannerIcon" class="text-2xl animate-bounce">⚔️</span>
       <div class="flex flex-col items-center text-center">
-        <span id="turnBannerTitle" class="text-amber-300 font-bold text-xs md:text-sm tracking-widest uppercase">YOUR TURN!</span>
-        <span id="turnBannerSubtitle" class="text-[9px] text-slate-300">Camera focused on hero</span>
+        <span id="turnBannerTitle" class="text-amber-300 font-bold text-xs md:text-sm tracking-widest uppercase">ถึงตาคุณ!</span>
+        <span id="turnBannerSubtitle" class="text-[9px] text-slate-300">กล้องโฟกัสที่วีรบุรุษ</span>
       </div>
     </div>
   </div>
@@ -265,7 +257,7 @@
     <div class="pixel-box pointer-events-auto px-3.5 py-2 flex items-center gap-3 bg-slate-900/95 border-slate-700 shadow-xl backdrop-blur-xs">
       <div id="hudPlayerAvatarWrapper" class="w-12 h-12 border-2 border-amber-400 bg-slate-950 rounded flex items-center justify-center overflow-hidden shadow relative">
         <canvas id="hudAvatarCanvas" width="48" height="48" class="image-pixelated"></canvas>
-        <span id="hudDarklingBadge" class="hidden absolute top-0 right-0 text-[9px] bg-purple-700 text-white font-bold px-1 rounded-bl">DEVIL</span>
+        <span id="hudDarklingBadge" class="hidden absolute top-0 right-0 text-[9px] bg-purple-700 text-white font-bold px-1 rounded-bl">จอมมาร</span>
       </div>
       <div>
         <div class="flex items-center gap-2">
@@ -312,26 +304,26 @@
         </div>
         <div class="flex items-center gap-1 text-indigo-300 font-bold">
           <span class="text-sm">🚩</span>
-          <span id="hudPlayerTowns">0 Towns</span>
+          <span id="hudPlayerTowns">0 เมือง</span>
         </div>
         <div class="border-l border-slate-700 pl-2.5 flex flex-col text-[9px] text-slate-400">
-          <span>DAY: <strong id="hudDayCount" class="text-white">1</strong></span>
-          <span>WEEK: <strong id="hudWeekCount" class="text-amber-300">1</strong></span>
+          <span>วัน: <strong id="hudDayCount" class="text-white">1</strong></span>
+          <span>สัปดาห์: <strong id="hudWeekCount" class="text-amber-300">1</strong></span>
         </div>
         <!-- Day / Night Indicator -->
         <div id="hudTimeOfDayBadge" class="border-l border-slate-700 pl-2.5 flex items-center gap-1 text-[10px] text-amber-300 font-bold" title="Time of Day">
           <span id="hudTimeIcon" class="text-sm">☀️</span>
-          <span id="hudTimeText">NOON</span>
+          <span id="hudTimeText">เที่ยง</span>
         </div>
         <!-- Regional Weather Indicator -->
         <div id="hudWeatherBadge" class="border-l border-slate-700 pl-2.5 flex items-center gap-1 text-[10px] text-sky-300 font-bold" title="Regional Weather Ecosystem">
           <span id="hudWeatherIcon" class="text-sm">🌤️</span>
-          <span id="hudWeatherText">CLEAR</span>
+          <span id="hudWeatherText">ลบ</span>
         </div>
-        <button id="btnToggleBgm" class="pixel-btn px-2 py-1 text-xs text-amber-300 hover:text-white" title="Toggle Chiptune BGM">
+        <button id="btnToggleBgm" class="pixel-btn px-2 py-1 text-xs text-amber-300 hover:text-white" title="เปิด/ปิดเพลง">
           🎵
         </button>
-        <button id="btnSettings" class="pixel-btn px-2 py-1 text-xs text-slate-300 hover:text-white" title="Options & Rules">
+        <button id="btnSettings" class="pixel-btn px-2 py-1 text-xs text-slate-300 hover:text-white" title="ตั้งค่า">
           ⚙️
         </button>
       </div>
@@ -339,7 +331,7 @@
       <!-- Live Isometric Radar Minimap -->
       <div id="minimapBox" class="pixel-box p-1 bg-slate-950/90 border-slate-700 shadow-2xl relative">
         <canvas id="minimapCanvas" width="130" height="130" class="block bg-slate-900 cursor-pointer rounded"></canvas>
-        <div class="absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 rounded text-slate-400 pointer-events-none">2.5D RADAR</div>
+        <div class="absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 rounded text-slate-400 pointer-events-none">เรดาร์ 2.5D</div>
       </div>
     </div>
   </div>
@@ -350,44 +342,44 @@
       <!-- Roll Dice / Spinner Button -->
       <button id="btnRollDice" class="pixel-btn pixel-btn-gold px-5 py-2.5 text-xs font-bold text-slate-950 flex items-center gap-2">
         <span class="text-base">🎲</span>
-        <span id="btnRollText">ROLL DICE</span>
+        <span id="btnRollText">ทอยลูกเต๋า</span>
       </button>
 
       <!-- Multi-Spinner / Item Spinner Menu -->
       <button id="btnUseSpinner" class="pixel-btn pixel-btn-purple px-3 py-2 text-xs text-white flex items-center gap-1.5" title="Use 2-Spinner or 3-Spinner">
         <span>🌀</span>
-        <span class="hidden sm:inline">SPINNER</span>
+        <span class="hidden sm:inline">วงล้อ</span>
       </button>
       
       <!-- Inventory & Magic Deck Button -->
       <button id="btnInventory" class="pixel-btn pixel-btn-blue px-3.5 py-2 text-xs text-white flex items-center gap-1.5">
         <span>🎒</span>
-        <span>BAG</span>
+        <span>กระเป๋า</span>
       </button>
 
       <!-- Field Magic Button -->
       <button id="btnFieldMagic" class="pixel-btn pixel-btn-purple px-3.5 py-2 text-xs text-white flex items-center gap-1.5">
         <span>✨</span>
-        <span>MAGIC</span>
+        <span>เวทมนตร์</span>
       </button>
 
       <!-- Center Camera Button -->
-      <button id="btnCenterCam" class="pixel-btn px-3 py-2 text-xs text-slate-200 flex items-center gap-1.5" title="Focus Active Hero">
+      <button id="btnCenterCam" class="pixel-btn px-3 py-2 text-xs text-slate-200 flex items-center gap-1.5" title="โฟกัสวีรบุรุษ">
         <span>🎯</span>
-        <span class="hidden sm:inline">HERO</span>
+        <span class="hidden sm:inline">วีรบุรุษ</span>
       </button>
 
       <!-- Full Continent Map Viewer Button -->
-      <button id="btnWorldMap" class="pixel-btn px-3 py-2 text-xs text-amber-300 flex items-center gap-1.5" title="View Full Continent Atlas">
+      <button id="btnWorldMap" class="pixel-btn px-3 py-2 text-xs text-amber-300 flex items-center gap-1.5" title="ดูแผนที่ทวีป">
         <span>🗺️</span>
-        <span class="hidden sm:inline">ATLAS</span>
+        <span class="hidden sm:inline">แผนที่โลก</span>
       </button>
 
       <!-- Zoom Controls -->
       <div class="flex items-center gap-1 border-l border-r border-slate-700 px-2">
-        <button id="btnZoomOut" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="Zoom Out">-</button>
+        <button id="btnZoomOut" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="ซูมออก">-</button>
         <span id="zoomLabel" class="text-[10px] text-slate-400 font-bold px-1">1.0x</span>
-        <button id="btnZoomIn" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="Zoom In">+</button>
+        <button id="btnZoomIn" class="pixel-btn px-2 py-1 text-xs text-slate-300" title="ซูมเข้า">+</button>
       </div>
 
       <!-- Action Log Toggle -->
@@ -401,10 +393,10 @@
   <div id="intersectionModal" class="hidden absolute inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto">
     <div class="pixel-box-gold max-w-md w-full p-5 text-center shadow-2xl">
       <h3 class="text-base text-amber-300 font-bold mb-1.5 tracking-wide flex items-center justify-center gap-2">
-        <span>🧭</span> CHOOSE STRATEGIC DIRECTION <span>🧭</span>
+        <span>🧭</span> เลือกทิศทาง <span>🧭</span>
       </h3>
       <p class="text-xs text-slate-300 mb-3">
-        Crossroad reached! Remaining movement: <span id="choiceMovesLeft" class="text-amber-400 font-bold">3</span>
+        ถึงทางแยก! การเคลื่อนที่เหลือ: <span id="choiceMovesLeft" class="text-amber-400 font-bold">3</span>
       </p>
       <div id="choiceButtonsContainer" class="grid grid-cols-1 gap-2 my-2"></div>
     </div>
@@ -417,7 +409,7 @@
         🎲
       </div>
       <div id="diceResultText" class="mt-3 text-amber-300 font-bold text-sm tracking-widest uppercase">
-        ROLLING...
+        กำลังทอย...
       </div>
     </div>
   </div>
@@ -434,7 +426,7 @@
         <div class="pixel-box p-2.5 bg-slate-900/95 border-blue-500/60 max-w-xs w-full shadow-lg">
           <div class="flex justify-between text-xs font-bold text-blue-300 mb-1">
             <span id="battlePlayerName">Galahad</span>
-            <span id="battlePlayerRoleBadge" class="text-[10px] bg-blue-900 px-1 rounded text-cyan-300">ATTACKER</span>
+            <span id="battlePlayerRoleBadge" class="text-[10px] bg-blue-900 px-1 rounded text-cyan-300">ฝ่ายโจมตี</span>
           </div>
           <div class="w-full bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative mb-1">
             <div id="battlePlayerHP" class="bg-gradient-to-r from-red-600 to-rose-400 h-full transition-all duration-300" style="width: 100%"></div>
@@ -450,14 +442,14 @@
         <div class="pointer-events-auto flex flex-col items-center">
           <button id="btnBattleScout" class="pixel-btn pixel-btn-purple px-3 py-1.5 text-xs text-amber-300 font-bold flex items-center gap-1.5 shadow-xl animate-pulse">
             <span>👁️</span>
-            <span>SCOUT [2]</span>
+            <span>สอดแนม [2]</span>
           </button>
         </div>
 
         <!-- Enemy Status -->
         <div class="pixel-box p-2.5 bg-slate-900/95 border-red-500/60 max-w-xs w-full shadow-lg text-right">
           <div class="flex justify-between text-xs font-bold text-red-300 mb-1">
-            <span id="battleEnemyRoleBadge" class="text-[10px] bg-red-900 px-1 rounded text-rose-300">DEFENDER</span>
+            <span id="battleEnemyRoleBadge" class="text-[10px] bg-red-900 px-1 rounded text-rose-300">ฝ่ายตั้งรับ</span>
             <span id="battleEnemyName">Forest Goblin</span>
           </div>
           <div class="w-full bg-slate-950 h-3 rounded border border-slate-700 overflow-hidden relative">
@@ -470,7 +462,7 @@
       <!-- Turn Phase & Mindgame Banner -->
       <div id="battleTurnBanner" class="absolute bottom-3 inset-x-0 flex justify-center pointer-events-none">
         <span id="battleTurnText" class="pixel-box px-4 py-1.5 text-xs text-amber-300 bg-slate-900/95 shadow-lg border-amber-500">
-          CHOOSE YOUR ACTION!
+          เลือกท่าทีของคุณ!
         </span>
       </div>
 
@@ -479,31 +471,31 @@
         <div class="pixel-box-gold max-w-md w-full p-4 text-left shadow-2xl relative">
           <div class="flex justify-between items-center border-b-2 border-amber-600/50 pb-2 mb-3">
             <div>
-              <span class="text-xs text-amber-400 font-bold tracking-wider">👁️ TACTICAL SCOUT INTEL</span>
-              <h3 id="scoutEnemyName" class="text-sm text-white font-bold">DRAGON OVERLORD</h3>
-              <span id="scoutEnemyType" class="text-[9px] text-amber-300">BOSS COMBATANT</span>
+              <span class="text-xs text-amber-400 font-bold tracking-wider">👁️ ข่าวกรองสอดแนม</span>
+              <h3 id="scoutEnemyName" class="text-sm text-white font-bold">จอมมังกร</h3>
+              <span id="scoutEnemyType" class="text-[9px] text-amber-300">บอสผู้ท้าชิง</span>
             </div>
-            <button id="btnCloseScout" class="pixel-btn px-2 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ CLOSE</button>
+            <button id="btnCloseScout" class="pixel-btn px-2 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ ปิด</button>
           </div>
 
           <!-- Move Tendency Probabilities -->
           <div class="mb-3">
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Behavioral Move Tendencies</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">แนวโน้มพฤติกรรมการต่อสู้</span>
             <div class="grid grid-cols-4 gap-1.5 text-center">
               <div class="bg-red-950/60 border border-red-800/60 p-1.5 rounded">
-                <span class="text-[9px] text-rose-300 block">⚔️ Attack</span>
+                <span class="text-[9px] text-rose-300 block">⚔️ โจมตี</span>
                 <span id="scoutAtkPct" class="text-xs font-bold text-white">25%</span>
               </div>
               <div class="bg-amber-950/60 border border-amber-700/60 p-1.5 rounded">
-                <span class="text-[9px] text-amber-300 block">💥 Strike</span>
+                <span class="text-[9px] text-amber-300 block">💥 ชาร์จฟัน</span>
                 <span id="scoutStrikePct" class="text-xs font-bold text-amber-300">45%</span>
               </div>
               <div class="bg-purple-950/60 border border-purple-800/60 p-1.5 rounded">
-                <span class="text-[9px] text-purple-300 block">🔮 Magic</span>
+                <span class="text-[9px] text-purple-300 block">🔮 ร่ายเวท</span>
                 <span id="scoutMagicPct" class="text-xs font-bold text-purple-300">20%</span>
               </div>
               <div class="bg-blue-950/60 border border-blue-800/60 p-1.5 rounded">
-                <span class="text-[9px] text-cyan-300 block">🌟 Skill</span>
+                <span class="text-[9px] text-cyan-300 block">🌟 ท่าไม้ตาย</span>
                 <span id="scoutSkillPct" class="text-xs font-bold text-cyan-300">10%</span>
               </div>
             </div>
@@ -512,21 +504,21 @@
           <!-- Tactical Weaknesses & Counters -->
           <div class="space-y-2 mb-3 text-[10px]">
             <div class="bg-slate-900/90 p-2 rounded border border-slate-700">
-              <span class="text-emerald-400 font-bold">⚡ Elemental Weakness: </span>
-              <span id="scoutWeakness" class="text-slate-200">Ice & Holy Magic</span>
+              <span class="text-emerald-400 font-bold">⚡ จุดอ่อนธาตุ: </span>
+              <span id="scoutWeakness" class="text-slate-200">น้ำแข็งและเวทศักดิ์สิทธิ์</span>
             </div>
             <div class="bg-slate-900/90 p-2 rounded border border-slate-700">
-              <span class="text-rose-400 font-bold">🛡️ Resistance: </span>
-              <span id="scoutResistance" class="text-slate-200">Fire & Slash blades</span>
+              <span class="text-rose-400 font-bold">🛡️ ต้านทาน: </span>
+              <span id="scoutResistance" class="text-slate-200">ไฟและดาบเฉือน</span>
             </div>
             <div class="bg-amber-950/80 p-2 rounded border border-amber-600/70 text-amber-200 font-bold">
-              <span>💡 Recommended Move: </span>
-              <span id="scoutRecommended" class="text-yellow-300">Ready Counter against Strike!</span>
+              <span>💡 ท่าแนะนำ: </span>
+              <span id="scoutRecommended" class="text-yellow-300">เตรียมสวนกลับเพื่อตอบโต้ชาร์จฟัน!</span>
             </div>
           </div>
 
           <p id="scoutLoreTip" class="text-[9px] text-slate-400 italic bg-slate-950/80 p-2 rounded border border-slate-800">
-            Observation lore tip goes here...
+            เคล็ดลับจากการสังเกตจะปรากฏที่นี่...
           </p>
         </div>
       </div>
@@ -540,26 +532,26 @@
         <!-- Attack -->
         <button id="btnCmdAttack" class="command-card pixel-btn-red p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">⚔️</span>
-          <span class="text-xs font-bold">ATTACK</span>
-          <span class="text-[8px] opacity-80 text-rose-200">Basic Phys</span>
+          <span class="text-xs font-bold">โจมตี</span>
+          <span class="text-[8px] opacity-80 text-rose-200">กายภาพพื้นฐาน</span>
         </button>
         <!-- Strike -->
         <button id="btnCmdStrike" class="command-card pixel-btn-gold p-2 flex flex-col items-center justify-center text-slate-950">
           <span class="text-xl mb-0.5">⚡💥</span>
-          <span class="text-xs font-bold">STRIKE</span>
-          <span class="text-[8px] text-amber-950 font-bold">Pierces Def!</span>
+          <span class="text-xs font-bold">ชาร์จฟัน</span>
+          <span class="text-[8px] text-amber-950 font-bold">ทะลุการ์ด!</span>
         </button>
         <!-- Magic -->
         <button id="btnCmdMagic" class="command-card pixel-btn-blue p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">🔮</span>
-          <span class="text-xs font-bold">MAGIC</span>
-          <span class="text-[8px] opacity-80 text-cyan-200">Cast Spell</span>
+          <span class="text-xs font-bold">เวทมนตร์</span>
+          <span class="text-[8px] opacity-80 text-cyan-200">ร่ายคาถา</span>
         </button>
         <!-- Skill -->
         <button id="btnCmdSkill" class="command-card pixel-btn-purple p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">🌟</span>
-          <span class="text-xs font-bold" id="battleSkillLabel">SKILL</span>
-          <span class="text-[8px] opacity-80 text-purple-200">Class Spec</span>
+          <span class="text-xs font-bold" id="battleSkillLabel">ท่าไม้ตาย</span>
+          <span class="text-[8px] opacity-80 text-purple-200">เฉพาะอาชีพ</span>
         </button>
       </div>
 
@@ -568,38 +560,38 @@
         <!-- Defend -->
         <button id="btnCmdDefend" class="command-card pixel-btn-blue p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">🛡️</span>
-          <span class="text-xs font-bold">DEFEND</span>
-          <span class="text-[8px] text-cyan-200">Halves Attack</span>
+          <span class="text-xs font-bold">ป้องกัน</span>
+          <span class="text-[8px] text-cyan-200">ลดดาเมจครึ่ง</span>
         </button>
         <!-- Counter -->
         <button id="btnCmdCounter" class="command-card pixel-btn-red p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">⚔️↩️</span>
-          <span class="text-xs font-bold">COUNTER</span>
-          <span class="text-[8px] text-amber-300 font-bold">Punishes Strike!</span>
+          <span class="text-xs font-bold">สวนกลับ</span>
+          <span class="text-[8px] text-amber-300 font-bold">ลงโทษชาร์จฟัน!</span>
         </button>
         <!-- Magic Guard -->
         <button id="btnCmdMagicGuard" class="command-card pixel-btn-purple p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">✨🛡️</span>
-          <span class="text-xs font-bold">M-GUARD</span>
-          <span class="text-[8px] text-purple-200">Blocks Spells</span>
+          <span class="text-xs font-bold">ปัดเวท</span>
+          <span class="text-[8px] text-purple-200">บล็อกเวทมนตร์</span>
         </button>
         <!-- Give Up -->
         <button id="btnCmdGiveUp" class="command-card pixel-btn p-2 flex flex-col items-center justify-center text-slate-300">
           <span class="text-xl mb-0.5">🏳️</span>
-          <span class="text-xs font-bold">GIVE UP</span>
-          <span class="text-[8px] text-slate-400">Surrender</span>
+          <span class="text-xs font-bold">ยอมแพ้</span>
+          <span class="text-[8px] text-slate-400">ยอมจำนน</span>
         </button>
       </div>
 
       <!-- Narration & RPS Hint Box -->
       <div class="flex-1 pixel-box p-3 bg-slate-950 flex flex-col justify-between text-xs text-slate-300 border-slate-700">
         <div id="battleNarration" class="overflow-y-auto max-h-20 pr-1 leading-relaxed text-[11px]">
-          Simultaneous Dokapon Duel! Strike crushes Defend, Counter obliterates Strike!
+          ดวลแบบโดคาปอน! ชาร์จฟันชนะป้องกัน, สวนกลับทำลายชาร์จฟัน!
         </div>
         <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between">
-          <span>⚔️ Attack &gt; Counter</span>
-          <span>💥 Strike &gt; Defend</span>
-          <span>↩️ Counter &gt; Strike</span>
+          <span>⚔️ โจมตี &gt; Counter</span>
+          <span>💥 ชาร์จฟัน &gt; Defend</span>
+          <span>↩️ สวนกลับ &gt; ชาร์จฟัน</span>
         </div>
       </div>
     </div>
@@ -609,51 +601,51 @@
   <div id="pvpSpoilsModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
     <div class="pixel-box-gold max-w-lg w-full p-5 text-center shadow-2xl">
       <div class="text-3xl mb-1">👑😈</div>
-      <h3 class="text-base text-amber-300 font-bold mb-1">VICTORY OVER RIVAL!</h3>
+      <h3 class="text-base text-amber-300 font-bold mb-1">ชนะคู่แข่ง!</h3>
       <p id="pvpDefeatedPlayerDesc" class="text-xs text-slate-300 mb-3">
-        You crushed Jax! Choose your spoils of war or exact sweet humiliating revenge:
+        คุณเอาชนะ Jax! เลือกรางวัลสงครามหรือแก้แค้นอย่างอัปยศ:
       </p>
 
       <div class="grid grid-cols-2 gap-2 mb-3">
         <button id="btnSpoilsGold" class="pixel-btn pixel-btn-gold p-2 text-xs flex flex-col items-center">
           <span class="text-lg">💰</span>
-          <span class="font-bold">ROB POCKET GOLD</span>
-          <span id="spoilsGoldAmount" class="text-[9px] text-amber-950 font-bold">Take 250G</span>
+          <span class="font-bold">ปล้นทอง</span>
+          <span id="spoilsGoldAmount" class="text-[9px] text-amber-950 font-bold">ยึด 250G</span>
         </button>
         <button id="btnSpoilsEquip" class="pixel-btn pixel-btn-blue p-2 text-xs flex flex-col items-center">
           <span class="text-lg">⚔️</span>
-          <span class="font-bold">STEAL EQUIPMENT</span>
-          <span class="text-[9px] text-blue-200">Take Weapon or Armor</span>
+          <span class="font-bold">ขโมยอุปกรณ์</span>
+          <span class="text-[9px] text-blue-200">ยึดอาวุธหรือเกราะ</span>
         </button>
         <button id="btnSpoilsTown" class="pixel-btn pixel-btn-green p-2 text-xs flex flex-col items-center">
           <span class="text-lg">🚩</span>
-          <span class="font-bold">TAKE TOWN DEED</span>
-          <span class="text-[9px] text-emerald-200">Seize 1 Territory</span>
+          <span class="font-bold">ยึดโฉนดเมือง</span>
+          <span class="text-[9px] text-emerald-200">ยึดดินแดน 1 แห่ง</span>
         </button>
         <button id="btnSpoilsPrank" class="pixel-btn pixel-btn-purple p-2 text-xs flex flex-col items-center">
           <span class="text-lg">🎨🤪</span>
-          <span class="font-bold">PRANK & HUMILIATE</span>
-          <span class="text-[9px] text-purple-200">Draw Graffiti / Rename!</span>
+          <span class="font-bold">แกล้งและอัปยศ</span>
+          <span class="text-[9px] text-purple-200">วาดกราฟฟิตี้ / เปลี่ยนชื่อ!</span>
         </button>
       </div>
 
       <!-- Sub-menu for Graffiti Canvas -->
       <div id="prankCanvasContainer" class="hidden pixel-box p-3 bg-slate-950 border-purple-500 mb-3 flex flex-col items-center">
-        <p class="text-xs text-purple-300 font-bold mb-2">SCRIBBLE ON VICTIM'S FACE!</p>
+        <p class="text-xs text-purple-300 font-bold mb-2">ขีดเขียนบนหน้าเหยื่อ!</p>
         <div class="relative w-32 h-32 border-2 border-purple-400 bg-slate-900 rounded mb-2">
           <canvas id="graffitiCanvas" width="128" height="128" class="block w-full h-full cursor-crosshair"></canvas>
         </div>
         <div class="flex gap-2">
-          <button id="btnClearGraffiti" class="pixel-btn px-2 py-1 text-[10px] text-slate-300">CLEAR</button>
-          <button id="btnApplyMustache" class="pixel-btn px-2 py-1 text-[10px] text-amber-300">MUSTACHE</button>
-          <button id="btnApplySwirl" class="pixel-btn px-2 py-1 text-[10px] text-rose-300">SWIRL EYES</button>
+          <button id="btnClearGraffiti" class="pixel-btn px-2 py-1 text-[10px] text-slate-300">ลบ</button>
+          <button id="btnApplyMustache" class="pixel-btn px-2 py-1 text-[10px] text-amber-300">หนวด</button>
+          <button id="btnApplySwirl" class="pixel-btn px-2 py-1 text-[10px] text-rose-300">ตาหมุน</button>
         </div>
         <div class="mt-2 flex items-center gap-2 w-full">
-          <span class="text-[10px] text-slate-300">Rename:</span>
-          <input id="inputPrankName" type="text" maxlength="10" placeholder="e.g. Poophead" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 text-white rounded flex-1">
+          <span class="text-[10px] text-slate-300">เปลี่ยนชื่อ:</span>
+          <input id="inputPrankName" type="text" maxlength="10" placeholder="เช่น ไอ่โง่" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 text-white rounded flex-1">
         </div>
         <button id="btnConfirmPrank" class="pixel-btn pixel-btn-purple mt-3 px-4 py-1.5 text-xs font-bold text-white w-full">
-          APPLY HUMILIATION!
+          ลงโทษ!
         </button>
       </div>
     </div>
@@ -666,8 +658,8 @@
         <div class="flex items-center gap-2">
           <span class="text-2xl">🍺</span>
           <div>
-            <h3 class="text-sm font-bold text-amber-300">ADVENTURER'S TAVERN & INN</h3>
-            <p class="text-[10px] text-slate-300">Rest, feast on hearty meals, or listen to adventurer rumors</p>
+            <h3 class="text-sm font-bold text-amber-300">โรงเตี๊ยมนักผจญภัย</h3>
+            <p class="text-[10px] text-slate-300">พักผ่อน ดื่มกิน หรือฟังข่าวลือจากนักผจญภัย</p>
           </div>
         </div>
         <span id="tavernPlayerGold" class="text-xs font-bold text-amber-400">300G</span>
@@ -678,15 +670,15 @@
         <button id="btnTavernRestInn" class="pixel-btn pixel-btn-green p-2.5 flex items-center justify-center gap-2 text-xs">
           <span>🛌</span>
           <div class="text-left">
-            <div class="font-bold">REST AT INN</div>
-            <div class="text-[9px] text-emerald-200">Full HP/MP, Cure Status (25G)</div>
+            <div class="font-bold">พักที่โรงแรม</div>
+            <div class="text-[9px] text-emerald-200">ฟื้นฟู HP/MP, รักษาสถานะ (25G)</div>
           </div>
         </button>
         <button id="btnTavernListenRumors" class="pixel-btn pixel-btn-blue p-2.5 flex items-center justify-center gap-2 text-xs">
           <span>💬</span>
           <div class="text-left">
-            <div class="font-bold">HEAR RUMORS</div>
-            <div class="text-[9px] text-sky-200">Gossip & Lore (Free)</div>
+            <div class="font-bold">ฟังข่าวลือ</div>
+            <div class="text-[9px] text-sky-200">ซุบซิบและตำนาน (ฟรี)</div>
           </div>
         </button>
       </div>
@@ -698,13 +690,13 @@
       <div>
         <div class="text-[11px] font-bold text-amber-300 mb-1.5 flex items-center gap-1.5">
           <span>🍽️</span>
-          <span>HEARTY ADVENTURER'S FEAST (STAT BUFFS FOR 3 TURNS):</span>
+          <span>งานเลี้ยงนักผจญภัย (เพิ่มสถานะ 3 เทิร์น):</span>
         </div>
         <div id="tavernMealList" class="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1"></div>
       </div>
 
       <button id="btnCloseTavern" class="pixel-btn p-2 text-xs text-slate-300 hover:text-white bg-slate-800 border-slate-600 mt-1">
-        LEAVE TAVERN
+        ออกจากโรงเตี๊ยม
       </button>
     </div>
   </div>
@@ -716,13 +708,13 @@
         <div class="flex items-center gap-2">
           <span class="text-2xl">📜</span>
           <div>
-            <h3 class="text-sm font-bold text-indigo-300">ADVENTURER'S GUILD HALL</h3>
-            <p class="text-[10px] text-slate-300">Accept bounties, slay beasts, and raise your adventurer rank</p>
+            <h3 class="text-sm font-bold text-indigo-300">สมาคมนักผจญภัย</h3>
+            <p class="text-[10px] text-slate-300">รับค่าหัว ล่าอสูร และเลื่อนขั้นนักผจญภัย</p>
           </div>
         </div>
         <div class="text-right">
-          <span id="guildPlayerRank" class="text-xs font-bold text-amber-300">RANK F</span>
-          <div id="guildCompletedCount" class="text-[9px] text-slate-400">0 Quests Completed</div>
+          <span id="guildPlayerRank" class="text-xs font-bold text-amber-300">แรงค์ F</span>
+          <div id="guildCompletedCount" class="text-[9px] text-slate-400">0 เควสสำเร็จ</div>
         </div>
       </div>
 
@@ -730,18 +722,18 @@
       <div class="pixel-box p-2.5 bg-slate-950/80 border-indigo-500/30 flex items-center gap-3">
         <span class="text-2xl">👩‍💼</span>
         <p class="text-[11px] text-indigo-200">
-          "Welcome to the Guild! Select a quest from the notice board below. Complete your assignment to receive gold bounties and advance your Hunter Rank!"
+          "ยินดีต้อนรับสู่กิลด์! เลือกเควสจากกระดานประกาศด้านล่าง ทำภารกิจให้สำเร็จเพื่อรับค่าหัวและเลื่อนขั้น!"
         </p>
       </div>
 
       <!-- Quest Board List -->
       <div class="flex flex-col gap-2">
-        <div class="text-[11px] font-bold text-amber-300">NOTICE BOARD BOUNTIES:</div>
+        <div class="text-[11px] font-bold text-amber-300">กระดานประกาศค่าหัว:</div>
         <div id="guildQuestList" class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1"></div>
       </div>
 
       <button id="btnCloseGuild" class="pixel-btn p-2 text-xs text-slate-300 hover:text-white bg-slate-800 border-slate-600 mt-1">
-        LEAVE GUILD HALL
+        ออกจากกิลด์
       </button>
     </div>
   </div>
@@ -751,27 +743,27 @@
     <div class="pixel-box max-w-md w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-sky-950/90 to-slate-950 border-sky-500 text-center">
       <div class="flex items-center justify-center gap-2">
         <span class="text-3xl animate-bounce">🎣</span>
-        <h3 class="text-sm font-bold text-sky-300">SPARKLING FISHING HAVEN</h3>
+        <h3 class="text-sm font-bold text-sky-300">จุดตกปลามหัศจรรย์</h3>
       </div>
 
       <!-- Prompt State -->
       <div id="fishingPromptState" class="flex flex-col items-center gap-3 my-2">
         <p class="text-xs text-slate-200">
-          The clear waters ripple with exotic fish and sunken relics. Cast your fishing line into the deep waters?
+          ผิวน้ำใสกระเพื่อมด้วยปลาหายากและโบราณวัตถุจมน้ำ ทอดเบ็ดลงไปไหม?
         </p>
         <button id="btnCastRod" class="pixel-btn pixel-btn-blue px-6 py-2.5 text-sm font-bold flex items-center gap-2">
           <span>🎣</span>
-          <span>CAST LINE!</span>
+          <span>ทอดเบ็ด!</span>
         </button>
       </div>
 
       <!-- Result State -->
       <div id="fishingResultState" class="hidden flex flex-col items-center gap-2 my-2">
         <span id="fishingCatchIcon" class="text-4xl animate-pulse">🐟</span>
-        <h4 id="fishingCatchTitle" class="text-sm font-bold text-amber-300">RAINBOW TROUT!</h4>
-        <p id="fishingCatchDesc" class="text-xs text-slate-200">You pulled up a prize catch!</p>
+        <h4 id="fishingCatchTitle" class="text-sm font-bold text-amber-300">ปลาเทราต์สายรุ้ง!</h4>
+        <p id="fishingCatchDesc" class="text-xs text-slate-200">คุณตกปลาชิ้นเยี่ยม!</p>
         <button id="btnFishingContinue" class="pixel-btn pixel-btn-gold mt-2 px-6 py-1.5 text-xs font-bold text-amber-950">
-          CONTINUE
+          ดำเนินการต่อ
         </button>
       </div>
     </div>
@@ -781,24 +773,24 @@
   <div id="banditAmbushModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
     <div class="pixel-box-gold max-w-md w-full p-5 shadow-2xl flex flex-col gap-3 bg-gradient-to-b from-red-950 to-slate-950 text-center">
       <div class="text-3xl animate-pulse">🗡️👺</div>
-      <h3 class="text-sm font-bold text-red-400 tracking-wider">HIGHWAY BANDIT AMBUSH!</h3>
+      <h3 class="text-sm font-bold text-red-400 tracking-wider">โจรดักปล้น!</h3>
       <p class="text-xs text-slate-200">
-        "Halt, traveler! Hand over your coin purse, or we'll turn your guts into vulture feed!"
+        "หยุดนะ นักเดินทาง! ส่งกระเป๋าเงินมา ไม่งั้นจะกลายเป็นอาหารแร้ง!"
       </p>
 
       <!-- 3 Choices -->
       <div id="banditChoicesBox" class="flex flex-col gap-2 mt-2">
         <button id="btnBanditFight" class="pixel-btn pixel-btn-red p-2.5 text-xs font-bold flex items-center justify-center gap-2">
           <span>⚔️</span>
-          <span>DRAW STEEL & FIGHT! (Duel Bandit Chief)</span>
+          <span>ชักดาบสู้! (ดวลหัวหน้าโจร)</span>
         </button>
         <button id="btnBanditBribe" class="pixel-btn pixel-btn-gold p-2.5 text-xs font-bold flex items-center justify-center gap-2 text-amber-950">
           <span>🪙</span>
-          <span>TOSS 40G BRIBE (Pass Peacefully)</span>
+          <span>ให้สินบน 40G (ผ่านอย่างสันติ)</span>
         </button>
         <button id="btnBanditTrick" class="pixel-btn pixel-btn-purple p-2.5 text-xs font-bold flex items-center justify-center gap-2">
           <span>🎭✨</span>
-          <span>CAST ILLUSION / INTIMIDATE (MAG or SPD Check)</span>
+          <span>ร่ายภาพลวง / ข่มขู่ (ทดสอบ MAG หรือ SPD)</span>
         </button>
       </div>
 
@@ -806,7 +798,7 @@
       <div id="banditOutcomeBox" class="hidden flex flex-col items-center gap-3 mt-2">
         <p id="banditOutcomeText" class="text-xs text-slate-200 bg-slate-900 p-3 rounded border border-slate-700"></p>
         <button id="btnBanditDismiss" class="pixel-btn pixel-btn-blue px-5 py-1.5 text-xs font-bold">
-          CONTINUE
+          ดำเนินการต่อ
         </button>
       </div>
     </div>
@@ -816,10 +808,10 @@
   <div id="shrineModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
     <div class="pixel-box max-w-md w-full p-5 shadow-2xl flex flex-col items-center gap-3 bg-gradient-to-b from-purple-950 to-slate-950 border-purple-400 text-center">
       <span id="shrineIcon" class="text-4xl animate-bounce">✨</span>
-      <h3 id="shrineTitle" class="text-sm font-bold text-purple-300">SHRINE OF LUMINA</h3>
-      <p id="shrineDesc" class="text-xs text-slate-200">The celestial goddess bestows a miracle upon your journey.</p>
+      <h3 id="shrineTitle" class="text-sm font-bold text-purple-300">ศาลเจ้าลูมินา</h3>
+      <p id="shrineDesc" class="text-xs text-slate-200">เทพธิดาประทานปาฏิหาริย์แก่การเดินทางของคุณ</p>
       <button id="btnCloseShrine" class="pixel-btn pixel-btn-gold px-6 py-1.5 text-xs font-bold text-amber-950 mt-2">
-        ACCEPT BLESSING
+        รับพร
       </button>
     </div>
   </div>
@@ -829,16 +821,16 @@
     <div class="pixel-box-gold max-w-lg w-full p-6 shadow-2xl flex flex-col items-center gap-3 bg-gradient-to-b from-slate-950 via-red-950 to-slate-950 border-red-500 text-center animate-pulse">
       <span id="calamityIcon" class="text-5xl">👹</span>
       <h2 id="calamityTitle" class="text-base md:text-lg font-bold text-red-400 tracking-widest uppercase">
-        GRAND CALAMITY STRIKES!
+        มหาภัยพิบัติถล่ม!
       </h2>
       <p id="calamityDesc" class="text-xs text-slate-200 leading-relaxed my-2">
-        The Overlord's dreaded commander has besieged a peaceful town!
+        แม่ทัพจอมมารบุกล้อมเมืองสงบสุข!
       </p>
       <div id="calamityReward" class="text-xs font-bold text-amber-300 bg-amber-950/60 px-3 py-1 rounded border border-amber-500">
-        Royal Bounty: 800G
+        ค่าหัวหลวง: 800G
       </div>
       <button id="btnDismissCalamity" class="pixel-btn pixel-btn-red mt-3 px-8 py-2 text-xs font-bold tracking-wider">
-        TO ARMS!
+        สู่สนามรบ!
       </button>
     </div>
   </div>
@@ -847,23 +839,23 @@
   <div id="darklingPactModal" class="hidden absolute inset-0 z-40 bg-black/90 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-lg">
     <div class="pixel-box-darkling max-w-lg w-full p-6 text-center shadow-2xl animate-pulse">
       <div class="text-4xl mb-2">😈🔥⚡</div>
-      <h2 class="text-base text-purple-300 font-bold mb-1 tracking-widest">PACT WITH OVERLORD RICO</h2>
+      <h2 class="text-base text-purple-300 font-bold mb-1 tracking-widest">สนธิสัญญากับจอมมารริโก้</h2>
       <p class="text-xs text-slate-300 mb-3 leading-relaxed">
-        You are lagging far behind the other lords! The Overlord offers you demonic power.
-        Sacrifice all your current towns, gold, and gear to become <strong class="text-red-400">THE DARKLING</strong>!
+        คุณตามหลังขุนนางคนอื่นมาก! จอมมารเสนอพลังปีศาจให้คุณ
+        สละเมือง ทอง และอุปกรณ์ทั้งหมดเพื่อกลายเป็น <strong class="text-red-400">จอมมาร</strong>!
       </p>
       <div class="pixel-box p-3 bg-purple-950/60 border-purple-800 text-left text-xs space-y-1 mb-4 text-purple-200">
-        <div>• 🎲 Roll <strong class="text-amber-300">3 DICE</strong> every turn!</div>
-        <div>• ⚔️ Base Stats Multiplied by <strong class="text-rose-400">3X</strong>!</div>
-        <div>• 👾 Cast global calamities: Summon monsters to take over towns!</div>
-        <div>• ⏳ Transformation lasts for <strong class="text-amber-300">14 TURNS</strong>!</div>
+        <div>• 🎲 ทอย <strong class="text-amber-300">3 ลูกเต๋า</strong>ทุกเทิร์น!</div>
+        <div>• ⚔️ สถานะพื้นฐานคูณ <strong class="text-rose-400">3 เท่า</strong>!</div>
+        <div>• 👾 ร่ายมนตร์ภัยพิบัติ: เรียกมอนสเตอร์ยึดเมือง!</div>
+        <div>• ⏳ การแปลงร่างอยู่ได้ <strong class="text-amber-300">14 เทิร์น</strong>!</div>
       </div>
       <div class="flex gap-3 justify-center">
         <button id="btnAcceptDarkling" class="pixel-btn pixel-btn-purple flex-1 py-2.5 text-xs font-bold text-white tracking-wider">
-          ACCEPT DARK PACT! 😈
+          ยอมรับสนธิสัญญามืด! 😈
         </button>
         <button id="btnRejectDarkling" class="pixel-btn flex-1 py-2.5 text-xs font-bold text-slate-400 hover:text-white">
-          DECLINE
+          ปฏิเสธ
         </button>
       </div>
     </div>
@@ -872,22 +864,22 @@
   <!-- DARKLING FIELD CALAMITY MODAL (z-40) -->
   <div id="darklingSpellsModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
     <div class="pixel-box-darkling max-w-md w-full p-5 text-center">
-      <h3 class="text-sm font-bold text-purple-300 mb-2">⚡ DARKLING CALAMITIES ⚡</h3>
+      <h3 class="text-sm font-bold text-purple-300 mb-2">⚡ คาถาจอมมาร ⚡</h3>
       <div class="space-y-2 mb-3">
         <button id="btnCalamityInvade" class="pixel-btn pixel-btn-purple w-full p-2 text-xs flex justify-between items-center text-white">
-          <span>👾 SUMMON INVADERS</span>
-          <span class="text-[9px] text-purple-200">Reclaims towns with monsters</span>
+          <span>👾 เรียกผู้บุกรุก</span>
+          <span class="text-[9px] text-purple-200">ยึดเมืองด้วยมอนสเตอร์</span>
         </button>
         <button id="btnCalamityPlague" class="pixel-btn pixel-btn-red w-full p-2 text-xs flex justify-between items-center text-white">
-          <span>💀 GLOBAL PLAGUE</span>
-          <span class="text-[9px] text-rose-200">Halves stats of all rivals</span>
+          <span>💀 โรคระบาดทั่วโลก</span>
+          <span class="text-[9px] text-rose-200">ลดสถานะคู่แข่งครึ่งหนึ่ง</span>
         </button>
         <button id="btnCalamityWarp" class="pixel-btn pixel-btn-gold w-full p-2 text-xs flex justify-between items-center text-slate-950 font-bold">
-          <span>🎯 DEMON WARP</span>
-          <span class="text-[9px] text-amber-950">Warps near the 1st place player</span>
+          <span>🎯 วาร์ปปีศาจ</span>
+          <span class="text-[9px] text-amber-950">วาร์ปไปใกล้ผู้เล่นอันดับ 1</span>
         </button>
       </div>
-      <button id="btnCloseDarklingSpells" class="pixel-btn px-4 py-1 text-xs text-slate-400">CLOSE</button>
+      <button id="btnCloseDarklingSpells" class="pixel-btn px-4 py-1 text-xs text-slate-400">ปิด</button>
     </div>
   </div>
 
@@ -895,19 +887,19 @@
   <div id="weeklyReportModal" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
     <div class="pixel-box-gold max-w-xl w-full p-6 text-center shadow-2xl">
       <div class="text-4xl mb-1 animate-bounce">👑🏰🎺</div>
-      <h2 class="text-base text-amber-300 font-bold mb-1 tracking-wider">ROYAL WEEKLY REPORT</h2>
-      <p id="weeklyWeekTitle" class="text-xs text-slate-300 mb-4 font-bold">End of Week 1 Ceremony</p>
+      <h2 class="text-base text-amber-300 font-bold mb-1 tracking-wider">รายงานประจำสัปดาห์</h2>
+      <p id="weeklyWeekTitle" class="text-xs text-slate-300 mb-4 font-bold">พิธีสิ้นสุดสัปดาห์ที่ 1</p>
       
       <div id="weeklyRankingsTable" class="pixel-box p-3 bg-slate-900 border-slate-800 space-y-2 mb-4 text-xs text-left">
         <!-- Rendered dynamically -->
       </div>
 
       <p id="weeklyKingSpeech" class="text-xs text-amber-200 italic mb-4">
-        "Work harder, heroes! The Kingdom demands prosperity and slain monsters!"
+        "ทำงานหนักขึ้นเหล่าวีรบุรุษ! อาณาจักรต้องการความเจริญรุ่งเรืองและการปราบมอนสเตอร์!"
       </p>
 
       <button id="btnDismissWeeklyReport" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
-        PROCEED TO NEXT WEEK ➔
+        ไปสัปดาห์ถัดไป ➔
       </button>
     </div>
   </div>
@@ -916,44 +908,44 @@
   <div id="royalDecreeModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-md">
     <div class="pixel-box-gold max-w-lg w-full p-6 text-center shadow-2xl relative">
       <div class="text-4xl mb-1" id="decreeIcon">👑📜</div>
-      <span class="text-[10px] text-amber-400 font-bold tracking-widest block uppercase">BY ROYAL PROCLAMATION</span>
-      <h2 id="decreeTitle" class="text-base text-amber-300 font-bold mb-2 tracking-wider">THE KING'S MONSTER BOUNTY</h2>
+      <span class="text-[10px] text-amber-400 font-bold tracking-widest block uppercase">โดยพระราชโองการ</span>
+      <h2 id="decreeTitle" class="text-base text-amber-300 font-bold mb-2 tracking-wider">ค่าหัวมอนสเตอร์จากกษัตริย์</h2>
       
       <div class="pixel-box p-3.5 bg-slate-900 border-amber-700/60 mb-4 text-left">
-        <h3 id="decreeHeadline" class="text-xs font-bold text-white mb-1.5">King Rico decrees an emergency royal bounty!</h3>
+        <h3 id="decreeHeadline" class="text-xs font-bold text-white mb-1.5">กษัตริย์ริโก้ประกาศค่าหัวฉุกเฉิน!</h3>
         <p id="decreeDescription" class="text-[11px] text-slate-300 leading-relaxed mb-2.5">
-          Description text...
+          คำอธิบาย...
         </p>
         <div class="bg-amber-950/70 border border-amber-600/70 p-2 rounded text-amber-200 text-xs font-bold flex items-center gap-2">
           <span>⚡</span>
-          <span id="decreePerk">Perk summary</span>
+          <span id="decreePerk">สรุปผลตอบแทน</span>
         </div>
       </div>
 
       <button id="btnAcknowledgeDecree" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
-        ACCEPT ROYAL DECREE ⚔️
+        ยอมรับพระราชกฤษฎีกา ⚔️
       </button>
     </div>
   </div>
 
-  <!-- FIELD MAGIC GRIMOIRE MODAL (z-40) -->
+  <!-- คัมภีร์เวทมนตร์สนาม MODAL (z-40) -->
   <div id="fieldMagicModal" class="hidden absolute inset-0 z-40 bg-black/85 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-sm">
     <div class="pixel-box-gold max-w-lg w-full p-5 text-left shadow-2xl relative">
       <div class="flex items-center justify-between border-b-2 border-purple-600/50 pb-2 mb-3">
         <div class="flex items-center gap-2">
           <span class="text-2xl">📖✨</span>
           <div>
-            <h2 class="text-sm font-bold text-amber-300 tracking-wider">FIELD MAGIC GRIMOIRE</h2>
-            <span class="text-[10px] text-purple-300">Overworld Arcane Sorcery</span>
+            <h2 class="text-sm font-bold text-amber-300 tracking-wider">คัมภีร์เวทมนตร์สนาม</h2>
+            <span class="text-[10px] text-purple-300">เวทย์มนตร์โลกภายนอก</span>
           </div>
         </div>
-        <button id="btnCloseFieldMagic" class="pixel-btn px-2.5 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ CLOSE</button>
+        <button id="btnCloseFieldMagic" class="pixel-btn px-2.5 py-1 text-xs text-rose-300 bg-red-950/80 border-red-800">✕ ปิด</button>
       </div>
 
       <!-- Target Selection Dropdown -->
       <div class="mb-3 bg-slate-900/90 p-2.5 rounded border border-slate-700 flex items-center justify-between">
         <label for="fieldSpellTargetSelect" class="text-[10px] text-slate-300 font-bold uppercase tracking-wide">
-          🎯 Target Player:
+          🎯 เป้าหมาย:
         </label>
         <select id="fieldSpellTargetSelect" class="bg-slate-950 border border-amber-600/60 text-xs text-amber-300 px-2 py-1 rounded focus:outline-none font-bold">
           <!-- Populated dynamically -->
@@ -976,16 +968,16 @@
       <div class="flex items-center justify-between border-b-2 border-amber-600/40 pb-2 mb-3">
         <div>
           <h2 id="townName" class="text-base font-bold text-amber-300 tracking-wider">Oaktown</h2>
-          <span id="townBiome" class="text-[10px] text-slate-400">Verdant Plains Level 1</span>
+          <span id="townBiome" class="text-[10px] text-slate-400">ที่ราบเขียวขจี เลเวล 1</span>
         </div>
         <div class="text-right">
-          <span class="text-[9px] text-slate-400 block">JURISDICTION</span>
-          <span id="townOwnerText" class="text-xs font-bold text-emerald-400">Neutral</span>
+          <span class="text-[9px] text-slate-400 block">เขตอำนาจ</span>
+          <span id="townOwnerText" class="text-xs font-bold text-emerald-400">เป็นกลาง</span>
         </div>
       </div>
 
       <p id="townDesc" class="text-xs text-slate-300 mb-3 leading-relaxed">
-        A prosperous merchant settlement. Rest your party, invest in infrastructure, or collect taxes!
+        เมืองพ่อค้าที่เจริญรุ่งเรือง พักผ่อน ลงทุน หรือเก็บภาษี!
       </p>
 
       <!-- 2.5D Isometric Town Plaza Diorama -->
@@ -994,29 +986,29 @@
       <div class="grid grid-cols-2 gap-2.5 mb-3">
         <button id="btnTownInn" class="pixel-btn pixel-btn-green p-2.5 text-xs flex flex-col items-center text-center gap-1">
           <span class="text-base">🛏️</span>
-          <span class="font-bold">REST AT INN</span>
-          <span class="text-[9px] text-emerald-100">Full HP & MP (30G)</span>
+          <span class="font-bold">พักที่โรงแรม</span>
+          <span class="text-[9px] text-emerald-100">ฟื้นฟู HP & MP (30G)</span>
         </button>
         <button id="btnTownInvest" class="pixel-btn pixel-btn-gold p-2.5 text-xs flex flex-col items-center text-center gap-1">
           <span class="text-base">📈</span>
-          <span class="font-bold">INVEST GOLD</span>
-          <span id="townInvestCostText" class="text-[9px] text-amber-950 font-bold">Upgrade Town (150G)</span>
+          <span class="font-bold">ลงทุนทอง</span>
+          <span id="townInvestCostText" class="text-[9px] text-amber-950 font-bold">อัพเกรดเมือง (150G)</span>
         </button>
         <button id="btnTownCollect" class="pixel-btn pixel-btn-blue p-2.5 text-xs flex flex-col items-center text-center gap-1">
           <span class="text-base">🪙</span>
-          <span class="font-bold">COLLECT TAX</span>
-          <span class="text-[9px] text-blue-100">Gather Local Funds</span>
+          <span class="font-bold">เก็บภาษี</span>
+          <span class="text-[9px] text-blue-100">รวบรวมเงินท้องถิ่น</span>
         </button>
         <button id="btnTownRob" class="pixel-btn pixel-btn-red p-2.5 text-xs flex flex-col items-center text-center gap-1">
           <span class="text-base">🏴‍☠️</span>
-          <span class="font-bold">ROB TOWN</span>
-          <span class="text-[9px] text-rose-200">Fight Town Guards</span>
+          <span class="font-bold">ปล้นเมือง</span>
+          <span class="text-[9px] text-rose-200">สู้กับทหารรักษาเมือง</span>
         </button>
       </div>
 
       <div class="flex justify-end">
         <button id="btnLeaveTown" class="pixel-btn px-5 py-1.5 text-xs font-bold text-slate-300 hover:text-white">
-          DEPART ➔
+          ออกเดินทาง ➔
         </button>
       </div>
     </div>
@@ -1028,10 +1020,10 @@
       <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
         <div class="flex items-center gap-2">
           <span class="text-lg">🏪</span>
-          <h2 id="shopTitle" class="text-sm font-bold text-amber-300">KINGDOM MERCHANDISE</h2>
+          <h2 id="shopTitle" class="text-sm font-bold text-amber-300">ร้านค้าอาณาจักร</h2>
         </div>
         <div class="text-xs text-amber-400 font-bold flex items-center gap-1">
-          <span>GOLD:</span>
+          <span>ทอง:</span>
           <span id="shopPlayerGold">300G</span>
         </div>
       </div>
@@ -1041,10 +1033,10 @@
 
       <div class="flex gap-2 mb-2.5">
         <button id="btnShopTabBuy" class="pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950">
-          BUY GOODS
+          ซื้อสินค้า
         </button>
         <button id="btnShopTabSell" class="pixel-btn px-3.5 py-1 text-xs text-slate-300">
-          SELL BAG
+          ขายของ
         </button>
       </div>
 
@@ -1052,7 +1044,7 @@
 
       <div class="flex justify-end pt-2 border-t border-slate-800">
         <button id="btnCloseShop" class="pixel-btn px-5 py-1.5 text-xs font-bold text-slate-300 hover:text-white">
-          EXIT SHOP
+          ออกจากร้านค้า
         </button>
       </div>
     </div>
@@ -1065,19 +1057,19 @@
         <div class="flex items-center gap-2.5">
           <span class="text-lg">🎒</span>
           <div>
-            <h2 id="invHeroName" class="text-sm font-bold text-amber-300">Hero's Bag</h2>
-            <span id="invHeroStatsSummary" class="text-[10px] text-slate-400">LV 1 Warrior</span>
+            <h2 id="invHeroName" class="text-sm font-bold text-amber-300">กระเป๋าวีรบุรุษ</h2>
+            <span id="invHeroStatsSummary" class="text-[10px] text-slate-400">LV 1 นักรบ</span>
           </div>
         </div>
         <button id="btnCloseInventory" class="pixel-btn px-3 py-1 text-xs text-slate-300 hover:text-white">
-          ✖ CLOSE
+          ✖ ปิด
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 overflow-y-auto">
         <!-- Equipment Slots -->
         <div class="pixel-box p-2.5 bg-slate-900 border-slate-800">
-          <h3 class="text-xs text-amber-400 font-bold border-b border-slate-800 pb-1 mb-2">EQUIPPED SLOTS</h3>
+          <h3 class="text-xs text-amber-400 font-bold border-b border-slate-800 pb-1 mb-2">ช่องสวมใส่</h3>
           <div class="space-y-1.5 text-[10px]" id="equippedSlotsList"></div>
           <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 space-y-1" id="statBreakdownList"></div>
         </div>
@@ -1085,8 +1077,8 @@
         <!-- Satchel Bag Items -->
         <div class="md:col-span-2 pixel-box p-2.5 bg-slate-900 border-slate-800 flex flex-col">
           <div class="flex justify-between items-center border-b border-slate-800 pb-1 mb-2">
-            <h3 class="text-xs text-blue-300 font-bold">ADVENTURER SATCHEL</h3>
-            <span id="invCapacityCount" class="text-[10px] text-slate-400">1/12 Items</span>
+            <h3 class="text-xs text-blue-300 font-bold">กระเป๋านักผจญภัย</h3>
+            <span id="invCapacityCount" class="text-[10px] text-slate-400">1/12 ชิ้น</span>
           </div>
           <div id="satchelItemsList" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
         </div>
@@ -1099,11 +1091,11 @@
     <div class="pixel-box-gold max-w-4xl w-full p-5 flex flex-col max-h-[92vh]">
       <div class="flex justify-between items-center border-b border-amber-600/40 pb-2 mb-3">
         <div>
-          <h2 class="text-base font-bold text-amber-300">CONTINENT OF FORTUNA 2.5D ATLAS</h2>
-          <p class="text-[10px] text-slate-400">Isometric strategic map of all 5 continental realms, towns, and dark gates.</p>
+          <h2 class="text-base font-bold text-amber-300">แผนที่ทวีปฟอร์จูน่า 2.5D</h2>
+          <p class="text-[10px] text-slate-400">แผนที่ยุทธศาสตร์ไอโซเมตริกของ 5 อาณาจักร เมือง และประตูมืด</p>
         </div>
         <button id="btnCloseWorldMap" class="pixel-btn px-3 py-1 text-xs text-slate-300 hover:text-white">
-          ✖ CLOSE
+          ✖ ปิด
         </button>
       </div>
       <div class="flex-1 relative bg-slate-950 rounded border-2 border-amber-900/60 overflow-hidden flex items-center justify-center">
@@ -1116,9 +1108,9 @@
   <div id="eventModal" class="hidden absolute inset-0 z-40 bg-black/75 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
     <div class="pixel-box-gold max-w-md w-full p-5 text-center">
       <div id="eventIcon" class="text-3xl mb-2">🎁</div>
-      <h3 id="eventTitle" class="text-sm text-amber-300 font-bold mb-1.5">Mysterious Encounter</h3>
+      <h3 id="eventTitle" class="text-sm text-amber-300 font-bold mb-1.5">เหตุการณ์ลึกลับ</h3>
       <p id="eventDescription" class="text-xs text-slate-300 leading-relaxed mb-4">
-        An event takes place on the path ahead.
+        มีเหตุการณ์เกิดขึ้นบนเส้นทางข้างหน้า
       </p>
       <div id="eventOptionsContainer" class="flex flex-col gap-2"></div>
     </div>
@@ -1128,11 +1120,11 @@
   <div id="levelUpModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-sm">
     <div class="pixel-box-gold max-w-sm w-full p-5 text-center">
       <div class="text-3xl animate-bounce mb-1">⭐</div>
-      <h2 class="text-base text-amber-400 font-bold mb-1 tracking-widest">LEVEL ADVANCEMENT!</h2>
-      <p id="lvlUpPlayerName" class="text-xs text-emerald-300 font-bold mb-2">Hero reached Level 2!</p>
+      <h2 class="text-base text-amber-400 font-bold mb-1 tracking-widest">เลเวลอัพ!</h2>
+      <p id="lvlUpPlayerName" class="text-xs text-emerald-300 font-bold mb-2">วีรบุรุษถึงเลเวล 2!</p>
       <div id="lvlUpStatIncreases" class="pixel-box p-2.5 bg-slate-900 border-slate-800 text-xs text-left space-y-1 mb-3 text-slate-300"></div>
       <button id="btnDismissLevelUp" class="pixel-btn pixel-btn-gold px-5 py-2 text-xs font-bold text-slate-950 w-full">
-        CONTINUE EXPEDITION ➔
+        เดินทางต่อ ➔
       </button>
     </div>
   </div>
@@ -1141,11 +1133,11 @@
   <div id="victoryModal" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4 pointer-events-auto">
     <div class="pixel-box-gold max-w-md w-full p-6 text-center shadow-2xl">
       <div class="text-4xl mb-2">👑🏆👑</div>
-      <h1 class="text-lg text-amber-300 font-bold mb-1 tracking-widest">GRAND MONARCH OF DOKAPON!</h1>
-      <p id="victorySubtitle" class="text-xs text-emerald-400 mb-4 font-bold">Player 1 reigns supreme!</p>
+      <h1 class="text-lg text-amber-300 font-bold mb-1 tracking-widest">จอมราชันแห่งโดคาปอน!</h1>
+      <p id="victorySubtitle" class="text-xs text-emerald-400 mb-4 font-bold">ผู้เล่น 1 ครองบัลลังก์!</p>
       <div id="victoryStatsSummary" class="pixel-box p-3 bg-slate-900 border-slate-800 text-xs text-left mb-4 space-y-1.5 text-slate-300"></div>
       <button id="btnPlayAgain" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
-        PLAY AGAIN
+        เล่นอีกครั้ง
       </button>
     </div>
   </div>
@@ -1154,34 +1146,34 @@
   <div id="settingsModal" class="hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto backdrop-blur-xs">
     <div class="pixel-box max-w-md w-full p-5 border-slate-700">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
-        <h3 class="text-xs font-bold text-amber-300">GAME RULES & SETTINGS</h3>
+        <h3 class="text-xs font-bold text-amber-300">กฎกติกาและการตั้งค่า</h3>
         <button id="btnCloseSettings" class="text-slate-400 hover:text-white text-xs">✖</button>
       </div>
 
       <div class="space-y-3 text-xs text-slate-300 mb-4">
         <div>
-          <h4 class="text-amber-400 font-bold mb-1">🎮 DOKAPON COMBAT RULES</h4>
+          <h4 class="text-amber-400 font-bold mb-1">🎮 กฎการต่อสู้โดคาปอน</h4>
           <p class="text-[10px] text-slate-400 leading-relaxed">
             • <strong>Attacker</strong> picks: Attack, Strike, Magic, or Skill.<br>
             • <strong>Defender</strong> picks: Defend, Counter, Magic Guard, or Give Up.<br>
-            • <strong>Strike vs Defend:</strong> Pierces defense for 2.5x fatal damage!<br>
-            • <strong>Counter vs Strike:</strong> Perfect parry & counter-kills the attacker!<br>
-            • <strong>Magic Guard:</strong> Blocks spells completely!<br>
-            • <strong>PvP Defeat:</strong> Loser gets robbed, town stolen, or face scribbled with graffiti!
+            • <strong>ชาร์จฟัน vs ป้องกัน:</strong> ทะลุการ์ดดาเมจ 2.5 เท่า!<br>
+            • <strong>สวนกลับ vs ชาร์จฟัน:</strong> ป้องสมบูรณ์และสังหารผู้โจมตี!<br>
+            • <strong>ปัดเวท:</strong> บล็อกเวทมนตร์ทั้งหมด!<br>
+            • <strong>แพ้ PvP:</strong> ผู้แพ้ถูกปล้น ยึดเมือง หรือถูกวาดหน้า!
           </p>
         </div>
 
         <div class="pt-2 border-t border-slate-800 space-y-2">
           <div class="flex items-center justify-between">
-            <span>Synthesized 8-Bit Audio:</span>
+            <span>เสียง 8-บิต:</span>
             <input type="checkbox" id="checkSound" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
           </div>
           <div class="flex items-center justify-between">
-            <span>Screen Shake:</span>
+            <span>สั่นหน้าจอ:</span>
             <input type="checkbox" id="checkShake" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
           </div>
           <div class="flex items-center justify-between">
-            <span>Retro Scanline Filter:</span>
+            <span>ฟิลเตอร์เรโทร:</span>
             <input type="checkbox" id="checkScanlines" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
           </div>
         </div>
@@ -1189,7 +1181,7 @@
 
       <div class="flex justify-end">
         <button id="btnConfirmSettings" class="pixel-btn pixel-btn-blue px-5 py-1.5 text-xs font-bold text-white">
-          CONFIRM
+          ยืนยัน
         </button>
       </div>
     </div>
@@ -1198,7 +1190,7 @@
   <!-- GAME CHRONICLE LOG DRAWER (z-40) -->
   <div id="gameLogDrawer" class="hidden absolute top-14 right-4 z-40 max-w-sm w-full pixel-box p-3 bg-slate-900/95 shadow-2xl border-slate-700 pointer-events-auto max-h-72 flex flex-col">
     <div class="flex justify-between items-center pb-1.5 border-b border-slate-800 mb-2">
-      <span class="text-xs text-amber-400 font-bold">DOKAPON EXPEDITION CHRONICLE</span>
+      <span class="text-xs text-amber-400 font-bold">บันทึกการผจญภัยโดคาปอน</span>
       <button id="btnCloseLog" class="text-slate-400 hover:text-white text-xs px-1">✖</button>
     </div>
     <div id="logMessagesList" class="flex-1 overflow-y-auto space-y-1 text-[10px] text-slate-300 pr-1"></div>
@@ -1208,16 +1200,16 @@
   <div id="titleScreen" class="absolute inset-0 z-40 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 pointer-events-auto">
     <div class="text-center mb-6">
       <div class="inline-block px-3 py-1 rounded bg-amber-500/20 text-amber-400 text-[10px] tracking-widest font-bold mb-2 border border-amber-500/40">
-        2.5D ISOMETRIC PIXEL BOARD RPG
+        เกมกระดาน RPG พิกเซล 2.5D
       </div>
       <h1 class="text-3xl md:text-5xl text-amber-300 font-extrabold tracking-wider drop-shadow-md">
-        DOKAPON
+        โดคาปอน
       </h1>
       <h2 class="text-xl md:text-3xl text-amber-500 font-bold tracking-widest mt-1">
-        CHRONICLES
+        ตำนานแห่งโชคชะตา
       </h2>
       <p class="text-[11px] text-slate-400 mt-2 max-w-sm mx-auto">
-        A brutal friend-ruining tactical adventure across a living 2.5D diagonal continent!
+        การผจญภัยเชิงยุทธวิธีสุดโหดข้ามทวีปมีชีวิต 2.5D ที่ทำลายมิตรภาพ!
       </p>
     </div>
 
@@ -1225,25 +1217,25 @@
     <div id="titleButtonsBlock" class="flex flex-col gap-2.5 w-64 max-w-full">
       <button id="btnStartAdventure" class="pixel-btn pixel-btn-gold py-3 text-xs font-bold text-slate-950 tracking-wider flex items-center justify-center gap-2">
         <span>⚔️</span>
-        <span>NEW GAME</span>
+        <span>เกมใหม่</span>
       </button>
       <button id="btnTitleLoadGame" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
-        CONTINUE EXPEDITION
+        เล่นต่อ
       </button>
       <button id="btnHowToPlay" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
-        RULES & RPS GUIDE
+        กฎกติกา
       </button>
     </div>
 
     <!-- Character Setup Screen -->
     <div id="playerSetupBlock" class="hidden pixel-box-gold max-w-2xl w-full p-5 flex flex-col gap-3.5">
       <div class="flex justify-between items-center border-b border-amber-600/40 pb-2">
-        <h3 class="text-xs md:text-sm font-bold text-amber-300">ADVENTURER ROSTER</h3>
-        <span class="text-[10px] text-slate-300">2 to 4 Players</span>
+        <h3 class="text-xs md:text-sm font-bold text-amber-300">รายชื่อนักผจญภัย</h3>
+        <span class="text-[10px] text-slate-300">2 ถึง 4 ผู้เล่น</span>
       </div>
 
       <div class="flex items-center justify-between text-xs text-slate-300">
-        <span class="font-bold">Party Size:</span>
+        <span class="font-bold">จำนวนผู้เล่น:</span>
         <div class="flex gap-2">
           <button class="player-count-btn pixel-btn px-3.5 py-1 text-xs text-slate-300" data-count="2">2P</button>
           <button class="player-count-btn pixel-btn pixel-btn-gold px-3.5 py-1 text-xs text-slate-950 font-bold" data-count="3">3P</button>
@@ -1254,21 +1246,21 @@
       <div id="playerSetupRoster" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
 
       <div class="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
-        <span>Victory Goal:</span>
+        <span>เป้าหมายชัยชนะ:</span>
         <select id="selectWinGoal" class="bg-slate-950 border border-slate-700 text-amber-300 rounded px-2 py-1 text-xs outline-none">
-          <option value="networth">Highest Net Worth (4 Weeks)</option>
-          <option value="towns">Liberate 4 Towns</option>
-          <option value="boss">Defeat Dragon Overlord</option>
-          <option value="gold">First to 3,000 Gold</option>
+          <option value="networth">มูลค่าสุทธิสูงสุด (4 สัปดาห์)</option>
+          <option value="towns">ปลดปล่อย 4 เมือง</option>
+          <option value="boss">ปราบจอมมังกร</option>
+          <option value="gold">สะสมทอง 3,000 ก่อน</option>
         </select>
       </div>
 
       <div class="flex justify-between items-center pt-2">
         <button id="btnBackToMenu" class="pixel-btn px-4 py-1.5 text-xs text-slate-400 hover:text-white">
-          ◀ BACK
+          ◀ ย้อนกลับ
         </button>
         <button id="btnBeginGame" class="pixel-btn pixel-btn-gold px-6 py-2 text-xs font-bold text-slate-950">
-          ENTER REALM ➔
+          เข้าสู่อาณาจักร ➔
         </button>
       </div>
     </div>

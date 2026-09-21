@@ -4,23 +4,23 @@ import { audio } from '../engine/AudioSynthesizer';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Consumables & Multi-Spinners
-  { id: 'spin_2', name: '2-Spinner', type: 'spinner', cost: 60, desc: 'Roll 2 Dice on next turn!', icon: '🎲' },
-  { id: 'spin_3', name: '3-Spinner', type: 'spinner', cost: 120, desc: 'Roll 3 Dice on next turn!', icon: '🌀' },
-  { id: 'pot_hp', name: 'Life Potion', type: 'potion', cost: 35, desc: 'Restores 50 HP', icon: '🧪' },
-  { id: 'pot_elixir', name: 'Full Elixir', type: 'potion', cost: 110, desc: 'Full restoration of HP & MP', icon: '🏺' },
-  { id: 'item_key', name: 'Magic Key', type: 'potion', cost: 75, desc: 'Unlocks ancient locked vaults', icon: '🗝️' },
+  { id: 'spin_2', name: 'สปินเนอร์ 2 ลูกเต๋า (2-Spinner)', type: 'spinner', cost: 60, desc: 'ทอยลูกเต๋า 2 ลูกในเทิร์นถัดไป!', icon: '🎲' },
+  { id: 'spin_3', name: 'สปินเนอร์ 3 ลูกเต๋า (3-Spinner)', type: 'spinner', cost: 120, desc: 'ทอยลูกเต๋า 3 ลูกในเทิร์นถัดไป!', icon: '🌀' },
+  { id: 'pot_hp', name: 'น้ำยาฟื้นพลังชีวิต (Life Potion)', type: 'potion', cost: 35, desc: 'ฟื้นฟู 50 HP ทันที', icon: '🧪' },
+  { id: 'pot_elixir', name: 'น้ำทิพย์ฟื้นฟูสมบูรณ์ (Full Elixir)', type: 'potion', cost: 110, desc: 'ฟื้นฟู HP & MP จนเต็มเปี่ยม', icon: '🏺' },
+  { id: 'item_key', name: 'กุญแจเวทมนตร์ (Magic Key)', type: 'potion', cost: 75, desc: 'ปลดล็อกหีบสมบัติและห้องนิรภัยโบราณ', icon: '🗝️' },
 
   // Weapons & Armor
-  { id: 'eq_sword', name: 'Tempered Broadsword', type: 'weapon', cost: 130, atk: 8, desc: 'Sharp steel blade (+8 ATK)', icon: '⚔️' },
-  { id: 'eq_axe', name: 'Battle Axe', type: 'weapon', cost: 170, atk: 14, spd: -2, desc: 'Crushing cleave (+14 ATK, -2 SPD)', icon: '🪓' },
-  { id: 'eq_daggers', name: 'Shadow Daggers', type: 'weapon', cost: 140, atk: 6, spd: 6, desc: 'Agile dual blades (+6 ATK, +6 SPD)', icon: '🗡️' },
-  { id: 'eq_plate', name: 'Iron Cuirass', type: 'armor', cost: 130, def: 10, desc: 'Solid forged steel (+10 DEF)', icon: '🦺' },
-  { id: 'eq_robe', name: 'Astral Robe', type: 'armor', cost: 140, def: 5, mag: 9, desc: 'Weaves mana shield (+5 DEF, +9 MAG)', icon: '👘' },
-  { id: 'eq_ring', name: 'Fortune Band', type: 'accessory', cost: 160, luk: 10, desc: 'Favored by Lady Luck (+10 LUK)', icon: '💍' },
+  { id: 'eq_sword', name: 'ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 130, atk: 8, desc: 'คมดาบกล้าแกร่ง (+8 ATK)', icon: '⚔️' },
+  { id: 'eq_axe', name: 'ขวานศึกจอมพลัง (Battle Axe)', type: 'weapon', cost: 170, atk: 14, spd: -2, desc: 'ขวานหนักหน่วง (+14 ATK, -2 SPD)', icon: '🪓' },
+  { id: 'eq_daggers', name: 'มีดสั้นเงามรณะ (Shadow Daggers)', type: 'weapon', cost: 140, atk: 6, spd: 6, desc: 'มีดคู่จอมว่องไว (+6 ATK, +6 SPD)', icon: '🗡️' },
+  { id: 'eq_plate', name: 'เกราะอกเหล็กกล้า (Iron Cuirass)', type: 'armor', cost: 130, def: 10, desc: 'เกราะเหล็กแข็งแกร่ง (+10 DEF)', icon: '🦺' },
+  { id: 'eq_robe', name: 'เสื้อคลุมดารา (Astral Robe)', type: 'armor', cost: 140, def: 5, mag: 9, desc: 'ถักทอด้วยม่านมานา (+5 DEF, +9 MAG)', icon: '👘' },
+  { id: 'eq_ring', name: 'แหวนแห่งโชคลาภ (Fortune Band)', type: 'accessory', cost: 160, luk: 10, desc: 'เทพีแห่งโชคประทานพร (+10 LUK)', icon: '💍' },
 
   // Field Magic Spells
-  { id: 'spell_zap', name: 'Field Zap', type: 'spell', cost: 80, desc: 'Cast lightning across the map dealing 35 dmg to a rival', icon: '⚡' },
-  { id: 'spell_swap', name: 'Warp Swap', type: 'spell', cost: 110, desc: 'Instantly swap positions with the furthest rival', icon: '🌀' }
+  { id: 'spell_zap', name: 'สายฟ้าฟาด (Field Zap)', type: 'spell', cost: 80, desc: 'ฟาดสายฟ้าสร้างความเสียหาย 35 ดาเมจใส่คู่แข่ง', icon: '⚡' },
+  { id: 'spell_swap', name: 'สลับมิติ (Warp Swap)', type: 'spell', cost: 110, desc: 'สลับตำแหน่งบนกระดานกับคู่แข่งทันที', icon: '🌀' }
 ];
 
 export class ShopUI {
@@ -52,9 +52,9 @@ export class ShopUI {
     const modal = document.getElementById('shopModal')!;
     const title = document.getElementById('shopTitle')!;
 
-    if (type === 'shop_weapon') title.innerText = 'IRONFORGE WEAPONS & ARMOR';
-    else if (type === 'shop_magic') title.innerText = 'ARCANE MAGIC EMPORIUM';
-    else title.innerText = 'CONTINENTAL GOODS & SPINNERS';
+    if (type === 'shop_weapon') title.innerText = '⚔️ คลังสรรพาวุธและชุดเกราะไอรอนฟอร์จ';
+    else if (type === 'shop_magic') title.innerText = '🔮 หอประมูลเวทมนตร์และคัมภีร์โบราณ';
+    else title.innerText = '🏪 ร้านค้าเบ็ดเตล็ดและสปินเนอร์นำโชค';
 
     // Render 2.5D Isometric Shop Interior Diorama
     const canvas = document.getElementById('shopDioramaCanvas') as HTMLCanvasElement;
@@ -74,7 +74,7 @@ export class ShopUI {
           if (spin && p.gold >= spin.cost) {
             p.gold -= spin.cost;
             p.inventory.push({ ...spin });
-            this.game.addLog(`AI ${p.displayName} bought a 2-Spinner!`, 'gold');
+            this.game.addLog(`AI ${p.displayName} ซื้อ 2-Spinner!`, 'gold');
           }
         }
         setTimeout(() => this.handleLeave(), 600);
@@ -110,24 +110,24 @@ export class ShopUI {
             </div>
           </div>
           <button class="pixel-btn pixel-btn-gold px-3 py-1 text-xs font-bold text-slate-950 flex items-center gap-1">
-            <span>BUY</span>
+            <span>ซื้อ</span>
             <span>${item.cost}G</span>
           </button>
         `;
 
         row.querySelector('button')!.onclick = () => {
           if (p.gold < item.cost) {
-            this.game.addLog(`${p.displayName} cannot afford ${item.name}!`);
+            this.game.addLog(`${p.displayName} มีเงินทองไม่พอซื้อ ${item.name}!`);
             return;
           }
           if (p.inventory.length >= 12) {
-            this.game.addLog(`Satchel full! Cannot hold more items.`);
+            this.game.addLog(`กระเป๋าสัมภาระเต็มแล้ว! ไม่สามารถบรรจุไอเทมเพิ่มได้ (สูงสุด 12 ช่อง)`);
             return;
           }
           p.gold -= item.cost;
           p.inventory.push({ ...item });
           audio.coin();
-          this.game.addLog(`🛒 ${p.displayName} purchased ${item.name}!`, 'gold');
+          this.game.addLog(`🛒 ${p.displayName} ซื้อ ${item.name} สำเร็จ!`, 'gold');
           this.renderList('buy');
         };
 
@@ -136,7 +136,7 @@ export class ShopUI {
     } else {
       // Sell
       if (p.inventory.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">Your satchel is empty.</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">กระเป๋าสัมภาระของคุณว่างเปล่า</div>`;
         return;
       }
 
@@ -149,11 +149,11 @@ export class ShopUI {
             <span class="text-xl">${item.icon}</span>
             <div>
               <div class="text-xs font-bold text-blue-300">${item.name}</div>
-              <div class="text-[9px] text-slate-400">Sell: ${sellVal}G</div>
+              <div class="text-[9px] text-slate-400">ขาย: ${sellVal}G</div>
             </div>
           </div>
           <button class="pixel-btn px-3 py-1 text-xs text-amber-400 font-bold">
-            SELL (+${sellVal}G)
+            ขาย (+${sellVal}G)
           </button>
         `;
 
@@ -161,7 +161,7 @@ export class ShopUI {
           p.gold += sellVal;
           p.inventory.splice(idx, 1);
           audio.coin();
-          this.game.addLog(`Sold ${item.name} for ${sellVal}G!`, 'gold');
+          this.game.addLog(`ขาย ${item.name} ได้เงิน ${sellVal}G!`, 'gold');
           this.renderList('sell');
         };
 
