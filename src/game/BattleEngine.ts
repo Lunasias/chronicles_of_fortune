@@ -31,8 +31,11 @@ export interface RoundResult {
   isStrikeSuccess: boolean;
   isMagicBlocked: boolean;
   isGiveUp: boolean;
+  isDodged?: boolean;
+  isFleeSuccess?: boolean;
   narration: string;
 }
+
 
 export interface CombatantIntel {
   name: string;
@@ -208,15 +211,59 @@ export class BattleEngine {
     let isStrikeSuccess = false;
     let isMagicBlocked = false;
     let isGiveUp = false;
+    let isFleeSuccess = false;
+    let isDodged = false;
     let narration = '';
+
 
     const a = this.attacker;
     const d = this.defender;
 
-    // 1. Give Up
+    // 1. Give Up / Flee Mechanism
     if (defAction === 'give_up') {
+      // Case A: Player fighting a Monster/Boss -> Tactical Retreat / Flee Check
+      if (!a.playerRef && d.playerRef) {
+        const fleeRoll = Math.random();
+        const fleeChance = Math.min(0.95, Math.max(0.60, 0.80 + (d.spd - a.spd) * 0.03));
+        if (fleeRoll < fleeChance) {
+          isGiveUp = true;
+          isFleeSuccess = true;
+          narration = `🏃 ${d.name} ตัดสินใจถอยหนีฉุกเฉินสำเร็จ! หลบหลีกจากการต่อสู้ได้ทันเวลา!`;
+          return {
+            attackerAction: atkAction,
+            defenderAction: defAction,
+            damageToDefender: 0,
+            damageToAttacker: 0,
+            isCounterSuccess,
+            isStrikeSuccess,
+            isMagicBlocked,
+            isGiveUp: true,
+            isFleeSuccess: true,
+            narration
+          };
+        } else {
+          // Botched Escape! Monster ambushes defender
+          const ambushDmg = Math.round(Math.max(12, a.atk * 1.8 - d.def * 0.5));
+          d.hp = Math.round(Math.max(0, d.hp - ambushDmg));
+          narration = `⚠️ ${d.name} พยายามถอยหนีแต่สะดุดล้ม! ${a.name} พุ่งโจมตีซ้ำสร้างความเสียหาย ${ambushDmg} ดาเมจ!`;
+          return {
+            attackerAction: atkAction,
+            defenderAction: defAction,
+            damageToDefender: ambushDmg,
+            damageToAttacker: 0,
+            isCounterSuccess,
+            isStrikeSuccess,
+            isMagicBlocked,
+            isGiveUp: false,
+            isFleeSuccess: false,
+            narration
+          };
+        }
+      }
+
+      // Case B: PvP Duel Surrender (Honorable tribute to victor)
       isGiveUp = true;
-      narration = `${d.name} ยกธงขาวขอยอมจำนน!`;
+      narration = `🏳️ ${d.name} ยกธงขาวขอยอมจำนน ยินยอมมอบเครื่องบรรณาการ 30% ของเงินสดเพื่อยุติศึกโดยไม่เสียชีวิต!`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -225,10 +272,11 @@ export class BattleEngine {
         isCounterSuccess,
         isStrikeSuccess,
         isMagicBlocked,
-        isGiveUp,
+        isGiveUp: true,
         narration
       };
     }
+
 
     // 2. Resolve Strike vs Counter
     if (atkAction === 'strike' && defAction === 'counter') {
@@ -302,10 +350,12 @@ export class BattleEngine {
     // 5. Resolve Magic vs Defend / Counter
     if (atkAction === 'magic') {
       audio.magicCast();
-      const spellDmg = Math.round(a.mag * 2.8 + 12 + Math.random() * 6);
-      damageToDefender = Math.round(Math.max(15, spellDmg));
+      // Magic penetrates physical armor, but is mitigated by Defender's MAG
+      const rawSpell = a.mag * 2.5 + 10 - d.mag * 0.7;
+      const spellDmg = Math.round(Math.max(12, rawSpell + Math.random() * 6));
+      damageToDefender = spellDmg;
       d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
-      narration = `🔮 เพลิงเวทมนตร์แผดเผา! การป้องกันกายภาพไม่สามารถหยุดยั้งเวทของ ${a.name} ได้! ${d.name} ถูกเผาผลาญ ${damageToDefender} ดาเมจ!`;
+      narration = `🔮 เพลิงเวทมนตร์แผดเผา! การโจมตีเวทของ ${a.name} ทะลุเกราะกายภาพ สร้างความเสียหาย ${damageToDefender} ดาเมจแก่ ${d.name}!`;
 
       return {
         attackerAction: atkAction,
@@ -353,6 +403,26 @@ export class BattleEngine {
     }
 
     // 7. Resolve Attack
+    // Speed Evasion Check (Faster defender can dodge standard attack if not defending)
+    if (defAction !== 'defend' && defAction !== 'counter' && d.spd > a.spd) {
+      const evasionChance = Math.min(0.35, (d.spd - a.spd) * 0.035);
+      if (Math.random() < evasionChance) {
+        narration = `⚡ ความว่องไวเหนือชั้น! ${d.name} เคลื่อนไหวรวดเร็วหลบการโจมตีของ ${a.name} ได้อย่างเฉียดฉิว! (0 ดาเมจ)`;
+        return {
+          attackerAction: atkAction,
+          defenderAction: defAction,
+          damageToDefender: 0,
+          damageToAttacker: 0,
+          isCounterSuccess,
+          isStrikeSuccess,
+          isMagicBlocked,
+          isGiveUp,
+          isDodged: true,
+          narration
+        };
+      }
+    }
+
     audio.attackHit();
     const rawAtk = Math.round(a.atk * 2 - d.def * 0.7);
     let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2)));
@@ -367,6 +437,7 @@ export class BattleEngine {
     } else {
       narration = `⚔️ ${a.name} โจมตีด้วยอาวุธ สร้างความเสียหาย ${finalDmg} ดาเมจแก่ ${d.name}!`;
     }
+
 
     d.hp = Math.round(Math.max(0, d.hp - finalDmg));
     damageToDefender = finalDmg;

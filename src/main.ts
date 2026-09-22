@@ -22,6 +22,8 @@ import { ecosystemSystem } from './game/EcosystemSystem';
 
 import { WonderChestUI } from './ui/WonderChestUI';
 import { InspectUI } from './ui/InspectUI';
+import { getNodeEncounterPreview } from './game/MonsterDatabase';
+
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -100,13 +102,19 @@ class DokaponApp {
   private bindInteractiveTileSelection() {
     // Mouse hover over 2.5D isometric tiles
     this.canvas.addEventListener('mousemove', e => {
-      if (this.isDragging || this.game.phase === 'MOVING' || this.game.phase === 'TITLE') return;
+      if (this.isDragging || this.game.phase === 'MOVING' || this.game.phase === 'TITLE') {
+        this.inspectUI.hideMoveDestinationPreview();
+        return;
+      }
 
       const hoveredNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes);
 
       if (hoveredNode && this.game.highlightedNodes.includes(hoveredNode.id)) {
         this.renderer.hoveredNodeId = hoveredNode.id;
         this.canvas.style.cursor = 'pointer';
+
+        // Monster Encounter & Stat Preview Tooltip
+        this.inspectUI.showMoveDestinationPreview(hoveredNode, this.game.activePlayer, e.clientX, e.clientY);
 
         // Calculate and preview path
         const path = this.game.findPathToTarget(hoveredNode.id);
@@ -123,6 +131,7 @@ class DokaponApp {
       } else {
         this.renderer.hoveredNodeId = null;
         this.renderer.previewPathNodeIds = [];
+        this.inspectUI.hideMoveDestinationPreview();
         this.canvas.style.cursor = this.isDragging ? 'grabbing' : 'grab';
       }
     });
@@ -141,6 +150,8 @@ class DokaponApp {
       if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
         const path = this.game.findPathToTarget(clickedNode.id);
         if (path && path.length > 1) {
+          this.inspectUI.hideMoveDestinationPreview();
+
           // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
           const rival = this.game.players.find(
             pl => pl.id !== this.game.activePlayer.id && pl.nodeId === clickedNode.id && pl.hp > 0
@@ -169,6 +180,34 @@ class DokaponApp {
             return;
           }
 
+          // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
+          const preview = getNodeEncounterPreview(clickedNode);
+          if (
+            preview.featuredMonster &&
+            (clickedNode.townData?.isOccupiedByMonster || clickedNode.type === 'boss') &&
+            !this.game.activePlayer.isAI
+          ) {
+            this.inspectUI.openMonsterScouting(
+              preview.featuredMonster,
+              clickedNode,
+              this.game.activePlayer,
+              () => {
+                audio.coin();
+                this.renderer.hoveredNodeId = null;
+                this.renderer.previewPathNodeIds = [];
+                this.game.executePath(
+                  path,
+                  () => this.onMoveStep(),
+                  tile => this.handleTileArrival(tile)
+                );
+              },
+              () => {
+                // Cancelled, pick another route
+              }
+            );
+            return;
+          }
+
           audio.coin();
           this.renderer.hoveredNodeId = null;
           this.renderer.previewPathNodeIds = [];
@@ -185,6 +224,7 @@ class DokaponApp {
   }
 
   private bindDOMEvents() {
+
     // Title Screen Start
     document.getElementById('btnStartAdventure')?.addEventListener('click', () => {
       audio.click();
@@ -287,12 +327,13 @@ class DokaponApp {
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
     });
 
-    // Center & Zoom on Hero
+    // Center on Hero
     document.getElementById('btnCenterCam')?.addEventListener('click', () => {
       audio.click();
       const p = this.game.activePlayer;
-      this.renderer.focusOnPlayer(p.gridX, p.gridY, p.gridZ, 1.25);
+      this.renderer.focusOnPlayer(p.gridX, p.gridY, p.gridZ);
     });
+
 
     // World Map Atlas
     document.getElementById('btnWorldMap')?.addEventListener('click', () => {
@@ -313,27 +354,7 @@ class DokaponApp {
 
     this.bindWorldMapEvents();
 
-    // Zoom Controls
-    document.getElementById('btnZoomIn')?.addEventListener('click', () => {
-      audio.click();
-      this.setZoom(this.renderer.camera.targetZoom + 0.15);
-    });
-    document.getElementById('btnZoomOut')?.addEventListener('click', () => {
-      audio.click();
-      this.setZoom(this.renderer.camera.targetZoom - 0.15);
-    });
-
-    this.canvas.addEventListener(
-      'wheel',
-      e => {
-        e.preventDefault();
-        const delta = e.deltaY < 0 ? 0.10 : -0.10;
-        this.setZoom(this.renderer.camera.targetZoom + delta);
-      },
-      { passive: false }
-    );
-
-    // Canvas Panning (Drag)
+    // Canvas Panning (Drag) with smooth continental clamping
     this.canvas.addEventListener('mousedown', e => {
       this.isDragging = true;
       this.hasMovedWhileDragging = false;
@@ -343,8 +364,8 @@ class DokaponApp {
     });
     window.addEventListener('mousemove', e => {
       if (this.isDragging) {
-        const dx = (e.clientX - this.dragStartX) / this.renderer.camera.zoom;
-        const dy = (e.clientY - this.dragStartY) / this.renderer.camera.zoom;
+        const dx = e.clientX - this.dragStartX;
+        const dy = e.clientY - this.dragStartY;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
           this.hasMovedWhileDragging = true;
         }
@@ -352,6 +373,7 @@ class DokaponApp {
         this.renderer.camera.y -= dy;
         this.renderer.camera.targetX = this.renderer.camera.x;
         this.renderer.camera.targetY = this.renderer.camera.y;
+        this.renderer.clampCameraBounds();
         this.dragStartX = e.clientX;
         this.dragStartY = e.clientY;
       }
@@ -362,6 +384,7 @@ class DokaponApp {
     });
 
     // Inventory button
+
     document.getElementById('btnInventory')?.addEventListener('click', () => {
       audio.click();
       this.openInventory();
@@ -426,12 +449,8 @@ class DokaponApp {
     });
   }
 
-  private setZoom(val: number) {
-    this.renderer.camera.targetZoom = Math.max(0.95, Math.min(1.40, val));
-    document.getElementById('zoomLabel')!.innerText = `${this.renderer.camera.targetZoom.toFixed(1)}x`;
-  }
-
   private renderRosterSetup(playerCount: number) {
+
     const container = document.getElementById('playerSetupRoster')!;
     container.innerHTML = '';
     const defaultNames = ['Galahad', 'Lyra', 'Jax', 'Aria'];
@@ -778,18 +797,29 @@ class DokaponApp {
       const loserPlayer = (winner.playerRef?.id === challenger.id) ? rival : challenger;
       const winnerPlayer = (winner.playerRef?.id === challenger.id) ? challenger : rival;
 
-      // Dokapon Kingdom rule: Send defeated player back to Dokapon Castle (node 0) with 1 HP
+      // Check if loser surrendered peacefully (HP > 0)
+      if (loserPlayer.hp > 0) {
+        const tributeGold = Math.floor(loserPlayer.gold * 0.30);
+        loserPlayer.gold -= tributeGold;
+        winnerPlayer.gold += tributeGold;
+        this.game.addLog(`🏳️ ยอมจำนนอย่างมีเกียรติ! ${loserPlayer.displayName} มอบเงินบรรณาการ ${tributeGold}G ให้แก่ ${winnerPlayer.displayName} ยุติศึกโดยไม่ต้องเข้าโรงพยาบาล!`, 'battle');
+        this.advanceTurn();
+        return;
+      }
+
+      // Dokapon Kingdom rule: Send knocked-out player back to Dokapon Castle (node 0)
       const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
       loserPlayer.nodeId = castleNode.id;
       loserPlayer.gridX = castleNode.gx;
       loserPlayer.gridY = castleNode.gy;
       loserPlayer.gridZ = castleNode.gz;
-      loserPlayer.hp = 1;
-      this.game.addLog(`🚑 ${loserPlayer.displayName} ถูกน็อคและถูกพากลับไปที่ Dokapon Castle!`, 'battle');
+      loserPlayer.hp = Math.max(1, Math.floor(loserPlayer.maxHp * 0.5));
+      this.game.addLog(`🚑 ${loserPlayer.displayName} ถูกน็อคและถูกพากลับไปฟื้นฟูที่ Dokapon Castle!`, 'battle');
 
       this.prankUI.open(winnerPlayer, loserPlayer, () => this.advanceTurn());
     });
   }
+
 
   private awardMonsterLoot(
     player: Player,
@@ -868,9 +898,30 @@ class DokaponApp {
         // Monster survived! Persist remaining HP for last-hit opportunity
         data.monsterHp = Math.max(1, Math.ceil(winner.hp));
         this.game.addLog(`💀 โอกาสลาสช็อต! ${data.monsterName} รอดตายโดยเหลือ ${data.monsterHp}/${monsterCombatant.maxHp} HP! ใครๆ ก็ขโมยคิลได้!`, 'battle');
+
+        if (loser.playerRef) {
+          if (loser.hp <= 0) {
+            // Player knocked out by town monster!
+            const lostGold = Math.floor(loser.playerRef.gold * 0.35);
+            loser.playerRef.gold -= lostGold;
+            const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
+            loser.playerRef.nodeId = castleNode.id;
+            loser.playerRef.gridX = castleNode.gx;
+            loser.playerRef.gridY = castleNode.gy;
+            loser.playerRef.gridZ = castleNode.gz;
+            loser.playerRef.hp = Math.max(1, Math.floor(loser.playerRef.maxHp * 0.5));
+            this.game.addLog(`🚑 ${loser.playerRef.displayName} ถูก ${data.monsterName} ปราบลง เสียเงินสด ${lostGold}G และถูกนำตัวส่ง Dokapon Castle!`, 'battle');
+          } else {
+            // Player retreated / fled!
+            const bribeGold = Math.floor(loser.playerRef.gold * 0.10);
+            loser.playerRef.gold -= bribeGold;
+            this.game.addLog(`🏃 ${loser.playerRef.displayName} ล่าถอยออกมาจาก ${townNode.name} ได้ทันเวลา! (เสียเงินล่ออสูร -${bribeGold}G)`, 'battle');
+          }
+        }
       }
       this.advanceTurn();
     });
+
   }
 
   private initiateTownRobberyBattle(townNode: BoardNode) {
@@ -930,9 +981,28 @@ class DokaponApp {
           this.game.addLog(`🎁 มอนสเตอร์ทำไอเทมตก! ได้รับ "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+      } else if (loser.playerRef) {
+        if (loser.hp <= 0) {
+          // Player knocked out by wild monster!
+          const lostGold = Math.floor(loser.playerRef.gold * 0.35);
+          loser.playerRef.gold -= lostGold;
+          const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
+          loser.playerRef.nodeId = castleNode.id;
+          loser.playerRef.gridX = castleNode.gx;
+          loser.playerRef.gridY = castleNode.gy;
+          loser.playerRef.gridZ = castleNode.gz;
+          loser.playerRef.hp = Math.max(1, Math.floor(loser.playerRef.maxHp * 0.5));
+          this.game.addLog(`🚑 ${loser.playerRef.displayName} ถูก ${pickedName} ปราบลง เสียเงินสด ${lostGold}G และถูกส่งกลับไปรักษาตัวที่ Dokapon Castle!`, 'battle');
+        } else {
+          // Player fled successfully!
+          const bribeGold = Math.floor(loser.playerRef.gold * 0.10);
+          loser.playerRef.gold -= bribeGold;
+          this.game.addLog(`🏃 ${loser.playerRef.displayName} หลบหนีจาก ${pickedName} สำเร็จ! (โยนเงินล่อเบี่ยงเบนความสนใจ -${bribeGold}G)`, 'battle');
+        }
       }
       this.advanceTurn();
     });
+
   }
 
   private initiateFishCombat(monsterName: string) {

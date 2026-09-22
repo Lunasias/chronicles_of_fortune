@@ -261,7 +261,25 @@ export class BattleUI {
       if (isDefenderHuman) {
         defGroup.classList.remove('hidden');
         document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): คาดเดาและเลือกคำสั่งรับ!`;
+
+        const giveUpBtn = document.getElementById('btnCmdGiveUp');
+        if (giveUpBtn) {
+          if (!b.attacker.playerRef) {
+            giveUpBtn.innerHTML = `
+              <span class="text-xl mb-0.5">🏃</span>
+              <span class="text-xs font-bold">ถอยหนี</span>
+              <span class="text-[8px] text-amber-300">สละเงิน 10% หนีฉุกเฉิน</span>
+            `;
+          } else {
+            giveUpBtn.innerHTML = `
+              <span class="text-xl mb-0.5">🏳️</span>
+              <span class="text-xs font-bold">ยอมแพ้</span>
+              <span class="text-[8px] text-slate-400">จ่าย 30% ยุติศึก</span>
+            `;
+          }
+        }
       } else {
+
         defGroup.classList.add('hidden');
         document.getElementById('battleTurnText')!.innerText = `⚔️ กำลังประมวลผลการต่อสู้...`;
       }

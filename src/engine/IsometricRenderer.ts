@@ -27,9 +27,10 @@ export class IsometricRenderer {
     y: 0,
     targetX: 0,
     targetY: 0,
-    zoom: 1.1,
-    targetZoom: 1.1
+    zoom: 1.0,
+    targetZoom: 1.0
   };
+
 
   // Hover & Destination Selection
   public hoveredNodeId: number | null = null;
@@ -291,7 +292,16 @@ export class IsometricRenderer {
       ctx.fillStyle = lighting.color;
       ctx.fillRect(0, 0, w, h);
     }
+
+    // 10. Dark Fantasy Gothic Atmospheric Vignette Overlay
+    const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.75);
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vignette.addColorStop(0.65, 'rgba(6, 10, 20, 0.20)');
+    vignette.addColorStop(1.0, 'rgba(2, 4, 10, 0.75)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
   }
+
 
   private renderIsometricRoads(
     ctx: CanvasRenderingContext2D,
@@ -786,28 +796,39 @@ export class IsometricRenderer {
       icon = '🎁';
     }
 
-    // Dokapon Signature Node Medallion Plate in Center (Flush on continuous terrain ground)
+    // Dokapon Signature Dark Fantasy Runic Node Seal
     ctx.save();
-    // Subtle ground contact shadow
+    // 1. Soft Ground Occlusion Shadow
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 1, 23, 15, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.ellipse(cx, cy + 2, 25, 16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(2, 6, 18, 0.48)';
     ctx.fill();
 
+    // 2. Weathered Iron / Bronze Outer Rim
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 22, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor;
+    ctx.ellipse(cx, cy, 23, 14, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#090d16';
     ctx.fill();
-    ctx.strokeStyle = isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#f8fafc';
-    ctx.lineWidth = isHovered ? 2.5 : isHighlighted ? 2.5 : 1.5;
+    ctx.strokeStyle = isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569';
+    ctx.lineWidth = 2.0;
     ctx.stroke();
 
-    // 3. Space Type Icon
-    ctx.font = '14px sans-serif';
+    // 3. Inner Gemstone Core
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 18, 11, 0, 0, Math.PI * 2);
+    ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor;
+    ctx.fill();
+    ctx.strokeStyle = isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#94a3b8';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 4. Space Type Icon with drop shadow
+    ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(icon, cx, cy + 1);
+    ctx.fillText(icon, cx, cy + 0.5);
     ctx.restore();
+
 
     // 4. Outer Diamond Border Highlight / Hover (Reachable Destination Spaces - Bright Cyan!)
     if (isHovered || isHighlighted) {
@@ -1190,22 +1211,43 @@ export class IsometricRenderer {
     return c;
   }
 
+  public clampCameraBounds() {
+    // Keep camera within playable continental boundaries
+    const minX = -3200;
+    const maxX = 5400;
+    const minY = -200;
+    const maxY = 4400;
+    this.camera.targetX = Math.max(minX, Math.min(maxX, this.camera.targetX));
+    this.camera.targetY = Math.max(minY, Math.min(maxY, this.camera.targetY));
+    this.camera.x = Math.max(minX, Math.min(maxX, this.camera.x));
+    this.camera.y = Math.max(minY, Math.min(maxY, this.camera.y));
+    this.camera.zoom = 1.0;
+    this.camera.targetZoom = 1.0;
+  }
+
   centerCameraOn(gx: number, gy: number, gz: number) {
     const p = this.toScreen(gx, gy, gz);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
+    this.camera.zoom = 1.0;
+    this.camera.targetZoom = 1.0;
+    this.clampCameraBounds();
   }
 
-  // Smooth cinematic camera focus and zoom onto player at turn start
-  focusOnPlayer(gx: number, gy: number, gz: number, zoom = 1.22) {
+  // Smooth cinematic camera focus onto player at turn start
+  focusOnPlayer(gx: number, gy: number, gz: number) {
     const p = this.toScreen(gx, gy, gz);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
-    this.camera.targetZoom = zoom;
+    this.camera.zoom = 1.0;
+    this.camera.targetZoom = 1.0;
+    this.clampCameraBounds();
   }
 
-  // Reset to default comfortable tactical board zoom
-  resetTacticalZoom(targetZoom = 1.1) {
-    this.camera.targetZoom = targetZoom;
+  // Reset to default comfortable fixed tactical board zoom
+  resetTacticalZoom() {
+    this.camera.zoom = 1.0;
+    this.camera.targetZoom = 1.0;
   }
 }
+

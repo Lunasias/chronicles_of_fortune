@@ -1,12 +1,16 @@
 import { Player } from '../game/Player';
 import { GameState } from '../game/GameState';
+import { BoardNode } from '../game/BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
+import { getNodeEncounterPreview, MonsterProfile } from '../game/MonsterDatabase';
 
 export class InspectUI {
   private game: GameState;
   private inspectModal: HTMLElement;
   private duelScoutModal: HTMLElement;
+  private monsterScoutModal: HTMLElement;
+  private destinationTooltip: HTMLElement;
 
   constructor(game: GameState) {
     this.game = game;
@@ -30,7 +34,28 @@ export class InspectUI {
       document.body.appendChild(duelEl);
     }
     this.duelScoutModal = duelEl;
+
+    // 3. Pre-Combat Monster Scouting Modal
+    let monEl = document.getElementById('preCombatMonsterScoutModal');
+    if (!monEl) {
+      monEl = document.createElement('div');
+      monEl.id = 'preCombatMonsterScoutModal';
+      monEl.className = 'hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto select-none';
+      document.body.appendChild(monEl);
+    }
+    this.monsterScoutModal = monEl;
+
+    // 4. Floating Tactical Move Preview Tooltip
+    let tipEl = document.getElementById('moveTargetPreviewTooltip');
+    if (!tipEl) {
+      tipEl = document.createElement('div');
+      tipEl.id = 'moveTargetPreviewTooltip';
+      tipEl.className = 'hidden fixed z-40 pointer-events-none transition-opacity duration-150 select-none';
+      document.body.appendChild(tipEl);
+    }
+    this.destinationTooltip = tipEl;
   }
+
 
   // =========================================================================
   // 1. UNIVERSAL CHARACTER INSPECTION (ดูสเตตัสตัวเองและเพื่อนร่วมทางได้ตลอดเวลา)
@@ -411,4 +436,189 @@ export class InspectUI {
       onCancel();
     });
   }
+  // =========================================================================
+  // 3. MOVE TARGET SELECTION: MONSTER ENCOUNTER & STAT PREVIEW TOOLTIP
+  // =========================================================================
+  showMoveDestinationPreview(node: BoardNode, activePlayer: Player, screenX: number, screenY: number) {
+    const preview = getNodeEncounterPreview(node);
+    const m = preview.featuredMonster;
+
+    let statComparisonHtml = '';
+    if (m) {
+      const atkAdvantage = activePlayer.atk >= m.def;
+      const spdAdvantage = activePlayer.spd >= m.spd;
+
+      statComparisonHtml = `
+        <div class="bg-slate-950/95 border border-amber-500/40 rounded p-2 mt-1.5 space-y-1">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-1">
+            <span class="font-bold text-amber-300 text-[11px] flex items-center gap-1">
+              <span>${m.icon}</span>
+              <span>${m.name}</span>
+            </span>
+            <span class="text-[9px] bg-rose-950/80 text-rose-300 px-1 rounded font-bold border border-rose-800/60">
+              LV.${m.level}
+            </span>
+          </div>
+
+          <div class="flex justify-between text-[9px] font-bold text-slate-300">
+            <span>HP: ${m.hp}/${m.maxHp}</span>
+            <span class="${spdAdvantage ? 'text-emerald-300' : 'text-yellow-300'}">SPD: ${m.spd}</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1 text-center text-[9px] bg-slate-900/80 p-1 rounded">
+            <div><span class="text-slate-400 block text-[8px]">ATK</span><strong class="${atkAdvantage ? 'text-amber-400' : 'text-rose-400'}">${m.atk}</strong></div>
+            <div><span class="text-slate-400 block text-[8px]">DEF</span><strong class="text-blue-400">${m.def}</strong></div>
+            <div><span class="text-slate-400 block text-[8px]">MAG</span><strong class="text-purple-400">${m.mag}</strong></div>
+            <div><span class="text-slate-400 block text-[8px]">SPD</span><strong class="${spdAdvantage ? 'text-emerald-400' : 'text-yellow-400'}">${m.spd}</strong></div>
+          </div>
+
+          <div class="text-[9px] text-slate-300 space-y-0.5 pt-0.5 border-t border-slate-800/80">
+            <div><strong class="text-purple-300">⚡ ท่า:</strong> ${m.skillName}</div>
+            <div><strong class="text-amber-300">🎁 ดรอป:</strong> ${m.lootDrop} (+${m.goldReward}G)</div>
+            ${m.weakness ? `<div><strong class="text-cyan-300">🎯 จุดอ่อน:</strong> ${m.weakness}</div>` : ''}
+          </div>
+
+          <div class="text-[8px] rounded px-1 py-0.5 font-bold ${spdAdvantage ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'}">
+            ${spdAdvantage ? '⚡ ความเร็วของคุณเหนือกว่า! (+15% อัตราหลบหลีก)' : '⚠️ อสูรตัวนี้เร็วกว่าคุณ! พึงระวังการโจมตี'}
+          </div>
+        </div>
+      `;
+    }
+
+    this.destinationTooltip.innerHTML = `
+      <div class="pixel-box-gold w-64 p-2.5 shadow-2xl bg-slate-950/95 border-2 border-amber-500/80 backdrop-blur-md text-left">
+        <div class="flex items-center justify-between border-b border-amber-600/40 pb-1 mb-1">
+          <div>
+            <h4 class="text-xs font-bold text-amber-200 leading-tight">${preview.typeLabel}</h4>
+            <span class="text-[8px] text-slate-400">${node.subRegionName || 'ราชอาณาจักร'}</span>
+          </div>
+          <span class="text-[8px] font-bold px-1.5 py-0.5 rounded border" style="color: ${preview.threatColor}; border-color: ${preview.threatColor}; background: rgba(0,0,0,0.5);">
+            ${preview.threatLevel}
+          </span>
+        </div>
+
+        <div class="flex items-center justify-between text-[9px] bg-slate-900/90 px-1.5 py-0.5 rounded mb-1 border border-slate-800">
+          <span class="text-slate-300">โอกาสปะทะอสูร:</span>
+          <strong class="font-bold" style="color: ${preview.threatColor};">${preview.encounterChancePercent}%</strong>
+        </div>
+
+        <p class="text-[9px] text-slate-300 leading-tight">
+          ${preview.threatDescription}
+        </p>
+
+        ${statComparisonHtml}
+
+        <div class="mt-1.5 pt-1 border-t border-slate-800 text-[8px] text-slate-400 flex items-center justify-between">
+          <span>💡 คลิกช่องเพื่อยืนยันการเดิน</span>
+          <span class="text-amber-400 font-bold">Dokapon</span>
+        </div>
+      </div>
+    `;
+
+    const tipW = 270;
+    const tipH = 260;
+    const pad = 14;
+    let posX = screenX + pad;
+    let posY = screenY + pad;
+
+    if (posX + tipW > window.innerWidth) posX = screenX - tipW - pad;
+    if (posY + tipH > window.innerHeight) posY = window.innerHeight - tipH - pad;
+    if (posX < 8) posX = 8;
+    if (posY < 8) posY = 8;
+
+    this.destinationTooltip.style.left = `${posX}px`;
+    this.destinationTooltip.style.top = `${posY}px`;
+    this.destinationTooltip.classList.remove('hidden');
+  }
+
+  hideMoveDestinationPreview() {
+    this.destinationTooltip.classList.add('hidden');
+  }
+  // =========================================================================
+  // 4. PRE-BATTLE TACTICAL SCOUTING FOR MONSTERS & BOSSES
+  // =========================================================================
+  openMonsterScouting(
+    monster: MonsterProfile,
+    node: BoardNode,
+    player: Player,
+    onConfirm: () => void,
+    onCancel: () => void
+  ) {
+    audio.click();
+    this.hideMoveDestinationPreview();
+
+    const estAtkPPhys = Math.max(8, player.atk - Math.floor(monster.def * 0.6));
+    const estAtkPStrike = Math.max(18, Math.floor(player.atk * 2.2));
+    const estAtkPMagic = Math.max(10, Math.floor(player.mag * 1.8 - monster.mag * 0.5));
+    const estMonsterPhys = Math.max(6, monster.atk - Math.floor(player.def * 0.6));
+
+    this.monsterScoutModal.innerHTML = `
+      <div class="pixel-box-gold max-w-lg w-full p-4 shadow-2xl relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
+        <div class="border-b border-rose-800/60 pb-2 mb-2 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-rose-300 flex items-center gap-1.5">
+              <span>👹</span> ส่องข้อมูลอสูร & ยืนยันการเข้าปะทะ
+            </h2>
+            <p class="text-[10px] text-slate-300">[${node.name}] มีอสูร <strong class="text-rose-300">${monster.name}</strong> คุ้มกันอยู่!</p>
+          </div>
+          <span class="text-2xl">${monster.icon}</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <div class="pixel-box p-2.5 bg-slate-900/95 border-blue-500/70 text-[10px]">
+            <div class="flex justify-between font-bold text-cyan-300 border-b border-slate-800 pb-1 mb-1">
+              <span>🛡️ ${player.displayName}</span><span>LV.${player.level}</span>
+            </div>
+            <div>HP: ${player.hp}/${player.maxHp} | MP: ${player.mp}/${player.maxMp}</div>
+            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 rounded mt-1">
+              <div><strong class="text-amber-400 block">${player.atk}</strong><span>ATK</span></div>
+              <div><strong class="text-blue-400 block">${player.def}</strong><span>DEF</span></div>
+              <div><strong class="text-purple-400 block">${player.mag}</strong><span>MAG</span></div>
+              <div><strong class="text-yellow-400 block">${player.spd}</strong><span>SPD</span></div>
+            </div>
+          </div>
+
+          <div class="pixel-box p-2.5 bg-slate-900/95 border-rose-500/70 text-[10px]">
+            <div class="flex justify-between font-bold text-rose-300 border-b border-slate-800 pb-1 mb-1">
+              <span>${monster.icon} ${monster.name}</span><span>LV.${monster.level}</span>
+            </div>
+            <div>HP: ${monster.hp}/${monster.maxHp} | MP: ${monster.mp}/${monster.maxMp}</div>
+            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 rounded mt-1">
+              <div><strong class="text-amber-400 block">${monster.atk}</strong><span>ATK</span></div>
+              <div><strong class="text-blue-400 block">${monster.def}</strong><span>DEF</span></div>
+              <div><strong class="text-purple-400 block">${monster.mag}</strong><span>MAG</span></div>
+              <div><strong class="text-yellow-400 block">${monster.spd}</strong><span>SPD</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-2 rounded border border-slate-800 text-[10px] space-y-1 mb-3">
+          <div class="font-bold text-amber-300">📊 คาดการณ์ดาเมจ: กายภาพ ~${estAtkPPhys} | ชาร์จฟัน ~${estAtkPStrike} | เวทมนตร์ ~${estAtkPMagic}</div>
+          <div class="text-slate-300">ท่าพิเศษ: <strong class="text-rose-300">${monster.skillName}</strong> (${monster.skillDesc})</div>
+          <div class="text-amber-300">🎯 จุดอ่อน: ${monster.weakness || 'ชาร์จฟันทะลวง'} | ดาเมจสวนกลับ: ~${estMonsterPhys} HP</div>
+        </div>
+
+        <div class="flex justify-between gap-3 pt-2 border-t border-slate-800">
+          <button id="btnCancelMonsterScout" class="pixel-btn px-4 py-2 text-xs text-slate-300 hover:text-white font-bold">❌ ยกเลิก</button>
+          <button id="btnConfirmMonsterScout" class="pixel-btn pixel-btn-red px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-lg"><span>⚔️ ยืนยันเข้าปะทะ!</span></button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btnConfirmMonsterScout')?.addEventListener('click', () => {
+      audio.click();
+      this.monsterScoutModal.classList.add('hidden');
+      onConfirm();
+    });
+
+    document.getElementById('btnCancelMonsterScout')?.addEventListener('click', () => {
+      audio.click();
+      this.monsterScoutModal.classList.add('hidden');
+      onCancel();
+    });
+
+    this.monsterScoutModal.classList.remove('hidden');
+  }
+
+
 }
