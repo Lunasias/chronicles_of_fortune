@@ -432,7 +432,8 @@ export class IsometricRenderer {
         node.type === 'tavern' ||
         node.type === 'guild' ||
         node.type === 'fishing' ||
-        node.type === 'isekai_event'
+        node.type === 'isekai_event' ||
+        node.type === 'mystery_chest'
       ) {
         renderList.push({
           depth: depth + 40,
@@ -606,6 +607,14 @@ export class IsometricRenderer {
                 textColor: '#f5d0fe',
                 bgColor: 'rgba(30, 15, 60, 0.92)'
               };
+            } else if (node.type === 'mystery_chest') {
+              badge = {
+                title: 'กล่องสุ่มมหัศจรรย์',
+                icon: '🎁',
+                borderColor: '#f59e0b',
+                textColor: '#fef08a',
+                bgColor: 'rgba(50, 30, 5, 0.94)'
+              };
             }
 
             if (badge) {
@@ -770,6 +779,11 @@ export class IsometricRenderer {
       leftColor = '#7e22ce';
       rightColor = '#581c87';
       icon = '⚡';
+    } else if (node.type === 'mystery_chest') {
+      topColor = '#facc15';
+      leftColor = '#d97706';
+      rightColor = '#b45309';
+      icon = '🎁';
     }
 
     // Dokapon Signature Node Medallion Plate in Center (Flush on continuous terrain ground)
@@ -981,7 +995,8 @@ export class IsometricRenderer {
       frame,
       player.equipment,
       player.isDarkling,
-      player.prank
+      player.prank,
+      player.skinVariant
     );
     ctx.drawImage(sprite, px - 48, py - 68, 96, 96);
 

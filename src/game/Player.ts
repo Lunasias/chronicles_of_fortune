@@ -179,11 +179,53 @@ export interface GuildQuest {
   rewardXp: number;
 }
 
+export interface SkinVariantData {
+  id: number;
+  name: string;
+  theme: string;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+export const HERO_SKINS: Record<string, SkinVariantData[]> = {
+  warrior: [
+    { id: 0, name: 'อัศวินเกราะเงิน (Silver Vanguard)', theme: 'classic', primaryColor: '#e2e8f0', secondaryColor: '#dc2626' },
+    { id: 1, name: 'อัศวินเงาทมิฬ (Shadow Knight)', theme: 'shadow', primaryColor: '#1e293b', secondaryColor: '#9333ea' },
+    { id: 2, name: 'พาลาดินทองคำ (Golden Paladin)', theme: 'gold', primaryColor: '#fbbf24', secondaryColor: '#f8fafc' },
+    { id: 3, name: 'ลอร์ดโลหิต (Crimson Sovereign)', theme: 'blood', primaryColor: '#991b1b', secondaryColor: '#18181b' }
+  ],
+  magician: [
+    { id: 0, name: 'จอมเวทมนตรา (Arcane Violet)', theme: 'classic', primaryColor: '#a855f7', secondaryColor: '#ec4899' },
+    { id: 1, name: 'เพลิงสุริยา (Solar Pyromancer)', theme: 'fire', primaryColor: '#f97316', secondaryColor: '#ef4444' },
+    { id: 2, name: 'เหมันต์เยือกแข็ง (Glacial Frost)', theme: 'frost', primaryColor: '#38bdf8', secondaryColor: '#e0f2fe' },
+    { id: 3, name: 'เนโครแมนเซอร์ (Plague Necro)', theme: 'poison', primaryColor: '#10b981', secondaryColor: '#064e3b' }
+  ],
+  thief: [
+    { id: 0, name: 'จอมโจรสายลม (Wind Rogue)', theme: 'classic', primaryColor: '#10b981', secondaryColor: '#065f46' },
+    { id: 1, name: 'นักฆ่าเงาราตรี (Night Assassin)', theme: 'shadow', primaryColor: '#0f172a', secondaryColor: '#ef4444' },
+    { id: 2, name: 'พ่อค้าเถื่อนทมิฬ (Desert Scoundrel)', theme: 'sand', primaryColor: '#d97706', secondaryColor: '#78350f' },
+    { id: 3, name: 'เงามายาปีศาจ (Phantom Shadow)', theme: 'phantom', primaryColor: '#7c3aed', secondaryColor: '#312e81' }
+  ],
+  cleric: [
+    { id: 0, name: 'ผู้พิทักษ์วิหาร (Temple Guardian)', theme: 'classic', primaryColor: '#f8fafc', secondaryColor: '#fbbf24' },
+    { id: 1, name: 'บาทหลวงมืด (Dark Inquisitor)', theme: 'dark', primaryColor: '#312e81', secondaryColor: '#a855f7' },
+    { id: 2, name: 'นักพรตไพรพฤกษ์ (Nature Hermit)', theme: 'nature', primaryColor: '#15803d', secondaryColor: '#86efac' },
+    { id: 3, name: 'เซราฟสรวงสวรรค์ (Celestial Seraph)', theme: 'celestial', primaryColor: '#0284c7', secondaryColor: '#fef08a' }
+  ],
+  spellblade: [
+    { id: 0, name: 'ดาบมนตราคลาสสิก (Mystic Blade)', theme: 'classic', primaryColor: '#ec4899', secondaryColor: '#831843' },
+    { id: 1, name: 'คมดาบอัสนี (Storm Spark)', theme: 'lightning', primaryColor: '#38bdf8', secondaryColor: '#facc15' },
+    { id: 2, name: 'เพลิงนรกพิฆาต (Inferno Blade)', theme: 'inferno', primaryColor: '#ea580c', secondaryColor: '#7c2d12' },
+    { id: 3, name: 'ผลึกเหมันต์ (Frost Shard)', theme: 'frost', primaryColor: '#bae6fd', secondaryColor: '#0284c7' }
+  ]
+};
+
 export class Player {
   public id: number;
   public name: string;
   public classKey: string;
   public isAI: boolean;
+  public skinVariant: number = 0;
 
   public level = 1;
   public xp = 0;
@@ -254,15 +296,18 @@ export class Player {
   public avatar: string;
   public skillName: string;
 
-  constructor(id: number, name: string, classKey: string, isAI = false, startNodeId = 0) {
+  constructor(id: number, name: string, classKey: string, isAI = false, startNodeId = 0, skinVariant = 0) {
     this.id = id;
     this.name = name;
     this.classKey = classKey;
     this.isAI = isAI;
+    this.skinVariant = skinVariant;
 
     const base = HERO_CLASSES[classKey] || HERO_CLASSES['warrior'];
     this.className = base.name;
-    this.color = base.color;
+    const skins = HERO_SKINS[classKey] || HERO_SKINS['warrior'];
+    const selectedSkin = skins[skinVariant] || skins[0];
+    this.color = selectedSkin ? selectedSkin.primaryColor : base.color;
     this.avatar = base.avatar;
     this.skillName = base.skillName;
 

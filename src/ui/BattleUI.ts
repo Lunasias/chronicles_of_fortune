@@ -450,6 +450,17 @@ export class BattleUI {
     // Start Phase 1: Dash forward across the arena! (340ms)
     this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
+    // Trigger Anime Speed Lines for rapid dash movement!
+    if (atkAction === 'strike' || isCounterStrikeClash) {
+      combatVFX.triggerSpeedLines('rgba(239, 68, 68, 0.75)', 24);
+    } else if (atkAction === 'magic') {
+      combatVFX.triggerSpeedLines('rgba(168, 85, 247, 0.75)', 22);
+    } else if (atkAction === 'skill') {
+      combatVFX.triggerSpeedLines('rgba(236, 72, 153, 0.85)', 28);
+    } else {
+      combatVFX.triggerSpeedLines('rgba(59, 130, 246, 0.65)', 18);
+    }
+
     if (atkAction === 'skill') {
       audio.skillCast();
     } else if (atkAction === 'strike' || isCounterStrikeClash) {
@@ -474,8 +485,9 @@ export class BattleUI {
         audio.counterParry();
         this.defenderAnim = 'counter';
         this.attackerAnim = 'hurt';
-        combatVFX.triggerScreenShake(18);
-        combatVFX.triggerHitstop(6);
+        combatVFX.triggerScreenShake(20);
+        combatVFX.triggerHitstop(8);
+        combatVFX.triggerSpeedLines('rgba(234, 179, 8, 0.9)', 28);
         combatVFX.spawnCounterHit(
           atkBaseX + this.cutscene.attackerOffsetX,
           atkBaseY + this.cutscene.attackerOffsetY,
@@ -489,8 +501,15 @@ export class BattleUI {
           targetDefDX += isPAtk ? 30 : -30;
           targetDefDY -= 8;
         }
-        combatVFX.triggerScreenShake(atkAction === 'strike' ? 18 : 12);
-        combatVFX.triggerHitstop(5);
+        combatVFX.triggerScreenShake(atkAction === 'strike' ? 22 : 14);
+        combatVFX.triggerHitstop(atkAction === 'strike' ? 9 : 6);
+        if (atkAction === 'strike') {
+          combatVFX.triggerSpeedLines('rgba(239, 68, 68, 0.9)', 30);
+        } else if (atkAction === 'magic') {
+          combatVFX.triggerSpeedLines('rgba(168, 85, 247, 0.85)', 25);
+        } else if (atkAction === 'skill') {
+          combatVFX.triggerSpeedLines('rgba(236, 72, 153, 0.9)', 32);
+        }
         this.startCutscenePhase('impact', 480, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
         const hitX = defBaseX + targetDefDX;
@@ -553,14 +572,14 @@ export class BattleUI {
       const atkFloatY = atkBaseY + targetAtkDY - 45;
 
       if (result.isCounterSuccess) {
-        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `PARRY! -${result.damageToAttacker}`, 'counter');
+        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ PARRY COUNTER!! -${result.damageToAttacker}`, 'counter');
       } else if (result.isStrikeSuccess) {
-        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `CRITICAL! -${result.damageToDefender}`, 'crit');
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `💥 CRITICAL SMASH!! -${result.damageToDefender}`, 'crit');
       } else if (atkAction === 'magic') {
         if (result.isMagicBlocked) {
-          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `BLOCKED! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🛡️ BARRIER BLOCKED! -${result.damageToDefender}`, 'magic');
         } else {
-          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `MAGIC! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🔮 ARCANE BURST!! -${result.damageToDefender}`, 'magic');
         }
       } else if (result.damageToDefender > 0) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'normal');
@@ -783,7 +802,8 @@ export class BattleUI {
       pFrame,
       p.equipment,
       p.isDarkling,
-      p.prank
+      p.prank,
+      p.skinVariant
     );
 
     const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
@@ -805,7 +825,8 @@ export class BattleUI {
         pFrame,
         enemyCombatant.playerRef.equipment,
         enemyCombatant.playerRef.isDarkling,
-        enemyCombatant.playerRef.prank
+        enemyCombatant.playerRef.prank,
+        enemyCombatant.playerRef.skinVariant
       );
       enemyW = 120;
       enemyH = 120;

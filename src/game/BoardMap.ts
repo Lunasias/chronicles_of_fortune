@@ -13,7 +13,8 @@ export type SpaceType =
   | 'tavern'
   | 'guild'
   | 'fishing'
-  | 'isekai_event';
+  | 'isekai_event'
+  | 'mystery_chest';
 
 export type BiomeType = 'grass' | 'forest' | 'snow' | 'desert' | 'volcano' | 'cavern' | 'coral' | 'abyss';
 
@@ -307,8 +308,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 39,
     "gy": 25,
     "gz": 1,
-    "type": "blue",
-    "name": "Clover Field",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์โซลาเรีย",
     "biome": "grass",
     "neighbors": [
       9,
@@ -764,8 +765,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 64,
     "gy": 34,
     "gz": 2,
-    "type": "vault",
-    "name": "Elven Spire Vault",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์เอลฟ์",
     "biome": "forest",
     "neighbors": [
       29,
@@ -1268,8 +1269,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 20,
     "gy": 52,
     "gz": 4,
-    "type": "empty",
-    "name": "Snowy Steps",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์ธารน้ำแข็ง",
     "biome": "snow",
     "neighbors": [
       49,
@@ -1822,8 +1823,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 93,
     "gy": 50,
     "gz": 0,
-    "type": "vault",
-    "name": "Pharaoh Vault",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์ฟาโรห์",
     "biome": "desert",
     "neighbors": [
       67,
@@ -2417,8 +2418,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 65,
     "gy": 72,
     "gz": 4,
-    "type": "red",
-    "name": "Magma River Crossing",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์ลาวาเนเธอร์",
     "biome": "volcano",
     "neighbors": [
       111,
@@ -2849,8 +2850,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "gx": 29,
     "gy": 31,
     "gz": 0,
-    "type": "red",
-    "name": "Reef Spikes",
+    "type": "mystery_chest",
+    "name": "กล่องสุ่มมหัศจรรย์อ่าวปะการัง",
     "biome": "coral",
     "neighbors": [
       132,

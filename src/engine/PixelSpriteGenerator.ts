@@ -474,7 +474,8 @@ export class PixelSpriteGenerator {
     frame: number = 0,
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null } = {},
     isDarkling: boolean = false,
-    prank?: PrankState
+    prank?: PrankState,
+    skinVariant: number = 0
   ): HTMLCanvasElement {
     return customIsometricHeroRenderer.getHeroSprite(
       classKey,
@@ -483,7 +484,8 @@ export class PixelSpriteGenerator {
       frame,
       equipment,
       isDarkling,
-      prank
+      prank,
+      skinVariant
     );
   }
 

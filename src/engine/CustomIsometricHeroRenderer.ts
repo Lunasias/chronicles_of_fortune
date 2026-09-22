@@ -22,7 +22,8 @@ export class CustomIsometricHeroRenderer {
     frame: number = 0,
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null } = {},
     isDarkling: boolean = false,
-    prank?: PrankState
+    prank?: PrankState,
+    skinVariant: number = 0
   ): HTMLCanvasElement {
     const weaponId = equipment.weapon?.id || 'default';
     const armorId = equipment.armor?.id || 'default';
@@ -33,7 +34,7 @@ export class CustomIsometricHeroRenderer {
       : 'none';
 
     const f = frame % 8;
-    const cacheKey = `custom_iso_${isDarkling ? 'darkling' : classKey}_${dir}_${animState}_${f}_${weaponId}_${armorId}_${prankKey}`;
+    const cacheKey = `custom_iso_${isDarkling ? 'darkling' : classKey}_s${skinVariant}_${dir}_${animState}_${f}_${weaponId}_${armorId}_${prankKey}`;
 
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
@@ -51,22 +52,22 @@ export class CustomIsometricHeroRenderer {
       const normalizedClass = this.normalizeClassKey(classKey);
       switch (normalizedClass) {
         case 'warrior':
-          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'magician':
-          this.renderMagician(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderMagician(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'cleric':
-          this.renderCleric(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderCleric(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'thief':
-          this.renderThief(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderThief(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'ranger':
-          this.renderRanger(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderRanger(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
         default:
-          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment);
+          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
       }
     }
@@ -323,24 +324,60 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState,
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // Palette
-    const steelLight = '#e2e8f0';
-    const steelMid = '#94a3b8';
-    const steelDark = '#475569';
-    const steelShadow = '#1e293b';
-    const goldTrim = '#fbbf24';
-    const plumeRed = '#dc2626';
-    const plumeDark = '#991b1b';
-    const capeCrimson = '#b91c1c';
-    const capeShadow = '#7f1d1d';
-    const leatherBrown = '#78350f';
+    // Palette variants
+    let steelLight = '#e2e8f0';
+    let steelMid = '#94a3b8';
+    let steelDark = '#475569';
+    let steelShadow = '#1e293b';
+    let goldTrim = '#fbbf24';
+    let plumeRed = '#dc2626';
+    let plumeDark = '#991b1b';
+    let capeCrimson = '#b91c1c';
+    let capeShadow = '#7f1d1d';
+    let leatherBrown = '#78350f';
+
+    if (skinVariant === 1) {
+      // Shadow Knight
+      steelLight = '#64748b';
+      steelMid = '#334155';
+      steelDark = '#1e293b';
+      steelShadow = '#020617';
+      goldTrim = '#c084fc';
+      plumeRed = '#a855f7';
+      plumeDark = '#581c87';
+      capeCrimson = '#4c1d95';
+      capeShadow = '#2e1065';
+    } else if (skinVariant === 2) {
+      // Golden Paladin
+      steelLight = '#fef08a';
+      steelMid = '#facc15';
+      steelDark = '#ca8a04';
+      steelShadow = '#854d0e';
+      goldTrim = '#ffffff';
+      plumeRed = '#38bdf8';
+      plumeDark = '#0284c7';
+      capeCrimson = '#f8fafc';
+      capeShadow = '#94a3b8';
+    } else if (skinVariant === 3) {
+      // Crimson Sovereign
+      steelLight = '#f87171';
+      steelMid = '#dc2626';
+      steelDark = '#991b1b';
+      steelShadow = '#450a0a';
+      goldTrim = '#f59e0b';
+      plumeRed = '#e11d48';
+      plumeDark = '#881337';
+      capeCrimson = '#18181b';
+      capeShadow = '#09090b';
+    }
 
     // 1. Ground Shadow (2:1 Isometric Oval)
     this.drawIsoShadow(ctx, cx, cy + 34, 20, 9);
@@ -542,22 +579,49 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState,
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // Palette
-    const robeVioletLight = '#a855f7';
-    const robeVioletMid = '#7e22ce';
-    const robeVioletDark = '#581c87';
-    const robeShadow = '#2e1065';
-    const goldRune = '#facc15';
-    const crystalCyan = '#38bdf8';
-    const woodStaff = '#5c2c16';
-    const skinTone = '#fde68a';
+    // Palette variants
+    let robeVioletLight = '#a855f7';
+    let robeVioletMid = '#7e22ce';
+    let robeVioletDark = '#581c87';
+    let robeShadow = '#2e1065';
+    let goldRune = '#facc15';
+    let crystalCyan = '#38bdf8';
+    let woodStaff = '#5c2c16';
+    let skinTone = '#fde68a';
+
+    if (skinVariant === 1) {
+      // Solar Pyromancer (Fire)
+      robeVioletLight = '#fb923c';
+      robeVioletMid = '#ea580c';
+      robeVioletDark = '#9a3412';
+      robeShadow = '#431407';
+      goldRune = '#fde047';
+      crystalCyan = '#ef4444';
+    } else if (skinVariant === 2) {
+      // Glacial Frost
+      robeVioletLight = '#7dd3fc';
+      robeVioletMid = '#0284c7';
+      robeVioletDark = '#0369a1';
+      robeShadow = '#082f49';
+      goldRune = '#e0f2fe';
+      crystalCyan = '#38bdf8';
+    } else if (skinVariant === 3) {
+      // Plague Necro
+      robeVioletLight = '#4ade80';
+      robeVioletMid = '#16a34a';
+      robeVioletDark = '#14532d';
+      robeShadow = '#052e16';
+      goldRune = '#a3e635';
+      crystalCyan = '#22c55e';
+    }
 
     // 1. Ground Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 9);
@@ -741,20 +805,44 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState,
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // Palette
-    const whiteBright = '#ffffff';
-    const whiteShade = '#e2e8f0';
-    const whiteDark = '#94a3b8';
-    const goldPrimary = '#fbbf24';
-    const goldDark = '#d97706';
-    const skinTone = '#fef08a';
+    // Palette variants
+    let whiteBright = '#ffffff';
+    let whiteShade = '#e2e8f0';
+    let whiteDark = '#94a3b8';
+    let goldPrimary = '#fbbf24';
+    let goldDark = '#d97706';
+    let skinTone = '#fef08a';
+
+    if (skinVariant === 1) {
+      // Dark Inquisitor
+      whiteBright = '#a855f7';
+      whiteShade = '#6b21a8';
+      whiteDark = '#3b0764';
+      goldPrimary = '#c084fc';
+      goldDark = '#7e22ce';
+    } else if (skinVariant === 2) {
+      // Nature Hermit
+      whiteBright = '#bbf7d0';
+      whiteShade = '#22c55e';
+      whiteDark = '#14532d';
+      goldPrimary = '#facc15';
+      goldDark = '#a16207';
+    } else if (skinVariant === 3) {
+      // Celestial Seraph
+      whiteBright = '#e0f2fe';
+      whiteShade = '#38bdf8';
+      whiteDark = '#0369a1';
+      goldPrimary = '#fde047';
+      goldDark = '#ca8a04';
+    }
 
     // 1. Ground Shadow with Holy Aura Glow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 9);
@@ -874,19 +962,40 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState,
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // Palette
-    const leatherDark = '#0f172a';
-    const leatherMid = '#1e293b';
-    const leatherLight = '#334155';
-    const poisonGreen = '#22c55e';
-    const skinTone = '#fed7aa';
+    // Palette variants
+    let leatherDark = '#0f172a';
+    let leatherMid = '#1e293b';
+    let leatherLight = '#334155';
+    let poisonGreen = '#22c55e';
+    let skinTone = '#fed7aa';
+
+    if (skinVariant === 1) {
+      // Night Assassin
+      leatherDark = '#020617';
+      leatherMid = '#0f172a';
+      leatherLight = '#1e293b';
+      poisonGreen = '#ef4444';
+    } else if (skinVariant === 2) {
+      // Desert Scoundrel
+      leatherDark = '#78350f';
+      leatherMid = '#b45309';
+      leatherLight = '#d97706';
+      poisonGreen = '#fbbf24';
+    } else if (skinVariant === 3) {
+      // Phantom Shadow
+      leatherDark = '#2e1065';
+      leatherMid = '#581c87';
+      leatherLight = '#7e22ce';
+      poisonGreen = '#c084fc';
+    }
 
     // 1. Ground Shadow (Slimmer, faster agile shadow)
     this.drawIsoShadow(ctx, cx, cy + 34, 16, 8);
@@ -982,19 +1091,40 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState,
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // Palette
-    const forestGreen = '#15803d';
-    const forestDark = '#14532d';
-    const leatherBrown = '#78350f';
-    const featherRed = '#ef4444';
-    const skinTone = '#fed7aa';
+    // Palette variants
+    let forestGreen = '#15803d';
+    let forestDark = '#14532d';
+    let leatherBrown = '#78350f';
+    let featherRed = '#ef4444';
+    let skinTone = '#fed7aa';
+
+    if (skinVariant === 1) {
+      // Storm Spark (Lightning)
+      forestGreen = '#0284c7';
+      forestDark = '#075985';
+      leatherBrown = '#1e293b';
+      featherRed = '#facc15';
+    } else if (skinVariant === 2) {
+      // Inferno Blade (Fire)
+      forestGreen = '#c2410c';
+      forestDark = '#7c2d12';
+      leatherBrown = '#431407';
+      featherRed = '#f97316';
+    } else if (skinVariant === 3) {
+      // Frost Shard (Ice)
+      forestGreen = '#38bdf8';
+      forestDark = '#0284c7';
+      leatherBrown = '#0f172a';
+      featherRed = '#ffffff';
+    }
 
     // 1. Ground Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 9);

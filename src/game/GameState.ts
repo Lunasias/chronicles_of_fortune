@@ -92,8 +92,8 @@ export class GameState {
     }
   }
 
-  initGame(partyConfig: Array<{ name: string; classKey: string; isAI: boolean }>, winGoal = 'networth') {
-    this.players = partyConfig.map((cfg, idx) => new Player(idx + 1, cfg.name, cfg.classKey, cfg.isAI, 0));
+  initGame(partyConfig: Array<{ name: string; classKey: string; isAI: boolean; skinVariant?: number }>, winGoal = 'networth') {
+    this.players = partyConfig.map((cfg, idx) => new Player(idx + 1, cfg.name, cfg.classKey, cfg.isAI, 0, cfg.skinVariant || 0));
     this.winGoal = winGoal;
     this.activePlayerIdx = 0;
     this.dayCounter = 1;

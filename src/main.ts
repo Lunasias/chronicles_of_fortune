@@ -7,8 +7,8 @@ import { ShopUI, SHOP_CATALOG } from './ui/ShopUI';
 import { PrankUI } from './ui/PrankUI';
 import { WeeklyReportUI } from './ui/WeeklyReportUI';
 import { IsekaiEventUI } from './ui/IsekaiEventUI';
-import { HERO_CLASSES, Player, FIELD_SPELLS } from './game/Player';
-import { EquipmentItem } from './engine/PixelSpriteGenerator';
+import { HERO_CLASSES, HERO_SKINS, Player, FIELD_SPELLS } from './game/Player';
+import { EquipmentItem, pixelSprites } from './engine/PixelSpriteGenerator';
 import { BoardNode } from './game/BoardMap';
 import { Combatant } from './game/BattleEngine';
 import { townManager } from './game/TownManager';
@@ -19,6 +19,9 @@ import { royalDecreeSystem } from './game/RoyalDecreeSystem';
 import { isekaiEventManager } from './game/IsekaiEventManager';
 import { worldCalamitySystem } from './game/WorldCalamitySystem';
 import { ecosystemSystem } from './game/EcosystemSystem';
+
+import { WonderChestUI } from './ui/WonderChestUI';
+import { InspectUI } from './ui/InspectUI';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -31,6 +34,8 @@ class DokaponApp {
   private prankUI: PrankUI;
   private weeklyReportUI: WeeklyReportUI;
   private isekaiEventUI: IsekaiEventUI;
+  private wonderChestUI: WonderChestUI;
+  private inspectUI: InspectUI;
 
   private isDragging = false;
   private dragStartX = 0;
@@ -38,6 +43,8 @@ class DokaponApp {
   private hasMovedWhileDragging = false;
   private bossCurrentHp = 380;
   private bossMaxHp = 380;
+  private worldMapFilter: string = 'all';
+  private mapTransform = { minGx: 0, minGy: 0, scale: 1, offsetX: 0, offsetY: 0 };
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -51,6 +58,12 @@ class DokaponApp {
     this.prankUI = new PrankUI(this.game);
     this.weeklyReportUI = new WeeklyReportUI(this.game);
     this.isekaiEventUI = new IsekaiEventUI(this.game);
+    this.wonderChestUI = new WonderChestUI(this.game);
+    this.inspectUI = new InspectUI(this.game);
+
+    this.hud.onInspectPlayerCallback = (pl) => {
+      this.inspectUI.openInspect(pl);
+    };
 
     this.initCanvasResize();
     this.bindDOMEvents();
@@ -128,6 +141,34 @@ class DokaponApp {
       if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
         const path = this.game.findPathToTarget(clickedNode.id);
         if (path && path.length > 1) {
+          // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
+          const rival = this.game.players.find(
+            pl => pl.id !== this.game.activePlayer.id && pl.nodeId === clickedNode.id && pl.hp > 0
+          );
+
+          if (rival && !this.game.activePlayer.isAI) {
+            this.inspectUI.openDuelScouting(
+              this.game.activePlayer,
+              rival,
+              clickedNode.name,
+              () => {
+                // Confirmed move to battle rival!
+                audio.coin();
+                this.renderer.hoveredNodeId = null;
+                this.renderer.previewPathNodeIds = [];
+                this.game.executePath(
+                  path,
+                  () => this.onMoveStep(),
+                  tile => this.handleTileArrival(tile)
+                );
+              },
+              () => {
+                // Cancelled, pick another move
+              }
+            );
+            return;
+          }
+
           audio.coin();
           this.renderer.hoveredNodeId = null;
           this.renderer.previewPathNodeIds = [];
@@ -261,7 +302,16 @@ class DokaponApp {
     document.getElementById('btnCloseWorldMap')?.addEventListener('click', () => {
       audio.click();
       document.getElementById('worldMapModal')?.classList.add('hidden');
+      document.getElementById('worldMapTooltip')?.classList.add('hidden');
     });
+
+    // Inspect Hero Button
+    document.getElementById('btnInspectHero')?.addEventListener('click', () => {
+      audio.click();
+      this.inspectUI.openInspect(this.game.activePlayer);
+    });
+
+    this.bindWorldMapEvents();
 
     // Zoom Controls
     document.getElementById('btnZoomIn')?.addEventListener('click', () => {
@@ -389,7 +439,12 @@ class DokaponApp {
 
     for (let i = 0; i < playerCount; i++) {
       const card = document.createElement('div');
-      card.className = 'pixel-box p-3 bg-slate-900 border-slate-700 flex flex-col gap-2 shadow';
+      card.className = 'player-setup-card pixel-box p-3 bg-slate-900 border-slate-700 flex flex-col gap-2 shadow';
+      card.dataset.playerIndex = `${i}`;
+      card.dataset.skinVariant = '0';
+
+      const initialClass = classKeys[i % classKeys.length];
+
       card.innerHTML = `
         <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
           <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
@@ -401,29 +456,102 @@ class DokaponApp {
             <span>AI Bot</span>
           </label>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div class="flex flex-col gap-1 min-w-0">
-            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Name</span>
-            <input type="text" maxlength="12" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-white w-full min-w-0 outline-none focus:border-amber-400" value="${defaultNames[i]}">
+        <div class="flex gap-3 items-center">
+          <!-- Live Preview Avatar -->
+          <div class="w-14 h-14 bg-slate-950 border-2 border-amber-600/60 rounded flex items-center justify-center relative overflow-hidden shadow-inner flex-shrink-0">
+            <canvas class="roster-preview-canvas w-12 h-12 image-pixelated"></canvas>
           </div>
-          <div class="flex flex-col gap-1 min-w-0">
-            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Class</span>
-            <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-amber-400 w-full min-w-0 outline-none cursor-pointer">
-              ${classKeys
-                .map(
-                  ck =>
-                    `<option value="${ck}" ${ck === classKeys[i % 4] ? 'selected' : ''}>${HERO_CLASSES[ck].name} ${HERO_CLASSES[ck].avatar}</option>`
-                )
-                .join('')}
-            </select>
+          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+            <div class="flex flex-col gap-1 min-w-0">
+              <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">ชื่อ (Name)</span>
+              <input type="text" maxlength="12" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-white w-full min-w-0 outline-none focus:border-amber-400" value="${defaultNames[i] || `Hero ${i + 1}`}">
+            </div>
+            <div class="flex flex-col gap-1 min-w-0">
+              <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">อาชีพ (Class)</span>
+              <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-amber-400 w-full min-w-0 outline-none cursor-pointer">
+                ${classKeys
+                  .map(
+                    ck =>
+                      `<option value="${ck}" ${ck === initialClass ? 'selected' : ''}>${HERO_CLASSES[ck].name} ${HERO_CLASSES[ck].avatar}</option>`
+                  )
+                  .join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- Appearance / Skin Customization Selector -->
+        <div class="flex items-center justify-between bg-slate-950/80 px-2.5 py-1.5 rounded border border-slate-800">
+          <span class="text-[9px] text-slate-400 font-bold flex items-center gap-1">
+            <span>🎨</span>
+            <span>รูปลักษณ์:</span>
+          </span>
+          <div class="flex items-center gap-1.5">
+            <button type="button" class="btn-prev-skin pixel-btn px-2 py-0.5 text-xs text-amber-300 font-bold" title="สกินก่อนหน้า">◀</button>
+            <span class="skin-name-label text-[10px] text-amber-300 font-semibold min-w-[130px] max-w-[160px] text-center truncate"></span>
+            <button type="button" class="btn-next-skin pixel-btn px-2 py-0.5 text-xs text-amber-300 font-bold" title="สกินถัดไป">▶</button>
           </div>
         </div>
       `;
       container.appendChild(card);
+
+      const classSelect = card.querySelector('.player-class-select') as HTMLSelectElement;
+      const skinLabel = card.querySelector('.skin-name-label') as HTMLElement;
+      const btnPrev = card.querySelector('.btn-prev-skin') as HTMLButtonElement;
+      const btnNext = card.querySelector('.btn-next-skin') as HTMLButtonElement;
+      const previewCanvas = card.querySelector('.roster-preview-canvas') as HTMLCanvasElement;
+      previewCanvas.width = 48;
+      previewCanvas.height = 48;
+      const pCtx = previewCanvas.getContext('2d')!;
+
+      const updateSkinDisplay = () => {
+        const ck = classSelect.value;
+        const skins = HERO_SKINS[ck] || HERO_SKINS['warrior'] || [];
+        let variant = parseInt(card.dataset.skinVariant || '0', 10);
+        if (variant >= skins.length) variant = 0;
+        if (variant < 0) variant = skins.length - 1;
+        card.dataset.skinVariant = `${variant}`;
+
+        const currentSkin = skins[variant] || { name: 'ค่าเริ่มต้น' };
+        skinLabel.innerText = currentSkin.name;
+
+        // Render live preview
+        pCtx.clearRect(0, 0, 48, 48);
+        pCtx.imageSmoothingEnabled = false;
+        const sprite = pixelSprites.getHeroSprite(ck, 'SE', 'idle', 0, {}, false, undefined, variant);
+        pCtx.drawImage(sprite, -24, -24, 96, 96);
+      };
+
+      classSelect.addEventListener('change', () => {
+        card.dataset.skinVariant = '0';
+        updateSkinDisplay();
+      });
+
+      btnPrev.addEventListener('click', () => {
+        audio.click();
+        const ck = classSelect.value;
+        const skins = HERO_SKINS[ck] || HERO_SKINS['warrior'] || [];
+        let variant = parseInt(card.dataset.skinVariant || '0', 10);
+        variant = (variant - 1 + skins.length) % skins.length;
+        card.dataset.skinVariant = `${variant}`;
+        updateSkinDisplay();
+      });
+
+      btnNext.addEventListener('click', () => {
+        audio.click();
+        const ck = classSelect.value;
+        const skins = HERO_SKINS[ck] || HERO_SKINS['warrior'] || [];
+        let variant = parseInt(card.dataset.skinVariant || '0', 10);
+        variant = (variant + 1) % skins.length;
+        card.dataset.skinVariant = `${variant}`;
+        updateSkinDisplay();
+      });
+
+      updateSkinDisplay();
     }
   }
 
   private startGame() {
+    const cards = document.querySelectorAll('.player-setup-card') as NodeListOf<HTMLElement>;
     const nameInputs = document.querySelectorAll('.player-name-input') as NodeListOf<HTMLInputElement>;
     const classSelects = document.querySelectorAll('.player-class-select') as NodeListOf<HTMLSelectElement>;
     const aiChecks = document.querySelectorAll('.is-ai-check') as NodeListOf<HTMLInputElement>;
@@ -432,7 +560,8 @@ class DokaponApp {
     const partyConfig = Array.from(nameInputs).map((input, idx) => ({
       name: input.value.trim() || `Hero ${idx + 1}`,
       classKey: classSelects[idx].value,
-      isAI: aiChecks[idx].checked
+      isAI: aiChecks[idx].checked,
+      skinVariant: parseInt(cards[idx]?.dataset.skinVariant || '0', 10)
     }));
 
     this.game.initGame(partyConfig, winGoal);
@@ -571,6 +700,10 @@ class DokaponApp {
           this.game.addLog(`แท่นบูชาแห่ง Rico ยังคงเงียบงัน มีเพียงลอร์ดผู้ต่ำต้อยที่สุดเท่านั้นที่สามารถทำสัญญามืดได้`);
         }
         this.advanceTurn();
+        break;
+
+      case 'mystery_chest':
+        this.wonderChestUI.open(p, () => this.advanceTurn());
         break;
 
       case 'vault':
@@ -1226,16 +1359,31 @@ class DokaponApp {
       if (node.gy > maxGy) maxGy = node.gy;
     });
 
-    const paddingX = 55;
-    const paddingY = 45;
+    const paddingX = 60;
+    const paddingY = 50;
     const rangeX = (maxGx - minGx) || 1;
     const rangeY = (maxGy - minGy) || 1;
-    const scale = Math.min((w - paddingX * 2) / rangeX, (h - paddingY * 2 - 30) / rangeY);
+    const scale = Math.min((w - paddingX * 2) / rangeX, (h - paddingY * 2 - 35) / rangeY);
     const offsetX = (w - rangeX * scale) / 2;
-    const offsetY = (h - 30 - rangeY * scale) / 2 + 10;
+    const offsetY = (h - 35 - rangeY * scale) / 2 + 10;
+
+    // Cache transform for hover/click coordinate detection
+    this.mapTransform = { minGx, minGy, scale, offsetX, offsetY };
 
     const toMapX = (gx: number) => offsetX + (gx - minGx) * scale;
     const toMapY = (gy: number) => offsetY + (gy - minGy) * scale;
+
+    const matchesFilter = (node: BoardNode): boolean => {
+      if (this.worldMapFilter === 'all') return true;
+      if (this.worldMapFilter === 'town') return node.type === 'town';
+      if (this.worldMapFilter === 'shop') return node.type.startsWith('shop');
+      if (this.worldMapFilter === 'boss') return node.type === 'boss' || node.type === 'dark_gate';
+      if (this.worldMapFilter === 'chest') return node.type === 'mystery_chest' || node.type === 'vault';
+      if (this.worldMapFilter === 'player') {
+        return this.game.players.some(pl => pl.nodeId === node.id || node.townData?.ownerId === pl.id);
+      }
+      return true;
+    };
 
     // 1. Draw Realm Territory Backdrop Halos
     const realms: Record<string, { color: string; label: string; minX: number; maxX: number; minY: number; maxY: number }> = {
@@ -1271,10 +1419,7 @@ class DokaponApp {
       }
     });
 
-    // 2. Draw Roads with Clean Styled Lines
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2.0;
-    ctx.lineCap = 'round';
+    // 2. Draw Roads with Styled Lines
     this.game.allNodes.forEach(node => {
       const x1 = toMapX(node.gx);
       const y1 = toMapY(node.gy);
@@ -1284,9 +1429,18 @@ class DokaponApp {
           if (target) {
             const x2 = toMapX(target.gx);
             const y2 = toMapY(target.gy);
+            const bothMatch = matchesFilter(node) && matchesFilter(target);
+
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
+            if (this.worldMapFilter === 'all' || bothMatch) {
+              ctx.strokeStyle = '#475569';
+              ctx.lineWidth = 2.0;
+            } else {
+              ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+              ctx.lineWidth = 1.0;
+            }
             ctx.stroke();
           }
         }
@@ -1297,13 +1451,38 @@ class DokaponApp {
     this.game.allNodes.forEach(node => {
       const nx = toMapX(node.gx);
       const ny = toMapY(node.gy);
+      const isMatch = matchesFilter(node);
+
+      if (!isMatch) {
+        // Dimmed node when filter is active
+        ctx.save();
+        ctx.globalAlpha = 0.20;
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(nx, ny, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
 
       let nodeColor = '#64748b';
-      let radius = 3.5;
+      let radius = 3.8;
 
       if (node.type === 'town') {
-        nodeColor = node.townData?.ownerId ? '#22c55e' : '#f59e0b';
+        if (node.townData?.isOccupiedByMonster) {
+          nodeColor = '#ef4444'; // monster red
+        } else if (node.townData?.ownerId) {
+          nodeColor = '#22c55e'; // player green
+        } else {
+          nodeColor = '#f59e0b'; // neutral gold
+        }
+        radius = 7.0;
+      } else if (node.type === 'mystery_chest') {
+        nodeColor = '#fbbf24';
         radius = 6.5;
+      } else if (node.type === 'vault') {
+        nodeColor = '#facc15';
+        radius = 5.5;
       } else if (node.type === 'shop_weapon') {
         nodeColor = '#f97316';
         radius = 5.0;
@@ -1324,14 +1503,35 @@ class DokaponApp {
         radius = 5.0;
       } else if (node.type === 'boss') {
         nodeColor = '#ef4444';
-        radius = 7.0;
+        radius = 7.5;
       } else if (node.type === 'dark_gate') {
         nodeColor = '#c084fc';
-        radius = 7.0;
+        radius = 7.5;
       } else if (node.type === 'blue') {
         nodeColor = '#3b82f6';
       } else if (node.type === 'red') {
         nodeColor = '#dc2626';
+      }
+
+      // Outer glow for special tiles
+      if (node.type === 'mystery_chest') {
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(nx, ny, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (node.type === 'town') {
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(nx, ny, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (node.type === 'boss') {
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(nx, ny, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       ctx.fillStyle = nodeColor;
@@ -1342,17 +1542,27 @@ class DokaponApp {
       ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // For towns and boss nodes, draw label
+      // Labels
       if (node.type === 'town') {
         ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 8.5px Kanit, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(`🏰 ${node.name}`, nx, ny - 9);
+      } else if (node.type === 'mystery_chest') {
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 8.5px Kanit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`🎁 ${node.name}`, nx, ny - 9);
       } else if (node.type === 'boss') {
         ctx.fillStyle = '#fca5a5';
         ctx.font = 'bold 8.5px Kanit, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(`💀 ${node.name}`, nx, ny - 9);
+      } else if (node.type === 'dark_gate') {
+        ctx.fillStyle = '#e9d5ff';
+        ctx.font = 'bold 8.5px Kanit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`😈 ${node.name}`, nx, ny - 9);
       }
     });
 
@@ -1400,7 +1610,188 @@ class DokaponApp {
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '10px Kanit, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🏰 เมือง  |  ⚔️ อาวุธ  |  🧪 ไอเทม  |  🔮 เวท  |  ✨ โบสถ์  |  🍺 โรงเตี๊ยม  |  📜 กิลด์  |  💀 บอส  |  🪙 ช่องทอง  |  🔴 ช่องมอนสเตอร์', w / 2, h - 14);
+    ctx.fillText('🏰 เมือง  |  🎁 กล่องสุ่ม  |  ⚔️ ร้านอาวุธ  |  🧪 ร้านไอเทม  |  🔮 ร้านเวท  |  ✨ โบสถ์  |  🍺 โรงเตี๊ยม  |  📜 กิลด์  |  💀 บอส  |  💰 ห้องนิรภัย', w / 2, h - 14);
+  }
+
+  private bindWorldMapEvents() {
+    const canvas = document.getElementById('worldMapCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    // Filter Buttons
+    document.querySelectorAll('.world-map-filter-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        audio.click();
+        document.querySelectorAll('.world-map-filter-btn').forEach(b => {
+          b.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold');
+          b.classList.add('bg-slate-800', 'text-slate-300');
+        });
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
+        target.classList.remove('bg-slate-800', 'text-slate-300');
+        this.worldMapFilter = target.getAttribute('data-filter') || 'all';
+        this.openWorldMapAtlas();
+      });
+    });
+
+    const tooltip = document.getElementById('worldMapTooltip');
+
+    // Mouse Move on World Map for Interactive Tooltip
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      const hoveredPlayer = this.findMapPlayerAtPoint(mx, my);
+      if (hoveredPlayer && tooltip) {
+        tooltip.innerHTML = `
+          <div class="font-bold text-amber-300 flex items-center gap-1">
+            <span>${hoveredPlayer.isDarkling ? '😈' : '🛡️'}</span>
+            <span>${hoveredPlayer.displayName} (${hoveredPlayer.className})</span>
+          </div>
+          <div class="text-[10px] text-slate-300">
+            HP: <span class="text-rose-300 font-bold">${hoveredPlayer.hp}/${hoveredPlayer.maxHp}</span> | 
+            ทอง: <span class="text-amber-300 font-bold">${hoveredPlayer.gold}G</span>
+          </div>
+          <div class="text-[9px] text-emerald-400 mt-0.5">
+            มูลค่าสุทธิ: ${hoveredPlayer.getNetWorth(this.game.allNodes)}G • เมือง: ${hoveredPlayer.townsControlled} แห่ง
+          </div>
+          <div class="text-[8px] text-cyan-400 mt-1 italic">🖱️ คลิกเพื่อหมุนกล้องไปหาตัวละครนี้</div>
+        `;
+        tooltip.style.left = `${e.clientX + 14}px`;
+        tooltip.style.top = `${e.clientY + 14}px`;
+        tooltip.classList.remove('hidden');
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+
+      const hoveredNode = this.findMapNodeAtPoint(mx, my);
+      if (hoveredNode && tooltip) {
+        let typeLabel = 'ช่องทางเดินทั่วไป';
+        let badgeColor = 'text-slate-300';
+        if (hoveredNode.type === 'town') {
+          typeLabel = hoveredNode.townData?.isOccupiedByMonster
+            ? `🏰 เมืองถูกมอนสเตอร์ (${hoveredNode.townData.monsterName}) ยึดครอง!`
+            : hoveredNode.townData?.ownerId
+            ? `🏰 เมืองในครอบครอง (เลเวล ${hoveredNode.townData.level})`
+            : '🏰 เมืองอิสระ (เข้าพิชิตเพื่อรับภาษี)';
+          badgeColor = 'text-amber-300 font-bold';
+        } else if (hoveredNode.type === 'mystery_chest') {
+          typeLabel = '🎁 กล่องสุ่มมหัศจรรย์ Dokapon (รูเล็ตต์เสี่ยงโชคสุดแรร์!)';
+          badgeColor = 'text-amber-400 font-bold';
+        } else if (hoveredNode.type === 'vault') {
+          typeLabel = '💰 ห้องนิรภัยโบราณ (ชิงสมบัติทองคำ)';
+          badgeColor = 'text-yellow-300 font-bold';
+        } else if (hoveredNode.type === 'shop_weapon') {
+          typeLabel = '⚔️ ร้านอาวุธและชุดเกราะ';
+          badgeColor = 'text-orange-400 font-bold';
+        } else if (hoveredNode.type === 'shop_item') {
+          typeLabel = '🧪 ร้านยาวิเศษและ Multi-Spinner';
+          badgeColor = 'text-emerald-400 font-bold';
+        } else if (hoveredNode.type === 'shop_magic') {
+          typeLabel = '🔮 ร้านเวทมนตร์และคัมภีร์สนาม';
+          badgeColor = 'text-purple-400 font-bold';
+        } else if (hoveredNode.type === 'church') {
+          typeLabel = '✨ วิหารศักดิ์สิทธิ์ (ฟื้นฟู HP/MP และลบล้างคำสาป)';
+          badgeColor = 'text-sky-300 font-bold';
+        } else if (hoveredNode.type === 'tavern') {
+          typeLabel = '🍺 โรงเตี๊ยมคนพเนจร (จ้างทหารรับจ้าง/ฟังข่าว)';
+          badgeColor = 'text-yellow-400 font-bold';
+        } else if (hoveredNode.type === 'guild') {
+          typeLabel = '📜 กิลด์นักผจญภัย (รับเควสต์ชิงเงินรางวัล)';
+          badgeColor = 'text-blue-400 font-bold';
+        } else if (hoveredNode.type === 'boss') {
+          typeLabel = '💀 แท่นบูชาบอสใหญ่ประจำอาณาจักร!';
+          badgeColor = 'text-rose-500 font-bold';
+        } else if (hoveredNode.type === 'dark_gate') {
+          typeLabel = '😈 ประตูแห่งความมืด (ทำสัญญา Rico กลายร่างเป็น Darkling)';
+          badgeColor = 'text-purple-500 font-bold';
+        } else if (hoveredNode.type === 'blue') {
+          typeLabel = '🪙 ช่องโชคดี (รับเหรียญทองฟรี)';
+          badgeColor = 'text-cyan-300';
+        } else if (hoveredNode.type === 'red') {
+          typeLabel = '💀 ช่องอันตราย (กับดักหนามและปีศาจร้าย)';
+          badgeColor = 'text-rose-400';
+        }
+
+        tooltip.innerHTML = `
+          <div class="font-bold text-amber-200">${hoveredNode.name}</div>
+          <div class="text-[10px] ${badgeColor} mt-0.5">${typeLabel}</div>
+          <div class="text-[9px] text-slate-400 mt-1">ไบโอม: ${hoveredNode.biome} • อาณาจักร: ${hoveredNode.realmId}</div>
+          <div class="text-[8px] text-cyan-400 mt-1 italic">🖱️ คลิกเพื่อหมุนกล้องไปดูจุดนี้บนแผนที่</div>
+        `;
+        tooltip.style.left = `${e.clientX + 14}px`;
+        tooltip.style.top = `${e.clientY + 14}px`;
+        tooltip.classList.remove('hidden');
+        canvas.style.cursor = 'pointer';
+      } else if (tooltip) {
+        tooltip.classList.add('hidden');
+        canvas.style.cursor = 'default';
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (tooltip) tooltip.classList.add('hidden');
+    });
+
+    // Click on World Map to Center Camera
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      const clickedPlayer = this.findMapPlayerAtPoint(mx, my);
+      if (clickedPlayer) {
+        audio.click();
+        if (tooltip) tooltip.classList.add('hidden');
+        document.getElementById('worldMapModal')?.classList.add('hidden');
+        this.renderer.centerCameraOn(clickedPlayer.gridX, clickedPlayer.gridY, clickedPlayer.gridZ);
+        this.game.addLog(`🗺️ ย้ายมุมมองกล้องไปยัง ${clickedPlayer.displayName}`);
+        return;
+      }
+
+      const clickedNode = this.findMapNodeAtPoint(mx, my);
+      if (clickedNode) {
+        audio.click();
+        if (tooltip) tooltip.classList.add('hidden');
+        document.getElementById('worldMapModal')?.classList.add('hidden');
+        this.renderer.centerCameraOn(clickedNode.gx, clickedNode.gy, clickedNode.gz);
+        this.game.addLog(`🗺️ ย้ายมุมมองกล้องไปยัง ${clickedNode.name}`);
+      }
+    });
+  }
+
+  private findMapNodeAtPoint(mx: number, my: number): BoardNode | undefined {
+    const { minGx, minGy, scale, offsetX, offsetY } = this.mapTransform;
+    let closestNode: BoardNode | undefined;
+    let minDist = 16;
+
+    for (const node of this.game.allNodes) {
+      const nx = offsetX + (node.gx - minGx) * scale;
+      const ny = offsetY + (node.gy - minGy) * scale;
+      const dist = Math.hypot(mx - nx, my - ny);
+      if (dist < minDist) {
+        minDist = dist;
+        closestNode = node;
+      }
+    }
+    return closestNode;
+  }
+
+  private findMapPlayerAtPoint(mx: number, my: number): Player | undefined {
+    const { minGx, minGy, scale, offsetX, offsetY } = this.mapTransform;
+    let closestPlayer: Player | undefined;
+    let minDist = 18;
+
+    for (const pl of this.game.players) {
+      const px = offsetX + (pl.gridX - minGx) * scale;
+      const py = offsetY + (pl.gridY - minGy) * scale;
+      const dist = Math.hypot(mx - px, my - py);
+      if (dist < minDist) {
+        minDist = dist;
+        closestPlayer = pl;
+      }
+    }
+    return closestPlayer;
   }
 
   private renderChronicleLog() {

@@ -1,4 +1,5 @@
 import { GameState } from '../game/GameState';
+import { Player } from '../game/Player';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 
@@ -8,6 +9,7 @@ export class HUD {
   private minimapCtx: CanvasRenderingContext2D;
   private avatarCanvas: HTMLCanvasElement;
   private avatarCtx: CanvasRenderingContext2D;
+  public onInspectPlayerCallback?: (player: Player) => void;
 
   constructor(game: GameState) {
     this.game = game;
@@ -15,6 +17,16 @@ export class HUD {
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
     this.avatarCanvas = document.getElementById('hudAvatarCanvas') as HTMLCanvasElement;
     this.avatarCtx = this.avatarCanvas.getContext('2d')!;
+
+    // Make active player avatar wrapper clickable to inspect oneself
+    const avatarWrapper = document.getElementById('hudPlayerAvatarWrapper');
+    if (avatarWrapper) {
+      avatarWrapper.addEventListener('click', () => {
+        if (this.onInspectPlayerCallback && this.game.activePlayer) {
+          this.onInspectPlayerCallback(this.game.activePlayer);
+        }
+      });
+    }
 
     // Make time of day badge interactive for instant testing and cycling
     const timeBadge = document.getElementById('hudTimeOfDayBadge');
@@ -103,6 +115,31 @@ export class HUD {
       }
     }
 
+    // Update Roster Inspect Buttons
+    const rosterContainer = document.getElementById('hudRosterButtonsContainer');
+    if (rosterContainer) {
+      rosterContainer.innerHTML = '';
+      this.game.players.forEach(pl => {
+        const isCurrent = pl.id === p.id;
+        const btn = document.createElement('button');
+        btn.className = `pixel-btn px-2 py-1 text-[10px] font-bold flex items-center gap-1 transition-transform hover:scale-105 ${
+          isCurrent ? 'pixel-btn-gold text-slate-950 ring-1 ring-amber-300' : 'text-slate-200 hover:text-white'
+        }`;
+        btn.title = `คลิกเพื่อส่องสเตตัสของ ${pl.displayName} (${isCurrent ? 'คุณ' : 'คู่ต่อสู้'})`;
+        btn.innerHTML = `
+          <span>${pl.avatar}</span>
+          <span class="truncate max-w-[65px]">${pl.displayName}</span>
+        `;
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          if (this.onInspectPlayerCallback) {
+            this.onInspectPlayerCallback(pl);
+          }
+        });
+        rosterContainer.appendChild(btn);
+      });
+    }
+
     // Render Avatar
     this.renderAvatar();
 
@@ -122,7 +159,8 @@ export class HUD {
       0,
       p.equipment,
       p.isDarkling,
-      p.prank
+      p.prank,
+      p.skinVariant
     );
     this.avatarCtx.drawImage(sprite, -16, -16, 80, 80);
   }

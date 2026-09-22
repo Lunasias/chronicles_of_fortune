@@ -94,6 +94,11 @@ export class CombatVFXEngine {
   public activeCutscene: SkillCutscene | null = null;
   public cutsceneDimAlpha = 0;
 
+  // Anime Action Speed Lines
+  public speedLinesAlpha = 0;
+  public speedLinesColor = '#ffffff';
+  public speedLinesTimer = 0;
+
   constructor() {}
 
   triggerHitstop(frames = 4) {
@@ -102,6 +107,12 @@ export class CombatVFXEngine {
 
   triggerScreenShake(intensity = 14) {
     this.screenShakeAmount = intensity;
+  }
+
+  triggerSpeedLines(color = '#ffffff', durationFrames = 18) {
+    this.speedLinesColor = color;
+    this.speedLinesAlpha = 1.0;
+    this.speedLinesTimer = durationFrames;
   }
 
   spawnFloatingCombatText(
@@ -613,7 +624,15 @@ export class CombatVFXEngine {
     this.heroStaggerX *= 0.82;
     this.heroFlashAlpha *= 0.88;
 
-    // 4. Update Cutscene
+    // 4. Update Speed Lines
+    if (this.speedLinesTimer > 0) {
+      this.speedLinesTimer--;
+      this.speedLinesAlpha = this.speedLinesTimer / 18;
+    } else {
+      this.speedLinesAlpha = 0;
+    }
+
+    // 5. Update Cutscene
     if (this.activeCutscene) {
       this.activeCutscene.elapsed++;
       this.cutsceneDimAlpha = Math.sin((this.activeCutscene.elapsed / this.activeCutscene.totalDuration) * Math.PI) * 0.75;
@@ -808,6 +827,30 @@ export class CombatVFXEngine {
       ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
     });
+
+    // 6. Action Speed Lines (Anime Dynamic Slash Overlay)
+    this.renderSpeedLines(ctx, arenaWidth, arenaHeight);
+  }
+
+  private renderSpeedLines(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    if (this.speedLinesAlpha <= 0.01) return;
+    ctx.save();
+    ctx.strokeStyle = this.speedLinesColor;
+    ctx.globalAlpha = Math.min(1.0, this.speedLinesAlpha * 0.85);
+    ctx.lineWidth = 2.2;
+    const scx = w * 0.5;
+    const scy = h * 0.5;
+    const lineCount = 32;
+    for (let i = 0; i < lineCount; i++) {
+      const angle = (i / lineCount) * Math.PI * 2 + Math.sin(i * 99) * 0.04;
+      const innerR = Math.min(w, h) * 0.32 + (i % 4) * 18;
+      const outerR = Math.max(w, h) * 0.82;
+      ctx.beginPath();
+      ctx.moveTo(scx + Math.cos(angle) * innerR, scy + Math.sin(angle) * innerR);
+      ctx.lineTo(scx + Math.cos(angle) * outerR, scy + Math.sin(angle) * outerR);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 }
 

@@ -61,6 +61,9 @@ export class TerrariaIsometricBuildingRenderer {
       case 'vault':
         this.renderIsometricTreasureVault(ctx, cx, cy);
         break;
+      case 'mystery_chest':
+        this.renderIsometricWonderChest(ctx, cx, cy);
+        break;
       default:
         this.renderIsometricCastleCitadel(ctx, cx, cy, ownerColor);
         break;
@@ -472,53 +475,6 @@ export class TerrariaIsometricBuildingRenderer {
   }
 
   // -------------------------------------------------------------------------
-  // 7. ISOMETRIC TREASURE VAULT (Stepped Sandstone Pyramid Shrine)
-  // -------------------------------------------------------------------------
-  private renderIsometricTreasureVault(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number
-  ) {
-    // 1. Ground Shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + 18, 38, 16, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 2. Stepped Isometric Sandstone Tiers (Terraria Desert Pyramid)
-    // Tier 1 (Base)
-    this.drawIsoWallLeft(ctx, cx, cy + 16, 32, 10, '#78350f', '#451a03', '#92400e');
-    this.drawIsoWallRight(ctx, cx, cy + 16, 32, 10, '#b45309', '#78350f', '#d97706');
-    this.drawIsoTopDiamond(ctx, cx, cy + 6, 32, 16, '#d97706', '#f59e0b');
-
-    // Tier 2 (Mid)
-    this.drawIsoWallLeft(ctx, cx, cy + 4, 24, 10, '#78350f', '#451a03', '#92400e');
-    this.drawIsoWallRight(ctx, cx, cy + 4, 24, 10, '#b45309', '#78350f', '#d97706');
-    this.drawIsoTopDiamond(ctx, cx, cy - 6, 24, 12, '#d97706', '#f59e0b');
-
-    // Tier 3 (Shrine Apex)
-    this.drawIsoWallLeft(ctx, cx, cy - 8, 16, 12, '#78350f', '#451a03', '#92400e');
-    this.drawIsoWallRight(ctx, cx, cy - 8, 16, 12, '#b45309', '#78350f', '#d97706');
-    this.drawIsoTopDiamond(ctx, cx, cy - 20, 16, 8, '#f59e0b', '#fde047');
-
-    // 3. Gilded Gold Ingot / Golden Scarab on Apex
-    ctx.fillStyle = '#fde047';
-    ctx.shadowColor = '#fbbf24';
-    ctx.shadowBlur = 10;
-    this.drawPixelDiamond(ctx, cx, cy - 26, 10, 10);
-    ctx.shadowBlur = 0;
-
-    // 4. Golden Vault Doorway (SE Face)
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(cx + 6, cy + 6, 8, 12);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(cx + 7, cy + 7, 6, 10);
-    // Keyhole
-    ctx.fillStyle = '#451a03';
-    ctx.fillRect(cx + 9, cy + 11, 2, 3);
-  }
-
-  // -------------------------------------------------------------------------
   // 8. ISOMETRIC TAVERN & INN (Cozy Wooden Lodge with Smoking Chimney & Beer Sign)
   // -------------------------------------------------------------------------
   private renderIsometricTavernInn(
@@ -735,6 +691,126 @@ export class TerrariaIsometricBuildingRenderer {
     ctx.beginPath();
     ctx.ellipse(cx, cy - 30, 14, 6, -0.3, 0, Math.PI * 2);
     ctx.stroke();
+  }
+
+  // -------------------------------------------------------------------------
+  // 12. ISOMETRIC TREASURE VAULT (Reinforced Vault with Heavy Steel Dial)
+  // -------------------------------------------------------------------------
+  private renderIsometricTreasureVault(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Heavy shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 16, 32, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Vault Stone Base
+    this.drawIsoWallLeft(ctx, cx, cy + 12, 26, 24, '#1e293b', '#0f172a', '#475569');
+    this.drawIsoWallRight(ctx, cx, cy + 12, 26, 24, '#334155', '#1e293b', '#64748b');
+    this.drawIsoTopDiamond(ctx, cx, cy - 12, 26, 26, '#475569', '#64748b');
+
+    // 3. Heavy Circular Vault Door (SE face)
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.ellipse(cx + 8, cy + 2, 8, 12, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Vault Wheel
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx + 8, cy + 2, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // -------------------------------------------------------------------------
+  // 13. ISOMETRIC WONDER CHEST (กล่องสุ่มมหัศจรรย์ Dokapon Wonder Mystery Chest)
+  // Radiant rainbow aura, floating golden chest, star sparkles & light beam
+  // -------------------------------------------------------------------------
+  private renderIsometricWonderChest(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number
+  ) {
+    // 1. Radiant Sacred Ground Halo
+    ctx.save();
+    const haloGrad = ctx.createRadialGradient(cx, cy + 12, 4, cx, cy + 12, 34);
+    haloGrad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+    haloGrad.addColorStop(0.5, 'rgba(236, 72, 153, 0.25)');
+    haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = haloGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 36, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Ascending Divine Light Pillar
+    const beamGrad = ctx.createLinearGradient(cx, cy + 12, cx, cy - 48);
+    beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+    beamGrad.addColorStop(0.6, 'rgba(244, 114, 182, 0.20)');
+    beamGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctx.fillStyle = beamGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, cy + 8);
+    ctx.lineTo(cx + 16, cy + 8);
+    ctx.lineTo(cx + 22, cy - 48);
+    ctx.lineTo(cx - 22, cy - 48);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Magic Floating Star Motes
+    const sparkles = [
+      { x: cx - 18, y: cy - 14, r: 2.5, c: '#fde047' },
+      { x: cx + 16, y: cy - 22, r: 3.0, c: '#f472b6' },
+      { x: cx - 8, y: cy - 32, r: 2.0, c: '#38bdf8' },
+      { x: cx + 12, y: cy - 6, r: 2.2, c: '#4ade80' }
+    ];
+    sparkles.forEach(s => {
+      ctx.fillStyle = s.c;
+      ctx.shadowColor = s.c;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+
+    // 4. Floating Isometric Golden Chest Body
+    // Chest base box
+    const chestBaseY = cy + 6;
+    this.drawIsoWallLeft(ctx, cx, chestBaseY, 20, 14, '#b45309', '#78350f', '#d97706');
+    this.drawIsoWallRight(ctx, cx, chestBaseY, 20, 14, '#d97706', '#92400e', '#f59e0b');
+    this.drawIsoTopDiamond(ctx, cx, chestBaseY - 14, 20, 14, '#f59e0b', '#fbbf24');
+
+    // Golden Trim Bands & Rivets
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx - 9, chestBaseY - 10, 3, 10);
+    ctx.fillRect(cx + 6, chestBaseY - 10, 3, 10);
+    ctx.fillRect(cx - 1, chestBaseY - 8, 3, 10);
+
+    // Domed Chest Lid (Arched Top)
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.ellipse(cx, chestBaseY - 16, 11, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Radiant Royal Gemstone Lock (Glowing Ruby)
+    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = '#f43f5e';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(cx, chestBaseY - 7, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
   }
 
   // =========================================================================
