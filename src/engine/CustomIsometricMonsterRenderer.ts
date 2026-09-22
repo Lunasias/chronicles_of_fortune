@@ -142,15 +142,16 @@ export class CustomIsometricMonsterRenderer {
     cy: number,
     skinColor: string,
     eyeColor: string,
-    hasFangs = false
+    hasFangs = false,
+    hairColor = '#a855f7'
   ) {
     // 1. Soft Contoured Anime Jawline & Petite Chin
     ctx.fillStyle = skinColor;
     ctx.beginPath();
     ctx.moveTo(cx - 7, cy - 6);
     ctx.lineTo(cx + 7, cy - 6);
-    ctx.quadraticCurveTo(cx + 7, cy + 3, cx + 1, cy + 7);
-    ctx.quadraticCurveTo(cx - 5, cy + 3, cx - 7, cy - 6);
+    ctx.quadraticCurveTo(cx + 7, cy + 3.5, cx + 1, cy + 7.5);
+    ctx.quadraticCurveTo(cx - 5, cy + 3.5, cx - 7, cy - 6);
     ctx.closePath();
     ctx.fill();
 
@@ -159,14 +160,14 @@ export class CustomIsometricMonsterRenderer {
     ctx.beginPath();
     ctx.moveTo(cx - 5, cy + 4);
     ctx.lineTo(cx + 5, cy + 4);
-    ctx.lineTo(cx, cy + 7);
+    ctx.lineTo(cx, cy + 7.5);
     ctx.closePath();
     ctx.fill();
 
     // 2. Big Expressive Anime Eyes with Lashes & Catchlights
     const leftEyeX = cx - 3;
     const rightEyeX = cx + 3;
-    const eyeY = cy - 1;
+    const eyeY = cy - 0.8;
 
     // Dark top eyelashes & outer wing
     ctx.fillStyle = '#0f172a';
@@ -209,6 +210,203 @@ export class CustomIsometricMonsterRenderer {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(cx + 0.8, cy + 4.2, 1, 1.4);
     }
+
+    // 6. Front Framing Locks & Bangs on forehead
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 6);
+    ctx.lineTo(cx + 6, cy - 6);
+    ctx.lineTo(cx + 3, cy - 2);
+    ctx.lineTo(cx, cy - 3.5);
+    ctx.lineTo(cx - 4, cy - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Side locks
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 5);
+    ctx.lineTo(cx - 8, cy + 5);
+    ctx.lineTo(cx - 5, cy + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy - 5);
+    ctx.lineTo(cx + 8, cy + 5);
+    ctx.lineTo(cx + 5, cy + 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /**
+   * Universal Helper to draw long flowing feminine hair for monster girls (Drawn BEHIND body!)
+   */
+  private drawMonsterFeminineHair(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    hairColor: string,
+    hairShadow: string,
+    hairHighlight: string,
+    frame: number,
+    style: 'long' | 'wavy' | 'twintails' | 'wild' = 'long'
+  ) {
+    const headY = cy - 14;
+    const hairSway = Math.sin((frame / 6) * Math.PI * 2) * 2.8;
+
+    if (style === 'twintails') {
+      // Twin high-ponytails cascading down each side past the hips
+      // Left Ponytail
+      ctx.fillStyle = hairShadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, headY);
+      ctx.quadraticCurveTo(cx - 16 + hairSway, headY + 10, cx - 14 + hairSway * 1.3, cy + 22);
+      ctx.lineTo(cx - 7 + hairSway * 1.3, cy + 22);
+      ctx.quadraticCurveTo(cx - 9 + hairSway, headY + 12, cx - 4, headY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, headY);
+      ctx.quadraticCurveTo(cx - 14 + hairSway, headY + 8, cx - 12 + hairSway * 1.2, cy + 20);
+      ctx.lineTo(cx - 8 + hairSway * 1.2, cy + 20);
+      ctx.quadraticCurveTo(cx - 9 + hairSway, headY + 10, cx - 4, headY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right Ponytail
+      ctx.fillStyle = hairShadow;
+      ctx.beginPath();
+      ctx.moveTo(cx + 4, headY + 2);
+      ctx.quadraticCurveTo(cx + 9 - hairSway, headY + 12, cx + 7 - hairSway * 1.3, cy + 22);
+      ctx.lineTo(cx + 14 - hairSway * 1.3, cy + 22);
+      ctx.quadraticCurveTo(cx + 16 - hairSway, headY + 10, cx + 7, headY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.moveTo(cx + 4, headY + 2);
+      ctx.quadraticCurveTo(cx + 9 - hairSway, headY + 10, cx + 8 - hairSway * 1.2, cy + 20);
+      ctx.lineTo(cx + 12 - hairSway * 1.2, cy + 20);
+      ctx.quadraticCurveTo(cx + 14 - hairSway, headY + 8, cx + 6, headY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Ponytail hair ties / scrunchies
+      ctx.fillStyle = hairHighlight;
+      ctx.beginPath();
+      ctx.arc(cx - 9, headY + 2, 3, 0, Math.PI * 2);
+      ctx.arc(cx + 9, headY + 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (style === 'wild') {
+      // Voluminous, spiky, wild cascading locks
+      ctx.fillStyle = hairShadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 9, headY);
+      ctx.quadraticCurveTo(cx - 18 + hairSway, headY + 10, cx - 15 + hairSway * 1.4, cy + 22);
+      ctx.lineTo(cx - 10 + hairSway * 1.4, cy + 24);
+      ctx.lineTo(cx - 6 + hairSway * 1.2, cy + 20);
+      ctx.lineTo(cx + 2 + hairSway * 1.2, cy + 23);
+      ctx.lineTo(cx + 8 + hairSway * 1.2, cy + 19);
+      ctx.lineTo(cx + 14 - hairSway * 1.4, cy + 23);
+      ctx.quadraticCurveTo(cx + 18 - hairSway, headY + 10, cx + 9, headY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, headY + 2);
+      ctx.quadraticCurveTo(cx - 14 + hairSway, headY + 9, cx - 11 + hairSway * 1.2, cy + 19);
+      ctx.lineTo(cx + 11 - hairSway * 1.2, cy + 19);
+      ctx.quadraticCurveTo(cx + 14 - hairSway, headY + 9, cx + 7, headY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Flare highlights
+      ctx.strokeStyle = hairHighlight;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, headY);
+      ctx.quadraticCurveTo(cx - 9 + hairSway, headY + 9, cx - 7 + hairSway * 1.2, cy + 17);
+      ctx.stroke();
+    } else {
+      // 'long' or 'wavy': Luscious feminine hair curtain cascading down past waist to hips
+      const waveWidth = style === 'wavy' ? 14 : 11;
+      ctx.fillStyle = hairShadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, headY + 2);
+      ctx.quadraticCurveTo(cx - waveWidth - 2 + hairSway, headY + 11, cx - waveWidth + hairSway * 1.3, cy + 21);
+      ctx.lineTo(cx + waveWidth - 2 + hairSway * 1.3, cy + 21);
+      ctx.quadraticCurveTo(cx + waveWidth + 2 + hairSway, headY + 11, cx + 7, headY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, headY + 2);
+      ctx.quadraticCurveTo(cx - waveWidth + 2 + hairSway, headY + 10, cx - waveWidth + 4 + hairSway * 1.2, cy + 19);
+      ctx.lineTo(cx + waveWidth - 4 + hairSway * 1.2, cy + 19);
+      ctx.quadraticCurveTo(cx + waveWidth - 2 + hairSway, headY + 10, cx + 6, headY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Shimmering highlights
+      ctx.strokeStyle = hairHighlight;
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 3, headY);
+      ctx.quadraticCurveTo(cx - 8 + hairSway, headY + 10, cx - 6 + hairSway * 1.3, cy + 16);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + 2, headY + 1);
+      ctx.quadraticCurveTo(cx + 6 + hairSway, headY + 10, cx + 5 + hairSway * 1.3, cy + 15);
+      ctx.stroke();
+    }
+  }
+
+  /**
+   * Helper to draw slender feminine legs and boots for monster girls
+   */
+  private drawFeminineMonsterLegs(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    skinColor = '#ffedd5',
+    bootColor = '#1e1b4b',
+    bootTrim = '#facc15'
+  ) {
+    // Thighs
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(cx - 5.5, cy + 12, 4.2, 8);
+    ctx.fillRect(cx + 1.3, cy + 12, 4.2, 8);
+
+    // Fitted boots / greaves
+    ctx.fillStyle = bootColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5.5, cy + 18);
+    ctx.lineTo(cx - 1.5, cy + 18);
+    ctx.lineTo(cx - 1.0, cy + 32);
+    ctx.lineTo(cx + 1.0, cy + 34); // toe
+    ctx.lineTo(cx - 6.0, cy + 34); // heel
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx + 1.5, cy + 18);
+    ctx.lineTo(cx + 5.5, cy + 18);
+    ctx.lineTo(cx + 6.0, cy + 32);
+    ctx.lineTo(cx + 8.0, cy + 34); // toe
+    ctx.lineTo(cx + 1.0, cy + 34); // heel
+    ctx.closePath();
+    ctx.fill();
+
+    // Boot trim
+    ctx.fillStyle = bootTrim;
+    ctx.fillRect(cx - 5.5, cy + 18, 4, 1.5);
+    ctx.fillRect(cx + 1.5, cy + 18, 4, 1.5);
   }
 
   /**
@@ -297,7 +495,7 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string
+    _animState: string
   ) {
     const skinTone = '#86efac';
     const skinShadow = '#22c55e';
@@ -305,23 +503,21 @@ export class CustomIsometricMonsterRenderer {
 
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
 
-    // Slender legs & leather boots
-    const legWiggle = animState === 'idle' ? Math.sin((frame / 8) * Math.PI * 2) * 1.5 : 0;
-    ctx.fillStyle = skinTone;
-    ctx.fillRect(cx - 5 + legWiggle, cy + 13, 4, 8);
-    ctx.fillRect(cx + 2 - legWiggle, cy + 13, 4, 8);
+    // 1. Long Emerald Twintails (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, '#14532d', '#4ade80', frame, 'twintails');
 
-    // Short leather boots
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(cx - 6 + legWiggle, cy + 21, 5, 13);
-    ctx.fillRect(cx + 1 - legWiggle, cy + 21, 5, 13);
+    // 2. Slender feminine legs & leather boots
+    this.drawFeminineMonsterLegs(ctx, cx, cy, skinTone, '#78350f', '#facc15');
 
-    // Hourglass corset & ragged mini skirt
+    // 3. Hourglass tribal leather bikini bra & ragged mini skirt
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#78350f',
       highlight: '#b45309',
       shadow: '#451a03',
-      trim: '#facc15'
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone,
+      skinShadow
     });
 
     // Ragged hem skirt
@@ -347,15 +543,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Head & Face
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, '#f59e0b', true);
-
-    // Messy green twintails
-    const hairWave = Math.sin(frame * 0.8) * 2;
-    ctx.fillStyle = hairColor;
-    ctx.beginPath();
-    ctx.arc(cx - 10, headY + 2 + hairWave, 4, 0, Math.PI * 2);
-    ctx.arc(cx + 10, headY + 2 - hairWave, 4, 0, Math.PI * 2);
-    ctx.fill();
+    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, '#f59e0b', true, hairColor);
 
     // Scimitar in hand
     ctx.save();
@@ -405,6 +593,9 @@ export class CustomIsometricMonsterRenderer {
 
     this.drawIsoShadow(ctx, cx, cy + 34, 20, 9);
 
+    // 1. Translucent Liquid Hair Cascading behind body
+    this.drawMonsterFeminineHair(ctx, cx, cy, mainColor, darkColor, lightColor, frame, 'wavy');
+
     // Gelatinous translucent lower body puddle/skirt with dynamic ripples
     const jiggle = Math.sin((frame / 6) * Math.PI * 2) * 3;
     ctx.fillStyle = darkColor;
@@ -421,11 +612,14 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Slime Maiden Voluptuous Torso
+    // Slime Maiden Voluptuous Gelatinous Bikini Torso
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: mainColor,
       highlight: lightColor,
-      shadow: darkColor
+      shadow: darkColor,
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone: lightColor
     });
 
     // Glowing Mana Core inside chest
@@ -440,7 +634,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Slime Droplet Hair & cute antenna
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, lightColor, eyeColor);
+    this.drawMonsterGirlFace(ctx, cx, headY, lightColor, eyeColor, false, lightColor);
 
     // Glossy Highlight on head
     ctx.fillStyle = '#ffffff';
@@ -489,17 +683,26 @@ export class CustomIsometricMonsterRenderer {
     const dressColor = isPharaoh ? '#d97706' : '#1e1b4b';
     const trimColor = isPharaoh ? '#facc15' : '#f8fafc';
     const boneColor = '#e2e8f0';
+    const hairColor = isPharaoh ? '#18181b' : '#cbd5e1';
+    const hairShadow = isPharaoh ? '#09090b' : '#64748b';
+    const hairHighlight = isPharaoh ? '#facc15' : '#ffffff';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
 
-    // Maid dress skirt
+    // 1. Long Silky Maid / Priestess Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, hairShadow, hairHighlight, frame, 'long');
+
+    // 2. Slender feminine legs & high-heeled boots
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#f8fafc', dressColor, trimColor);
+
+    // 3. Maid apron & corset bikini torso
     const skirtWave = animState === 'idle' ? Math.sin((frame / 8) * Math.PI * 2) * 1.5 : 0;
     ctx.fillStyle = dressColor;
     ctx.beginPath();
     ctx.moveTo(cx - 7, cy + 8);
     ctx.lineTo(cx + 7, cy + 8);
-    ctx.lineTo(cx + 13 + skirtWave, cy + 32);
-    ctx.lineTo(cx - 13 + skirtWave, cy + 32);
+    ctx.lineTo(cx + 12 + skirtWave, cy + 24);
+    ctx.lineTo(cx - 12 + skirtWave, cy + 24);
     ctx.closePath();
     ctx.fill();
 
@@ -508,8 +711,8 @@ export class CustomIsometricMonsterRenderer {
     ctx.beginPath();
     ctx.moveTo(cx - 5, cy + 9);
     ctx.lineTo(cx + 5, cy + 9);
-    ctx.lineTo(cx + 8 + skirtWave, cy + 28);
-    ctx.lineTo(cx - 8 + skirtWave, cy + 28);
+    ctx.lineTo(cx + 7 + skirtWave, cy + 22);
+    ctx.lineTo(cx - 7 + skirtWave, cy + 22);
     ctx.closePath();
     ctx.fill();
 
@@ -518,7 +721,10 @@ export class CustomIsometricMonsterRenderer {
       base: dressColor,
       highlight: isPharaoh ? '#fbbf24' : '#312e81',
       shadow: '#0f172a',
-      trim: trimColor
+      trim: trimColor,
+      exposedMidriff: true,
+      skinTone: '#f8fafc',
+      skinShadow: '#cbd5e1'
     });
 
     // Bone/Rapier weapon
@@ -535,7 +741,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Pale head & gothic maid headdress
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, boneColor, isPharaoh ? '#eab308' : '#38bdf8');
+    this.drawMonsterGirlFace(ctx, cx, headY, boneColor, isPharaoh ? '#eab308' : '#38bdf8', false, hairColor);
 
     // Gothic lace maid tiara / Pharaoh headdress
     ctx.fillStyle = trimColor;
@@ -553,9 +759,12 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string
+    _animState: string
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
+
+    // 1. Long Flowing Midnight Violet Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#4c1d95', '#2e1065', '#a855f7', frame, 'wild');
 
     // Flowing dark cape
     const capeFlutter = Math.sin((frame / 6) * Math.PI * 2) * 3;
@@ -568,18 +777,17 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Greaves & Sabatons
-    const legWiggle = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(cx - 6 + legWiggle, cy + 18, 4.5, 15);
-    ctx.fillRect(cx + 1 - legWiggle, cy + 18, 4.5, 15);
+    // 2. Slender armored greaves & heels
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', '#0f172a', '#c084fc');
 
-    // Contoured dark hourglass cuirass
+    // 3. Contoured dark hourglass plate bikini cuirass
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#1e1b4b',
       highlight: '#4338ca',
       shadow: '#0f172a',
-      trim: '#c084fc'
+      trim: '#c084fc',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Dark broadsword
@@ -594,7 +802,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Head, Winged Horns & Glowing Violet Gaze
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#f1f5f9', '#a855f7');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#a855f7', false, '#4c1d95');
 
     // Winged Knight Visor / Horns
     ctx.fillStyle = '#0f172a';
@@ -622,30 +830,30 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string,
+    _animState: string,
     mName: string
   ) {
     const isPirate = mName.includes('pirate') || mName.includes('corsair');
     const coatColor = isPirate ? '#1e3a8a' : '#78350f';
     const skinTone = '#fed7aa';
+    const hairColor = '#b91c1c';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 17, 8);
 
-    // Thigh-high boots
-    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = skinTone;
-    ctx.fillRect(cx - 5 + legStep, cy + 13, 4, 6);
-    ctx.fillRect(cx + 1 - legStep, cy + 13, 4, 6);
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(cx - 5 + legStep, cy + 19, 4.5, 14);
-    ctx.fillRect(cx + 1 - legStep, cy + 19, 4.5, 14);
+    // 1. Long Wavy Auburn Pirate Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, '#7f1d1d', '#f87171', frame, 'wavy');
 
-    // Corset blouse
+    // 2. Slender buccaneer boots
+    this.drawFeminineMonsterLegs(ctx, cx, cy, skinTone, '#1e293b', '#ca8a04');
+
+    // 3. Buccaneer leather buckle bikini bra & bare midriff
     this.drawMonsterHourglassBody(ctx, cx, cy, {
-      base: '#ffffff',
-      highlight: '#ffffff',
-      shadow: '#cbd5e1',
-      trim: '#ca8a04'
+      base: '#78350f',
+      highlight: '#b45309',
+      shadow: '#451a03',
+      trim: '#ca8a04',
+      exposedMidriff: true,
+      skinTone
     });
 
     // Pirate Coat over shoulders
@@ -666,7 +874,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Head, Pirate Hat / Bandana
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, '#0ea5e9');
+    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, '#0ea5e9', false, hairColor);
 
     // Pirate Bicorne Hat with Skull/Feather
     ctx.fillStyle = '#0f172a';
@@ -690,15 +898,21 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string,
+    _animState: string,
     mName: string
   ) {
     const isPanther = mName.includes('panther');
     const furColor = isPanther ? '#1e293b' : '#78350f';
     const furLight = isPanther ? '#475569' : '#d97706';
     const skinTone = '#ffedd5';
+    const hairColor = isPanther ? '#1e293b' : '#d97706';
+    const hairShadow = isPanther ? '#0f172a' : '#78350f';
+    const hairHighlight = isPanther ? '#475569' : '#fde047';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
+
+    // 1. Long Wild Beast Mane / Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, hairShadow, hairHighlight, frame, 'wild');
 
     // Fluffy tail wagging behind
     const tailWag = Math.sin((frame / 6) * Math.PI * 2) * 5;
@@ -710,21 +924,17 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Slender athletic legs & soft paw boots
-    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = skinTone;
-    ctx.fillRect(cx - 5 + legStep, cy + 13, 4, 7);
-    ctx.fillRect(cx + 1 - legStep, cy + 13, 4, 7);
-    ctx.fillStyle = furColor;
-    ctx.fillRect(cx - 5 + legStep, cy + 20, 4.5, 13);
-    ctx.fillRect(cx + 1 - legStep, cy + 20, 4.5, 13);
+    // 2. Slender athletic legs & soft paw boots
+    this.drawFeminineMonsterLegs(ctx, cx, cy, skinTone, furColor, '#facc15');
 
-    // Athletic bikini / leather bustier
+    // 3. Athletic fur-lined battle bikini
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: furColor,
       highlight: furLight,
       shadow: '#0f172a',
-      trim: '#facc15'
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone
     });
 
     // Fluffy Animal Ears on Head
@@ -751,7 +961,7 @@ export class CustomIsometricMonsterRenderer {
     ctx.fillRect(cx + 5, headY - 11, 2, 4);
 
     // Face & fangs
-    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, isPanther ? '#eab308' : '#38bdf8', true);
+    this.drawMonsterGirlFace(ctx, cx, headY, skinTone, isPanther ? '#eab308' : '#38bdf8', true, hairColor);
   }
 
   // =========================================================================
@@ -763,14 +973,20 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string,
+    _animState: string,
     mName: string
   ) {
     const isCrystal = mName.includes('crystal') || mName.includes('lithia') || mName.includes('colossus');
     const mainColor = isCrystal ? '#0284c7' : '#d97706';
     const lightColor = isCrystal ? '#38bdf8' : '#facc15';
+    const hairColor = isCrystal ? '#06b6d4' : '#fb7185';
+    const hairShadow = isCrystal ? '#0891b2' : '#be123c';
+    const hairHighlight = isCrystal ? '#67e8f9' : '#fecdd3';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 19, 8);
+
+    // 1. Long Clockwork Twintails (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, hairShadow, hairHighlight, frame, 'twintails');
 
     // Winding Key on back spinning
     const keyTurn = (frame / 8) * Math.PI * 2;
@@ -782,26 +998,23 @@ export class CustomIsometricMonsterRenderer {
     ctx.fillRect(-6, -1.5, 12, 3);
     ctx.restore();
 
-    // Porcelain Legs & Brass Joints
-    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(cx - 5 + legStep, cy + 13, 4, 12);
-    ctx.fillRect(cx + 1 - legStep, cy + 13, 4, 12);
-    ctx.fillStyle = mainColor;
-    ctx.fillRect(cx - 5 + legStep, cy + 25, 4.5, 8);
-    ctx.fillRect(cx + 1 - legStep, cy + 25, 4.5, 8);
+    // 2. Porcelain Legs & Brass Joints
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#f8fafc', mainColor, '#facc15');
 
-    // Hourglass Brass Corset
+    // 3. Hourglass Brass Steampunk Bikini Corset
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: mainColor,
       highlight: lightColor,
       shadow: '#78350f',
-      trim: '#ffffff'
+      trim: '#ffffff',
+      exposedMidriff: true,
+      skinTone: '#f8fafc',
+      skinShadow: '#cbd5e1'
     });
 
     // Porcelain Face & Headgear
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#f8fafc', lightColor);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#f8fafc', lightColor, false, hairColor);
 
     // Brass bonnet / crystals
     ctx.fillStyle = lightColor;
@@ -819,25 +1032,24 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string
+    _animState: string
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 20, 9);
 
-    // Fluffy fur boots
-    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = '#ffedd5';
-    ctx.fillRect(cx - 6 + legStep, cy + 13, 5, 8);
-    ctx.fillRect(cx + 1 - legStep, cy + 13, 5, 8);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(cx - 7 + legStep, cy + 21, 6.5, 12);
-    ctx.fillRect(cx + 0.5 - legStep, cy + 21, 6.5, 12);
+    // 1. Long Wavy Glacier-Blue Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#38bdf8', '#0284c7', '#e0f2fe', frame, 'wavy');
 
-    // Fur trimmed hourglass bikini
+    // 2. Slender feminine boots with snow trim
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', '#0284c7', '#ffffff');
+
+    // 3. Fur trimmed hourglass bikini bra & bare midriff
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#38bdf8',
       highlight: '#e0f2fe',
       shadow: '#0284c7',
-      trim: '#ffffff'
+      trim: '#ffffff',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Crystalline ice club in hand
@@ -850,12 +1062,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Head, Ice Blue Hair & Fluffy Horns
     const headY = cy - 14;
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(cx, headY, 8, 0, Math.PI * 2);
-    ctx.fill();
-
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#0284c7', true);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#0284c7', true, '#38bdf8');
 
     // Cute Ice Horns
     ctx.fillStyle = '#bae6fd';
@@ -872,14 +1079,20 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string,
+    _animState: string,
     mName: string
   ) {
     const isIce = mName.includes('frost') || mName.includes('glacia');
     const scaleColor = isIce ? '#0284c7' : '#dc2626';
     const scaleLight = isIce ? '#38bdf8' : '#f87171';
+    const hairColor = isIce ? '#0284c7' : '#ea580c';
+    const hairShadow = isIce ? '#0c4a6e' : '#9a3412';
+    const hairHighlight = isIce ? '#7dd3fc' : '#fdba74';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 19, 8);
+
+    // 1. Long Silky Dragon Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, hairShadow, hairHighlight, frame, 'long');
 
     // Scaled Tail waving
     const tailWave = Math.sin((frame / 6) * Math.PI * 2) * 5;
@@ -908,25 +1121,22 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Slender scaled legs
-    ctx.fillStyle = '#ffedd5';
-    ctx.fillRect(cx - 5, cy + 13, 4, 8);
-    ctx.fillRect(cx + 1, cy + 13, 4, 8);
-    ctx.fillStyle = scaleColor;
-    ctx.fillRect(cx - 5, cy + 21, 4.5, 12);
-    ctx.fillRect(cx + 1, cy + 21, 4.5, 12);
+    // 2. Slender scaled greaves
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', scaleColor, '#facc15');
 
-    // Draconic hourglass scale armor
+    // 3. Draconic hourglass scale bikini armor
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: scaleColor,
       highlight: scaleLight,
       shadow: '#450a0a',
-      trim: '#facc15'
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Head, Horns & Eyes
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', scaleLight, true);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', scaleLight, true, hairColor);
 
     // Swept-back Dragon Horns
     ctx.fillStyle = '#facc15';
@@ -959,8 +1169,14 @@ export class CustomIsometricMonsterRenderer {
   ) {
     const isDemon = mName.includes('demon') || mName.includes('lilith');
     const wingColor = isDemon ? '#581c87' : '#0284c7';
+    const hairColor = isDemon ? '#9333ea' : '#0284c7';
+    const hairShadow = isDemon ? '#581c87' : '#0c4a6e';
+    const hairHighlight = isDemon ? '#c084fc' : '#38bdf8';
 
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
+
+    // 1. Long Voluminous Wavy Hair (Drawn BEHIND body - NO BALDNESS!)
+    this.drawMonsterFeminineHair(ctx, cx, cy, hairColor, hairShadow, hairHighlight, frame, 'wavy');
 
     // Majestic Winged Arms fluttering
     const wingFlap = Math.sin((frame / 6) * Math.PI * 2) * 5;
@@ -981,25 +1197,30 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Taloned Legs
-    ctx.fillStyle = '#ffedd5';
-    ctx.fillRect(cx - 5, cy + 13, 4, 10);
-    ctx.fillRect(cx + 1, cy + 13, 4, 10);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(cx - 6, cy + 23, 5, 10);
-    ctx.fillRect(cx + 0.5, cy + 23, 5, 10);
+    // 2. Slender taloned high-heeled legs
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', wingColor, '#fbbf24');
 
-    // Sensual Hourglass Bodice
+    // 3. Sensual Hourglass Succubus / Siren Bikini Bodice
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: wingColor,
       highlight: isDemon ? '#a855f7' : '#38bdf8',
       shadow: '#0f172a',
-      trim: '#fbbf24'
+      trim: '#fbbf24',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
-    // Head, Flowing Hair & Tiara
+    // Head, Tiara & Anime Face
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', isDemon ? '#ef4444' : '#38bdf8');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', isDemon ? '#ef4444' : '#38bdf8', true, hairColor);
+
+    // Cute Demonic Tiara / Siren Pearl Crown
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx, headY - 6, 4, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = isDemon ? '#ef4444' : '#38bdf8';
+    ctx.fillRect(cx - 1, headY - 8, 2, 2);
   }
 
   // =========================================================================
@@ -1014,6 +1235,9 @@ export class CustomIsometricMonsterRenderer {
     _animState: string
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 22, 9);
+
+    // 1. Long Flowing Deep-Sea Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#0891b2', '#155e75', '#67e8f9', frame, 'wavy');
 
     // 4 Dynamic Curled Tentacles at Base
     const tentacleWave = Math.sin((frame / 6) * Math.PI * 2) * 4;
@@ -1032,17 +1256,25 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Oceanic Bikini & Hourglass Torso
+    // Oceanic Seashell Bikini & Hourglass Torso
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#06b6d4',
       highlight: '#67e8f9',
       shadow: '#0e7490',
-      trim: '#ffffff'
+      trim: '#ffffff',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Head, Turquoise Hair & Shell Tiara
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#06b6d4');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#06b6d4', false, '#0891b2');
+
+    // Shell Pearl Tiara
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx, headY - 6, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // =========================================================================
@@ -1058,6 +1290,9 @@ export class CustomIsometricMonsterRenderer {
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 20, 9);
 
+    // 1. Long Jet-Black Braided Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#18181b', '#09090b', '#facc15', frame, 'long');
+
     // Lioness Tail waving
     const tailWave = Math.sin((frame / 6) * Math.PI * 2) * 4;
     ctx.fillStyle = '#d97706';
@@ -1067,12 +1302,17 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Regal Egyptian Dress & Hourglass Torso
+    // 2. Slender golden sandals & legs
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#fed7aa', '#d97706', '#facc15');
+
+    // Regal Egyptian Bikini Dress & Hourglass Torso
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#ffffff',
       highlight: '#ffffff',
       shadow: '#cbd5e1',
-      trim: '#facc15'
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone: '#fed7aa'
     });
 
     // Pharaoh Nemes Headdress (Blue & Gold stripes)
@@ -1083,7 +1323,7 @@ export class CustomIsometricMonsterRenderer {
     ctx.fillRect(cx - 8, headY - 7, 16, 2);
     ctx.fillRect(cx - 8, headY - 3, 16, 2);
 
-    this.drawMonsterGirlFace(ctx, cx, headY, '#fed7aa', '#0ea5e9');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#fed7aa', '#0ea5e9', false, '#18181b');
   }
 
   // =========================================================================
@@ -1099,33 +1339,36 @@ export class CustomIsometricMonsterRenderer {
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
 
+    // 1. Long Wavy Emerald Vine Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#16a34a', '#14532d', '#86efac', frame, 'wavy');
+
+    // 2. Slender feminine legs with floral vine garters
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', '#15803d', '#f472b6');
+
     // Vine leaves skirt
     const leafWave = Math.sin((frame / 6) * Math.PI * 2) * 2;
     ctx.fillStyle = '#15803d';
     ctx.beginPath();
     ctx.moveTo(cx - 7, cy + 10);
     ctx.lineTo(cx + 7, cy + 10);
-    ctx.lineTo(cx + 12 + leafWave, cy + 30);
-    ctx.lineTo(cx - 12 + leafWave, cy + 30);
+    ctx.lineTo(cx + 12 + leafWave, cy + 24);
+    ctx.lineTo(cx - 12 + leafWave, cy + 24);
     ctx.closePath();
     ctx.fill();
 
-    // Floral vine hourglass dress
+    // Floral vine hourglass bikini dress
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#22c55e',
       highlight: '#86efac',
       shadow: '#14532d',
-      trim: '#f472b6'
+      trim: '#f472b6',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Head, Emerald Hair & Blossom Crown
     const headY = cy - 14;
-    ctx.fillStyle = '#16a34a';
-    ctx.beginPath();
-    ctx.arc(cx, headY, 7, 0, Math.PI * 2);
-    ctx.fill();
-
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#15803d');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#15803d', false, '#16a34a');
 
     // Pink Flower Blossom in hair
     ctx.fillStyle = '#f472b6';
@@ -1147,6 +1390,9 @@ export class CustomIsometricMonsterRenderer {
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 24, 10);
 
+    // 1. Long Silky Silver-White Spider Silk Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#e2e8f0', '#64748b', '#ffffff', frame, 'long');
+
     // 8 Articulated Spider Legs
     const legTwitch = Math.sin((frame / 6) * Math.PI * 2) * 3;
     ctx.strokeStyle = '#312e81';
@@ -1167,17 +1413,19 @@ export class CustomIsometricMonsterRenderer {
     ctx.ellipse(cx, cy + 18, 14, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Maiden Torso & Hourglass Corset
+    // Maiden Torso & Hourglass Spider-Web Lace Bikini Corset
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#4338ca',
       highlight: '#818cf8',
       shadow: '#1e1b4b',
-      trim: '#c084fc'
+      trim: '#c084fc',
+      exposedMidriff: true,
+      skinTone: '#ede9fe'
     });
 
-    // Dark Elf Face & Violet Hair
+    // Dark Elf Face & Silver-White Silk Hair
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ede9fe', '#a855f7');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ede9fe', '#a855f7', true, '#e2e8f0');
   }
 
   // =========================================================================
@@ -1193,37 +1441,37 @@ export class CustomIsometricMonsterRenderer {
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
 
+    // 1. Long Wavy Obsidian-Crimson Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#18181b', '#09090b', '#ef4444', frame, 'wavy');
+
+    // 2. Slender gothic high-heeled boots
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#f8fafc', '#450a0a', '#fbbf24');
+
     // Velvet Crimson Ballgown Skirt
     const dressWave = Math.sin((frame / 6) * Math.PI * 2) * 2.5;
     ctx.fillStyle = '#450a0a';
     ctx.beginPath();
     ctx.moveTo(cx - 7, cy + 8);
     ctx.lineTo(cx + 7, cy + 8);
-    ctx.lineTo(cx + 14 + dressWave, cy + 32);
-    ctx.lineTo(cx - 14 + dressWave, cy + 32);
+    ctx.lineTo(cx + 12 + dressWave, cy + 24);
+    ctx.lineTo(cx - 12 + dressWave, cy + 24);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.moveTo(cx - 5, cy + 9);
-    ctx.lineTo(cx + 5, cy + 9);
-    ctx.lineTo(cx + 10 + dressWave, cy + 30);
-    ctx.lineTo(cx - 10 + dressWave, cy + 30);
-    ctx.closePath();
-    ctx.fill();
-
-    // Hourglass Velvet Corset
+    // Hourglass Velvet Corset Bikini
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#dc2626',
       highlight: '#f87171',
       shadow: '#450a0a',
-      trim: '#fbbf24'
+      trim: '#fbbf24',
+      exposedMidriff: true,
+      skinTone: '#f8fafc',
+      skinShadow: '#cbd5e1'
     });
 
     // Pale Gothic Face, Crimson Eyes & Fangs
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#f8fafc', '#ef4444', true);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#f8fafc', '#ef4444', true, '#18181b');
   }
 
   // =========================================================================
@@ -1239,6 +1487,9 @@ export class CustomIsometricMonsterRenderer {
   ) {
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8, 0.35);
 
+    // 1. Long Floating Spectral Cyan Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#38bdf8', '#0284c7', '#e0f2fe', frame, 'wavy');
+
     // Floating spectral tail wisp instead of legs
     const ghostFloat = Math.sin((frame / 6) * Math.PI * 2) * 4;
     ctx.fillStyle = 'rgba(56, 189, 248, 0.65)';
@@ -1249,16 +1500,19 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Ethereal Hourglass Torso
+    // Ethereal Hourglass Bikini Torso
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: 'rgba(224, 242, 254, 0.85)',
       highlight: '#ffffff',
-      shadow: '#38bdf8'
+      shadow: '#38bdf8',
+      trim: '#7dd3fc',
+      exposedMidriff: true,
+      skinTone: '#f0f9ff'
     });
 
     // Spectral Head & Glowing Gaze
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#f0f9ff', '#0284c7');
+    this.drawMonsterGirlFace(ctx, cx, headY, '#f0f9ff', '#0284c7', false, '#38bdf8');
   }
 
   // =========================================================================
@@ -1271,7 +1525,7 @@ export class CustomIsometricMonsterRenderer {
     cx: number,
     cy: number,
     frame: number,
-    animState: string
+    _animState: string
   ) {
     // Sprawling Royal Shadow with Magma Glow
     this.drawIsoShadow(ctx, cx, cy + 34, 26, 12, 0.75);
@@ -1281,6 +1535,9 @@ export class CustomIsometricMonsterRenderer {
     ctx.ellipse(cx, cy + 34, 32, 15, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+
+    // 1. Long Wild Flaming Dragon Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#dc2626', '#7f1d1d', '#f97316', frame, 'wild');
 
     // Colossal Dragon Wings Flapping
     const wingFlap = Math.sin((frame / 6) * Math.PI * 2) * 6;
@@ -1320,18 +1577,17 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Armored Dragon Greaves
-    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 4;
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fillRect(cx - 6 + legStep, cy + 18, 5, 15);
-    ctx.fillRect(cx + 1 - legStep, cy + 18, 5, 15);
+    // 2. Armored Dragon Greaves
+    this.drawFeminineMonsterLegs(ctx, cx, cy, '#ffedd5', '#7f1d1d', '#facc15');
 
-    // Royal Dragon Cuirass (Hourglass Voluptuous Draconic Bodice)
+    // 3. Royal Dragon Plate Bikini Cuirass
     this.drawMonsterHourglassBody(ctx, cx, cy, {
       base: '#dc2626',
       highlight: '#f87171',
       shadow: '#450a0a',
-      trim: '#facc15'
+      trim: '#facc15',
+      exposedMidriff: true,
+      skinTone: '#ffedd5'
     });
 
     // Colossal Flaming Greatsword in hand
@@ -1350,7 +1606,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Head, Crimson Horns & Golden Crown
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#f59e0b', true);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', '#f59e0b', true, '#dc2626');
 
     // Majestic Curled Dragon Horns
     ctx.fillStyle = '#7f1d1d';
@@ -1395,6 +1651,9 @@ export class CustomIsometricMonsterRenderer {
   ) {
     const isTengu = mName.includes('tengu') || mName.includes('ayame');
     this.drawIsoShadow(ctx, cx, cy + 34, 19, 8);
+
+    // 1. Long Silky Sakura Pink Hair (Drawn BEHIND body)
+    this.drawMonsterFeminineHair(ctx, cx, cy, '#f472b6', '#db2777', '#fbcfe8', frame, 'long');
 
     // Animated Fox Tail or Crow Wings
     if (!isTengu) {
@@ -1489,7 +1748,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Anime Shrine Maiden Face
     const headY = cy - 14;
-    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', isTengu ? '#dc2626' : '#ec4899', false);
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', isTengu ? '#dc2626' : '#ec4899', false, '#f472b6');
 
     // Kitsune Fox Ears or Tengu Tokin Cap
     if (!isTengu) {

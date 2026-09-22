@@ -268,20 +268,27 @@ export class GameState {
     }
 
     const reachable = new Set<number>();
-    const queue: Array<{ nodeId: number; dist: number }> = [
-      { nodeId: this.activePlayer.nodeId, dist: 0 }
+    // BFS tracking path history to avoid immediate 180-degree reversals in the same turn
+    const queue: Array<{ nodeId: number; prevId: number | null; steps: number }> = [
+      { nodeId: this.activePlayer.nodeId, prevId: this.activePlayer.prevNodeId ?? null, steps: 0 }
     ];
-    const visitedDist = new Map<number, number>();
-    visitedDist.set(this.activePlayer.nodeId, 0);
 
     while (queue.length > 0) {
-      const { nodeId, dist } = queue.shift()!;
+      const { nodeId, prevId, steps } = queue.shift()!;
 
-      if (nodeId !== this.activePlayer.nodeId && dist >= 1) {
-        reachable.add(nodeId);
+      // Valid landing destinations:
+      // 1. Exact dice roll consumption (steps === remainingMoves)
+      // 2. Major landmark stops: Royal Castle (node 0) or Player's own Home
+      const isLandmark = (nodeId === 0 && steps >= 1) ||
+                         (this.activePlayer.homeNodeId && nodeId === this.activePlayer.homeNodeId && steps >= 1);
+
+      if (steps === this.remainingMoves || isLandmark) {
+        if (nodeId !== this.activePlayer.nodeId) {
+          reachable.add(nodeId);
+        }
       }
 
-      if (dist >= this.remainingMoves) {
+      if (steps >= this.remainingMoves) {
         continue;
       }
 
@@ -289,47 +296,49 @@ export class GameState {
       if (!node) continue;
 
       for (const nextId of node.neighbors) {
-        const nextDist = dist + 1;
-        if (!visitedDist.has(nextId) || visitedDist.get(nextId)! > nextDist) {
-          visitedDist.set(nextId, nextDist);
-          queue.push({ nodeId: nextId, dist: nextDist });
+        // Prevent immediate 180-degree reversal if other path choices exist
+        if (prevId !== null && nextId === prevId && node.neighbors.length > 1) {
+          continue;
         }
+        queue.push({ nodeId: nextId, prevId: nodeId, steps: steps + 1 });
       }
     }
 
     this.highlightedNodes = Array.from(reachable);
   }
 
-  // Pathfinding: Find shortest valid route from current position to target node with length <= remainingMoves
+  // Pathfinding: Find valid directional route from current position to chosen target node
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
 
-    const queue: number[][] = [[this.activePlayer.nodeId]];
-    const visited = new Set<number>([this.activePlayer.nodeId]);
+    const queue: Array<{ path: number[] }> = [{ path: [this.activePlayer.nodeId] }];
 
     while (queue.length > 0) {
-      const path = queue.shift()!;
+      const { path } = queue.shift()!;
       const currentId = path[path.length - 1];
+      const steps = path.length - 1;
 
-      if (currentId === targetNodeId && path.length > 1) {
-        const steps = path.length - 1;
-        if (steps <= this.remainingMoves) {
-          return path;
-        }
+      const isLandmark = (targetNodeId === 0 && steps >= 1) ||
+                         (this.activePlayer.homeNodeId && targetNodeId === this.activePlayer.homeNodeId && steps >= 1);
+
+      if (currentId === targetNodeId && (steps === this.remainingMoves || isLandmark)) {
+        return path;
       }
 
-      if (path.length - 1 >= this.remainingMoves) {
+      if (steps >= this.remainingMoves) {
         continue;
       }
 
       const node = this.allNodes.find(n => n.id === currentId);
       if (!node) continue;
 
+      const prevId = path.length >= 2 ? path[path.length - 2] : (this.activePlayer.prevNodeId ?? null);
+
       for (const nextId of node.neighbors) {
-        if (!visited.has(nextId)) {
-          visited.add(nextId);
-          queue.push([...path, nextId]);
+        if (prevId !== null && nextId === prevId && node.neighbors.length > 1) {
+          continue;
         }
+        queue.push({ path: [...path, nextId] });
       }
     }
 
