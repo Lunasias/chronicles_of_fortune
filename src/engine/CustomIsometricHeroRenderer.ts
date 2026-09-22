@@ -66,6 +66,9 @@ export class CustomIsometricHeroRenderer {
         case 'ranger':
           this.renderRanger(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
+        case 'spellblade':
+          this.renderSpellblade(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          break;
         default:
           this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
           break;
@@ -83,6 +86,7 @@ export class CustomIsometricHeroRenderer {
 
   private normalizeClassKey(rawKey: string): string {
     const k = rawKey.toLowerCase();
+    if (k.includes('spellblade') || k.includes('spell') || k.includes('ดาบเวท') || k.includes('magic_sword')) return 'spellblade';
     if (k.includes('warrior') || k.includes('knight') || k.includes('hero') || k === 'player') return 'warrior';
     if (k.includes('magician') || k.includes('mage') || k.includes('wizard') || k.includes('warlock')) return 'magician';
     if (k.includes('cleric') || k.includes('priest') || k.includes('monk')) return 'cleric';
@@ -1967,6 +1971,197 @@ export class CustomIsometricHeroRenderer {
 
     if (animState === 'attack' || animState === 'strike') {
       this.drawDiagonalSlashArc(ctx, cx, cy, dir, '#a855f7');
+    }
+  }
+
+  // =========================================================================
+  // 6. SPELLBLADE HEROINE: ELENA (จอมดาบเวทสาว เอเลน่า)
+  // Pure snow-white hair, alluring battle bikini armor with gold trim,
+  // toned midriff with cute navel, glowing runic lightning katana, and 8-directional rendering
+  // =========================================================================
+  private renderSpellblade(
+    ctx: CanvasRenderingContext2D,
+    dir: IsoDirection,
+    animState: CharacterAnimState,
+    frame: number,
+    offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
+    _equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null },
+    skinVariant: number = 0
+  ) {
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
+    const isBack = dir === 'NE' || dir === 'NW' || dir === 'N';
+    const cx = 48 + offsets.stepX + offsets.lean;
+    const cy = 48 + offsets.stepY + offsets.bob;
+
+    // White Hair Palette (Pure Snow White)
+    let hairHighlight = '#ffffff';
+    let hairBase = '#f1f5f9';
+    let hairShadow = '#cbd5e1';
+
+    // Battle Bikini Armor Palette (Metallic Silver + Rose Gold Trim + Magenta Gem)
+    let armorPlateBase = '#e2e8f0';
+    let armorPlateLight = '#ffffff';
+    let armorPlateShadow = '#64748b';
+    let goldTrim = '#facc15';
+    let auraColor = '#ec4899';
+    let eyeColor = '#ec4899';
+    const skinTone = '#ffedd5';
+
+    if (skinVariant === 1) {
+      // Midnight Eclipse variant: White hair with violet/cyan armor
+      armorPlateBase = '#334155';
+      armorPlateLight = '#64748b';
+      armorPlateShadow = '#0f172a';
+      goldTrim = '#38bdf8';
+      auraColor = '#38bdf8';
+      eyeColor = '#38bdf8';
+    }
+
+    // 1. Ground Shadow
+    this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
+
+    // 1.5 Furry Beastgirl Fluffy White Tail (Swaying gracefully behind back)
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, 'fox', hairBase, '#ffffff');
+
+    // 2. Battle Bikini Loincloth / Fluttering Hip Ribbon
+    const clothWave = Math.sin((frame / 6) * Math.PI * 2) * 3;
+    ctx.fillStyle = auraColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 12);
+    ctx.lineTo(cx + 5, cy + 12);
+    ctx.lineTo(cx + (isRight ? 9 : 4) + clothWave, cy + 28);
+    ctx.lineTo(cx - (isRight ? 4 : 9) + clothWave, cy + 28);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Slender Toned Legs with Armored Thigh-High Sabatons
+    const legStep = animState === 'run' ? Math.sin((frame / 6) * Math.PI * 2) * 5 : 0;
+    this.drawFeminineLegs(ctx, cx, cy, isRight, legStep, skinTone, {
+      base: armorPlateBase,
+      highlight: armorPlateLight,
+      shadow: armorPlateShadow
+    });
+
+    // 4. Alluring Battle Bikini Armor (Exposed Toned Midriff with Cute Navel)
+    this.drawFeminineHourglassTorso(ctx, cx, cy, isRight, {
+      base: armorPlateBase,
+      highlight: armorPlateLight,
+      shadow: armorPlateShadow,
+      trim: goldTrim
+    }, true, skinTone);
+
+    // Mystical Arcane Core Jewel on Bikini Cleavage
+    ctx.fillStyle = auraColor;
+    ctx.shadowColor = auraColor;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 4.5 Articulated Feminine Arms with Silver Gauntlets
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, undefined, armorPlateBase);
+
+    // 5. Runic Lightning Katana / Spellblade
+    const swordX = isRight ? cx + 13 : cx - 13;
+    const swordY = cy + 2;
+    ctx.save();
+    ctx.translate(swordX, swordY);
+    ctx.rotate(isRight ? 0.35 : -0.35);
+
+    // Crackling Lightning Aura along blade
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#06b6d4';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, -22);
+    ctx.lineTo(0, 10);
+    ctx.stroke();
+
+    // White Metallic Blade Core
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -22);
+    ctx.lineTo(0, 10);
+    ctx.stroke();
+
+    // Gold Guard & Ribbon Hilt
+    ctx.fillStyle = goldTrim;
+    ctx.fillRect(-3, 10, 6, 2.5);
+    ctx.fillStyle = auraColor;
+    ctx.fillRect(-1.5, 12.5, 3, 7);
+    ctx.restore();
+
+    // 6. Head, Pure White Hair & Fluffy Animal Ears
+    const headY = cy - 14;
+
+    // Long cascading white hair locks flowing down behind back
+    const hairSway = Math.sin(frame * 0.7) * 2;
+    ctx.fillStyle = hairShadow;
+    ctx.beginPath();
+    ctx.arc(cx - 8, headY + 5 + hairSway, 4, 0, Math.PI * 2);
+    ctx.arc(cx + 8, headY + 5 - hairSway, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = hairBase;
+    ctx.beginPath();
+    ctx.arc(cx - 8, headY + 4 + hairSway, 3.5, 0, Math.PI * 2);
+    ctx.arc(cx + 8, headY + 4 - hairSway, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cute Anime Face with 8-Directional Support
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, eyeColor);
+    } else if (isFront) {
+      this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, eyeColor);
+    } else {
+      // Rear View: Luscious pure white hair in back
+      ctx.fillStyle = hairBase;
+      ctx.beginPath();
+      ctx.arc(cx, headY, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = hairHighlight;
+      ctx.beginPath();
+      ctx.arc(cx, headY - 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Bangs & Side Locks (Framing Face)
+    if (!isBack) {
+      ctx.fillStyle = hairBase;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, headY - 4);
+      ctx.lineTo(cx - 8, headY + 3);
+      ctx.lineTo(cx - 4, headY - 1);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + 6, headY - 4);
+      ctx.lineTo(cx + 8, headY + 3);
+      ctx.lineTo(cx + 4, headY - 1);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillRect(cx - 5, headY - 6, 10, 2);
+    }
+
+    // White Ribbon Hairpin / Headpiece
+    ctx.fillStyle = auraColor;
+    ctx.fillRect(cx - (isRight ? 6 : -4), headY - 5, 3, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - (isRight ? 5 : -3), headY - 4, 1.5, 1.5);
+
+    // Fluffy White Fox/Wolf Ears with soft pink inner
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, 'fox', hairBase, '#fda4af');
+
+    // Attack slash
+    if (animState === 'attack' || animState === 'strike') {
+      this.drawDiagonalSlashArc(ctx, cx, cy, dir, '#38bdf8');
     }
   }
 

@@ -547,70 +547,78 @@ export class CombatVFXEngine {
     });
 
     // Class-specific Dark Fantasy FX
-    if (classKey === 'warrior' || isDarkling) {
-      // Leaping blood cleave
+    const cls = classKey.toLowerCase();
+    if (cls === 'warrior' || isDarkling) {
+      // Colossal Blade Groundbreak: Massive ground cracks and cleave shockwave
       this.spawnStrikeHit(targetX, targetY);
+      this.groundCracks.push({
+        x: targetX,
+        y: targetY,
+        radius: 65,
+        alpha: 1.0,
+        decay: 0.015,
+        points: [
+          { x: targetX - 50, y: targetY + 10 },
+          { x: targetX - 25, y: targetY - 15 },
+          { x: targetX, y: targetY },
+          { x: targetX + 30, y: targetY - 20 },
+          { x: targetX + 55, y: targetY + 15 }
+        ]
+      });
       this.slashArcs.push({
         x: targetX,
-        y: targetY - 10,
-        radius: 65,
+        y: targetY - 20,
+        radius: 80,
         startAngle: -Math.PI * 0.7,
         endAngle: Math.PI * 0.4,
-        color: '#be123c',
-        width: 10,
+        color: isDarkling ? '#be123c' : '#38bdf8',
+        width: 14,
         alpha: 1.0,
-        decay: 0.025
+        decay: 0.02
       });
-    } else if (classKey === 'magician') {
-      // Eldritch Void Cataclysm
-      this.spawnMagicHit(targetX, targetY);
-      for (let i = 0; i < 40; i++) {
-        this.particles.push({
-          x: targetX + (Math.random() * 40 - 20),
-          y: targetY - 60 + Math.random() * 20,
-          vx: (Math.random() - 0.5) * 6,
-          vy: 4 + Math.random() * 6,
-          color: Math.random() > 0.5 ? '#c084fc' : '#7e22ce',
-          size: 4 + Math.random() * 5,
+      this.triggerScreenShake(28);
+    } else if (cls === 'magician') {
+      // Megumin Explosion Nova: Catastrophic blast shockwave
+      this.spawnExplosionNova(targetX, targetY - 25, '#ef4444');
+      this.triggerScreenShake(34);
+      this.triggerSpeedLines('#f59e0b', 30);
+    } else if (cls === 'thief') {
+      // 5-Shadow Clone Strike Arcs
+      this.triggerScreenShake(22);
+      this.triggerSpeedLines('#10b981', 25);
+      for (let i = 0; i < 5; i++) {
+        const startAng = (i / 5) * Math.PI * 2;
+        this.slashArcs.push({
+          x: targetX,
+          y: targetY - 15,
+          radius: 50 + (i % 2) * 15,
+          startAngle: startAng,
+          endAngle: startAng + Math.PI * 0.8,
+          color: i % 2 === 0 ? '#10b981' : '#ec4899',
+          width: 6,
           alpha: 1.0,
           decay: 0.025
         });
       }
-    } else if (classKey === 'thief') {
-      // Shadow Step Assassination
-      this.slashArcs.push({
-        x: targetX,
-        y: targetY,
-        radius: 55,
-        startAngle: -Math.PI * 0.4,
-        endAngle: Math.PI * 0.6,
-        color: '#10b981',
-        width: 7,
-        alpha: 1.0,
-        decay: 0.03
-      });
-      this.slashArcs.push({
-        x: targetX,
-        y: targetY,
-        radius: 55,
-        startAngle: Math.PI * 0.6,
-        endAngle: -Math.PI * 0.4,
-        color: '#e11d48',
-        width: 7,
-        alpha: 1.0,
-        decay: 0.03
-      });
-    } else if (classKey === 'cleric') {
-      // Judgement of the Eclipse
-      this.spawnMagicHit(targetX, targetY, false);
-      for (let i = 0; i < 35; i++) {
+    } else if (cls === 'cleric') {
+      // Holy Cross Judgment: Divine light pillar from heaven
+      this.triggerScreenShake(26);
+      this.triggerSpeedLines('#fde047', 28);
+      this.spawnMagicHit(targetX, targetY, true);
+      this.spawnMagicLaserBeam(targetX, 0, targetX, targetY, '#fde047', 36);
+    } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
+      // Horizontal Lightning Slicer: Screen-wide lightning slash
+      this.triggerScreenShake(30);
+      this.triggerSpeedLines('#38bdf8', 30);
+      this.spawnStrikeHit(targetX, targetY);
+      for (let i = 0; i < 50; i++) {
         this.particles.push({
-          x: targetX + (Math.random() * 30 - 15),
-          y: targetY - 90,
-          vx: (Math.random() - 0.5) * 2,
-          vy: 6 + Math.random() * 8,
-          color: Math.random() > 0.5 ? '#fde047' : '#ffffff',
-          size: 3 + Math.random() * 4,
+          x: targetX + (Math.random() - 0.5) * 100,
+          y: targetY - 30 + (Math.random() - 0.5) * 40,
+          vx: (Math.random() - 0.5) * 12,
+          vy: (Math.random() - 0.5) * 6,
+          color: Math.random() > 0.4 ? '#38bdf8' : '#ec4899',
+          size: 3 + Math.random() * 5,
           alpha: 1.0,
           decay: 0.03
         });
@@ -873,6 +881,8 @@ export class CombatVFXEngine {
         ctx.shadowBlur = 18;
         ctx.fillText(`⚡ ${this.activeCutscene.skillName.toUpperCase()} ⚡`, arenaWidth * 0.5, 60);
         ctx.shadowBlur = 0;
+
+        this.renderSkillCinematic(ctx, arenaWidth, arenaHeight, this.activeCutscene);
       }
       ctx.restore();
     }
@@ -1123,6 +1133,185 @@ export class CombatVFXEngine {
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  private renderSkillCinematic(
+    ctx: CanvasRenderingContext2D,
+    arenaWidth: number,
+    arenaHeight: number,
+    cut: SkillCutscene
+  ) {
+    const cls = cut.classKey.toLowerCase();
+
+    if (cls === 'magician') {
+      // 1. Megumin Explosion Dome
+      const progress = Math.min(1.0, cut.elapsed / 45);
+      const maxR = 150;
+      const currentR = maxR * Math.sin(progress * Math.PI * 0.5);
+
+      ctx.save();
+      // Blinding nuclear flash at impact start
+      if (cut.elapsed < 10) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${(10 - cut.elapsed) / 10 * 0.8})`;
+        ctx.fillRect(0, 0, arenaWidth, arenaHeight);
+      }
+
+      // Expanding Fireball Core
+      const grad = ctx.createRadialGradient(
+        cut.targetX, cut.targetY - 25, 5,
+        cut.targetX, cut.targetY - 25, Math.max(10, currentR)
+      );
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(0.2, 'rgba(254, 240, 138, 0.9)');
+      grad.addColorStop(0.5, 'rgba(239, 68, 68, 0.85)');
+      grad.addColorStop(0.8, 'rgba(127, 29, 29, 0.7)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cut.targetX, cut.targetY - 25, currentR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Shockwave ellipse
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(cut.targetX, cut.targetY, currentR * 1.3, currentR * 0.55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    } else if (cls === 'cleric') {
+      // 2. Giant Radiant Cross descending from heaven
+      const progress = Math.min(1.0, cut.elapsed / 22);
+      const crossY = cut.targetY - 240 + (progress * 200);
+
+      ctx.save();
+      // Holy Light Pillar
+      const pillarGrad = ctx.createLinearGradient(cut.targetX - 45, 0, cut.targetX + 45, 0);
+      pillarGrad.addColorStop(0, 'rgba(253, 224, 71, 0)');
+      pillarGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.75)');
+      pillarGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      ctx.fillStyle = pillarGrad;
+      ctx.fillRect(cut.targetX - 50, 0, 100, arenaHeight);
+
+      // Giant Radiant Golden Cross
+      ctx.fillStyle = '#fef08a';
+      ctx.shadowColor = '#eab308';
+      ctx.shadowBlur = 24;
+
+      // Vertical beam
+      ctx.fillRect(cut.targetX - 12, crossY, 24, 150);
+      // Horizontal crossbar
+      ctx.fillRect(cut.targetX - 55, crossY + 38, 110, 22);
+
+      // Radiant Holy Halo Rings
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cut.targetX, crossY + 49, 36, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    } else if (cls === 'warrior' || cut.isDarkling) {
+      // 3. Colossal Phantom Broadsword
+      const progress = Math.min(1.0, cut.elapsed / 18);
+      const swordAngle = -Math.PI * 0.35 + (progress * Math.PI * 0.45);
+      const swordDropY = -120 + progress * (cut.targetY + 80);
+
+      ctx.save();
+      ctx.translate(cut.targetX, Math.min(cut.targetY, swordDropY));
+      ctx.rotate(swordAngle);
+
+      // Phantom Giant Broadsword Blade
+      ctx.fillStyle = cut.isDarkling ? '#be123c' : '#38bdf8';
+      ctx.shadowColor = cut.isDarkling ? '#e11d48' : '#60a5fa';
+      ctx.shadowBlur = 22;
+
+      // Blade (Colossal Titan Size!)
+      ctx.beginPath();
+      ctx.moveTo(-18, -130);
+      ctx.lineTo(18, -130);
+      ctx.lineTo(16, 30);
+      ctx.lineTo(0, 55); // Tip impaling
+      ctx.lineTo(-16, 30);
+      ctx.closePath();
+      ctx.fill();
+
+      // Crossguard & Hilt
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-35, -135, 70, 14);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-6, -175, 12, 40);
+
+      ctx.restore();
+    } else if (cls === 'thief') {
+      // 4. 5-Shadow Clones surrounding target
+      ctx.save();
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2 + (cut.elapsed * 0.05);
+        const dist = Math.max(30, 95 - (cut.elapsed * 1.6));
+        const cloneX = cut.targetX + Math.cos(angle) * dist;
+        const cloneY = cut.targetY + Math.sin(angle) * (dist * 0.5);
+
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.75)';
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 14;
+
+        ctx.beginPath();
+        ctx.arc(cloneX, cloneY - 20, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillRect(cloneX - 7, cloneY - 10, 14, 20);
+
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cloneX, cloneY);
+        ctx.lineTo(cut.targetX, cut.targetY);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
+      // 5. Screen-Wide Horizontal Lightning Slicer
+      const waveY = cut.targetY - 20;
+
+      ctx.save();
+      // Blinding horizontal lightning energy beam across full screen width
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 14 + Math.sin(cut.elapsed * 0.5) * 6;
+      ctx.shadowColor = '#ec4899';
+      ctx.shadowBlur = 24;
+
+      ctx.beginPath();
+      ctx.moveTo(0, waveY);
+      for (let x = 0; x <= arenaWidth; x += 40) {
+        const jitter = (Math.random() - 0.5) * 16;
+        ctx.lineTo(x, waveY + jitter);
+      }
+      ctx.stroke();
+
+      // White core beam
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(0, waveY);
+      ctx.lineTo(arenaWidth, waveY);
+      ctx.stroke();
+
+      // Lightning branches
+      for (let k = 0; k < 6; k++) {
+        const rx = (cut.elapsed * 55 + k * 140) % arenaWidth;
+        ctx.strokeStyle = k % 2 === 0 ? '#ec4899' : '#a855f7';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(rx, waveY);
+        ctx.lineTo(rx + (Math.random() - 0.5) * 30, waveY - 45);
+        ctx.lineTo(rx + (Math.random() - 0.5) * 50, waveY - 70);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
   }
 }
 

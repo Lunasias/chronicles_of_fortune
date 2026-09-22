@@ -426,32 +426,69 @@ export class BattleEngine {
       };
     }
 
-    // 6. Resolve Skill
+    // 6. Resolve Skill (Differentiated Class Ultimate Abilities)
     if (atkAction === 'skill') {
       audio.magicCast();
-      let skillDmg = Math.round(a.atk * 1.9 + a.mag * 1.3);
 
       // LUK Critical Hit for Skill
       let isCrit = false;
       if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
         isCrit = true;
-        skillDmg = Math.round(skillDmg * 1.5);
       }
 
-      damageToDefender = Math.round(Math.max(15, skillDmg));
-      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+      const cls = (a.classKey || '').toLowerCase();
 
-      if (a.classKey === 'thief' && a.playerRef && d.playerRef) {
-        const stolen = Math.min(d.playerRef.gold, 60);
-        d.playerRef.gold -= stolen;
-        a.playerRef.gold += stolen;
-        narration = `🗡️ โจรกรรมฉับไว! ${a.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G จากกระเป๋าของ ${d.name}!${isCrit ? ' 💥 คริติคอล!' : ''}`;
-      } else if (a.classKey === 'cleric') {
-        const healAmt = 25 + Math.floor(a.mag * 0.5);
-        a.hp = Math.round(Math.min(a.maxHp, a.hp + healAmt));
-        narration = `✨ แสงศักดิ์สิทธิ์พิฆาต! ${a.name} ปลดปล่อยดาเมจแสง ${damageToDefender} หน่วย พร้อมฟื้นฟูเลือดตนเอง ${healAmt} HP!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      if (cls === 'magician') {
+        // Megumin-style Explosion: Sacrifices 20% of current HP to deal 40% of target Max HP + MAG scaling!
+        const hpCost = Math.max(1, Math.floor(a.hp * 0.20));
+        a.hp = Math.max(1, a.hp - hpCost);
+        let explosionDmg = Math.max(25, Math.floor(d.maxHp * 0.40) + Math.floor(a.mag * 1.5));
+        if (isCrit) explosionDmg = Math.round(explosionDmg * 1.5);
+        damageToDefender = explosionDmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `💥 มหาเวทเอ็กซ์โพลชั่น (EXPLOSION)! ${a.name} สละพลังชีวิต ${hpCost} HP ร่ายมหาเวทระเบิดทำลายล้างสร้างความเสียหายวินาศสันตะโร ${damageToDefender} ดาเมจ (40% Max HP ของ ${d.name})!${isCrit ? ' 💥 มหาคริติคอล!' : ''}`;
+      } else if (cls === 'cleric') {
+        // Holy Cross Judgment: Summons a giant radiant cross impaling enemy from heaven + heals caster!
+        let holyDmg = Math.round(a.mag * 2.8 + 25);
+        if (isCrit) holyDmg = Math.round(holyDmg * 1.5);
+        const healAmt = Math.round(30 + a.mag * 0.8);
+        a.hp = Math.min(a.maxHp, a.hp + healAmt);
+        damageToDefender = holyDmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `✝️ ทัณฑ์กางเขนศักดิ์สิทธิ์ (Holy Cross Judgment)! เสกกางเขนยักษ์ปักลงมาจากฟากฟ้า สร้างความเสียหายศักดิ์สิทธิ์ ${damageToDefender} ดาเมจ และฟื้นฟูเลือด ${healAmt} HP!${isCrit ? ' 💥 คริติคอลศักดิ์สิทธิ์!' : ''}`;
+      } else if (cls === 'warrior') {
+        // Colossal Blade Groundbreak: Massive phantom broadsword cleaving down and shattering the ground!
+        let colBladeDmg = Math.round(a.atk * 3.4 + 20);
+        if (isCrit) colBladeDmg = Math.round(colBladeDmg * 1.5);
+        damageToDefender = colBladeDmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🗡️ ดาบยักษ์ผ่าปฐพี (Colossal Blade Groundbreak)! ${a.name} เสกดาบยักษ์ฟันสับ ${d.name} พื้นดินแตกเป็นเสี่ยงๆ สร้างความเสียหายมหาศาล ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอลสะเทือนฟ้าดิน!' : ''}`;
+      } else if (cls === 'thief') {
+        // 5-Shadow Clone Illusion: Summons 5 shadow clones striking from all sides + steals gold!
+        let cloneDmg = Math.round(a.atk * 2.4 + (a.spd || 5) * 1.6 + 15);
+        if (isCrit) cloneDmg = Math.round(cloneDmg * 1.5);
+        damageToDefender = cloneDmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        const stolen = Math.min(d.playerRef ? d.playerRef.gold : 100, 100);
+        if (d.playerRef && a.playerRef) {
+          d.playerRef.gold -= stolen;
+          a.playerRef.gold += stolen;
+        }
+        narration = `👥 ห้าร่างเงาลวงสังหาร (5-Shadow Clone Illusion)! ร่างแยกเงา 5 ร่างพุ่งรุมฟันจากทุกทิศทาง สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G!${isCrit ? ' 💥 คริติคอลเงาสังหาร!' : ''}`;
+      } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
+        // Horizontal Lightning Slicer: Screen-wide horizontal lightning wave slashing through everything!
+        let slicerDmg = Math.round(a.atk * 2.2 + a.mag * 2.2 + 25);
+        if (isCrit) slicerDmg = Math.round(slicerDmg * 1.5);
+        damageToDefender = slicerDmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `⚡ คลื่นดาบสายฟ้าสะบั้นพิภพ (Horizontal Lightning Slicer)! ${a.name} ปลดปล่อยคลื่นดาบสายฟ้าแนวนอนผ่าผืนพิภพ กวาดล้างศัตรูสร้างความเสียหาย ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอลสายฟ้าฟาด!' : ''}`;
       } else {
-        narration = `🌟 ท่าไม้ตายคลาส! ${a.name} ปลดปล่อย ${a.skillName || 'สกิล'} สร้างความเสียหาย ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+        // Darkling / Boss / Generic fallback
+        let genericDmg = Math.round(a.atk * 2.8 + a.mag * 1.8 + 15);
+        if (isCrit) genericDmg = Math.round(genericDmg * 1.5);
+        damageToDefender = Math.round(Math.max(15, genericDmg));
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🌟 ท่าไม้ตายคลาส! ${a.name} ปลดปล่อย ${a.skillName || 'สกิลเฉพาะ'} สร้างความเสียหาย ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอล!' : ''}`;
       }
 
       // LUK Miracle Survival

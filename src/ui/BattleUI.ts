@@ -1,6 +1,6 @@
 import { GameState } from '../game/GameState';
 import { BattleEngine, AttackerAction, DefenderAction, Combatant } from '../game/BattleEngine';
-import { pixelSprites, CharacterAnimState } from '../engine/PixelSpriteGenerator';
+import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelSpriteGenerator';
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX } from '../engine/CombatVFXEngine';
@@ -21,6 +21,7 @@ export class BattleUI {
   public isScoutOpen = false;
   public pendingAttackerAction: AttackerAction | null = null;
   public companionUsedThisBattle = false;
+  public playerSkillUsedThisBattle = false;
 
   // Cinematic Combat Cutscene State
   public cutscene = {
@@ -187,6 +188,7 @@ export class BattleUI {
     this.isExecutingRound = false;
     this.isScoutOpen = false;
     this.companionUsedThisBattle = false;
+    this.playerSkillUsedThisBattle = false;
 
     // Switch to battle chiptune theme
     if (enemy.isBoss) {
@@ -289,6 +291,20 @@ export class BattleUI {
         }
       } else {
         defGroup.classList.add('hidden');
+      }
+    }
+
+    // Update skill button 1-use state
+    const p = this.game.activePlayer;
+    const skillBtn = document.getElementById('btnCmdSkill');
+    const skillLbl = document.getElementById('battleSkillLabel');
+    if (skillBtn && skillLbl) {
+      if (this.playerSkillUsedThisBattle) {
+        skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+        skillLbl.innerText = `${(p.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
+      } else {
+        skillBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+        skillLbl.innerText = (p.skillName || 'SKILL').toUpperCase();
       }
     }
 
@@ -458,6 +474,17 @@ export class BattleUI {
   private handleAttackerInput(atkAction: AttackerAction) {
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
+
+    if (atkAction === 'skill') {
+      if (this.playerSkillUsedThisBattle) return;
+      this.playerSkillUsedThisBattle = true;
+      const skillBtn = document.getElementById('btnCmdSkill');
+      const skillLbl = document.getElementById('battleSkillLabel');
+      if (skillBtn && skillLbl) {
+        skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+        skillLbl.innerText = `${(b.attacker.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
+      }
+    }
 
     audio.click();
 
@@ -988,9 +1015,14 @@ export class BattleUI {
     const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
     const pFrame = Math.floor(time * 0.005);
 
+    // Contextual Isometric Combat Orientation: Left Dais faces Right ('SE'), Right Dais faces Left ('SW')
+    // Neither combatant turns their back during battle; faces and expressions remain clearly visible!
+    const heroDir: IsoDirection = px <= ex ? 'SE' : 'SW';
+    const enemyDir: IsoDirection = ex >= px ? 'SW' : 'SE';
+
     const heroSprite = pixelSprites.getHeroSprite(
       p.classKey,
-      'NE',
+      heroDir,
       pAnim,
       pFrame,
       p.equipment,
@@ -1007,13 +1039,13 @@ export class BattleUI {
     let enemyH = 140;
 
     if (enemyCombatant.isBoss) {
-      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', 'SW', eAnim, pFrame);
+      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', enemyDir, eAnim, pFrame);
       enemyW = 140;
       enemyH = 140;
     } else if (enemyCombatant.playerRef) {
       enemySprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
-        'SW',
+        enemyDir,
         eAnim,
         pFrame,
         enemyCombatant.playerRef.equipment,
@@ -1024,7 +1056,7 @@ export class BattleUI {
       enemyW = 120;
       enemyH = 120;
     } else {
-      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, 'SW', eAnim, pFrame);
+      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, pFrame);
     }
 
     // -----------------------------------------------------------------------

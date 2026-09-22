@@ -83,6 +83,18 @@ export class InspectUI {
       ? `${player.equipment.accessory.icon} ${player.equipment.accessory.name}`
       : '💍 ไม่มีเครื่องประดับ';
 
+    const totalAtk = player.getTotalStat('atk');
+    const totalDef = player.getTotalStat('def');
+    const totalMag = player.getTotalStat('mag');
+    const totalSpd = player.getTotalStat('spd');
+    const totalLuk = player.getTotalStat('luk');
+
+    const bonusAtk = totalAtk - player.atk;
+    const bonusDef = totalDef - player.def;
+    const bonusMag = totalMag - player.mag;
+    const bonusSpd = totalSpd - player.spd;
+    const bonusLuk = totalLuk - player.luk;
+
     this.inspectModal.innerHTML = `
       <div class="pixel-box-gold max-w-xl w-full p-5 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
         <!-- Header -->
@@ -134,32 +146,32 @@ export class InspectUI {
           </div>
         </div>
 
-        <!-- Combat Attributes 6-Grid -->
+        <!-- Combat Attributes 6-Grid (Total Stats + Bonus) -->
         <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3 text-center">
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">⚔️ ATK</span>
-            <span class="text-sm font-bold text-amber-300">${player.atk}</span>
-            <span class="text-[8px] text-slate-500">โจมตีกายภาพ</span>
+            <span class="text-sm font-bold text-amber-300">${totalAtk}</span>
+            <span class="text-[8px] text-slate-400">${bonusAtk > 0 ? `(${player.atk}+${bonusAtk})` : 'โจมตีกายภาพ'}</span>
           </div>
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🛡️ DEF</span>
-            <span class="text-sm font-bold text-blue-300">${player.def}</span>
-            <span class="text-[8px] text-slate-500">พลังป้องกัน</span>
+            <span class="text-sm font-bold text-blue-300">${totalDef}</span>
+            <span class="text-[8px] text-slate-400">${bonusDef > 0 ? `(${player.def}+${bonusDef})` : 'พลังป้องกัน'}</span>
           </div>
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🔮 MAG</span>
-            <span class="text-sm font-bold text-purple-300">${player.mag}</span>
-            <span class="text-[8px] text-slate-500">พลังเวทมนตร์</span>
+            <span class="text-sm font-bold text-purple-300">${totalMag}</span>
+            <span class="text-[8px] text-slate-400">${bonusMag > 0 ? `(${player.mag}+${bonusMag})` : 'พลังเวทมนตร์'}</span>
           </div>
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">⚡ SPD</span>
-            <span class="text-sm font-bold text-yellow-300">${player.spd}</span>
-            <span class="text-[8px] text-slate-500">ความเร็วออกท่า</span>
+            <span class="text-sm font-bold text-yellow-300">${totalSpd}</span>
+            <span class="text-[8px] text-slate-400">${bonusSpd > 0 ? `(${player.spd}+${bonusSpd})` : 'ความเร็วออกท่า'}</span>
           </div>
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🍀 LUK</span>
-            <span class="text-sm font-bold text-emerald-300">${player.luk}</span>
-            <span class="text-[8px] text-slate-500">โชค & คริติคอล</span>
+            <span class="text-sm font-bold text-emerald-300">${totalLuk}</span>
+            <span class="text-[8px] text-slate-400">${bonusLuk > 0 ? `(${player.luk}+${bonusLuk})` : 'โชค & คริติคอล'}</span>
           </div>
           <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">💎 ทรัพย์สิน</span>
@@ -258,28 +270,38 @@ export class InspectUI {
     onConfirm: () => void,
     onCancel: () => void
   ) {
-    // Matchup damage estimations
-    const estAtkPPhys = Math.max(8, attacker.atk - Math.floor(defender.def * 0.6));
-    const estAtkPStrike = Math.max(18, Math.floor(attacker.atk * 2.0 - defender.def * 0.3));
-    const estAtkPMagic = Math.max(10, Math.floor(attacker.mag * 1.8 - defender.mag * 0.6));
+    const aAtk = attacker.getTotalStat('atk');
+    const aDef = attacker.getTotalStat('def');
+    const aMag = attacker.getTotalStat('mag');
+    const aSpd = attacker.getTotalStat('spd');
 
-    const estDefPPhys = Math.max(8, defender.atk - Math.floor(attacker.def * 0.6));
-    const estDefPCounter = Math.max(20, Math.floor(defender.atk * 2.2));
+    const dAtk = defender.getTotalStat('atk');
+    const dDef = defender.getTotalStat('def');
+    const dMag = defender.getTotalStat('mag');
+    const dSpd = defender.getTotalStat('spd');
+
+    // Matchup damage estimations using total equipped stats
+    const estAtkPPhys = Math.max(8, aAtk - Math.floor(dDef * 0.6));
+    const estAtkPStrike = Math.max(18, Math.floor(aAtk * 2.0 - dDef * 0.3));
+    const estAtkPMagic = Math.max(10, Math.floor(aMag * 1.8 - dMag * 0.6));
+
+    const estDefPPhys = Math.max(8, dAtk - Math.floor(aDef * 0.6));
+    const estDefPCounter = Math.max(20, Math.floor(dAtk * 2.2));
 
     // Tactical match intelligence advice
     let adviceText = '';
     let adviceColor = '#38bdf8';
 
-    if (defender.def >= attacker.atk) {
+    if (dDef >= aAtk) {
       adviceText = '🛡️ ข้อแนะนำ: คู่ต่อสู้มีพลังป้องกันกายภาพสูงมาก! การโจมตีธรรมดาอาจทำดาเมจได้น้อย แนะนำให้ใช้เวทมนตร์ (Magic) ทะลวงเกราะ!';
       adviceColor = '#f59e0b';
-    } else if (defender.mag > attacker.mag + 6) {
+    } else if (dMag > aMag + 6) {
       adviceText = '🔮 คำเตือน: คู่ต่อสู้มีพลังเวทมนตร์สูงลิ่ว! พึงระวังการโดนยิงเวทสวนกลับ เตรียมใช้บาเรียเวท (Magic Guard) หากตั้งรับ!';
       adviceColor = '#c084fc';
     } else if (estAtkPStrike >= defender.hp) {
       adviceText = '⚔️ โอกาสทอง: ท่าฟันชาร์จ Strike ของคุณมีพลังทำลายเพียงพอที่จะสังหารคู่ต่อสู้ได้ในคอมโบเดียว! แต่พึงระวังว่าศัตรูอาจเลือก Counter!';
       adviceColor = '#4ade80';
-    } else if (attacker.spd > defender.spd) {
+    } else if (aSpd > dSpd) {
       adviceText = '⚡ ความได้เปรียบ: คุณมีความเร็วสูงกว่าคู่ต่อสู้ (+15% โอกาสหลบหลีกการโจมตี)';
       adviceColor = '#38bdf8';
     } else {
@@ -329,10 +351,10 @@ export class InspectUI {
 
             <!-- Combat Attributes -->
             <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 rounded text-[10px]">
-              <div><strong class="text-amber-400 block">${attacker.atk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
-              <div><strong class="text-blue-400 block">${attacker.def}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
-              <div><strong class="text-purple-400 block">${attacker.mag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
-              <div><strong class="text-yellow-400 block">${attacker.spd}</strong><span class="text-[8px] text-slate-400">SPD</span></div>
+              <div><strong class="text-amber-400 block">${aAtk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
+              <div><strong class="text-blue-400 block">${aDef}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
+              <div><strong class="text-purple-400 block">${aMag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
+              <div><strong class="text-yellow-400 block">${aSpd}</strong><span class="text-[8px] text-slate-400">SPD</span></div>
               <div><strong class="text-emerald-400 block">${attacker.gold}G</strong><span class="text-[8px] text-slate-400">ทอง</span></div>
             </div>
 
@@ -369,10 +391,10 @@ export class InspectUI {
 
             <!-- Combat Attributes -->
             <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 rounded text-[10px]">
-              <div><strong class="text-amber-400 block">${defender.atk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
-              <div><strong class="text-blue-400 block">${defender.def}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
-              <div><strong class="text-purple-400 block">${defender.mag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
-              <div><strong class="text-yellow-400 block">${defender.spd}</strong><span class="text-[8px] text-slate-400">SPD</span></div>
+              <div><strong class="text-amber-400 block">${dAtk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
+              <div><strong class="text-blue-400 block">${dDef}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
+              <div><strong class="text-purple-400 block">${dMag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
+              <div><strong class="text-yellow-400 block">${dSpd}</strong><span class="text-[8px] text-slate-400">SPD</span></div>
               <div><strong class="text-emerald-400 block">${defender.gold}G</strong><span class="text-[8px] text-slate-400">ทอง</span></div>
             </div>
 

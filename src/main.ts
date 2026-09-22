@@ -1740,12 +1740,24 @@ class DokaponApp {
       });
     });
 
+    const totalAtk = p.getTotalStat('atk');
+    const totalDef = p.getTotalStat('def');
+    const totalMag = p.getTotalStat('mag');
+    const totalSpd = p.getTotalStat('spd');
+    const totalLuk = p.getTotalStat('luk');
+
+    const bAtk = totalAtk - p.atk;
+    const bDef = totalDef - p.def;
+    const bMag = totalMag - p.mag;
+    const bSpd = totalSpd - p.spd;
+    const bLuk = totalLuk - p.luk;
+
     document.getElementById('statBreakdownList')!.innerHTML = `
-      <div class="flex justify-between"><span>ATK:</span> <strong class="text-white">${p.getTotalStat('atk')}</strong></div>
-      <div class="flex justify-between"><span>DEF:</span> <strong class="text-white">${p.getTotalStat('def')}</strong></div>
-      <div class="flex justify-between"><span>MAG:</span> <strong class="text-white">${p.getTotalStat('mag')}</strong></div>
-      <div class="flex justify-between"><span>SPD:</span> <strong class="text-white">${p.getTotalStat('spd')}</strong></div>
-      <div class="flex justify-between"><span>LUK:</span> <strong class="text-white">${p.getTotalStat('luk')}</strong></div>
+      <div class="flex justify-between items-center text-xs"><span>ATK:</span> <strong class="text-amber-300 font-bold">${totalAtk} ${bAtk > 0 ? `<span class="text-[10px] text-emerald-400 font-normal">(${p.atk}+${bAtk})</span>` : ''}</strong></div>
+      <div class="flex justify-between items-center text-xs"><span>DEF:</span> <strong class="text-blue-300 font-bold">${totalDef} ${bDef > 0 ? `<span class="text-[10px] text-emerald-400 font-normal">(${p.def}+${bDef})</span>` : ''}</strong></div>
+      <div class="flex justify-between items-center text-xs"><span>MAG:</span> <strong class="text-purple-300 font-bold">${totalMag} ${bMag > 0 ? `<span class="text-[10px] text-emerald-400 font-normal">(${p.mag}+${bMag})</span>` : ''}</strong></div>
+      <div class="flex justify-between items-center text-xs"><span>SPD:</span> <strong class="text-yellow-300 font-bold">${totalSpd} ${bSpd > 0 ? `<span class="text-[10px] text-emerald-400 font-normal">(${p.spd}+${bSpd})</span>` : ''}</strong></div>
+      <div class="flex justify-between items-center text-xs"><span>LUK:</span> <strong class="text-emerald-300 font-bold">${totalLuk} ${bLuk > 0 ? `<span class="text-[10px] text-emerald-400 font-normal">(${p.luk}+${bLuk})</span>` : ''}</strong></div>
     `;
 
     document.getElementById('invCapacityCount')!.innerText = `${p.inventory.length}/12 ช่อง`;

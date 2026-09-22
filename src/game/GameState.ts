@@ -260,7 +260,7 @@ export class GameState {
     return totalRoll;
   }
 
-  // Calculate all reachable destination nodes: Requires EXACT dice count landing (or Castle node 0 stop)
+  // Calculate all reachable destination nodes: Allows flexible landing from 1 to remainingMoves steps & backtracking
   updateReachableHighlights() {
     if (this.remainingMoves <= 0) {
       this.highlightedNodes = [];
@@ -268,52 +268,52 @@ export class GameState {
     }
 
     const reachable = new Set<number>();
-    const queue: Array<{ nodeId: number; movesLeft: number; prevId: number | null }> = [
-      { nodeId: this.activePlayer.nodeId, movesLeft: this.remainingMoves, prevId: this.activePlayer.prevNodeId }
+    const queue: Array<{ nodeId: number; dist: number }> = [
+      { nodeId: this.activePlayer.nodeId, dist: 0 }
     ];
+    const visitedDist = new Map<number, number>();
+    visitedDist.set(this.activePlayer.nodeId, 0);
 
     while (queue.length > 0) {
-      const curr = queue.shift()!;
-      if (curr.nodeId !== this.activePlayer.nodeId && (curr.movesLeft === 0 || curr.nodeId === 0)) {
-        reachable.add(curr.nodeId);
+      const { nodeId, dist } = queue.shift()!;
+
+      if (nodeId !== this.activePlayer.nodeId && dist >= 1) {
+        reachable.add(nodeId);
       }
 
-      if (curr.movesLeft === 0) {
+      if (dist >= this.remainingMoves) {
         continue;
       }
 
-      const node = this.allNodes.find(n => n.id === curr.nodeId);
+      const node = this.allNodes.find(n => n.id === nodeId);
       if (!node) continue;
 
-      let neighbors = node.neighbors;
-      if (curr.prevId !== null && neighbors.length > 1) {
-        neighbors = neighbors.filter(id => id !== curr.prevId);
+      for (const nextId of node.neighbors) {
+        const nextDist = dist + 1;
+        if (!visitedDist.has(nextId) || visitedDist.get(nextId)! > nextDist) {
+          visitedDist.set(nextId, nextDist);
+          queue.push({ nodeId: nextId, dist: nextDist });
+        }
       }
-
-      neighbors.forEach(nextId => {
-        queue.push({ nodeId: nextId, movesLeft: curr.movesLeft - 1, prevId: curr.nodeId });
-      });
     }
 
     this.highlightedNodes = Array.from(reachable);
   }
 
-  // Pathfinding: Find shortest valid route from current position to target node with length === remainingMoves (or stopping at Castle 0)
+  // Pathfinding: Find shortest valid route from current position to target node with length <= remainingMoves
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
 
-    const queue: Array<{ path: number[]; prevId: number | null }> = [
-      { path: [this.activePlayer.nodeId], prevId: this.activePlayer.prevNodeId }
-    ];
+    const queue: number[][] = [[this.activePlayer.nodeId]];
+    const visited = new Set<number>([this.activePlayer.nodeId]);
 
     while (queue.length > 0) {
-      const { path, prevId } = queue.shift()!;
+      const path = queue.shift()!;
       const currentId = path[path.length - 1];
 
-      // Reached target: exact roll required, unless reaching Dokapon Castle (node 0)
       if (currentId === targetNodeId && path.length > 1) {
         const steps = path.length - 1;
-        if (steps === this.remainingMoves || targetNodeId === 0) {
+        if (steps <= this.remainingMoves) {
           return path;
         }
       }
@@ -325,13 +325,11 @@ export class GameState {
       const node = this.allNodes.find(n => n.id === currentId);
       if (!node) continue;
 
-      let neighbors = node.neighbors;
-      if (prevId !== null && neighbors.length > 1) {
-        neighbors = neighbors.filter(id => id !== prevId);
-      }
-
-      for (const nextId of neighbors) {
-        queue.push({ path: [...path, nextId], prevId: currentId });
+      for (const nextId of node.neighbors) {
+        if (!visited.has(nextId)) {
+          visited.add(nextId);
+          queue.push([...path, nextId]);
+        }
       }
     }
 

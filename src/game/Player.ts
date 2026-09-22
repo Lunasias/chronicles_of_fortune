@@ -29,9 +29,9 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 3,
     spd: 7,
     luk: 5,
-    skillName: 'กล้ามเนื้อเหล็กไหล (Muscle Guard)',
+    skillName: 'ดาบยักษ์ผ่าปฐพี (Colossal Blade)',
     skillCost: 10,
-    skillDesc: 'เกร็งกล้ามเนื้อดั่งเหล็กไหล เพิ่มพลังป้องกันและฟาดฟันกายภาพแรงขึ้น 1.3 เท่า'
+    skillDesc: 'เสกดาบยักษ์ผ่าปฐพีลงมาฟันสับศัตรู พื้นดินแตกกระจาย สร้างความเสียหายมหาศาล'
   },
   magician: {
     name: 'จอมเวท (Magician)',
@@ -44,9 +44,9 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 19,
     spd: 10,
     luk: 8,
-    skillName: 'สูบกลืนมานา (Mana Burn)',
+    skillName: 'เอ็กซ์โพลชั่น (Explosion)',
     skillCost: 18,
-    skillDesc: 'สูบ 15 MP จากศัตรูพร้อมระเบิดเพลิงเวทมนตร์ทะลวงเกราะ'
+    skillDesc: 'สละ 20% HP เพื่อปลดปล่อยมหาเวทระเบิดทำลายล้าง 40% ของ Max HP เป้าหมาย!'
   },
   thief: {
     name: 'จอมโจร (Thief)',
@@ -59,9 +59,9 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 6,
     spd: 17,
     luk: 16,
-    skillName: 'โจรกรรมฉับไว (Pickpocket)',
+    skillName: 'ห้าร่างเงาลวงสังหาร (5-Shadow Clone)',
     skillCost: 12,
-    skillDesc: 'โอกาสติดคริติคอลสูงมาก และฉกเงิน 40G จากกระเป๋าของเหยื่อทันที'
+    skillDesc: 'แยกร่างเงา 5 ร่างรุมฟันจากทุกทิศทางด้วยความเร็วแสง และฉกเงินสดศัตรู'
   },
   cleric: {
     name: 'นักบวช (Cleric)',
@@ -74,9 +74,9 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 13,
     spd: 9,
     luk: 9,
-    skillName: 'แสงศักดิ์สิทธิ์พิฆาต (Holy Smite)',
+    skillName: 'ทัณฑ์กางเขนศักดิ์สิทธิ์ (Holy Cross Judgment)',
     skillCost: 16,
-    skillDesc: 'ลำแสงศักดิ์สิทธิ์สร้างความเสียหายธาตุแสงรุนแรง และฟื้นฟู 25 HP'
+    skillDesc: 'เสกกางเขนแสงยักษ์ปักลงมาจากฟากฟ้า สร้างความเสียหายศักดิ์สิทธิ์และฟื้นฟูเลือด'
   },
   spellblade: {
     name: 'จอมดาบเวท (Spellblade)',
@@ -89,9 +89,9 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     mag: 12,
     spd: 11,
     luk: 7,
-    skillName: 'ดาบมนตราสังหาร (Spell Slash)',
+    skillName: 'คลื่นดาบสายฟ้าสะบั้นพิภพ (Lightning Slicer)',
     skillCost: 14,
-    skillDesc: 'ผสานพลังเวทลงสู่คมดาบ ฟันทะลวงเกราะและสร้างความเสียหายรุนแรง'
+    skillDesc: 'ปล่อยคลื่นดาบสายฟ้าแนวนอนผ่าผืนพิภพ กวาดล้างศัตรูด้วยพลังดาบเวท'
   }
 };
 

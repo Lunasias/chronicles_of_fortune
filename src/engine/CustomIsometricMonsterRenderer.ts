@@ -57,6 +57,16 @@ export class CustomIsometricMonsterRenderer {
     const cx = 70 + lungeX;
     const cy = 70 + lungeY + bob;
 
+    // 8-Directional Isometric Monster Transform
+    // East-facing angles ('SE', 'E', 'NE') mirror horizontally so monster faces East!
+    const isFacingEast = dir === 'SE' || dir === 'E' || dir === 'NE';
+    if (isFacingEast) {
+      ctx.save();
+      ctx.translate(70, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-70, 0);
+    }
+
     // Route to specialized Fantasy Monster Girl Archetypes
     if (mName.includes('slime') || mName.includes('ooze') || mName.includes('jelly')) {
       let element: 'flame' | 'ice' | 'sun' | 'blossom' | 'gold' = 'flame';
@@ -103,6 +113,10 @@ export class CustomIsometricMonsterRenderer {
       this.renderGoblinGirl(ctx, cx, cy, f, animState);
     }
 
+    if (isFacingEast) {
+      ctx.restore();
+    }
+
     this.cache.set(cacheKey, canvas);
     return canvas;
   }
@@ -130,7 +144,7 @@ export class CustomIsometricMonsterRenderer {
     eyeColor: string,
     hasFangs = false
   ) {
-    // Jaw & Chin
+    // 1. Soft Contoured Anime Jawline & Petite Chin
     ctx.fillStyle = skinColor;
     ctx.beginPath();
     ctx.moveTo(cx - 7, cy - 6);
@@ -140,33 +154,60 @@ export class CustomIsometricMonsterRenderer {
     ctx.closePath();
     ctx.fill();
 
-    // Big Anime Eyes with lashes & catchlights
+    // Subtle jawline ambient shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 4);
+    ctx.lineTo(cx + 5, cy + 4);
+    ctx.lineTo(cx, cy + 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Big Expressive Anime Eyes with Lashes & Catchlights
     const leftEyeX = cx - 3;
     const rightEyeX = cx + 3;
     const eyeY = cy - 1;
 
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(leftEyeX - 1.5, eyeY - 2, 3.5, 1);
-    ctx.fillRect(rightEyeX - 1.5, eyeY - 2, 3.5, 1);
+    // Dark top eyelashes & outer wing
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(leftEyeX - 1.8, eyeY - 2.2, 3.8, 1.3);
+    ctx.fillRect(rightEyeX - 1, eyeY - 2.2, 3.8, 1.3);
+    ctx.fillRect(leftEyeX - 2.2, eyeY - 1.5, 1, 1);
+    ctx.fillRect(rightEyeX + 2.5, eyeY - 1.5, 1, 1);
 
+    // Vibrant Iris
     ctx.fillStyle = eyeColor;
-    ctx.fillRect(leftEyeX - 1, eyeY - 1, 2.5, 3);
-    ctx.fillRect(rightEyeX - 1, eyeY - 1, 2.5, 3);
+    ctx.fillRect(leftEyeX - 1.2, eyeY - 1, 2.7, 3);
+    ctx.fillRect(rightEyeX - 0.5, eyeY - 1, 2.7, 3);
 
-    // Eye catchlight
+    // Deep pupil center
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(leftEyeX - 0.5, eyeY, 1.3, 1.6);
+    ctx.fillRect(rightEyeX + 0.2, eyeY, 1.3, 1.6);
+
+    // Double crisp catchlight sparkles
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(leftEyeX - 1, eyeY - 1, 1, 1);
-    ctx.fillRect(rightEyeX - 1, eyeY - 1, 1, 1);
+    ctx.fillRect(leftEyeX + 0.4, eyeY + 1, 0.7, 0.7);
+    ctx.fillRect(rightEyeX - 0.3, eyeY - 1, 1, 1);
+    ctx.fillRect(rightEyeX + 1.1, eyeY + 1, 0.7, 0.7);
 
-    // Cheek blush
+    // 3. Cute Maiden Cheek Blush (Soft pink stickers)
     ctx.fillStyle = '#f472b6';
-    ctx.fillRect(leftEyeX - 2.5, eyeY + 2.5, 2, 1);
-    ctx.fillRect(rightEyeX + 1, eyeY + 2.5, 2, 1);
+    ctx.fillRect(leftEyeX - 2.8, eyeY + 2.5, 2.2, 1);
+    ctx.fillRect(rightEyeX + 1.2, eyeY + 2.5, 2.2, 1);
 
-    // Cute fangs or smile
+    // 4. Petite Nose dot
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.35)';
+    ctx.fillRect(cx, cy + 2.2, 1, 0.8);
+
+    // 5. Cute Smile or Fangs
+    ctx.fillStyle = '#fb7185';
+    ctx.fillRect(cx - 0.5, cy + 4.5, 2, 0.8);
+
     if (hasFangs) {
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(cx - 1, cy + 4, 1, 1.5);
+      ctx.fillRect(cx + 0.8, cy + 4.2, 1, 1.4);
     }
   }
 
