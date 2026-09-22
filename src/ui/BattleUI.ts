@@ -16,6 +16,7 @@ export class BattleUI {
   public defenderAnim: CharacterAnimState = 'idle';
   public isExecutingRound = false;
   public isScoutOpen = false;
+  public pendingAttackerAction: AttackerAction | null = null;
 
   // Cinematic Combat Cutscene State
   public cutscene = {
@@ -242,17 +243,28 @@ export class BattleUI {
     const b = this.game.activeBattle;
     if (!b) return;
 
+    this.pendingAttackerAction = null;
     const atkGroup = document.getElementById('attackerCommandGroup')!;
     const defGroup = document.getElementById('defenderCommandGroup')!;
 
-    if (b.isPlayerAttacking) {
+    // Check if the current Attacker is a human player
+    const isAttackerHuman = b.attacker.playerRef ? !b.attacker.playerRef.isAI : b.isPlayerAttacking;
+
+    if (isAttackerHuman) {
       atkGroup.classList.remove('hidden');
       defGroup.classList.add('hidden');
-      document.getElementById('battleTurnText')!.innerText = '⚔️ คุณเป็นฝ่ายโจมตี! เลือกคำสั่งรุกของคุณ!';
+      document.getElementById('battleTurnText')!.innerText = `⚔️ ${b.attacker.name} (ฝ่ายโจมตี): เลือกคำสั่งรุกของคุณ!`;
     } else {
+      // Attacker is AI / Monster: Attacker AI chooses, and if Defender is human, prompt Defender
       atkGroup.classList.add('hidden');
-      defGroup.classList.remove('hidden');
-      document.getElementById('battleTurnText')!.innerText = '🛡️ คุณเป็นฝ่ายตั้งรับ! คาดเดาและเลือกคำสั่งรับ!';
+      const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : !b.isPlayerAttacking;
+      if (isDefenderHuman) {
+        defGroup.classList.remove('hidden');
+        document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): คาดเดาและเลือกคำสั่งรับ!`;
+      } else {
+        defGroup.classList.add('hidden');
+        document.getElementById('battleTurnText')!.innerText = `⚔️ กำลังประมวลผลการต่อสู้...`;
+      }
     }
   }
 
@@ -260,27 +272,56 @@ export class BattleUI {
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
 
-    const p = this.game.activePlayer;
+    const isAttackerHuman = b.attacker.playerRef ? !b.attacker.playerRef.isAI : b.isPlayerAttacking;
 
-    if (p.isAI) {
+    if (!isAttackerHuman) {
+      // AI or Monster is Attacking!
       setTimeout(() => {
-        if (b.isPlayerAttacking) {
-          const action = aiSystem.chooseAttackerAction(p, b.defender);
-          this.handleAttackerInput(action);
+        const action = b.attacker.playerRef
+          ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender)
+          : (Math.random() < 0.45 ? 'attack' : Math.random() < 0.75 ? 'strike' : 'magic');
+        this.pendingAttackerAction = action;
+
+        const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : !b.isPlayerAttacking;
+        if (!isDefenderHuman) {
+          // Both are AI
+          const defAct = b.defender.playerRef
+            ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker)
+            : 'defend';
+          this.executeRoundWithAnimation(action, defAct);
         } else {
-          const action = aiSystem.chooseDefenderAction(p, b.attacker);
-          this.handleDefenderInput(action);
+          // Human defender: show defender buttons so human can choose!
+          const atkGroup = document.getElementById('attackerCommandGroup')!;
+          const defGroup = document.getElementById('defenderCommandGroup')!;
+          atkGroup.classList.add('hidden');
+          defGroup.classList.remove('hidden');
+          document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกัน!`;
         }
-      }, 800);
+      }, 700);
     }
   }
 
   private handleAttackerInput(atkAction: AttackerAction) {
     const b = this.game.activeBattle;
-    if (!b || !b.isPlayerAttacking || this.isExecutingRound) return;
+    if (!b || this.isExecutingRound) return;
 
     audio.click();
 
+    // Check if Defender is a human player (PvP duel or human-controlled defending player)
+    const isDefenderHuman = b.defender.playerRef && !b.defender.playerRef.isAI;
+
+    if (isDefenderHuman) {
+      // PvP mode: Save attacker choice and prompt human defender to choose!
+      this.pendingAttackerAction = atkAction;
+      const atkGroup = document.getElementById('attackerCommandGroup')!;
+      const defGroup = document.getElementById('defenderCommandGroup')!;
+      atkGroup.classList.add('hidden');
+      defGroup.classList.remove('hidden');
+      document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+      return;
+    }
+
+    // AI or Monster Defender: choose immediately
     let defAction: DefenderAction = 'defend';
     if (b.defender.playerRef && b.defender.playerRef.isAI) {
       defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker);
@@ -296,14 +337,16 @@ export class BattleUI {
 
   private handleDefenderInput(defAction: DefenderAction) {
     const b = this.game.activeBattle;
-    if (!b || b.isPlayerAttacking || this.isExecutingRound) return;
+    if (!b || this.isExecutingRound) return;
 
     audio.click();
 
-    let atkAction: AttackerAction = 'attack';
-    if (b.attacker.playerRef && b.attacker.playerRef.isAI) {
+    let atkAction: AttackerAction = this.pendingAttackerAction || 'attack';
+    this.pendingAttackerAction = null;
+
+    if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
       atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender);
-    } else {
+    } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
       const roll = Math.random();
       if (roll < 0.45) atkAction = 'attack';
       else if (roll < 0.75) atkAction = 'strike';
@@ -407,10 +450,14 @@ export class BattleUI {
     // Start Phase 1: Dash forward across the arena! (340ms)
     this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
-    if (atkAction === 'strike' || isCounterStrikeClash) {
-      audio.fanfare();
+    if (atkAction === 'skill') {
+      audio.skillCast();
+    } else if (atkAction === 'strike' || isCounterStrikeClash) {
+      audio.strikeHit();
+    } else if (atkAction === 'magic') {
+      audio.magicCast();
     } else {
-      audio.click();
+      audio.attackHit();
     }
 
     // Phase 2: Impact & Combat Resolution (after dash completes at 340ms)
@@ -424,6 +471,7 @@ export class BattleUI {
 
       if (result.isCounterSuccess) {
         // Counter parry successful!
+        audio.counterParry();
         this.defenderAnim = 'counter';
         this.attackerAnim = 'hurt';
         combatVFX.triggerScreenShake(18);
@@ -449,6 +497,7 @@ export class BattleUI {
         const hitY = defBaseY + targetDefDY;
 
         if (atkAction === 'skill') {
+          audio.skillCast();
           combatVFX.triggerSkillCutscene(
             b.attacker.skillName || 'DARK CLEAVE',
             atkBaseX + targetAtkDX,
@@ -459,10 +508,21 @@ export class BattleUI {
             b.attacker.playerRef?.isDarkling || false
           );
         } else if (result.isStrikeSuccess) {
+          audio.strikeHit();
           combatVFX.spawnStrikeHit(hitX, hitY);
         } else if (atkAction === 'magic') {
+          if (result.isMagicBlocked) {
+            audio.magicGuardBlock();
+          } else {
+            audio.magicHit();
+          }
           combatVFX.spawnMagicHit(hitX, hitY, b.attacker.classKey === 'cleric');
         } else {
+          if (defAction === 'defend') {
+            audio.defendBlock();
+          } else {
+            audio.attackHit();
+          }
           if (isPAtk) {
             combatVFX.spawnAttackHit(hitX, hitY);
           } else {
@@ -475,6 +535,10 @@ export class BattleUI {
               atkAction
             );
           }
+        }
+
+        if (result.damageToDefender > 0) {
+          audio.hurt();
         }
       }
 
@@ -540,7 +604,13 @@ export class BattleUI {
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
-    audio.fanfare();
+    if (winner.playerRef && !winner.playerRef.isAI) {
+      audio.victory();
+    } else if (loser.playerRef && !loser.playerRef.isAI) {
+      audio.defeat();
+    } else {
+      audio.fanfare();
+    }
     document.getElementById('battleScreen')?.classList.add('hidden');
     document.getElementById('battleScoutModal')?.classList.add('hidden');
     this.isScoutOpen = false;

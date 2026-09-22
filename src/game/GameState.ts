@@ -52,7 +52,43 @@ export class GameState {
 
   addLog(text: string, type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' = 'info') {
     this.logs.unshift({ text, type });
-    if (this.logs.length > 50) this.logs.pop();
+    if (this.logs.length > 60) this.logs.pop();
+
+    // Stream into Live Game Event Feed Window (Middle-Left of screen)
+    if (typeof document !== 'undefined') {
+      const list = document.getElementById('gameEventFeedList');
+      if (list) {
+        // Remove empty state message if present
+        if (list.children.length === 1 && list.children[0].classList.contains('italic')) {
+          list.innerHTML = '';
+        }
+
+        const row = document.createElement('div');
+        row.className = 'py-1 px-1.5 rounded border transition-all duration-200 flex items-start gap-1.5 bg-slate-950/60 shadow-sm';
+
+        if (type === 'gold') {
+          row.className += ' border-amber-500/30 text-amber-300';
+          row.innerHTML = `<span class="shrink-0 text-xs">🪙</span><span class="break-words leading-tight">${text}</span>`;
+        } else if (type === 'battle') {
+          row.className += ' border-rose-500/30 text-rose-300';
+          row.innerHTML = `<span class="shrink-0 text-xs">⚔️</span><span class="break-words leading-tight">${text}</span>`;
+        } else if (type === 'darkling') {
+          row.className += ' border-purple-500/40 text-purple-300';
+          row.innerHTML = `<span class="shrink-0 text-xs">😈</span><span class="break-words leading-tight">${text}</span>`;
+        } else if (type === 'level') {
+          row.className += ' border-emerald-500/30 text-emerald-300';
+          row.innerHTML = `<span class="shrink-0 text-xs">⭐</span><span class="break-words leading-tight">${text}</span>`;
+        } else {
+          row.className += ' border-slate-700/40 text-slate-200';
+          row.innerHTML = `<span class="shrink-0 text-xs">💬</span><span class="break-words leading-tight">${text}</span>`;
+        }
+
+        list.insertBefore(row, list.firstChild);
+        if (list.children.length > 40) {
+          list.removeChild(list.lastChild!);
+        }
+      }
+    }
   }
 
   initGame(partyConfig: Array<{ name: string; classKey: string; isAI: boolean }>, winGoal = 'networth') {
@@ -120,7 +156,7 @@ export class GameState {
 
     // Deduct MP
     caster.mp -= spell.mpCost;
-    audio.magicCast();
+    audio.fieldSpellCast();
 
     if (spellKey === 'zap' && target) {
       const dmg = Math.round(25 + caster.getTotalStat('mag') * 1.5);

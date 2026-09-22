@@ -312,14 +312,26 @@ class DokaponApp {
       document.getElementById('inventoryModal')?.classList.add('hidden');
     });
 
-    // Chronicle Log toggle
+    // Chronicle Log & Live Event Feed toggle (Middle-Left of Screen)
+    let isEventFeedMinimized = false;
+    document.getElementById('btnToggleEventFeed')?.addEventListener('click', () => {
+      audio.click();
+      const list = document.getElementById('gameEventFeedList');
+      const btnMin = document.getElementById('btnMinimizeEventFeed');
+      if (!list || !btnMin) return;
+      isEventFeedMinimized = !isEventFeedMinimized;
+      if (isEventFeedMinimized) {
+        list.classList.add('hidden');
+        btnMin.innerText = '▲';
+      } else {
+        list.classList.remove('hidden');
+        btnMin.innerText = '▼';
+      }
+    });
+
     document.getElementById('btnToggleLog')?.addEventListener('click', () => {
       audio.click();
-      this.renderChronicleLog();
-      document.getElementById('gameLogDrawer')?.classList.toggle('hidden');
-    });
-    document.getElementById('btnCloseLog')?.addEventListener('click', () => {
-      document.getElementById('gameLogDrawer')?.classList.add('hidden');
+      document.getElementById('gameEventFeedWindow')?.classList.toggle('hidden');
     });
 
     // Settings & Rules
@@ -419,6 +431,7 @@ class DokaponApp {
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
+    document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
 
     this.onTurnStarted();
 
@@ -557,7 +570,7 @@ class DokaponApp {
       case 'vault':
         const loot = 90 + Math.floor(Math.random() * 110);
         p.gold += loot;
-        audio.coin();
+        audio.chestOpen();
         this.game.addLog(`🎁 ห้องนิรภัยโบราณ! ${p.displayName} งัดห้องนิรภัยและได้เงิน ${loot}G!`, 'gold');
         this.advanceTurn();
         break;

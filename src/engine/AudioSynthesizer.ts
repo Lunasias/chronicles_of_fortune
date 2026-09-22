@@ -4,8 +4,9 @@ export class AudioSynthesizer {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
   public bgmEnabled: boolean = true;
-  public bgmVolume: number = 0.25;
-  public sfxVolume: number = 0.35;
+  public sfxVolume: number = 0.40;
+  // BGM volume is strictly kept at 50% of SFX volume per user requirement
+  public bgmVolume: number = 0.20;
 
   private currentTrack: BgmTrack = 'none';
   private bgmTimer: number | null = null;
@@ -28,10 +29,10 @@ export class AudioSynthesizer {
   }
 
   // =========================================================================
-  // VOLUME & TOGGLE CONTROLS
+  // VOLUME & TOGGLE CONTROLS (BGM ALWAYS HALF OF SFX VOLUME)
   // =========================================================================
   setBgmVolume(val: number) {
-    this.bgmVolume = Math.max(0, Math.min(1, val));
+    this.bgmVolume = Math.max(0, Math.min(this.sfxVolume * 0.5, val));
     if (this.ctx && this.bgmGainNode) {
       this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
     }
@@ -39,6 +40,10 @@ export class AudioSynthesizer {
 
   setSfxVolume(val: number) {
     this.sfxVolume = Math.max(0, Math.min(1, val));
+    this.bgmVolume = this.sfxVolume * 0.5;
+    if (this.ctx && this.bgmGainNode) {
+      this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
+    }
   }
 
   toggleBgm(): boolean {
@@ -316,6 +321,68 @@ export class AudioSynthesizer {
 
   hurt() {
     this.playTone(150, 'sawtooth', 0.18, 0.2);
+  }
+
+  // --- SPECIAL COMBAT & SKILL SOUNDS ---
+
+  skillCast() {
+    // Majestic rising arpeggio for class ultimate skill
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sawtooth', 0.14, 0.18), idx * 45);
+    });
+  }
+
+  magicHit() {
+    // Explosive magic impact burst
+    this.playTone(280, 'sawtooth', 0.2, 0.22);
+    setTimeout(() => this.playTone(160, 'square', 0.18, 0.20), 40);
+    setTimeout(() => this.playTone(440, 'sine', 0.25, 0.16), 90);
+  }
+
+  defendBlock() {
+    // Solid shield bash / metallic guard block thud
+    this.playTone(120, 'square', 0.14, 0.24);
+    setTimeout(() => this.playTone(60, 'triangle', 0.22, 0.28), 30);
+  }
+
+  giveUpDefeat() {
+    // Descending sad defeat chord
+    const notes = [392.0, 349.2, 311.1, 261.6];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.2, 0.16), idx * 100);
+    });
+  }
+
+  victory() {
+    // Dokapon Royal Victory Fanfare
+    const seq = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+    seq.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'square', 0.18, 0.22), idx * 110);
+    });
+  }
+
+  defeat() {
+    // Tragic minor game over cadence
+    const seq = [329.6, 311.1, 293.7, 261.6, 220.0];
+    seq.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sawtooth', 0.28, 0.18), idx * 130);
+    });
+  }
+
+  chestOpen() {
+    // Sparkling golden chest unlock
+    const notes = [659.25, 880.0, 1046.5, 1318.5, 1760.0];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.15, 0.16), idx * 60);
+    });
+  }
+
+  fieldSpellCast() {
+    // Cosmic chime resonance
+    this.playTone(880, 'sine', 0.12, 0.15);
+    setTimeout(() => this.playTone(1320, 'sine', 0.18, 0.18), 70);
+    setTimeout(() => this.playTone(1760, 'sine', 0.24, 0.16), 140);
   }
 }
 

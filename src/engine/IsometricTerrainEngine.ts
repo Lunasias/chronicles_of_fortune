@@ -74,25 +74,23 @@ export class IsometricTerrainEngine {
       }
     };
 
-    // 1. Expand terrain around every board node (radius of 2 tiles for solid island ground)
+    // 1. Expand terrain around every board node (radius of 1 tile for solid ground)
     nodes.forEach(node => {
-      for (let dx = -2; dx <= 2; dx++) {
-        for (let dy = -2; dy <= 2; dy++) {
-          if (Math.abs(dx) + Math.abs(dy) <= 3) {
-            addCell(node.gx + dx, node.gy + dy, node.gz, node.biome, node.realmId);
-          }
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          addCell(node.gx + dx, node.gy + dy, node.gz, node.biome, node.realmId);
         }
       }
     });
 
-    // 2. Expand terrain along every roadway connection between neighboring nodes
+    // 2. Expand terrain along roadway connections between neighboring nodes
     nodes.forEach(node => {
       node.neighbors.forEach(neighborId => {
         if (neighborId > node.id) {
           const neighbor = nodeMap.get(neighborId);
           if (!neighbor) return;
 
-          const steps = Math.max(Math.abs(neighbor.gx - node.gx), Math.abs(neighbor.gy - node.gy)) * 2;
+          const steps = Math.max(Math.abs(neighbor.gx - node.gx), Math.abs(neighbor.gy - node.gy));
           for (let s = 0; s <= steps; s++) {
             const t = steps === 0 ? 0 : s / steps;
             const midGx = Math.round(node.gx + (neighbor.gx - node.gx) * t);
@@ -101,12 +99,7 @@ export class IsometricTerrainEngine {
             const curBiome = t < 0.5 ? node.biome : neighbor.biome;
             const curRealm = t < 0.5 ? node.realmId : neighbor.realmId;
 
-            // 3-wide road embankment buffer (ox, oy in -1 to +1)
-            for (let ox = -1; ox <= 1; ox++) {
-              for (let oy = -1; oy <= 1; oy++) {
-                addCell(midGx + ox, midGy + oy, midGz, curBiome, curRealm);
-              }
-            }
+            addCell(midGx, midGy, midGz, curBiome, curRealm);
           }
         }
       });
@@ -168,8 +161,8 @@ export class IsometricTerrainEngine {
       const rand2 = (seed * 1.5) - Math.floor(seed * 1.5);
       const rand3 = (seed * 2.3) - Math.floor(seed * 2.3);
 
-      // 65% of perimeter/buffer tiles receive natural environment props
-      if (rand1 < 0.65) {
+      // Tasteful, performance-friendly scattering of natural environment props (8% density, max 160 props total)
+      if (rand1 < 0.08 && this.environmentProps.length < 160) {
         let type: EnvironmentProp['type'] = 'grass';
         if (rand2 < 0.32) {
           type = 'rock'; // Boulders and stones

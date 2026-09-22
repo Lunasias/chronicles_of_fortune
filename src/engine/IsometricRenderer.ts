@@ -775,34 +775,14 @@ export class IsometricRenderer {
       icon = '⚡';
     }
 
-    // 0. 3D Cliff Pedestal for elevated spaces (gz > 0)
-    if (node.gz > 0) {
-      const drop = node.gz * this.elevationStep;
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.moveTo(cx - hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx, cy + hh + drop);
-      ctx.lineTo(cx - hw, cy + drop);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#020617';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx + hw, cy + drop);
-      ctx.lineTo(cx, cy + hh + drop);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // 1. Draw Authentic 2.5D Isometric Terrain Slab
-    const isoTerrain = pixelSprites.getTerrainBlock(node.biome, node.id, this.tileWidth, 64);
-    ctx.drawImage(isoTerrain, cx - hw, cy - hh, this.tileWidth, 64);
-
-    // 2. Dokapon Signature Node Medallion Plate in Center
+    // Dokapon Signature Node Medallion Plate in Center (Flush on continuous terrain ground)
     ctx.save();
+    // Subtle ground contact shadow
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 1, 23, 15, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fill();
+
     ctx.beginPath();
     ctx.ellipse(cx, cy, 22, 14, 0, 0, Math.PI * 2);
     ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor;
