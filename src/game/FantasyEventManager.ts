@@ -21,14 +21,34 @@ export interface FantasyEventOutcome {
 
 export interface FantasyEventData {
   id: string;
-  category: 'church' | 'tavern' | 'waterfall_forest' | 'sakura_shrine' | 'steampunk' | 'volcano' | 'snow' | 'desert' | 'abyss' | 'blue' | 'red' | 'empty';
+  category:
+    | 'church'
+    | 'tavern'
+    | 'shop_weapon'
+    | 'shop_magic'
+    | 'shop_item'
+    | 'guild'
+    | 'fishing'
+    | 'vault'
+    | 'dark_gate'
+    | 'waterfall_forest'
+    | 'sakura_shrine'
+    | 'steampunk'
+    | 'volcano'
+    | 'snow'
+    | 'desert'
+    | 'abyss'
+    | 'blue'
+    | 'red'
+    | 'empty';
   title: string;
   subtitle: string;
   icon: string;
   badge: string;
   description: string;
   bannerColor: string;
-  choices: [FantasyChoice, FantasyChoice, FantasyChoice];
+  choices: FantasyChoice[];
+  actionType?: 'open_weapon_shop' | 'open_magic_shop' | 'open_item_shop' | 'open_guild' | 'open_fishing';
 }
 
 export class FantasyEventManager {
@@ -2495,6 +2515,480 @@ export class FantasyEventManager {
           }
         }
       ]
+    },
+
+    // =========================================================================
+    // 13. WEAPON SHOP EVENTS (คลังสรรพาวุธและช่างตีเหล็กสาว)
+    // =========================================================================
+    {
+      id: 'shop_weapon_blacksmith',
+      category: 'shop_weapon',
+      title: 'เตาหลอมสรรพาวุธของสาวน้อยช่างตีเหล็ก',
+      subtitle: 'ประกายไฟและควันหอมกรุ่น ช่างตีเหล็กสาวในชุดเอี๊ยมหนังเผยแผ่นหลังและเอวเอสกำลังตีดาบ',
+      icon: '⚔️👩‍🏭',
+      badge: 'WEAPON FORGE',
+      description: 'สาวน้อยช่างตีเหล็ก คาร์ล่า ปาดเหงื่อบนหน้าผาก ยิ้มหวานต้อนรับ "ยินดีต้อนรับสู่อู่เหล็กจ้ะ! วันนี้อยากได้อาวุธคมกริบหรือจะให้อัปเกรดอะไรดี?"',
+      bannerColor: '#f97316',
+      actionType: 'open_weapon_shop',
+      choices: [
+        {
+          text: '⚔️ เข้าสู่ร้านค้าคลังสรรพาวุธและชุดเกราะ',
+          subtext: 'เลือกซื้อดาบ โล่ เกราะ และเครื่องประดับ T1-T5',
+          icon: '⚔️',
+          resolve: () => ({
+            outcomeTitle: 'ยินดีต้อนรับสู่คลังอาวุธ!',
+            outcomeText: 'คาร์ล่าพาคุณเข้าสู่คลังอาวุธ เลือกสรรอุปกรณ์ชั้นยอดเพื่อเสริมพลังรบของคุณ!',
+            icon: '🛡️',
+            soundType: 'coin'
+          })
+        },
+        {
+          text: '💖 หยอดคำหวานชื่นชมกล้ามเนื้อและฝีมือการตีเหล็กของเธอ',
+          subtext: 'เธอเขินอายหน้าแดงก่ำ และแถมหินลับมีดเวทมนตร์ลับดาบให้ฟรี (+3 ATK ถาวร!)',
+          icon: '💖',
+          resolve: (player) => {
+            player.atk += 3;
+            return {
+              outcomeTitle: 'ช่างสาวเขินอายหน้าแดง!',
+              outcomeText: 'คาร์ล่าหน้าแดงถึงใบหู "พะ...พูดบ้าอะไรน่ะ! แต่ก็ขอบใจนะ... นี่! ข้าแถมหินลับมีดเวทมนตร์ช่วยเพิ่มคมดาบให้ (+3 ATK ถาวร)!"',
+              icon: '✨',
+              soundType: 'level'
+            };
+          }
+        },
+        {
+          text: '🔥 อาสาช่วยเร่งเปลวไฟในเตาหลอมโบราณ',
+          subtext: 'ใช้พลังช่วยตีเหล็ก ได้รับเงินค่าจ้าง 120G และพลังกาย +2 DEF',
+          icon: '🔥',
+          resolve: (player) => {
+            player.gold += 120;
+            player.def += 2;
+            return {
+              outcomeTitle: 'งานฝีมือประสานใจ!',
+              outcomeText: 'คุณกับคาร์ล่าช่วยกันทุบตีเหล็กกล้าอย่างเข้าขา เธอประทับใจมากและมอบค่าจ้าง 120G พร้อมกล้ามเนื้อที่กระชับขึ้น (+2 DEF)!',
+              icon: '💪',
+              soundType: 'fanfare',
+              goldChange: 120
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 14. MAGIC SHOP EVENTS (หอเวทมนตร์และแม่มดสาว)
+    // =========================================================================
+    {
+      id: 'shop_magic_witch',
+      category: 'shop_magic',
+      title: 'หอปรุงยาและคัมภีร์เวทมนตร์ของแม่มดสาว',
+      subtitle: 'กลิ่นควันกำยานหอมละมุน แม่มดสาวผมม่วงดวงตากลมโตสวมหมวกปีกกว้างกำลังคนหม้อยาเวท',
+      icon: '🔮🧙‍♀️',
+      badge: 'ARCANE EMPORIUM',
+      description: 'แม่มดสาว เมอร์ลินด้า เงยหน้าขึ้นมองด้วยแววตาซุกซน "อ๊ะ แขกผู้มาเยือน... สนใจมนตราลึกลับ น้ำยาเพิ่มพลัง หรือจะมาฟังคำทำนายแห่งชะตาชีวิตดีล่ะ?"',
+      bannerColor: '#a855f7',
+      actionType: 'open_magic_shop',
+      choices: [
+        {
+          text: '🔮 เข้าสู่ร้านค้าคัมภีร์เวทมนตร์และโอสถทิพย์',
+          subtext: 'เลือกซื้อเวทฟิลด์ น้ำยาเพิ่มสเตตัสถาวร และสปินเนอร์',
+          icon: '🔮',
+          resolve: () => ({
+            outcomeTitle: 'เข้าสู่หอคัมภีร์เวทมนตร์!',
+            outcomeText: 'เมอร์ลินด้าเปิดตำราเวทมนตร์โบราณให้คุณเลือกซื้อคาถาอาคมชั้นสูง!',
+            icon: '📜',
+            soundType: 'magic'
+          })
+        },
+        {
+          text: '✨ ให้แม่มดสาวตรวจดูลายมือทำนายดวงชะตาชีวิต',
+          subtext: 'ได้รับพรแห่งดวงดาว ฟื้นฟู MP เต็มเปี่ยม และโชคลาภ +5 LUK ถาวร!',
+          icon: '✨',
+          resolve: (player) => {
+            player.luk += 5;
+            player.mp = player.maxMp;
+            return {
+              outcomeTitle: 'คำทำนายแห่งโชคชะตาส่องประกาย!',
+              outcomeText: 'เมอร์ลินด้ากุมมือของคุณอย่างแผ่วเบา ร่ายมนตร์ประสานจิต "เส้นลายมือของท่านสุกสกาวดั่งดวงดาว... จะมีโชคลาภหลั่งไหลมา!" (+5 LUK, ฟื้นฟู MP เต็ม)',
+              icon: '🌟',
+              soundType: 'level',
+              mpChange: player.maxMp
+            };
+          }
+        },
+        {
+          text: '🧪 อาสาเป็นผู้ทดลองชิมน้ำยาสูตรลับแปลกใหม่',
+          subtext: 'ดื่มน้ำยาสีรุ้งเรืองแสง ลุ้นรับพลังเวทมนตร์มหาศาล (+4 MAG ถาวร)',
+          icon: '🧪',
+          resolve: (player) => {
+            player.mag += 4;
+            return {
+              outcomeTitle: 'รสชาติหวานซ่านถึงแก่นวิญญาณ!',
+              outcomeText: 'น้ำยาในหม้อต้มมีรสชาติหวานเปรี้ยวซาบซ่า วงจรมานาในกายคุณแผ่ขยายพลังเวทพุ่งสูงขึ้นอย่างถาวร (+4 MAG)!',
+              icon: '⚡',
+              soundType: 'level'
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 15. ITEM SHOP EVENTS (ร้านเบ็ดเตล็ดและสาวหูแมว)
+    // =========================================================================
+    {
+      id: 'shop_item_gachapon',
+      category: 'shop_item',
+      title: 'ร้านสะดวกซื้อแสนสุขของแม่ค้าสาวหูแมว',
+      subtitle: 'กระดิ่งหน้าร้านดังกริ๊ง สาวน้อยหูแมว เหมียวเหมียว โบกหางนุ่มฟูต้อนรับอย่างร่าเริง',
+      icon: '🏪🐱',
+      badge: 'GENERAL STORE',
+      description: 'เหมียวเหมียว กระดิกหูแมวไปมา "เนียะฮ่า! ยินดีต้อนรับเมี๊ยว! ร้านเรามีทั้งสปินเนอร์นำโชค ยาฟื้นพลัง และตู้กาชาปองไข่ทองคำด้วยน้า!"',
+      bannerColor: '#22c55e',
+      actionType: 'open_item_shop',
+      choices: [
+        {
+          text: '🏪 เข้าสู่ร้านค้าไอเทมและอุปกรณ์ทั่วไป',
+          subtext: 'เลือกซื้อสปินเนอร์ลูกเต๋า ระเบิด คัมภีร์วาร์ป และน้ำยา',
+          icon: '🏪',
+          resolve: () => ({
+            outcomeTitle: 'เลือกชมสินค้าในร้าน!',
+            outcomeText: 'เหมียวเหมียวพาคุณเดินชมชั้นวางสินค้าที่เต็มไปด้วยไอเทมมีประโยชน์สำหรับการเดินทาง!',
+            icon: '🛍️',
+            soundType: 'coin'
+          })
+        },
+        {
+          text: '🎰 หยอดเหรียญ 50G หมุนตู้กาชาปองนำโชคหน้าร้าน',
+          subtext: 'ลุ้นสุ่มรับสปินเนอร์ 3 ลูกเต๋า หรือน้ำยาเพิ่มพลังถาวร!',
+          icon: '🎰',
+          resolve: (player) => {
+            if (player.gold < 50) {
+              return {
+                outcomeTitle: 'ทองไม่พอหมุนกาชา!',
+                outcomeText: 'คุณมีเงินไม่พอ 50G เหมียวเหมียวปลอบใจด้วยลูกกวาดหวานๆ ชิ้นหนึ่ง (+10 HP)',
+                icon: '🍬',
+                soundType: 'magic',
+                hpChange: 10
+              };
+            }
+            player.gold -= 50;
+            player.activeSpinnerMultiplier = 3;
+            return {
+              outcomeTitle: 'แจ็กพอตไข่ทองคำแตก!',
+              outcomeText: 'ไข่ทองคำกลิ้งออกมาจากตู้กาชาปอง! ข้างในคือสปินเนอร์ 3 ลูกเต๋า (การเดินครั้งถัดไปจะทอยเต๋าได้ 3 ลูกเต็ม!)',
+              icon: '🌀',
+              soundType: 'fanfare',
+              goldChange: -50
+            };
+          }
+        },
+        {
+          text: '📦 ช่วยแม่ค้าสาวจัดสต็อกลังสินค้าหน้าร้าน',
+          subtext: 'ช่วยยกของสร้างความประทับใจ ได้รับเงิน 100G และน้ำยาฟื้นเลือดฟรี',
+          icon: '📦',
+          resolve: (player) => {
+            player.gold += 100;
+            player.hp = Math.min(player.maxHp, player.hp + 50);
+            return {
+              outcomeTitle: 'เหมียวเหมียวซาบซึ้งใจยิ่งนัก!',
+              outcomeText: 'เหมียวเหมียวเอาแก้มคลอเคลียขอบคุณอย่างมีความสุข มอบเงินตอบแทน 100G และช่วยทายารักษาแผลให้ (+50 HP)!',
+              icon: '💖',
+              soundType: 'fanfare',
+              goldChange: 100,
+              hpChange: 50
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 16. GUILD EVENTS (กิลด์นักผจญภัย & สัญญาจ้างคู่หู 3 เทิร์น)
+    // =========================================================================
+    {
+      id: 'guild_mercenary_hall',
+      category: 'guild',
+      title: 'ห้องโถงกิลด์นักผจญภัยและศูนย์ว่าจ้าง',
+      subtitle: 'เสียงชนแก้วเบียร์เคล้าเสียงหัวเราะ สาวๆ นักผจญภัยหลากหลายเผ่าพันธุ์กำลังรอคอยภารกิจ',
+      icon: '📜🍻',
+      badge: 'ADVENTURER GUILD',
+      description: 'พนักงานต้อนรับสาวกิลด์ เอริน ยิ้มต้อนรับ "ยินดีต้อนรับสู่กิลด์ค่ะ! มีทั้งกระดานเควสต์ล่าค่าหัว และเหล่านักรบสาวรับจ้างพร้อมเซ็นสัญญาร่วมรบระยะสั้น (3 เทิร์น) ค่ะ!"',
+      bannerColor: '#eab308',
+      actionType: 'open_guild',
+      choices: [
+        {
+          text: '📜 ตรวจดูกระดานเควสต์ล่าค่าหัวประจำกิลด์',
+          subtext: 'รับภารกิจล่ามอนสเตอร์หรือปลดปล่อยเมืองเพื่อรับรางวัลเงินก้อนโต',
+          icon: '📜',
+          resolve: () => ({
+            outcomeTitle: 'เข้าสู่กระดานเควสต์กิลด์!',
+            outcomeText: 'เอรินนำแผ่นประกาศเควสต์ล่าสุดมาแสดงให้คุณเลือกรับภารกิจ!',
+            icon: '📋',
+            soundType: 'coin'
+          })
+        },
+        {
+          text: '🐾 จ้างสาวหูแมวนักล่า "มิอา" ร่วมรบ (สัญญา 3 เทิร์น: 180G)',
+          subtext: 'มิอาจะร่วมต่อสู้และกระโดดเข้าช่วยโจมตีในสมรภูมิตลอด 3 เทิร์นเต็ม!',
+          icon: '🐾',
+          resolve: (player) => {
+            if (player.gold < 180) {
+              return {
+                outcomeTitle: 'ทองไม่เพียงพอสำหรับค่าจ้าง!',
+                outcomeText: 'คุณมีเงินไม่พอ 180G มิอาเอียงคอทำตาละห้อย "ไว้มีตังค์ค่อยมาจ้างเค้าน้าเมี๊ยว..."',
+                icon: '💸',
+                soundType: 'magic'
+              };
+            }
+            player.gold -= 180;
+            player.companion = {
+              id: 'comp_hired_mia',
+              name: 'สาวหูแมวนักล่า มิอา',
+              title: 'มือสังหารกิลด์รับจ้าง',
+              avatar: '🐱🗡️',
+              role: 'striker',
+              skillName: 'Lupine Cat Claw Rush',
+              skillDesc: 'พุ่งกระโจนข่วนศัตรูต่อเนื่องด้วยกรงเล็บลมกรด!',
+              affinity: 100,
+              dialogue: 'สัญญาสามเทิร์นนี้ เหมียวจะปกป้องเจ้านายด้วยชีวิตเลยเมี๊ยว!',
+              color: '#10b981',
+              contractTurnsRemaining: 3
+            };
+            return {
+              outcomeTitle: 'เซ็นสัญญาว่าจ้างมิอาสำเร็จ!',
+              outcomeText: 'สาวหูแมว มิอา กระโดดกอดแขนคุณอย่างสนิทสนม! เธอจะร่วมทัพช่วยต่อสู้เป็นเวลา 3 เทิร์นเต็มนับจากนี้!',
+              icon: '🎉',
+              soundType: 'fanfare',
+              goldChange: -180,
+              companionRecruited: player.companion
+            };
+          }
+        },
+        {
+          text: '🧝‍♀️ จ้างเจ้าหญิงเอลฟ์นักเวท "ซิลฟิรา" ร่วมรบ (สัญญา 3 เทิร์น: 220G)',
+          subtext: 'ซิลฟิราจะร่ายมนตร์ม่านพฤกษาคุ้มกันและยิงบีมเวทช่วยรบ 3 เทิร์น!',
+          icon: '🧝‍♀️',
+          resolve: (player) => {
+            if (player.gold < 220) {
+              return {
+                outcomeTitle: 'ทองไม่เพียงพอสำหรับค่าจ้าง!',
+                outcomeText: 'คุณมีเงินไม่พอ 220G เจ้าหญิงซิลฟิรายิ้มสง่างาม "ฝึกฝนและสะสมทรัพย์อีกนิดนะท่านผู้กล้า"',
+                icon: '💸',
+                soundType: 'magic'
+              };
+            }
+            player.gold -= 220;
+            player.companion = {
+              id: 'comp_hired_sylphira',
+              name: 'เจ้าหญิงเอลฟ์ ซิลฟิรา',
+              title: 'มหาจอมเวทพฤกษาแห่งป่าน้ำตก',
+              avatar: '🧝‍♀️✨',
+              role: 'mage',
+              skillName: 'Emerald Waterfall Deluge',
+              skillDesc: 'อัญเชิญสายน้ำตกมรกตชำระล้างศัตรูและฟื้นฟูเลือด!',
+              affinity: 100,
+              dialogue: 'สายลมและผืนป่าจะคอยปกปักรักษาท่านตลอดการเดินทางนี้',
+              color: '#38bdf8',
+              contractTurnsRemaining: 3
+            };
+            return {
+              outcomeTitle: 'เซ็นสัญญาว่าจ้างซิลฟิราสำเร็จ!',
+              outcomeText: 'เจ้าหญิงเอลฟ์ ซิลฟิรา โบกคทาประกายแสงมรกต เธอจะร่วมทัพช่วยต่อสู้และคุ้มครองคุณเป็นเวลา 3 เทิร์นเต็ม!',
+              icon: '🌟',
+              soundType: 'fanfare',
+              goldChange: -220,
+              companionRecruited: player.companion
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 17. FISHING EVENTS (เวิ้งน้ำตกมรกตและเงือกสาว)
+    // =========================================================================
+    {
+      id: 'fishing_mermaid_cove',
+      category: 'fishing',
+      title: 'เวิ้งน้ำตกมรกตและเสียงเพลงของไซเรน',
+      subtitle: 'ผิวน้ำประกายแสงระยิบระยับ ปรากฏเงือกสาวแสนสวยแหวกว่ายเข้ามาหยอกล้อ',
+      icon: '🎣🧜‍♀️',
+      badge: 'SIREN COVE',
+      description: 'เงือกสาวไซเรน เนริดา เกาะโขดหินริมน้ำ เผยหน้าอกอวบอิ่มและครีบหางประกายสีรุ้ง "เจ้ามนุษย์รูปงาม... แวะมาตกปลาหรือแวะมาชมความงามของข้ากันแน่จ๊ะ?"',
+      bannerColor: '#06b6d4',
+      actionType: 'open_fishing',
+      choices: [
+        {
+          text: '🎣 หย่อนเบ็ดตกปลาธรรมดาในเวิ้งน้ำ',
+          subtext: 'ตกปลาเพื่อลุ้นไอเทม อาหารบัฟ หรือมอนสเตอร์ใต้สมุทร',
+          icon: '🎣',
+          resolve: () => ({
+            outcomeTitle: 'หย่อนเบ็ดตกปลา!',
+            outcomeText: 'คุณเตรียมคันเบ็ดและเหยื่อตกปลา ท้าทายสิ่งมีชีวิตลึกลับใต้ผิวน้ำ!',
+            icon: '🐟',
+            soundType: 'coin'
+          })
+        },
+        {
+          text: '🧜‍♀️ ร้องเพลงคู่ประสานเสียงกับเงือกสาวเนริดา',
+          subtext: 'ฟื้นฟู HP & MP เต็ม 100% พร้อมได้รับพรเสน่ห์ดวงชะตา (+6 LUK ถาวร)',
+          icon: '🎵',
+          resolve: (player) => {
+            player.hp = player.maxHp;
+            player.mp = player.maxMp;
+            player.luk += 6;
+            return {
+              outcomeTitle: 'บทเพลงแห่งไซเรนสะกดวิญญาณ!',
+              outcomeText: 'เสียงเพลงของคุณและเนริดากังวานไปทั่วผืนน้ำ ละอองน้ำศักดิ์สิทธิ์รักษาบาดแผลจนหายสนิท และชะตาชีวิตของคุณเปล่งประกาย (+6 LUK)!',
+              icon: '💖',
+              soundType: 'level',
+              hpChange: player.maxHp,
+              mpChange: player.maxMp
+            };
+          }
+        },
+        {
+          text: '⚓ ดำน้ำลึกตามหาหีบสมบัติใต้ก้นทะเลสาบ',
+          subtext: 'เนริดาช่วยนำทางพาไปค้นพบหีบทองคำเรืออับปาง (+320G)',
+          icon: '⚓',
+          resolve: (player) => {
+            player.gold += 320;
+            return {
+              outcomeTitle: 'ค้นพบหีบสมบัติใต้สมุทร!',
+              outcomeText: 'เนริดาจับมือคุณดำดิ่งลงสู่ก้นบึงมรกต ชี้ทางให้คุณเปิดหีบโบราณที่เต็มไปด้วยเหรียญทองคำ (+320G)!',
+              icon: '🎁',
+              soundType: 'fanfare',
+              goldChange: 320
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 18. VAULT EVENTS (ห้องนิรภัยโบราณ)
+    // =========================================================================
+    {
+      id: 'vault_ancient_chamber',
+      category: 'vault',
+      title: 'ห้องนิรภัยทองคำของอารยธรรมโบราณ',
+      subtitle: 'ประตูป้อมปราการศิลาปิดผนึกด้วยโซ่ตรวนและรูนเวทมนตร์เรืองแสงสีทอง',
+      icon: '🗝️🎁',
+      badge: 'ANCIENT VAULT',
+      description: 'วิญญาณสาวผู้เฝ้าห้องนิรภัยปรากฏกายขึ้นเตือน "เฉพาะผู้ที่มีสติปัญญา พละกำลัง หรือโชคชะตาอันล้ำเลิศเท่านั้น ที่จะได้ครอบครองสมบัติข้างในนี้!"',
+      bannerColor: '#fbbf24',
+      choices: [
+        {
+          text: '🗝️ ถอดรหัสอักขระรูนโบราณบนบานประตูอย่างประณีต',
+          subtext: 'ใช้พลังเวทมนตร์ปลดล็อกกลไก ได้รับทอง 350G และปัญญาเวท +3 MAG',
+          icon: '🔮',
+          resolve: (player) => {
+            player.gold += 350;
+            player.mag += 3;
+            return {
+              outcomeTitle: 'ถอดรหัสรูนสำเร็จ!',
+              outcomeText: 'รูนเวทมนตร์ส่องแสงจ้า ประตูนิรภัยค่อยๆ เลื่อนเปิดออก เผยสมบัติทองคำ 350G และภูมิปัญญาโบราณ (+3 MAG)!',
+              icon: '✨',
+              soundType: 'level',
+              goldChange: 350
+            };
+          }
+        },
+        {
+          text: '🗡️ ใช้ความชำนาญโจรสะเดาะสลักกลอนชั้นสูง',
+          subtext: 'สะเดาะกลอนโดยไร้เสียงรบกวน ได้รับทองคำ 450G และโชคลาภ +8 LUK',
+          icon: '🗝️',
+          resolve: (player) => {
+            player.gold += 450;
+            player.luk += 8;
+            return {
+              outcomeTitle: 'สะเดาะกลอนสมบูรณ์แบบ!',
+              outcomeText: 'เสียงสลักปลดล็อกดัง "คลิก!" กล่องสมบัติภายในห้องเปิดออก มอบทองคำ 450G และความมั่นใจในโชคชะตา (+8 LUK)!',
+              icon: '👑',
+              soundType: 'fanfare',
+              goldChange: 450
+            };
+          }
+        },
+        {
+          text: '💥 ใช้แรงกายเกร็งกล้ามเนื้อกระแทกพังประตู',
+          subtext: 'พังประตูบุกเข้าไป ได้รับทอง 380G (รับดาเมจจากเศษหิน -15 HP)',
+          icon: '💥',
+          resolve: (player) => {
+            player.gold += 380;
+            player.hp = Math.max(1, player.hp - 15);
+            return {
+              outcomeTitle: 'พลังทำลายล้างมหาศาล!',
+              outcomeText: 'ประตูศิลาแตกกระจายเป็นเสี่ยงๆ! คุณกวาดทองคำมาได้ 380G แม้จะมีรอยฟกช้ำจากเศษหินเล็กน้อย (-15 HP)!',
+              icon: '💰',
+              soundType: 'coin',
+              goldChange: 380,
+              hpChange: -15
+            };
+          }
+        }
+      ]
+    },
+
+    // =========================================================================
+    // 19. DARK GATE EVENTS (ประตูนรก & แท่นบูชามารดำ)
+    // =========================================================================
+    {
+      id: 'dark_gate_sanctuary',
+      category: 'dark_gate',
+      title: 'ประตูนรกและแท่นบูชามารดำ Rico',
+      subtitle: 'ไอหมอกสีม่วงเข้มปกคลุม ซัคคิวบัสสาวในชุดเปิดเผยร่ายรำอยู่หน้าประตูมิติ',
+      icon: '😈💋',
+      badge: 'DARK GATE',
+      description: 'ซัคคิวบัสสาวแห่งความมืด ลิลิธ หัวเราะคิกคัก "ยินดีต้อนรับสู่ธรณีประตูแห่งความมืด... เจ้าปรารถนาพลังอันไร้ขีดจำกัดเพื่อล้างแค้น หรือจะมาหาความสำราญกับข้ากันแน่จ๊ะ?"',
+      bannerColor: '#c084fc',
+      choices: [
+        {
+          text: '😈 สวดอัญเชิญ Rico ทำพันธสัญญาจุติร่างดาร์คลิง',
+          subtext: 'หากเป็นผู้เล่นอันดับสุดท้าย จะแปลงร่างเป็นอสูรดาร์คลิงสุดแกร่งทันที!',
+          icon: '😈',
+          resolve: () => {
+            return {
+              outcomeTitle: 'พันธสัญญามารดำดาร์คลิง!',
+              outcomeText: 'หากคุณเป็นผู้เล่นที่ตามหลังอันดับสุดท้าย แท่นบูชาจะตอบรับและมอบพลังจุติร่างดาร์คลิงทันที!',
+              icon: '🔥',
+              soundType: 'magic'
+            };
+          }
+        },
+        {
+          text: '💋 ยอมรับจุมพิตแห่งความมืดจากซัคคิวบัสสาวลิลิธ',
+          subtext: 'ได้รับพลังเสน่ห์มืด เพิ่มพลังรบมหาศาล (+4 ATK, +4 MAG ถาวร!)',
+          icon: '💋',
+          resolve: (player) => {
+            player.atk += 4;
+            player.mag += 4;
+            return {
+              outcomeTitle: 'จุมพิตต้องมนตร์มหาเสน่ห์!',
+              outcomeText: 'ลิลิธประกบริมฝีปากอันเย้ายวนมอบไอพลังมารอันอบอุ่น พลังโจมตีและเวทมนตร์ของคุณทะยานสูงขึ้น (+4 ATK, +4 MAG)!',
+              icon: '💖',
+              soundType: 'level'
+            };
+          }
+        },
+        {
+          text: '🕊️ สวดมนต์ศักดิ์สิทธิ์ขับไล่หมอกพิษหน้าประตูนรก',
+          subtext: 'ชำระล้างไอทมิฬ ฟื้นฟู HP เต็มเปี่ยม และได้รับค่าประสบการณ์ 120 XP',
+          icon: '🕊️',
+          resolve: (player) => {
+            player.hp = player.maxHp;
+            player.gainXP(120);
+            return {
+              outcomeTitle: 'แสงศักดิ์สิทธิ์ชำระล้างความมืด!',
+              outcomeText: 'ละอองแสงขับไล่ไอพิษจนจางหาย ลิลิธกรีดร้องและล่าถอยเข้าประตูมิติ คุณได้รับค่าประสบการณ์ 120 XP และเลือดเต็ม!',
+              icon: '✨',
+              soundType: 'fanfare',
+              hpChange: player.maxHp
+            };
+          }
+        }
+      ]
     }
   ];
 
@@ -2504,7 +2998,21 @@ export class FantasyEventManager {
   public getRandomEvent(node: BoardNode): FantasyEventData {
     let candidateCategory: FantasyEventData['category'] = 'empty';
 
-    if (node.type === 'church') {
+    if (node.type === 'shop_weapon') {
+      candidateCategory = 'shop_weapon';
+    } else if (node.type === 'shop_magic') {
+      candidateCategory = 'shop_magic';
+    } else if (node.type === 'shop_item') {
+      candidateCategory = 'shop_item';
+    } else if (node.type === 'guild') {
+      candidateCategory = 'guild';
+    } else if (node.type === 'fishing') {
+      candidateCategory = 'fishing';
+    } else if (node.type === 'vault') {
+      candidateCategory = 'vault';
+    } else if (node.type === 'dark_gate') {
+      candidateCategory = 'dark_gate';
+    } else if (node.type === 'church') {
       candidateCategory = 'church';
     } else if (node.type === 'tavern') {
       candidateCategory = 'tavern';
@@ -2526,7 +3034,7 @@ export class FantasyEventManager {
       candidateCategory = 'snow';
     } else if (node.biome === 'desert') {
       candidateCategory = 'desert';
-    } else if (node.biome === 'abyss' || node.type === 'dark_gate') {
+    } else if (node.biome === 'abyss') {
       candidateCategory = 'abyss';
     } else {
       candidateCategory = 'empty';
@@ -2543,7 +3051,51 @@ export class FantasyEventManager {
 
     const selected = pool[Math.floor(Math.random() * pool.length)];
     this.lastEventId = selected.id;
-    return selected;
+
+    // Clone event and its choices so dynamically added choices don't contaminate the static definition
+    const eventCopy: FantasyEventData = {
+      ...selected,
+      choices: [...selected.choices]
+    };
+
+    // If node is an unowned empty tile (ไม่มีสิ่งปลูกสร้าง), inject Choice 4: Buy Personal Home!
+    if (node.type === 'empty' && !node.homeData) {
+      eventCopy.choices.push({
+        text: '🏡 ซื้อที่ดินสร้างบ้านพักส่วนตัว (150G)',
+        subtext: 'เป็นเจ้าของที่ดินผืนนี้! หากพ่ายแพ้หรือตายในการต่อสู้ จะมาเกิดใหม่ที่นี่ด้วย HP/MP เต็ม 100%!',
+        icon: '🏡',
+        resolve: (player, targetNode) => {
+          if (player.gold < 150) {
+            return {
+              outcomeTitle: 'ทองไม่เพียงพอสำหรับซื้อที่ดิน!',
+              outcomeText: `คุณมีเงินเพียง ${player.gold}G (ต้องการ 150G) นายหน้าค้าที่ดินจึงเดินจากไป...`,
+              icon: '💸',
+              soundType: 'magic'
+            };
+          }
+          player.gold -= 150;
+          player.homeNodeId = targetNode.id;
+          targetNode.type = 'home';
+          targetNode.homeData = {
+            ownerId: player.id,
+            ownerName: player.displayName,
+            level: 1,
+            purchasePrice: 150,
+            visitorsCount: 0,
+            tollFee: 35
+          };
+          return {
+            outcomeTitle: 'ยินดีด้วย! คุณมีบ้านเป็นของตัวเองแล้ว!',
+            outcomeText: `คุณได้สร้างคฤหาสน์พักส่วนตัวบนที่ดินนี้สำเร็จ! เมื่อใดก็ตามที่คุณพ่ายแพ้หรือตายในการต่อสู้ คุณจะมาเกิดใหม่ที่นี่ทันทีด้วย HP & MP เต็ม 100%!`,
+            icon: '🎉',
+            soundType: 'fanfare',
+            goldChange: -150
+          };
+        }
+      });
+    }
+
+    return eventCopy;
   }
 }
 

@@ -214,10 +214,347 @@ export class CustomIsometricHeroRenderer {
     ry: number = 9,
     alpha: number = 0.55
   ) {
+    // AAA Two-layer depth ambient occlusion
+    // 1. Soft outer ground contact shadow
+    ctx.fillStyle = `rgba(3, 7, 18, ${alpha * 0.45})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 1, rx * 1.15, ry * 1.15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Focused direct contact occlusion
     ctx.fillStyle = `rgba(3, 7, 18, ${alpha})`;
     ctx.beginPath();
     ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  /**
+   * Semi-Realistic Anime Female Side-Profile Face (for 'E' and 'W' 8-directional rendering)
+   */
+  private drawAnimeProfileFace(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    isFacingEast: boolean,
+    skinTone: string,
+    eyeColor: string,
+    blushColor = '#f472b6'
+  ) {
+    const dirSign = isFacingEast ? 1 : -1;
+
+    // Profile jawline & forehead contour
+    ctx.fillStyle = skinTone;
+    ctx.beginPath();
+    ctx.moveTo(cx - dirSign * 4, cy - 6);
+    ctx.lineTo(cx + dirSign * 4, cy - 6); // Forehead
+    ctx.lineTo(cx + dirSign * 5.5, cy); // Pert anime nose tip
+    ctx.lineTo(cx + dirSign * 4.5, cy + 2); // Philtrum
+    ctx.lineTo(cx + dirSign * 4.8, cy + 3.5); // Cute lips
+    ctx.lineTo(cx + dirSign * 3.5, cy + 6.5); // Petite chin
+    ctx.quadraticCurveTo(cx, cy + 6, cx - dirSign * 3, cy + 3); // Jawline
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle jawline ambient shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(cx - dirSign * 2, cy + 3);
+    ctx.lineTo(cx + dirSign * 3.5, cy + 6.5);
+    ctx.lineTo(cx, cy + 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Expressive Profile Anime Eye
+    const eyeX = cx + dirSign * 1.5;
+    const eyeY = cy - 1;
+
+    // Eyelash contour pointing forward
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(eyeX - (isFacingEast ? 1 : 2.5), eyeY - 2, 3.5, 1.2);
+    ctx.fillRect(eyeX + dirSign * 1.5, eyeY - 2.8, 1.2, 1.2);
+
+    // Iris
+    ctx.fillStyle = eyeColor;
+    ctx.fillRect(eyeX - (isFacingEast ? 0.5 : 1.5), eyeY - 1, 2.2, 3);
+
+    // Catchlight sparkle
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(eyeX + dirSign * 0.2, eyeY - 1, 1, 1);
+
+    // Soft maiden blush on profile cheek
+    ctx.fillStyle = blushColor;
+    ctx.fillRect(eyeX - dirSign * 1.5, eyeY + 2.5, 2.5, 1);
+
+    // Cute pink lips highlight
+    ctx.fillStyle = '#fb7185';
+    ctx.fillRect(cx + dirSign * 4.2, cy + 3.2, 1.2, 0.8);
+
+    // Petite ear on side of head
+    ctx.fillStyle = skinTone;
+    ctx.beginPath();
+    ctx.arc(cx - dirSign * 3, cy + 1, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.4)';
+    ctx.fillRect(cx - dirSign * 3, cy + 1, 1, 1);
+  }
+
+  /**
+   * Furry Beastgirl Fluffy Tail (Swinging behind back based on direction & frame)
+   */
+  private drawFurryBeastgirlTail(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    dir: IsoDirection,
+    frame: number,
+    beastType: 'cat' | 'fox' | 'wolf' | 'bunny' | 'horns',
+    tailColor: string,
+    tipColor = '#ffffff'
+  ) {
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
+    const isBack = dir === 'NE' || dir === 'NW' || dir === 'N';
+    const dirSign = isRight ? 1 : -1;
+    const sway = Math.sin((frame / 6) * Math.PI * 2) * 3.5;
+    const tailBaseX = cx - (isBack ? 0 : dirSign * 3);
+    const tailBaseY = cy + 4;
+
+    ctx.save();
+    if (beastType === 'bunny') {
+      const hop = Math.abs(Math.sin(frame * 0.8)) * 1.5;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.beginPath();
+      ctx.arc(tailBaseX, tailBaseY + 2 - hop, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = tailColor;
+      ctx.beginPath();
+      ctx.arc(tailBaseX, tailBaseY + 1 - hop, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(tailBaseX + (isRight ? -1 : 1), tailBaseY - hop, 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (beastType === 'fox') {
+      const tailTipX = tailBaseX - dirSign * 16 + sway;
+      const tailTipY = tailBaseY - 10 + Math.cos(frame * 0.8) * 2;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.beginPath();
+      ctx.moveTo(tailBaseX, tailBaseY + 2);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 18 + sway, tailBaseY - 4, tailTipX, tailTipY + 2);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 8, tailBaseY + 7, tailBaseX, tailBaseY + 2);
+      ctx.fill();
+
+      ctx.fillStyle = tailColor;
+      ctx.beginPath();
+      ctx.moveTo(tailBaseX, tailBaseY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 20 + sway, tailBaseY - 6, tailTipX, tailTipY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 8, tailBaseY + 6, tailBaseX, tailBaseY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = tipColor;
+      ctx.beginPath();
+      ctx.arc(tailTipX, tailTipY, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (beastType === 'wolf') {
+      const tailTipX = tailBaseX - dirSign * 13 + sway * 0.8;
+      const tailTipY = tailBaseY + 2;
+
+      ctx.fillStyle = tailColor;
+      ctx.beginPath();
+      ctx.moveTo(tailBaseX, tailBaseY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 15 + sway, tailBaseY + 6, tailTipX, tailTipY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 5, tailBaseY - 4, tailBaseX, tailBaseY);
+      ctx.closePath();
+      ctx.fill();
+    } else if (beastType === 'horns') {
+      const tailTipX = tailBaseX - dirSign * 14 + sway;
+      const tailTipY = tailBaseY - 5;
+
+      ctx.strokeStyle = tailColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tailBaseX, tailBaseY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 10, tailBaseY + 8, tailTipX, tailTipY);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(tailTipX, tailTipY - 3);
+      ctx.lineTo(tailTipX - dirSign * 4, tailTipY);
+      ctx.lineTo(tailTipX, tailTipY + 3);
+      ctx.lineTo(tailTipX + dirSign * 2, tailTipY);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      const tailTipX = tailBaseX - dirSign * 12 + sway;
+      const tailTipY = tailBaseY - 8 + Math.cos(frame * 0.7) * 2;
+
+      ctx.strokeStyle = tailColor;
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tailBaseX, tailBaseY);
+      ctx.quadraticCurveTo(tailBaseX - dirSign * 14 + sway, tailBaseY + 4, tailTipX, tailTipY);
+      ctx.stroke();
+
+      ctx.fillStyle = tipColor;
+      ctx.beginPath();
+      ctx.arc(tailTipX, tailTipY, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /**
+   * Furry Beastgirl Animated Ears on top of head
+   */
+  private drawFurryBeastgirlEars(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    headY: number,
+    dir: IsoDirection,
+    frame: number,
+    beastType: 'cat' | 'fox' | 'wolf' | 'bunny' | 'horns',
+    earColor: string,
+    innerColor = '#fda4af'
+  ) {
+    const isProfile = dir === 'E' || dir === 'W';
+    const isBack = dir === 'NE' || dir === 'NW' || dir === 'N';
+    const dirSign = (dir === 'SE' || dir === 'NE' || dir === 'E') ? 1 : -1;
+    const twitch = Math.sin((frame + 2) * 1.4) * 0.8;
+
+    ctx.save();
+    if (beastType === 'bunny') {
+      if (isProfile) {
+        ctx.fillStyle = earColor;
+        ctx.beginPath();
+        ctx.ellipse(cx - dirSign * 1, headY - 14, 3, 7, dirSign * 0.15 + twitch * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = innerColor;
+        ctx.beginPath();
+        ctx.ellipse(cx - dirSign * 1, headY - 14, 1.5, 5, dirSign * 0.15 + twitch * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = earColor;
+        ctx.beginPath();
+        ctx.ellipse(cx - 4, headY - 14, 3, 7, -0.15 + twitch * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 4, headY - 14, 3, 7, 0.15 - twitch * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (!isBack) {
+          ctx.fillStyle = innerColor;
+          ctx.beginPath();
+          ctx.ellipse(cx - 4, headY - 14, 1.5, 5, -0.15 + twitch * 0.05, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(cx + 4, headY - 14, 1.5, 5, 0.15 - twitch * 0.05, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    } else if (beastType === 'horns') {
+      ctx.fillStyle = '#1e1b4b';
+      if (isProfile) {
+        ctx.beginPath();
+        ctx.moveTo(cx + dirSign * 1, headY - 4);
+        ctx.quadraticCurveTo(cx - dirSign * 8, headY - 14, cx - dirSign * 4, headY - 18);
+        ctx.quadraticCurveTo(cx - dirSign * 5, headY - 12, cx + dirSign * 2, headY - 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(cx - dirSign * 3, headY - 14, 1.5, 3);
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(cx - 4, headY - 4);
+        ctx.quadraticCurveTo(cx - 12, headY - 12, cx - 8, headY - 17);
+        ctx.quadraticCurveTo(cx - 8, headY - 10, cx - 2, headY - 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(cx + 4, headY - 4);
+        ctx.quadraticCurveTo(cx + 12, headY - 12, cx + 8, headY - 17);
+        ctx.quadraticCurveTo(cx + 8, headY - 10, cx + 2, headY - 6);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else {
+      const earHeight = beastType === 'fox' ? 8 : (beastType === 'wolf' ? 7 : 6);
+      const isFox = beastType === 'fox';
+
+      if (isProfile) {
+        ctx.fillStyle = earColor;
+        ctx.beginPath();
+        ctx.moveTo(cx - dirSign * 4, headY - 4);
+        ctx.lineTo(cx - dirSign * 1 + twitch, headY - 4 - earHeight);
+        ctx.lineTo(cx + dirSign * 2, headY - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        if (isFox) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(cx - dirSign * 2, headY - 4 - earHeight + 3);
+          ctx.lineTo(cx - dirSign * 1 + twitch, headY - 4 - earHeight);
+          ctx.lineTo(cx, headY - 4 - earHeight + 3);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        if (!isBack) {
+          ctx.fillStyle = innerColor;
+          ctx.beginPath();
+          ctx.moveTo(cx - dirSign * 3, headY - 4);
+          ctx.lineTo(cx - dirSign * 1 + twitch, headY - 4 - (earHeight - 2));
+          ctx.lineTo(cx + dirSign * 1, headY - 4);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = earColor;
+        ctx.beginPath();
+        ctx.moveTo(cx - 7, headY - 4);
+        ctx.lineTo(cx - 5 + twitch, headY - 4 - earHeight);
+        ctx.lineTo(cx - 2, headY - 5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(cx + 2, headY - 5);
+        ctx.lineTo(cx + 5 - twitch, headY - 4 - earHeight);
+        ctx.lineTo(cx + 7, headY - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        if (isFox) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx - 6 + twitch, headY - 4 - earHeight, 2, 2.5);
+          ctx.fillRect(cx + 4 - twitch, headY - 4 - earHeight, 2, 2.5);
+        }
+
+        if (!isBack) {
+          ctx.fillStyle = innerColor;
+          ctx.beginPath();
+          ctx.moveTo(cx - 6, headY - 4);
+          ctx.lineTo(cx - 5 + twitch, headY - 4 - (earHeight - 2));
+          ctx.lineTo(cx - 3, headY - 5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(cx + 3, headY - 5);
+          ctx.lineTo(cx + 5 - twitch, headY - 4 - (earHeight - 2));
+          ctx.lineTo(cx + 6, headY - 4);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
   }
 
   /**
@@ -672,6 +1009,7 @@ export class CustomIsometricHeroRenderer {
     skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -712,6 +1050,10 @@ export class CustomIsometricHeroRenderer {
 
     // 1. Ground Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
+
+    // 1.5 Furry Beastgirl Fluffy Tail (Swinging gracefully behind)
+    const warriorBeast = skinVariant === 1 ? 'fox' : (skinVariant === 2 ? 'horns' : 'wolf');
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, warriorBeast, hairColor, '#ffffff');
 
     // 2. Flowing Cape (Back of body)
     const capeWave = Math.sin((frame / 6) * Math.PI * 2) * 3.5;
@@ -835,7 +1177,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fill();
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#2563eb');
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#2563eb');
     } else {
       ctx.fillStyle = hairColor;
@@ -861,6 +1205,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fillStyle = '#38bdf8';
     ctx.fillRect(cx - 1, headY - 6, 2, 2); // Gem
 
+    // Furry Beastgirl Ears (Alert animated wolf/fox ears)
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, warriorBeast, hairColor, '#fda4af');
+
     // Attack Slash
     if (isAttacking) {
       this.drawDiagonalSlashArc(ctx, cx, cy, dir, '#60a5fa');
@@ -882,6 +1229,7 @@ export class CustomIsometricHeroRenderer {
     skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -914,6 +1262,10 @@ export class CustomIsometricHeroRenderer {
 
     // 1. Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 17, 8);
+
+    // 1.5 Furry Beastgirl Fluffy Tail (Swinging gracefully behind)
+    const mageBeast = skinVariant === 1 ? 'cat' : (skinVariant === 2 ? 'horns' : 'fox');
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, mageBeast, hairColor, '#ffffff');
 
     // 2. Skirt with Side Thigh Slit
     const robeSway = animState === 'run' ? Math.sin(frame * 1.1) * 3 : Math.sin(frame * 0.5) * 1.5;
@@ -1002,7 +1354,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fill();
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#a855f7');
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#a855f7');
     } else {
       ctx.fillStyle = hairColor;
@@ -1010,6 +1364,9 @@ export class CustomIsometricHeroRenderer {
       ctx.arc(cx, headY, 6, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Furry Beastgirl Ears (Fox/Cat ears peeking below witch hat)
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, mageBeast, hairColor, '#fda4af');
 
     // Wizard Witch Hat with Curved Tip
     const hatTilt = isRight ? 2 : -2;
@@ -1059,6 +1416,7 @@ export class CustomIsometricHeroRenderer {
     skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -1081,6 +1439,10 @@ export class CustomIsometricHeroRenderer {
 
     // 1. Ground Shadow & Divine Glow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 9);
+
+    // 1.5 Furry Beastgirl Fluffy Tail (Bunny cottontail / Holy cat tail)
+    const clericBeast = skinVariant === 1 ? 'cat' : (skinVariant === 2 ? 'fox' : 'bunny');
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, clericBeast, hairColor, '#ffffff');
     ctx.save();
     ctx.fillStyle = 'rgba(253, 224, 71, 0.22)';
     ctx.beginPath();
@@ -1142,9 +1504,19 @@ export class CustomIsometricHeroRenderer {
     const headY = cy - 14;
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#10b981');
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#10b981');
+    } else {
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.arc(cx, headY, 6, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    // Furry Beastgirl Ears (Bunny / Cat ears)
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, clericBeast, hairColor, '#fda4af');
 
     // Nun Habit / Veiled Cowl framing head gracefully
     ctx.fillStyle = whiteShadow;
@@ -1188,6 +1560,7 @@ export class CustomIsometricHeroRenderer {
     skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -1210,6 +1583,10 @@ export class CustomIsometricHeroRenderer {
 
     // 1. Agile Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 15, 7.5);
+
+    // 1.5 Furry Beastgirl Fluffy Tail (Cat / Shadow Wolf tail)
+    const thiefBeast = skinVariant === 1 ? 'wolf' : (skinVariant === 2 ? 'fox' : 'cat');
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, thiefBeast, hairColor, '#ffffff');
 
     // 2. Slender Legs in Sleek Leather Tights & Thigh-High Boots
     const legStep = animState === 'run' ? Math.sin((frame / 6) * Math.PI * 2) * 6 : 0;
@@ -1279,7 +1656,11 @@ export class CustomIsometricHeroRenderer {
     ctx.fill();
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#eab308');
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(cx - (dir === 'E' ? 1 : 4), headY - 2, 6, 2);
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#eab308');
       // Stylish rogue eye mask
       ctx.fillStyle = '#0f172a';
@@ -1290,6 +1671,9 @@ export class CustomIsometricHeroRenderer {
       ctx.arc(cx, headY, 6, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Furry Beastgirl Ears (Neko / Fox stealth ears)
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, thiefBeast, hairColor, '#fda4af');
 
     // Assassin Hood / Cowl
     ctx.fillStyle = suitShadow;
@@ -1317,6 +1701,7 @@ export class CustomIsometricHeroRenderer {
     skinVariant: number = 0
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -1339,6 +1724,10 @@ export class CustomIsometricHeroRenderer {
 
     // 1. Ground Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 16, 8);
+
+    // 1.5 Furry Beastgirl Fluffy Tail (Forest Fox / Bunny tail)
+    const rangerBeast = skinVariant === 1 ? 'bunny' : (skinVariant === 2 ? 'cat' : 'fox');
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, rangerBeast, hairColor, '#ffffff');
 
     // 2. Quiver on Back (Visible from back or side)
     if (!isFront) {
@@ -1400,7 +1789,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fill();
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#15803d');
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#15803d');
     } else {
       ctx.fillStyle = hairColor;
@@ -1408,6 +1799,9 @@ export class CustomIsometricHeroRenderer {
       ctx.arc(cx, headY, 6, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Furry Beastgirl Ears (Forest Fox / Bunny alert ears)
+    this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, rangerBeast, hairColor, '#fda4af');
 
     // Archer Beret / Cap with Feather
     ctx.fillStyle = greenShadow;
@@ -1442,6 +1836,7 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number }
   ) {
     const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isProfile = dir === 'E' || dir === 'W';
     const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
@@ -1460,6 +1855,9 @@ export class CustomIsometricHeroRenderer {
     ctx.ellipse(cx, cy + 34, 28, 13, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+
+    // 1.5 Demonic Spade Tail (Swaying behind)
+    this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, 'horns', voidPurple, '#ef4444');
 
     // 2. Demoness Wings (Sensual fluttering bat wings)
     const wingFlap = Math.sin((frame / 6) * Math.PI * 2) * 4;
@@ -1533,7 +1931,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fill();
 
     // Face
-    if (isFront) {
+    if (isProfile) {
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', paleDemonSkin, crimsonEye, '#f43f5e');
+    } else if (isFront) {
       this.drawAnimeFemaleFace(ctx, cx, headY, isRight, paleDemonSkin, crimsonEye, '#f43f5e');
     } else {
       ctx.fillStyle = voidPurple;

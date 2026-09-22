@@ -735,7 +735,9 @@ class DokaponApp {
       case 'shop_item':
       case 'shop_weapon':
       case 'shop_magic':
-        this.shopUI.open(tile.type, () => this.advanceTurn());
+        this.fantasyEventUI.openEvent(p, tile, () => {
+          this.shopUI.open(tile.type, () => this.advanceTurn());
+        });
         break;
 
       case 'home':
@@ -755,12 +757,14 @@ class DokaponApp {
         break;
 
       case 'dark_gate':
-        if (darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
-          document.getElementById('darklingPactModal')?.classList.remove('hidden');
-        } else {
-          this.game.addLog(`แท่นบูชาแห่ง Rico ยังคงเงียบงัน มีเพียงลอร์ดผู้ต่ำต้อยที่สุดเท่านั้นที่สามารถทำสัญญามืดได้`);
-        }
-        this.advanceTurn();
+        this.fantasyEventUI.openEvent(p, tile, () => {
+          if (darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
+            document.getElementById('darklingPactModal')?.classList.remove('hidden');
+          } else {
+            this.game.addLog(`แท่นบูชาแห่ง Rico ยังคงเงียบงัน มีเพียงลอร์ดผู้ต่ำต้อยที่สุดเท่านั้นที่สามารถทำสัญญามืดได้`);
+          }
+          this.advanceTurn();
+        });
         break;
 
       case 'mystery_chest':
@@ -768,11 +772,7 @@ class DokaponApp {
         break;
 
       case 'vault':
-        const loot = 90 + Math.floor(Math.random() * 110);
-        p.gold += loot;
-        audio.chestOpen();
-        this.game.addLog(`🎁 ห้องนิรภัยโบราณ! ${p.displayName} งัดห้องนิรภัยและได้เงิน ${loot}G!`, 'gold');
-        this.advanceTurn();
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'boss':
@@ -788,15 +788,19 @@ class DokaponApp {
         break;
 
       case 'guild':
-        this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
+        this.fantasyEventUI.openEvent(p, tile, () => {
+          this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
+        });
         break;
 
       case 'fishing':
-        this.isekaiEventUI.openFishing(
-          p,
-          () => this.advanceTurn(),
-          monsterName => this.initiateFishCombat(monsterName)
-        );
+        this.fantasyEventUI.openEvent(p, tile, () => {
+          this.isekaiEventUI.openFishing(
+            p,
+            () => this.advanceTurn(),
+            monsterName => this.initiateFishCombat(monsterName)
+          );
+        });
         break;
 
       case 'isekai_event':
@@ -807,20 +811,9 @@ class DokaponApp {
       default:
         if (tile.homeData) {
           this.homeUI.openHome(tile, p, () => this.advanceTurn());
-        } else if (p.homeNodeId === null && p.gold >= 150) {
-          this.homeUI.openHome(
-            tile,
-            p,
-            () => this.advanceTurn(),
-            () => {
-              // If skipped buying plot, resolve empty tile event
-              this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-            }
-          );
-        } else if (Math.random() < 0.70) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         } else {
-          this.initiateRandomEncounter(tile);
+          // Open contextual fantasy event (guaranteeing Choice 4: Buy House for 150G on unowned empty tiles)
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         }
         break;
     }
@@ -945,6 +938,220 @@ class DokaponApp {
     return { gold, xp, droppedItem };
   }
 
+  private checkPostCombatCompanionRecruitment(winner: Player, defeatedName: string) {
+    const recruitChance = 0.28 + Math.min(0.25, winner.getTotalStat('luk') * 0.015);
+    if (Math.random() > recruitChance) return;
+
+    interface RosterGirl {
+      name: string;
+      avatar: string;
+      bonusDesc: string;
+      color: string;
+      skillName: string;
+    }
+
+    const roster: Record<string, RosterGirl> = {
+      'Forest Goblin Marauder': {
+        name: 'ก็อบลินสาวขี้อ้อน ก็อบลี่ (Goblin Lass Gobby)',
+        avatar: '👺💚',
+        bonusDesc: '+6 ATK, ช่วยขโมยทอง 20G ในการรบ',
+        color: '#22c55e',
+        skillName: 'Goblin Gold Steal'
+      },
+      'Briar Kobold': {
+        name: 'โคโบลด์สาวน้อยหูตูบ ลูลู่ (Kobold Pup Lulu)',
+        avatar: '🐶✨',
+        bonusDesc: '+6 DEF, ขุดแร่หายากเพิ่มโชค LUK +5',
+        color: '#f59e0b',
+        skillName: 'Kobold Digging Barrier'
+      },
+      'Royal Slime Bloblet': {
+        name: 'สไลม์สาวใสบริสุทธิ์ พุดดิ้ง (Slime Girl Pudding)',
+        avatar: '💧💙',
+        bonusDesc: '+30 Max HP, ฟื้นฟูเลือดอัตโนมัติ',
+        color: '#38bdf8',
+        skillName: 'Gelatin Shield Blast'
+      },
+      'Meadow Wolf': {
+        name: 'บีสต์เกิร์ลหมาป่าทุ่งหญ้า ซิลวา (Meadow Wolf Silva)',
+        avatar: '🐺🍃',
+        bonusDesc: '+8 SPD, กระโจนกัดคู่ศัตรู',
+        color: '#84cc16',
+        skillName: 'Wolf Pack Pounce'
+      },
+      'Shadow Panther': {
+        name: 'สาวเสือดำรัตติกาล ชาโดว์ (Shadow Panther Shadow)',
+        avatar: '🐆🖤',
+        bonusDesc: '+8 ATK, +6 SPD, การโจมตีติดคริติคอลบ่อยขึ้น',
+        color: '#6366f1',
+        skillName: 'Night Ambush'
+      },
+      'Frost Skeleton Soldier': {
+        name: 'อัศวินสาววิญญาณเยือกแข็ง เอลซ่า (Frost Ghost Elsa)',
+        avatar: '❄️🤍',
+        bonusDesc: '+8 DEF, +6 MAG, เกราะน้ำแข็งดูดซับดาเมจ',
+        color: '#a5f3fc',
+        skillName: 'Frost Glaze Armor'
+      },
+      'Glacial Yeti Scout': {
+        name: 'เยติสาวขนนุ่ม ยูกิโกะ (Fluffy Yeti Yukiko)',
+        avatar: '❄️🐾',
+        bonusDesc: '+10 DEF, มอบความอบอุ่นต้านทานหนาว',
+        color: '#e0f2fe',
+        skillName: 'Snowstorm Hug'
+      },
+      'Ice Wyrmling': {
+        name: 'เจ้าหญิงมังกรน้ำแข็ง เกลเซีย (Ice Drake Glacia)',
+        avatar: '🐉❄️',
+        bonusDesc: '+9 MAG, พ่นไอเย็นแช่แข็งศัตรู',
+        color: '#06b6d4',
+        skillName: 'Glacial Breath'
+      },
+      'Dune Bandit Raider': {
+        name: 'สาวนักดาบทราย ซาฟิรา (Sand Dune Safira)',
+        avatar: '💃🗡️',
+        bonusDesc: '+8 ATK, +6 LUK, โบนัสทองคำหลังชนะศึก',
+        color: '#f97316',
+        skillName: 'Mirage Strike'
+      },
+      'Sandstone Mummy': {
+        name: 'ฟาโรห์สาวมัมมี่มนตรา เนเฟอร์ติติ (Mummy Queen Nefertiti)',
+        avatar: '🏺✨',
+        bonusDesc: '+10 MAG, ปลดปล่อยคำสาปโบราณ',
+        color: '#eab308',
+        skillName: 'Pharaoh Sand Curse'
+      },
+      'Brimstone Fire Imp': {
+        name: 'อิมป์สาวน้อยไฟลุก ฟิซซี่ (Brimstone Imp Fizzy)',
+        avatar: '🔥😈',
+        bonusDesc: '+8 MAG, เผาผลาญศัตรูต่อเนื่อง',
+        color: '#ef4444',
+        skillName: 'Hellfire Spark'
+      },
+      'Magma Scorpion': {
+        name: 'สาวแมงป่องหางเพลิง เซลิน่า (Magma Stinger Selina)',
+        avatar: '🦂🔥',
+        bonusDesc: '+7 ATK, +7 DEF, พิษลาวาเข้มข้น',
+        color: '#dc2626',
+        skillName: 'Molten Stinger'
+      },
+      'Obsidian Automaton': {
+        name: 'เมดจักรกลศิลาดำ แอนเดรีย (Obsidian Maid Andrea)',
+        avatar: '⚙️🖤',
+        bonusDesc: '+12 DEF, สร้างบาเรียหินดำดูดซับความเสียหาย',
+        color: '#475569',
+        skillName: 'Obsidian Barrier'
+      },
+      'Steampunk Automaton Princess Alice': {
+        name: 'เจ้าหญิงจักรกล อลิซ (Automaton Princess Alice)',
+        avatar: '⚙️👗',
+        bonusDesc: '+10 DEF, +6 MAG, คลื่นกระแทกไอน้ำ',
+        color: '#f59e0b',
+        skillName: 'Clockwork Overdrive'
+      },
+      'Steam Gear Gunner Victoria': {
+        name: 'มือปืนสาวสตรีมพังก์ วิกตอเรีย (Gunner Victoria)',
+        avatar: '🔫🎩',
+        bonusDesc: '+10 ATK, +8 SPD, ระดมยิงปืนกลสนับสนุน',
+        color: '#0ea5e9',
+        skillName: 'Gatling Suppressive Fire'
+      },
+      'Clockwork Maid Nicole': {
+        name: 'เมดสาวไขลาน นิโคล (Clockwork Nicole)',
+        avatar: '⏱️🎀',
+        bonusDesc: '+8 DEF, +8 SPD, เสิร์ฟชาฟื้นฟู HP/MP ทุกเทิร์น',
+        color: '#ec4899',
+        skillName: 'Earl Grey Restoration'
+      },
+      'Kitsune Shrine Maiden Chiyo': {
+        name: 'มิโกะจิ้งจอกเก้าหาง จิโยะ (Nine-Tailed Kitsune Chiyo)',
+        avatar: '🦊⛩️',
+        bonusDesc: '+10 MAG, +8 LUK, ปัดเป่าคำสาปและบัฟโชคลาภ',
+        color: '#f43f5e',
+        skillName: 'Nine Fox Spirit Fire'
+      },
+      'Sakura Blossom Tengu Ayame': {
+        name: 'เทนงูสาวขนนกซากุระ อายาเมะ (Sakura Tengu Ayame)',
+        avatar: '🌸🪶',
+        bonusDesc: '+10 SPD, +6 ATK, พัดสายลมคมกริบ',
+        color: '#f472b6',
+        skillName: 'Cherry Blossom Gale'
+      },
+      'Dryad Nymph Alura': {
+        name: 'นิมฟ์พฤกษา อาลูร่า (Dryad Nymph Alura)',
+        avatar: '🌿🌸',
+        bonusDesc: '+8 MAG, +35 HP, เถาวัลย์พันธนาการศัตรู',
+        color: '#10b981',
+        skillName: 'Nature Embrace'
+      },
+      'Abyssal Siren': {
+        name: 'ไซเรนสาวห้วงอเวจี เมโลดี้ (Abyss Siren Melody)',
+        avatar: '🧜‍♀️💜',
+        bonusDesc: '+11 MAG, ร้องเพลงสะกดจิตลดพลังศัตรู',
+        color: '#a855f7',
+        skillName: 'Siren Abyssal Lullaby'
+      },
+      'Chaos Slime': {
+        name: 'เคออสสไลม์สาวมืด โคลอี้ (Chaos Slime Chloe)',
+        avatar: '💜🫧',
+        bonusDesc: '+35 Max HP, หลบหลีกการโจมตีทางกายภาพ',
+        color: '#8b5cf6',
+        skillName: 'Void Fluid Split'
+      },
+      'Bandit Chief Garak': {
+        name: 'จอมโจรสาวโรบินฮู้ด การาเกะ (Banditess Gara)',
+        avatar: '🗡️🏴‍☠️',
+        bonusDesc: '+8 ATK, +8 SPD, เพิ่มทองที่ได้รับ 30%',
+        color: '#eab308',
+        skillName: 'Shadow Prowl Loot'
+      },
+      'Dragon Princess Ignis': {
+        name: 'เจ้าหญิงมังกรเพลิงบรรพกาล อิกนิส (Dragon Princess Ignis)',
+        avatar: '🐉🔥',
+        bonusDesc: '+15 ATK, +15 MAG, พ่นเปลวเพลิงมังกรบรรพกาลล้างผลาญ',
+        color: '#ef4444',
+        skillName: 'Ancient Dragon Flare'
+      }
+    };
+
+    const girl = roster[defeatedName] || {
+      name: `สาวน้อยอสูร ${defeatedName}`,
+      avatar: '🐾💖',
+      bonusDesc: '+6 All Stats, คุ้มกันภัยทุกการเดินทาง',
+      color: '#ec4899',
+      skillName: 'Beast Instinct'
+    };
+
+    const hadMercenary = winner.companion && winner.companion.contractTurnsRemaining !== undefined;
+    if (winner.companion && !hadMercenary) {
+      winner.atk += 2;
+      winner.def += 2;
+      winner.mag += 2;
+      this.game.addLog(`💖 ${defeatedName} ซาบซึ้งในความเมตตาของคุณ! มอบพรศักดิ์สิทธิ์เพิ่มพลัง +2 All Stats ถาวร!`, 'level');
+      return;
+    }
+
+    winner.companion = {
+      id: `comp_${Date.now()}`,
+      name: girl.name,
+      title: 'Monster Girl Companion',
+      avatar: girl.avatar,
+      role: 'striker',
+      skillName: girl.skillName,
+      skillDesc: girl.bonusDesc,
+      affinity: 50,
+      dialogue: 'ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!',
+      bonusDesc: girl.bonusDesc,
+      color: girl.color
+    };
+
+    audio.fanfare();
+    this.game.addLog(
+      `💖 โชคชะตาผูกพัน! หลังพ่ายแพ้ ${defeatedName} ประทับใจในเสน่ห์และความกล้าหาญของคุณ! ขอร่วมเดินทางเคียงข้างเป็นคู่หูถาวร! [${girl.name}] (${girl.bonusDesc})!`,
+      'level'
+    );
+  }
+
   private initiateTownLiberationBattle(townNode: BoardNode) {
     const data = townNode.townData!;
     this.game.addLog(`⚔️ ${townNode.name} ถูกยึดครองโดย ${data.monsterName}! ต่อสู้เพื่อปลดปล่อยเมือง!`, 'battle');
@@ -971,6 +1178,7 @@ class DokaponApp {
           this.game.addLog(`🎁 ปลดปล่อยเมืองสำเร็จ! ได้รับรางวัลพิเศษ: "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
         isekaiEventManager.onGameAction(winner.playerRef, 'town');
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, data.monsterName);
       } else {
         // Monster survived! Persist remaining HP for last-hit opportunity
         data.monsterHp = Math.max(1, Math.ceil(winner.hp));
@@ -1054,6 +1262,7 @@ class DokaponApp {
           this.game.addLog(`🎁 มอนสเตอร์ทำไอเทมตก! ได้รับ "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, pickedName);
       } else if (loser.playerRef) {
         if (loser.hp <= 0) {
           // Player knocked out by wild monster!
@@ -1092,6 +1301,7 @@ class DokaponApp {
         winner.playerRef.gainXP(80);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${monsterName} (+120G, +80 EXP)!`);
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, monsterName);
       } else if (loser.playerRef) {
         const lostGold = Math.floor(loser.playerRef.gold * 0.25);
         loser.playerRef.gold -= lostGold;
@@ -1122,6 +1332,7 @@ class DokaponApp {
         winner.playerRef.gainXP(90);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น Bandit Chief Garak และยึด ${stolenGold}G (+90 EXP)!`);
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Bandit Chief Garak');
       } else if (loser.playerRef) {
         const lostGold = Math.floor(loser.playerRef.gold * 0.35);
         loser.playerRef.gold -= lostGold;
@@ -1153,6 +1364,7 @@ class DokaponApp {
         this.bossCurrentHp = 0;
         isekaiEventManager.onGameAction(winner.playerRef, 'boss');
         this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารเจ้าหญิงมังกรเพลิงบรรพกาล! ความรุ่งโรจน์นิรันดร์!`, 'level');
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Dragon Princess Ignis');
         this.game.phase = 'VICTORY';
         this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon Princess Ignis');
       } else {

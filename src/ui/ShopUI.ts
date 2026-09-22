@@ -4,59 +4,59 @@ import { audio } from '../engine/AudioSynthesizer';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Multi-Spinners (Tiers 1-5)
-  { id: 'spin_2', name: 'สปินเนอร์ 2 ลูกเต๋า (2-Spinner)', type: 'spinner', cost: 60, desc: 'ทอยลูกเต๋า 2 ลูกในการเดินเทิร์นถัดไป!', icon: '🎲' },
-  { id: 'spin_3', name: 'สปินเนอร์ 3 ลูกเต๋า (3-Spinner)', type: 'spinner', cost: 120, desc: 'ทอยลูกเต๋า 3 ลูกในการเดินเทิร์นถัดไป!', icon: '🌀' },
-  { id: 'spin_4', name: 'สปินเนอร์ 4 ลูกเต๋า (4-Spinner)', type: 'spinner', cost: 220, desc: 'ทอยลูกเต๋า 4 ลูก พุ่งทะยานระยะไกล!', icon: '🌪️' },
-  { id: 'spin_5', name: 'สปินเนอร์ 5 ลูกเต๋า (5-Spinner)', type: 'spinner', cost: 360, desc: 'ทอยลูกเต๋า 5 ลูก สูงสุดข้ามทวีป!', icon: '🚀' },
+  { id: 'spin_2', name: 'สปินเนอร์ 2 ลูกเต๋า (2-Spinner)', type: 'spinner', cost: 150, desc: 'ทอยลูกเต๋า 2 ลูกในการเดินเทิร์นถัดไป!', icon: '🎲' },
+  { id: 'spin_3', name: 'สปินเนอร์ 3 ลูกเต๋า (3-Spinner)', type: 'spinner', cost: 350, desc: 'ทอยลูกเต๋า 3 ลูกในการเดินเทิร์นถัดไป!', icon: '🌀' },
+  { id: 'spin_4', name: 'สปินเนอร์ 4 ลูกเต๋า (4-Spinner)', type: 'spinner', cost: 750, desc: 'ทอยลูกเต๋า 4 ลูก พุ่งทะยานระยะไกล!', icon: '🌪️' },
+  { id: 'spin_5', name: 'สปินเนอร์ 5 ลูกเต๋า (5-Spinner)', type: 'spinner', cost: 1500, desc: 'ทอยลูกเต๋า 5 ลูก สูงสุดข้ามทวีป!', icon: '🚀' },
 
   // Potions & Permanent Stat Draughts
-  { id: 'pot_hp', name: 'น้ำยาฟื้นพลังชีวิต (Life Potion)', type: 'potion', cost: 35, desc: 'ฟื้นฟู 60 HP ทันที', icon: '🧪' },
-  { id: 'pot_elixir', name: 'น้ำทิพย์ฟื้นฟูสมบูรณ์ (Full Elixir)', type: 'potion', cost: 110, desc: 'ฟื้นฟู HP & MP จนเต็มเปี่ยม 100%', icon: '🏺' },
-  { id: 'pot_str', name: 'น้ำยาพลังกายยักษ์ (STR Elixir)', type: 'potion', cost: 180, desc: 'เพิ่มพลังกายภาพ +3 ATK อย่างถาวร!', icon: '💪' },
-  { id: 'pot_def', name: 'น้ำยาเกราะเหล็กไหล (DEF Elixir)', type: 'potion', cost: 180, desc: 'เพิ่มพลังป้องกัน +3 DEF อย่างถาวร!', icon: '🛡️' },
-  { id: 'pot_mag', name: 'น้ำยาปัญญามนต์ (MAG Elixir)', type: 'potion', cost: 180, desc: 'เพิ่มพลังเวทมนตร์ +3 MAG อย่างถาวร!', icon: '🔮' },
-  { id: 'pot_spd', name: 'น้ำยาวายุติดปีก (SPD Elixir)', type: 'potion', cost: 180, desc: 'เพิ่มความเร็ว +3 SPD อย่างถาวร!', icon: '👟' },
-  { id: 'pot_luk', name: 'น้ำยาเทพีนำโชค (LUK Elixir)', type: 'potion', cost: 180, desc: 'เพิ่มโชคชะตา +3 LUK อย่างถาวร!', icon: '🍀' },
-  { id: 'item_bomb', name: 'ระเบิดไดนาไมต์สนามรบ (Field Bomb)', type: 'potion', cost: 100, desc: 'ขว้างใส่ศัตรู/ผู้เล่นใกล้เคียง สร้าง 40 ดาเมจ', icon: '💣' },
-  { id: 'item_dispel', name: 'เครื่องรางแก้คำสาป (Dispel Charm)', type: 'potion', cost: 75, desc: 'ลบล้างคำสาปสนิมและสถานะผิดปกติทั้งหมด', icon: '🫙' },
-  { id: 'item_recall', name: 'คัมภีร์วาร์ปปราสาท (Castle Recall)', type: 'potion', cost: 90, desc: 'เปิดมิติวาร์ปกลับสู่ปราสาทหลวงทันที', icon: '🚪' },
-  { id: 'item_key', name: 'กุญแจเวทมนตร์ (Magic Key)', type: 'potion', cost: 75, desc: 'ปลดล็อกหีบสมบัติและห้องนิรภัยโบราณ', icon: '🗝️' },
+  { id: 'pot_hp', name: 'น้ำยาฟื้นพลังชีวิต (Life Potion)', type: 'potion', cost: 80, desc: 'ฟื้นฟู 60 HP ทันที', icon: '🧪' },
+  { id: 'pot_elixir', name: 'น้ำทิพย์ฟื้นฟูสมบูรณ์ (Full Elixir)', type: 'potion', cost: 350, desc: 'ฟื้นฟู HP & MP จนเต็มเปี่ยม 100%', icon: '🏺' },
+  { id: 'pot_str', name: 'น้ำยาพลังกายยักษ์ (STR Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มพลังกายภาพ +3 ATK อย่างถาวร!', icon: '💪' },
+  { id: 'pot_def', name: 'น้ำยาเกราะเหล็กไหล (DEF Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มพลังป้องกัน +3 DEF อย่างถาวร!', icon: '🛡️' },
+  { id: 'pot_mag', name: 'น้ำยาปัญญามนต์ (MAG Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มพลังเวทมนตร์ +3 MAG อย่างถาวร!', icon: '🔮' },
+  { id: 'pot_spd', name: 'น้ำยาวายุติดปีก (SPD Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มความเร็ว +3 SPD อย่างถาวร!', icon: '👟' },
+  { id: 'pot_luk', name: 'น้ำยาเทพีนำโชค (LUK Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มโชคชะตา +3 LUK อย่างถาวร!', icon: '🍀' },
+  { id: 'item_bomb', name: 'ระเบิดไดนาไมต์สนามรบ (Field Bomb)', type: 'potion', cost: 250, desc: 'ขว้างใส่ศัตรู/ผู้เล่นใกล้เคียง สร้าง 40 ดาเมจ', icon: '💣' },
+  { id: 'item_dispel', name: 'เครื่องรางแก้คำสาป (Dispel Charm)', type: 'potion', cost: 180, desc: 'ลบล้างคำสาปสนิมและสถานะผิดปกติทั้งหมด', icon: '🫙' },
+  { id: 'item_recall', name: 'คัมภีร์วาร์ปปราสาท (Castle Recall)', type: 'potion', cost: 220, desc: 'เปิดมิติวาร์ปกลับสู่ปราสาทหลวงทันที', icon: '🚪' },
+  { id: 'item_key', name: 'กุญแจเวทมนตร์ (Magic Key)', type: 'potion', cost: 200, desc: 'ปลดล็อกหีบสมบัติและห้องนิรภัยโบราณ', icon: '🗝️' },
 
-  // Weapons (Tiers 1–5)
-  { id: 'wpn_broadsword', name: 'T1 ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 120, atk: 8, desc: 'คมดาบกล้าแกร่งเบื้องต้น (+8 ATK)', icon: '⚔️' },
-  { id: 'wpn_mithril_edge', name: 'T2 คมดาบมิธริล (Mithril Edge)', type: 'weapon', cost: 240, atk: 15, spd: 3, desc: 'ดาบเบาและคมกริบ (+15 ATK, +3 SPD)', icon: '🗡️' },
-  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 420, atk: 24, mag: 5, desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+24 ATK, +5 MAG)', icon: '🔥⚔️' },
-  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 750, atk: 36, def: 8, mag: 8, desc: 'ดาบเทวะศักดิ์สิทธิ์ (+36 ATK, +8 DEF, +8 MAG)', icon: '🌟⚔️' },
-  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 1250, atk: 50, spd: 12, luk: 10, desc: 'ดาบโบราณสะท้านภพ (+50 ATK, +12 SPD, +10 LUK)', icon: '👑⚔️' },
+  // Weapons (Tiers 1–5: Progressive Scaled Costs)
+  { id: 'wpn_broadsword', name: 'T1 ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 320, atk: 8, desc: 'คมดาบกล้าแกร่งเบื้องต้น (+8 ATK)', icon: '⚔️' },
+  { id: 'wpn_mithril_edge', name: 'T2 คมดาบมิธริล (Mithril Edge)', type: 'weapon', cost: 1200, atk: 15, spd: 3, desc: 'ดาบเบาและคมกริบ (+15 ATK, +3 SPD)', icon: '🗡️' },
+  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 4200, atk: 26, mag: 6, desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+26 ATK, +6 MAG)', icon: '🔥⚔️' },
+  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 12500, atk: 42, def: 10, mag: 10, desc: 'ดาบเทวะศักดิ์สิทธิ์ (+42 ATK, +10 DEF, +10 MAG)', icon: '🌟⚔️' },
+  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 32000, atk: 65, spd: 15, luk: 15, desc: 'ดาบโบราณสะท้านภพ (+65 ATK, +15 SPD, +15 LUK)', icon: '👑⚔️' },
 
-  // Shields (Tiers 1–5)
-  { id: 'shd_buckler', name: 'T1 โล่กลมไม้โอ๊ค (Round Buckler)', type: 'shield', cost: 90, def: 6, desc: 'โล่ป้องกันเบื้องต้น (+6 DEF)', icon: '🛡️' },
-  { id: 'shd_knight', name: 'T2 โล่อัศวินเหล็กกล้า (Knight Shield)', type: 'shield', cost: 200, def: 12, atk: 2, desc: 'โล่ปะทะกระแทกศัตรู (+12 DEF, +2 ATK)', icon: '🛡️⚔️' },
-  { id: 'shd_dragon_scale', name: 'T3 โล่เกล็ดมังกร (Dragon Shield)', type: 'shield', cost: 380, def: 20, mag: 5, desc: 'เกล็ดมังกรต้านเพลิงและเวทมนตร์ (+20 DEF, +5 MAG)', icon: '🐉🛡️' },
-  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 680, def: 30, mag: 10, luk: 5, desc: 'โล่เทวาพิทักษ์กาย (+30 DEF, +10 MAG, +5 LUK)', icon: '✨🛡️' },
-  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 1100, def: 45, mag: 15, spd: 6, desc: 'โล่กระจกสะท้อนเวทมนตร์ (+45 DEF, +15 MAG, +6 SPD)', icon: '🪞🛡️' },
+  // Shields (Tiers 1–5: Progressive Scaled Costs)
+  { id: 'shd_buckler', name: 'T1 โล่กลมไม้โอ๊ค (Round Buckler)', type: 'shield', cost: 260, def: 6, desc: 'โล่ป้องกันเบื้องต้น (+6 DEF)', icon: '🛡️' },
+  { id: 'shd_knight', name: 'T2 โล่อัศวินเหล็กกล้า (Knight Shield)', type: 'shield', cost: 980, def: 14, atk: 3, desc: 'โล่ปะทะกระแทกศัตรู (+14 DEF, +3 ATK)', icon: '🛡️⚔️' },
+  { id: 'shd_dragon_scale', name: 'T3 โล่เกล็ดมังกร (Dragon Shield)', type: 'shield', cost: 3600, def: 24, mag: 6, desc: 'เกล็ดมังกรต้านเพลิงและเวทมนตร์ (+24 DEF, +6 MAG)', icon: '🐉🛡️' },
+  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 10800, def: 38, mag: 12, luk: 8, desc: 'โล่เทวาพิทักษ์กาย (+38 DEF, +12 MAG, +8 LUK)', icon: '✨🛡️' },
+  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 28000, def: 55, mag: 18, spd: 8, desc: 'โล่กระจกสะท้อนเวทมนตร์ (+55 DEF, +18 MAG, +8 SPD)', icon: '🪞🛡️' },
 
-  // Armor (Tiers 1–5)
-  { id: 'arm_iron_cuirass', name: 'T1 เกราะอกเหล็กกล้า (Iron Cuirass)', type: 'armor', cost: 110, def: 8, desc: 'เกราะเหล็กเนื้อแน่น (+8 DEF)', icon: '🦺' },
-  { id: 'arm_mithril_chain', name: 'T2 เสื้อโซ่ถักมิธริล (Mithril Mail)', type: 'armor', cost: 230, def: 16, spd: 3, desc: 'โซ่ถักน้ำหนักเบาคล่องตัว (+16 DEF, +3 SPD)', icon: '⛓️' },
-  { id: 'arm_dragon_scale', name: 'T3 เกราะเกล็ดมังกรเพลิง (Dragon Armor)', type: 'armor', cost: 400, def: 26, atk: 4, desc: 'เกราะเกล็ดหลอมลาวา (+26 DEF, +4 ATK)', icon: '🐲🦺' },
-  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 720, def: 35, mag: 14, luk: 8, desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+35 DEF, +14 MAG, +8 LUK)', icon: '👘✨' },
-  { id: 'arm_valkyrie_plate', name: 'T5 เกราะวัลคิรีไร้พ่าย (Valkyrie Plate)', type: 'armor', cost: 1200, def: 50, atk: 10, spd: 10, desc: 'เกราะทองคำขาวแห่งวัลคิรี (+50 DEF, +10 ATK, +10 SPD)', icon: '👑🦺' },
+  // Armor (Tiers 1–5: Progressive Scaled Costs)
+  { id: 'arm_iron_cuirass', name: 'T1 เกราะอกเหล็กกล้า (Iron Cuirass)', type: 'armor', cost: 280, def: 8, desc: 'เกราะเหล็กเนื้อแน่น (+8 DEF)', icon: '🦺' },
+  { id: 'arm_mithril_chain', name: 'T2 เสื้อโซ่ถักมิธริล (Mithril Mail)', type: 'armor', cost: 1100, def: 18, spd: 4, desc: 'โซ่ถักน้ำหนักเบาคล่องตัว (+18 DEF, +4 SPD)', icon: '⛓️' },
+  { id: 'arm_dragon_scale', name: 'T3 เกราะเกล็ดมังกรเพลิง (Dragon Armor)', type: 'armor', cost: 3900, def: 30, atk: 6, desc: 'เกราะเกล็ดหลอมลาวา (+30 DEF, +6 ATK)', icon: '🐲🦺' },
+  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 11500, def: 42, mag: 16, luk: 10, desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+42 DEF, +16 MAG, +10 LUK)', icon: '👘✨' },
+  { id: 'arm_valkyrie_plate', name: 'T5 เกราะวัลคิรีไร้พ่าย (Valkyrie Plate)', type: 'armor', cost: 30000, def: 60, atk: 12, spd: 12, desc: 'เกราะทองคำขาวแห่งวัลคิรี (+60 DEF, +12 ATK, +12 SPD)', icon: '👑🦺' },
 
-  // Accessories (Tiers 1–5)
-  { id: 'acc_fortune_band', name: 'T1 แหวนโชคลาภ (Fortune Band)', type: 'accessory', cost: 130, luk: 8, desc: 'แหวนเพิ่มดวงชะตา (+8 LUK)', icon: '💍' },
-  { id: 'acc_swift_wing', name: 'T2 ตราปีกวายุ (Swift Wing Amulet)', type: 'accessory', cost: 220, spd: 8, luk: 4, desc: 'จี้เร่งความเร็วการเดินทาง (+8 SPD, +4 LUK)', icon: '🪶' },
-  { id: 'acc_berserk_belt', name: 'T3 เข็มขัดเบอร์เซิร์กเกอร์ (Berserk Belt)', type: 'accessory', cost: 390, atk: 10, def: 6, desc: 'ปลุกสัญชาตญาณนักรบ (+10 ATK, +6 DEF)', icon: '🥋' },
-  { id: 'acc_archmage_ring', name: 'T4 ตราประจำจอมเวท (Archmage Crest)', type: 'accessory', cost: 650, mag: 18, spd: 8, desc: 'ตราสัญลักษณ์มหาจอมเวท (+18 MAG, +8 SPD)', icon: '🔮' },
-  { id: 'acc_heroine_crown', name: 'T5 มงกุฎราชินีผู้พิชิต (Sovereign Crown)', type: 'accessory', cost: 1150, atk: 12, def: 12, mag: 12, spd: 12, luk: 15, desc: 'มงกุฎเกียรติยศเพิ่มสเตตัสทุกค่า (+12 ALL, +15 LUK)', icon: '👑' },
+  // Accessories (Tiers 1–5: Progressive Scaled Costs)
+  { id: 'acc_fortune_band', name: 'T1 แหวนโชคลาภ (Fortune Band)', type: 'accessory', cost: 300, luk: 8, desc: 'แหวนเพิ่มดวงชะตา (+8 LUK)', icon: '💍' },
+  { id: 'acc_swift_wing', name: 'T2 ตราปีกวายุ (Swift Wing Amulet)', type: 'accessory', cost: 1050, spd: 10, luk: 5, desc: 'จี้เร่งความเร็วการเดินทาง (+10 SPD, +5 LUK)', icon: '🪶' },
+  { id: 'acc_berserk_belt', name: 'T3 เข็มขัดเบอร์เซิร์กเกอร์ (Berserk Belt)', type: 'accessory', cost: 3800, atk: 12, def: 8, desc: 'ปลุกสัญชาตญาณนักรบ (+12 ATK, +8 DEF)', icon: '🥋' },
+  { id: 'acc_archmage_ring', name: 'T4 ตราประจำจอมเวท (Archmage Crest)', type: 'accessory', cost: 11000, mag: 22, spd: 10, desc: 'ตราสัญลักษณ์มหาจอมเวท (+22 MAG, +10 SPD)', icon: '🔮' },
+  { id: 'acc_heroine_crown', name: 'T5 มงกุฎราชินีผู้พิชิต (Sovereign Crown)', type: 'accessory', cost: 35000, atk: 15, def: 15, mag: 15, spd: 15, luk: 20, desc: 'มงกุฎเกียรติยศเพิ่มสเตตัสทุกค่า (+15 ALL, +20 LUK)', icon: '👑' },
 
   // Field Magic Spells
-  { id: 'spell_zap', name: 'สายฟ้าฟาด (Field Zap)', type: 'spell', cost: 80, desc: 'ฟาดสายฟ้าสร้างความเสียหาย 35 ดาเมจใส่คู่แข่ง', icon: '⚡' },
-  { id: 'spell_swap', name: 'สลับมิติ (Warp Swap)', type: 'spell', cost: 110, desc: 'สลับตำแหน่งบนกระดานกับคู่แข่งทันที', icon: '🌀' },
-  { id: 'spell_curse', name: 'คำสาปสนิม (Curse of Rust)', type: 'spell', cost: 130, desc: 'ลดพลัง ATK และ DEF ของเป้าหมาย 30% นาน 3 เทิร์น', icon: '🩸' },
-  { id: 'spell_audit', name: 'ตรวจสอบบัญชีหลวง (Royal Audit)', type: 'spell', cost: 150, desc: 'ยึดเงิน 25% จากถุงเงินของผู้เล่นเป้าหมาย', icon: '🧲' },
-  { id: 'spell_sanctuary', name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)', type: 'spell', cost: 160, desc: 'ฟื้นฟู HP เต็มเปี่ยม และลบล้างสถานะผิดปกติทั้งหมด', icon: '🕊️' },
-  { id: 'spell_recall', name: 'วาร์ปกลับปราสาท (Castle Recall)', type: 'spell', cost: 100, desc: 'ย้ายตำแหน่งกลับสู่ปราสาทหลวงทันที', icon: '🚪' }
+  { id: 'spell_zap', name: 'สายฟ้าฟาด (Field Zap)', type: 'spell', cost: 220, desc: 'ฟาดสายฟ้าสร้างความเสียหาย 35 ดาเมจใส่คู่แข่ง', icon: '⚡' },
+  { id: 'spell_swap', name: 'สลับมิติ (Warp Swap)', type: 'spell', cost: 380, desc: 'สลับตำแหน่งบนกระดานกับคู่แข่งทันที', icon: '🌀' },
+  { id: 'spell_curse', name: 'คำสาปสนิม (Curse of Rust)', type: 'spell', cost: 450, desc: 'ลดพลัง ATK และ DEF ของเป้าหมาย 30% นาน 3 เทิร์น', icon: '🩸' },
+  { id: 'spell_audit', name: 'ตรวจสอบบัญชีหลวง (Royal Audit)', type: 'spell', cost: 550, desc: 'ยึดเงิน 25% จากถุงเงินของผู้เล่นเป้าหมาย', icon: '🧲' },
+  { id: 'spell_sanctuary', name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)', type: 'spell', cost: 600, desc: 'ฟื้นฟู HP เต็มเปี่ยม และลบล้างสถานะผิดปกติทั้งหมด', icon: '🕊️' },
+  { id: 'spell_recall', name: 'วาร์ปกลับปราสาท (Castle Recall)', type: 'spell', cost: 300, desc: 'ย้ายตำแหน่งกลับสู่ปราสาทหลวงทันที', icon: '🚪' }
 ];
 
 export class ShopUI {

@@ -54,6 +54,9 @@ export interface HomeData {
   ownerId: number;
   ownerName: string;
   level: number;
+  purchasePrice?: number;
+  visitorsCount?: number;
+  tollFee?: number;
 }
 
 export interface BoardNode {

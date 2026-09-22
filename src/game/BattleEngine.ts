@@ -32,6 +32,7 @@ export interface RoundResult {
   isMagicBlocked: boolean;
   isGiveUp: boolean;
   isDodged?: boolean;
+  isCritical?: boolean;
   isFleeSuccess?: boolean;
   narration: string;
 }
@@ -285,8 +286,23 @@ export class BattleEngine {
       audio.counterParry();
       const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
       damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(Math.random() * 8)));
+
+      // LUK Critical Hit for Counter
+      if (Math.random() < Math.min(0.40, (d.luk || 5) * 0.015)) {
+        damageToAttacker = Math.round(damageToAttacker * 1.5);
+        narration = `💥 สวนกลับคริติคอลขั้นสุดยอด! ${d.name} ปัดป้องดาบของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย! (ติด Critical!)`;
+      } else {
+        narration = `💥 สวนกลับสมบูรณ์แบบ! ${d.name} ปัดป้องท่าชาร์จฟันของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย!`;
+      }
+
       a.hp = Math.round(Math.max(0, a.hp - damageToAttacker));
-      narration = `💥 สวนกลับสมบูรณ์แบบ! ${d.name} ปัดป้องท่าชาร์จฟันของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย!`;
+
+      // LUK Miracle Survival for Attacker
+      if (a.hp <= 0 && Math.random() < Math.min(0.30, (a.luk || 5) * 0.012)) {
+        a.hp = 1;
+        narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${a.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
+      }
+
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -307,12 +323,26 @@ export class BattleEngine {
       // Strike ignores defense!
       const rawStrike = Math.round(a.atk * 2.6 + Math.floor(Math.random() * 12));
       damageToDefender = Math.round(Math.max(20, rawStrike));
+
+      // LUK Critical Strike
+      let isCrit = false;
+      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+        isCrit = true;
+        damageToDefender = Math.round(damageToDefender * 1.5);
+      }
+
       d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
 
       if (defAction === 'defend') {
-        narration = `⚡ ชาร์จฟันทลายการป้องกัน! การฟาดฟันอันรุนแรงของ ${a.name} ทะลวงการตั้งการ์ดของ ${d.name} สร้างดาเมจมหาศาล ${damageToDefender} หน่วย!`;
+        narration = `⚡ ชาร์จฟันทลายการป้องกัน! การฟาดฟันอันรุนแรงของ ${a.name} ทะลวงการตั้งการ์ดของ ${d.name} สร้างดาเมจมหาศาล ${damageToDefender} หน่วย!${isCrit ? ' 💥 คริติคอล!' : ''}`;
       } else {
-        narration = `⚡ ชาร์จฟันเต็มแรง! ${a.name} ฟาดฟันทำลายบาเรียของ ${d.name} ได้รับดาเมจ ${damageToDefender} หน่วย!`;
+        narration = `⚡ ชาร์จฟันเต็มแรง! ${a.name} ฟาดฟันทำลายบาเรียของ ${d.name} ได้รับดาเมจ ${damageToDefender} หน่วย!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      }
+
+      // LUK Miracle Survival
+      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+        d.hp = 1;
+        narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
 
       return {
@@ -324,6 +354,7 @@ export class BattleEngine {
         isStrikeSuccess,
         isMagicBlocked,
         isGiveUp,
+        isCritical: isCrit,
         narration
       };
     }
@@ -332,8 +363,8 @@ export class BattleEngine {
     if (atkAction === 'magic' && defAction === 'magic_guard') {
       isMagicBlocked = true;
       audio.magicGuardBlock();
-      // Magic guard nullifies spell
-      narration = `✨ ปัดเวทสำเร็จ! บาเรียมนตราของ ${d.name} สะท้อนเวทมนตร์ของ ${a.name} ออกไปจนหมดสิ้น! (0 ดาเมจ)`;
+      // Magic guard nullifies spell and reflects minor mana
+      narration = `✨ ปัดเวทสำเร็จ! บาเรียมนตราของ ${d.name} (MAG ${d.mag || 5}) สะท้อนเวทมนตร์ของ ${a.name} ออกไปจนหมดสิ้น! (0 ดาเมจ)`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -351,42 +382,34 @@ export class BattleEngine {
     if (atkAction === 'magic') {
       audio.magicCast();
       // Magic penetrates physical armor, but is mitigated by Defender's MAG
-      const rawSpell = a.mag * 2.5 + 10 - d.mag * 0.7;
-      const spellDmg = Math.round(Math.max(12, rawSpell + Math.random() * 6));
+      const magMitigation = (d.mag || 5) * 0.85;
+      let rawSpell = a.mag * 2.6 + 12 - magMitigation + Math.random() * 6;
+
+      // MAG High-Tier Mastery: Elemental burn if MAG >= 20
+      let elementalBonus = 0;
+      if (a.mag >= 20) {
+        elementalBonus = Math.floor(a.mag * 0.35);
+        rawSpell += elementalBonus;
+      }
+
+      let spellDmg = Math.round(Math.max(12, rawSpell));
+
+      // LUK Critical Hit for Magic
+      let isCrit = false;
+      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+        isCrit = true;
+        spellDmg = Math.round(spellDmg * 1.5);
+      }
+
       damageToDefender = spellDmg;
       d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
-      narration = `🔮 เพลิงเวทมนตร์แผดเผา! การโจมตีเวทของ ${a.name} ทะลุเกราะกายภาพ สร้างความเสียหาย ${damageToDefender} ดาเมจแก่ ${d.name}!`;
 
-      return {
-        attackerAction: atkAction,
-        defenderAction: defAction,
-        damageToDefender,
-        damageToAttacker: 0,
-        isCounterSuccess,
-        isStrikeSuccess,
-        isMagicBlocked,
-        isGiveUp,
-        narration
-      };
-    }
+      narration = `🔮 เพลิงเวทมนตร์แผดเผา! การโจมตีเวทของ ${a.name} ทะลุเกราะกายภาพ สร้างความเสียหาย ${damageToDefender} ดาเมจแก่ ${d.name}!${elementalBonus > 0 ? ' (โบนัสธาตุเวทมนตร์ชั้นสูง)' : ''}${isCrit ? ' 💥 คริติคอลมนตรา!' : ''}`;
 
-    // 6. Resolve Skill
-    if (atkAction === 'skill') {
-      audio.magicCast();
-      const skillDmg = Math.round(a.atk * 1.8 + a.mag * 1.2);
-      damageToDefender = Math.round(Math.max(12, skillDmg));
-      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
-
-      if (a.classKey === 'thief' && a.playerRef && d.playerRef) {
-        const stolen = Math.min(d.playerRef.gold, 50);
-        d.playerRef.gold -= stolen;
-        a.playerRef.gold += stolen;
-        narration = `🗡️ โจรกรรมฉับไว! ${a.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G จากกระเป๋าของ ${d.name}!`;
-      } else if (a.classKey === 'cleric') {
-        a.hp = Math.round(Math.min(a.maxHp, a.hp + 25));
-        narration = `✨ แสงศักดิ์สิทธิ์พิฆาต! ${a.name} ปลดปล่อยดาเมจแสง ${damageToDefender} หน่วย พร้อมฟื้นฟูเลือดตนเอง 25 HP!`;
-      } else {
-        narration = `🌟 ท่าไม้ตายคลาส! ${a.name} ปลดปล่อย ${a.skillName || 'สกิล'} สร้างความเสียหาย ${damageToDefender} ดาเมจ!`;
+      // LUK Miracle Survival
+      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+        d.hp = 1;
+        narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
 
       return {
@@ -398,16 +421,65 @@ export class BattleEngine {
         isStrikeSuccess,
         isMagicBlocked,
         isGiveUp,
+        isCritical: isCrit,
+        narration
+      };
+    }
+
+    // 6. Resolve Skill
+    if (atkAction === 'skill') {
+      audio.magicCast();
+      let skillDmg = Math.round(a.atk * 1.9 + a.mag * 1.3);
+
+      // LUK Critical Hit for Skill
+      let isCrit = false;
+      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+        isCrit = true;
+        skillDmg = Math.round(skillDmg * 1.5);
+      }
+
+      damageToDefender = Math.round(Math.max(15, skillDmg));
+      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+
+      if (a.classKey === 'thief' && a.playerRef && d.playerRef) {
+        const stolen = Math.min(d.playerRef.gold, 60);
+        d.playerRef.gold -= stolen;
+        a.playerRef.gold += stolen;
+        narration = `🗡️ โจรกรรมฉับไว! ${a.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G จากกระเป๋าของ ${d.name}!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (a.classKey === 'cleric') {
+        const healAmt = 25 + Math.floor(a.mag * 0.5);
+        a.hp = Math.round(Math.min(a.maxHp, a.hp + healAmt));
+        narration = `✨ แสงศักดิ์สิทธิ์พิฆาต! ${a.name} ปลดปล่อยดาเมจแสง ${damageToDefender} หน่วย พร้อมฟื้นฟูเลือดตนเอง ${healAmt} HP!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else {
+        narration = `🌟 ท่าไม้ตายคลาส! ${a.name} ปลดปล่อย ${a.skillName || 'สกิล'} สร้างความเสียหาย ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      }
+
+      // LUK Miracle Survival
+      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+        d.hp = 1;
+        narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
+      }
+
+      return {
+        attackerAction: atkAction,
+        defenderAction: defAction,
+        damageToDefender,
+        damageToAttacker: 0,
+        isCounterSuccess,
+        isStrikeSuccess,
+        isMagicBlocked,
+        isGiveUp,
+        isCritical: isCrit,
         narration
       };
     }
 
     // 7. Resolve Attack
     // Speed Evasion Check (Faster defender can dodge standard attack if not defending)
-    if (defAction !== 'defend' && defAction !== 'counter' && d.spd > a.spd) {
-      const evasionChance = Math.min(0.35, (d.spd - a.spd) * 0.035);
+    if (defAction !== 'defend' && defAction !== 'counter' && (d.spd || 5) > (a.spd || 5)) {
+      const evasionChance = Math.min(0.40, ((d.spd || 5) - (a.spd || 5)) * 0.035);
       if (Math.random() < evasionChance) {
-        narration = `⚡ ความว่องไวเหนือชั้น! ${d.name} เคลื่อนไหวรวดเร็วหลบการโจมตีของ ${a.name} ได้อย่างเฉียดฉิว! (0 ดาเมจ)`;
+        narration = `⚡ ความว่องไวเหนือชั้น! ${d.name} (SPD ${d.spd}) เคลื่อนไหวรวดเร็วหลบการโจมตีของ ${a.name} ได้อย่างเฉียดฉิว! (0 ดาเมจ)`;
         return {
           attackerAction: atkAction,
           defenderAction: defAction,
@@ -424,23 +496,44 @@ export class BattleEngine {
     }
 
     audio.attackHit();
-    const rawAtk = Math.round(a.atk * 2 - d.def * 0.7);
+    const rawAtk = Math.round(a.atk * 2.1 - (d.def || 5) * 0.75);
     let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2)));
 
-    if (defAction === 'defend') {
-      finalDmg = Math.round(Math.max(3, finalDmg * 0.45));
-      narration = `🛡️ ป้องกันสำเร็จ! ${d.name} ลดทอนแรงปะทะ รับความเสียหายเพียง ${finalDmg} หน่วย`;
-    } else if (defAction === 'counter') {
-      // Counter failed! Full damage
-      finalDmg = Math.round(finalDmg * 1.2);
-      narration = `⚔️ สวนกลับพลาดเป้า! ${d.name} รอสวนกลับท่าชาร์จฟัน แต่โดนการโจมตีธรรมดาของ ${a.name} เต็มๆ ${finalDmg} ดาเมจ!`;
-    } else {
-      narration = `⚔️ ${a.name} โจมตีด้วยอาวุธ สร้างความเสียหาย ${finalDmg} ดาเมจแก่ ${d.name}!`;
+    // LUK Critical Hit for Attack
+    let isCrit = false;
+    if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+      isCrit = true;
+      finalDmg = Math.round(finalDmg * 1.5);
     }
 
+    // DEF Shield / Guard Scaling (High DEF mitigates even more damage!)
+    if (defAction === 'defend') {
+      const blockRatio = Math.max(0.18, 0.45 - (d.def || 5) * 0.0035);
+      finalDmg = Math.round(Math.max(2, finalDmg * blockRatio));
+      narration = `🛡️ ป้องกันสำเร็จ! ${d.name} ยกโล่และเกราะ (DEF ${d.def}) ลดทอนแรงปะทะ รับความเสียหายเพียง ${finalDmg} หน่วย!`;
+    } else if (defAction === 'counter') {
+      // Counter failed! Full damage
+      finalDmg = Math.round(finalDmg * 1.25);
+      narration = `⚔️ สวนกลับพลาดเป้า! ${d.name} รอสวนกลับท่าชาร์จฟัน แต่โดนการโจมตีธรรมดาของ ${a.name} เต็มๆ ${finalDmg} ดาเมจ!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+    } else {
+      narration = `⚔️ ${a.name} โจมตีด้วยอาวุธ สร้างความเสียหาย ${finalDmg} ดาเมจแก่ ${d.name}!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+    }
+
+    // SPD Agile Double-Strike Check (High SPD heroines can land a bonus follow-up strike!)
+    if ((a.spd || 5) - (d.spd || 5) >= 8 && Math.random() < 0.28) {
+      const doubleStrikeDmg = Math.round(Math.max(4, finalDmg * 0.40));
+      finalDmg += doubleStrikeDmg;
+      narration += ` ⚡ ความเร็วเหนือชั้น! (SPD ${a.spd}) พุ่งโจมตีต่อเนื่องเบิ้ลดาเมจ +${doubleStrikeDmg} หน่วย!`;
+    }
 
     d.hp = Math.round(Math.max(0, d.hp - finalDmg));
     damageToDefender = finalDmg;
+
+    // LUK Miracle Survival
+    if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+      d.hp = 1;
+      narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
+    }
 
     return {
       attackerAction: atkAction,
@@ -451,6 +544,7 @@ export class BattleEngine {
       isStrikeSuccess,
       isMagicBlocked,
       isGiveUp,
+      isCritical: isCrit,
       narration
     };
   }

@@ -115,7 +115,10 @@ export class GameState {
   startTurn() {
     const p = this.activePlayer;
     this.phase = 'BOARD_TURN';
-    p.tickTurn();
+    const turnRes = p.tickTurn();
+    if (turnRes?.companionDeparted) {
+      this.addLog(`⌛ สัญญาจ้างคู่หู ${turnRes.companionDeparted} สิ้นสุดลงแล้ว (ครบ 3 เทิร์น) เธอโบกมือลาและเดินทางกลับกิลด์!`, 'level');
+    }
 
     // Start overworld chiptune music if not active
     if (audio.getCurrentTrack() !== 'overworld') {
@@ -140,8 +143,13 @@ export class GameState {
     const spell = FIELD_SPELLS[spellKey];
     if (!spell) return { success: false, message: 'Unknown spell scroll.' };
 
-    if (caster.mp < spell.mpCost) {
-      return { success: false, message: `Not enough MP! Requires ${spell.mpCost} MP.` };
+    // MAG Stat Bonus: High MAG grants MP cost discount for field spells!
+    const playerMag = caster.getTotalStat('mag');
+    const mpDiscount = Math.floor(playerMag / 8);
+    const actualMpCost = Math.max(5, spell.mpCost - mpDiscount);
+
+    if (caster.mp < actualMpCost) {
+      return { success: false, message: `Not enough MP! Requires ${actualMpCost} MP (ลดลงจาก ${spell.mpCost} MP ด้วยพลังเวท MAG ${playerMag}).` };
     }
 
     let target: Player | undefined;
@@ -156,7 +164,7 @@ export class GameState {
     }
 
     // Deduct MP
-    caster.mp -= spell.mpCost;
+    caster.mp -= actualMpCost;
     audio.fieldSpellCast();
 
     if (spellKey === 'zap' && target) {
@@ -236,6 +244,14 @@ export class GameState {
       const numDice = Math.max(1, p.activeSpinnerMultiplier);
       for (let i = 0; i < numDice; i++) {
         totalRoll += Math.floor(Math.random() * 6) + 1;
+      }
+
+      // SPD Stat Overworld Bonus: High speed heroines sprint faster!
+      const playerSpd = p.getTotalStat('spd');
+      if (playerSpd >= 15 && Math.random() < Math.min(0.55, playerSpd * 0.022)) {
+        const bonusStep = playerSpd >= 25 ? 2 : 1;
+        totalRoll += bonusStep;
+        this.addLog(`👟 ฝีเท้าคล่องตัวสูง! (SPD ${playerSpd}) มอบโบนัสการก้าวเดินเพิ่ม +${bonusStep} ก้าว!`, 'level');
       }
     }
 

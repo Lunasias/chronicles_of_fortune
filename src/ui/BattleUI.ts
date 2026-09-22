@@ -370,6 +370,58 @@ export class BattleUI {
     }, 450);
   }
 
+  public triggerEmergencyCompanionAssist(playerC: Combatant, enemyC: Combatant, onComplete: () => void) {
+    const pRef = playerC.playerRef;
+    if (!pRef || !pRef.companion) {
+      onComplete();
+      return;
+    }
+    this.companionUsedThisBattle = true;
+    const comp = pRef.companion;
+    audio.fanfare();
+
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const arenaCX = w * 0.50;
+    const arenaCY = h * 0.56;
+    const isPAtk = this.game.activeBattle?.isPlayerAttacking ?? true;
+    const summonX = isPAtk ? arenaCX - 120 : arenaCX + 120;
+    const summonY = arenaCY + 20;
+    const enemyX = isPAtk ? arenaCX + 130 : arenaCX - 130;
+    const enemyY = arenaCY - 25;
+
+    combatVFX.spawnCompanionSummonPortal(summonX, summonY, comp.color || '#ec4899');
+    combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${comp.name}!`, 'crit');
+
+    // Heal player
+    const healAmt = Math.max(25, Math.floor(playerC.maxHp * 0.35));
+    playerC.hp = Math.min(playerC.maxHp, playerC.hp + healAmt);
+    if (pRef) pRef.hp = playerC.hp;
+
+    // Counter strike damage
+    const assistDmg = 35 + Math.floor((pRef.getTotalStat('atk') + pRef.getTotalStat('mag')) * 0.55);
+    enemyC.hp = Math.max(0, enemyC.hp - assistDmg);
+    if (enemyC.playerRef) enemyC.playerRef.hp = enemyC.hp;
+
+    const logMsg = `🛡️💖 [คู่หูเข้าช่วยเหลือฉุกเฉิน!] ${comp.name} กระโจนเข้ามาขวางหน้ากางบาเรียคุ้มกัน ฟื้นฟู HP +${healAmt} และร่าย [${comp.skillName || 'Companion Strike'}] สวนกลับสร้างความเสียหาย ${assistDmg} แก่ ${enemyC.name}!`;
+    document.getElementById('battleNarration')!.innerText = logMsg;
+    this.game.addLog(logMsg, 'battle');
+
+    combatVFX.spawnFloatingCombatText(summonX, summonY - 30, `+${healAmt} HP!`, 'heal');
+    combatVFX.spawnMagicLaserBeam(summonX, summonY - 50, enemyX, enemyY - 50, comp.color || '#f43f5e', 22);
+    combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${assistDmg} HP!`, 'crit');
+
+    this.updateUI();
+
+    setTimeout(() => {
+      if (enemyC.hp <= 0) {
+        this.concludeBattle(playerC, enemyC);
+      } else {
+        onComplete();
+      }
+    }, 1400);
+  }
+
   private checkAITurn() {
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
@@ -719,6 +771,29 @@ export class BattleUI {
           }
           if (b.attacker.hp <= 0) {
             setTimeout(() => this.concludeBattle(b.defender, b.attacker), 600);
+            return;
+          }
+
+          // Emergency Companion Assist check:
+          const playerC = b.attacker.playerRef ? b.attacker : (b.defender.playerRef ? b.defender : null);
+          const enemyC = b.attacker.playerRef ? b.defender : (b.defender.playerRef ? b.attacker : null);
+          const pRef = playerC?.playerRef;
+
+          if (
+            playerC &&
+            enemyC &&
+            pRef?.companion &&
+            !this.companionUsedThisBattle &&
+            playerC.hp > 0 &&
+            playerC.hp < playerC.maxHp * 0.40 &&
+            Math.random() < 0.65
+          ) {
+            this.triggerEmergencyCompanionAssist(playerC, enemyC, () => {
+              b.swapTurns();
+              this.updateUI();
+              this.updateCommandMenu();
+              this.checkAITurn();
+            });
             return;
           }
 

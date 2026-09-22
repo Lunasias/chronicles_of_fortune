@@ -190,6 +190,8 @@ export interface CompanionData {
   affinity: number;
   dialogue: string;
   color?: string;
+  bonusDesc?: string;
+  contractTurnsRemaining?: number;
 }
 
 export interface SkinVariantData {
@@ -513,5 +515,16 @@ export class Player {
     if (this.rustTurns > 0) {
       this.rustTurns--;
     }
+
+    // Tick down mercenary companion contract (จำกัดสัญญา 3 เทิร์นจากกิลด์)
+    if (this.companion && this.companion.contractTurnsRemaining !== undefined) {
+      this.companion.contractTurnsRemaining--;
+      if (this.companion.contractTurnsRemaining <= 0) {
+        const departedName = this.companion.name;
+        this.companion = null;
+        return { companionDeparted: departedName };
+      }
+    }
+    return {};
   }
 }
