@@ -195,9 +195,26 @@ export class IsometricRenderer {
       const dist = dx / hw + dy / hh;
 
       const isPriority = priorityIds && priorityIds.includes(node.id);
-      const effectiveDist = isPriority ? dist * 0.75 : dist;
+      let effectiveDist = isPriority ? dist * 0.75 : dist;
+      let isHit = dist <= 1.45;
 
-      if (dist <= 1.45 && effectiveDist < minDistance) {
+      // When node is an active destination, also accept clicks directly on the floating overhead indicator!
+      if (isPriority) {
+        const hasBuilding = [
+          'town', 'shop_item', 'shop_weapon', 'shop_magic', 'church',
+          'dark_gate', 'boss', 'vault', 'tavern', 'guild', 'fishing',
+          'isekai_event', 'mystery_chest', 'home'
+        ].includes(node.type);
+        const beaconY = ny - (node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62));
+        const dyBeacon = Math.abs(worldY - beaconY);
+        const beaconDist = (dx / (hw * 1.2)) + (dyBeacon / 32);
+        if (beaconDist <= 1.35) {
+          effectiveDist = Math.min(effectiveDist, beaconDist * 0.6);
+          isHit = true;
+        }
+      }
+
+      if (isHit && effectiveDist < minDistance) {
         minDistance = effectiveDist;
         closestNode = node;
       }
@@ -751,6 +768,9 @@ export class IsometricRenderer {
     // Sort by isometric depth
     renderList.sort((a, b) => a.depth - b.depth);
     renderList.forEach(item => item.draw());
+
+    // 3. Highlighted Reachable Destinations Overhead Pass (Always on top of terrain & buildings, never obscured!)
+    this.renderDestinationOverheadMarkers(ctx, nodes, highlightedNodes, minX, maxX, minY, maxY, time);
   }
 
   // Draw 3D Isometric Tile Block with Authentic Isometric Tiles & Dokapon Node Plates
@@ -884,66 +904,85 @@ export class IsometricRenderer {
     ctx.restore();
 
 
-    // 4. Outer Diamond Border Highlight / Hover (Reachable Destination Spaces - Bright Cyan!)
+    // 4. Large Illuminated Ground Target Zone (Reachable Destination Spaces - Surrounds tile floor cleanly)
     if (isHovered || isHighlighted) {
       const ringColor = isHovered ? '#fde047' : '#00f0ff';
-      const fillGlow = isHovered ? 'rgba(251, 191, 36, 0.35)' : 'rgba(0, 240, 255, 0.40)';
+      const fillGlow = isHovered ? 'rgba(251, 191, 36, 0.40)' : 'rgba(0, 240, 255, 0.35)';
 
-      // Glowing pulsing tile footprint
-      ctx.fillStyle = fillGlow;
+      ctx.save();
+      // 4.1 Large glowing elliptical ground footprint framing the entire tile
+      const groundRx = isHovered ? 36 : 30;
+      const groundRy = isHovered ? 18 : 15;
+
+      // Soft filled inner ambient light
+      ctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.22)' : 'rgba(0, 240, 255, 0.16)';
       ctx.beginPath();
-      ctx.moveTo(cx, cy - hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx - hw, cy);
-      ctx.closePath();
+      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Outer glow aura stroke (zero-lag hardware acceleration)
+      // Outer glow aura stroke
       ctx.strokeStyle = fillGlow;
-      ctx.lineWidth = isHovered ? 6.5 : 5.5;
+      ctx.lineWidth = isHovered ? 5.5 : 4.0;
       ctx.beginPath();
-      ctx.moveTo(cx, cy - hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx - hw, cy);
-      ctx.closePath();
+      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Sharp core border stroke
+      // Sharp primary boundary ring
       ctx.strokeStyle = ringColor;
-      ctx.lineWidth = isHovered ? 2.8 : 2.2;
+      ctx.lineWidth = isHovered ? 2.5 : 1.8;
       ctx.beginPath();
-      ctx.moveTo(cx, cy - hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx - hw, cy);
-      ctx.closePath();
+      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Floating Diamond Beacon above tile (zero-lag dual fill)
-      const floatY = Math.sin(time * 0.006) * 4;
-      const beaconY = cy - hh - 18 + floatY;
-
-      // Outer beacon aura
-      ctx.fillStyle = fillGlow;
+      // 4.2 Expanding Active Sonar / Runic Pulse Wave on Ground
+      const pulseProg = ((time * 0.0022) + (node.id * 0.18)) % 1;
+      const pulseRx = groundRx * (0.85 + pulseProg * 0.65);
+      const pulseRy = groundRy * (0.85 + pulseProg * 0.65);
+      const pulseAlpha = (1 - pulseProg) * (isHovered ? 0.65 : 0.45);
+      ctx.strokeStyle = isHovered ? `rgba(251, 191, 36, ${pulseAlpha})` : `rgba(0, 240, 255, ${pulseAlpha})`;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.moveTo(cx, beaconY - 11);
-      ctx.lineTo(cx + 8, beaconY);
-      ctx.lineTo(cx, beaconY + 11);
-      ctx.lineTo(cx - 8, beaconY);
-      ctx.closePath();
-      ctx.fill();
+      ctx.ellipse(cx, cy, pulseRx, pulseRy, 0, 0, Math.PI * 2);
+      ctx.stroke();
 
-      // Inner core beacon
-      ctx.fillStyle = ringColor;
+      // 4.3 Sleek High-Tech / Fantasy Corner Targeting Brackets [ ]
+      const bw = groundRx + (isHovered ? 7 : 5);
+      const bh = groundRy + (isHovered ? 4 : 3);
+      const blx = 9;
+      const bly = 5;
+
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = isHovered ? 2.8 : 2.0;
+
+      // West corner bracket
       ctx.beginPath();
-      ctx.moveTo(cx, beaconY - 7);
-      ctx.lineTo(cx + 5, beaconY);
-      ctx.lineTo(cx, beaconY + 7);
-      ctx.lineTo(cx - 5, beaconY);
-      ctx.closePath();
-      ctx.fill();
+      ctx.moveTo(cx - bw + blx, cy - bly);
+      ctx.lineTo(cx - bw, cy);
+      ctx.lineTo(cx - bw + blx, cy + bly);
+      ctx.stroke();
+
+      // East corner bracket
+      ctx.beginPath();
+      ctx.moveTo(cx + bw - blx, cy - bly);
+      ctx.lineTo(cx + bw, cy);
+      ctx.lineTo(cx + bw - blx, cy + bly);
+      ctx.stroke();
+
+      // North corner bracket
+      ctx.beginPath();
+      ctx.moveTo(cx - blx, cy - bh + bly);
+      ctx.lineTo(cx, cy - bh);
+      ctx.lineTo(cx + blx, cy - bh + bly);
+      ctx.stroke();
+
+      // South corner bracket
+      ctx.beginPath();
+      ctx.moveTo(cx - blx, cy + bh - bly);
+      ctx.lineTo(cx, cy + bh);
+      ctx.lineTo(cx + blx, cy + bh - bly);
+      ctx.stroke();
+
+      ctx.restore();
     }
   }
 
@@ -955,6 +994,166 @@ export class IsometricRenderer {
     ctx.lineTo(cx - w / 2, cy);
     ctx.closePath();
     ctx.fill();
+  }
+
+  /**
+   * Prominent Overhead Destination Indicators & Translucent Pillar Beams
+   * Floats safely ABOVE buildings and characters, with zero obstruction to sprites or text badges!
+   */
+  private renderDestinationOverheadMarkers(
+    ctx: CanvasRenderingContext2D,
+    nodes: BoardNode[],
+    highlightedNodes: number[],
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    time: number
+  ) {
+    if (highlightedNodes.length === 0) return;
+
+    for (let i = 0; i < highlightedNodes.length; i++) {
+      const nodeId = highlightedNodes[i];
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) continue;
+
+      const pos = this.nodeScreenCache.get(node.id);
+      const px = pos ? pos.x : this.toScreen(node.gx, node.gy, node.gz).x;
+      const py = pos ? pos.y : this.toScreen(node.gx, node.gy, node.gz).y;
+
+      // View frustum culling
+      if (px < minX - 100 || px > maxX + 100 || py < minY - 180 || py > maxY + 180) {
+        continue;
+      }
+
+      const isHovered = this.hoveredNodeId === node.id;
+      const ringColor = isHovered ? '#fde047' : '#00f0ff';
+      const glowColor = isHovered ? 'rgba(251, 191, 36, 0.45)' : 'rgba(0, 240, 255, 0.35)';
+
+      // Safe clearance height calculation:
+      // Buildings & Badges reach up to py - 80, Realm Bosses reach py - 95, normal nodes reach py - 48
+      const hasBuilding = [
+        'town', 'shop_item', 'shop_weapon', 'shop_magic', 'church',
+        'dark_gate', 'boss', 'vault', 'tavern', 'guild', 'fishing',
+        'isekai_event', 'mystery_chest', 'home'
+      ].includes(node.type);
+
+      const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
+      const bob = Math.sin((time * 0.0055) + (node.id * 0.7)) * 5;
+      const pointerY = py - baseClearance + bob;
+
+      ctx.save();
+
+      // 1. Soft Vertical Translucent Light Column (Non-intrusive guide ray)
+      const beamW = isHovered ? 26 : 18;
+      const grad = ctx.createLinearGradient(px, py, px, pointerY);
+      grad.addColorStop(0, isHovered ? 'rgba(251, 191, 36, 0.22)' : 'rgba(0, 240, 255, 0.16)');
+      grad.addColorStop(0.7, isHovered ? 'rgba(251, 191, 36, 0.08)' : 'rgba(0, 240, 255, 0.05)');
+      grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(px - beamW * 0.5, py + 8);
+      ctx.lineTo(px + beamW * 0.5, py + 8);
+      ctx.lineTo(px + beamW * 0.25, pointerY + 12);
+      ctx.lineTo(px - beamW * 0.25, pointerY + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. High-Visibility 3D Downward Pointer Arrow
+      const arrowScale = isHovered ? 1.25 : 1.0;
+      const aw = 14 * arrowScale;
+      const ah = 22 * arrowScale;
+      const tipY = pointerY + 8;
+
+      // 2.1 Drop Shadow for maximum contrast against any terrain/sky
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.75)';
+      ctx.beginPath();
+      ctx.moveTo(px, tipY + 4);
+      ctx.lineTo(px - aw - 3, tipY - ah - 3);
+      ctx.lineTo(px, tipY - ah + 3);
+      ctx.lineTo(px + aw + 3, tipY - ah - 3);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2.2 Outer Glow Aura
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = isHovered ? 5.5 : 4.0;
+      ctx.beginPath();
+      ctx.moveTo(px, tipY);
+      ctx.lineTo(px - aw, tipY - ah);
+      ctx.lineTo(px, tipY - ah + 5);
+      ctx.lineTo(px + aw, tipY - ah);
+      ctx.closePath();
+      ctx.stroke();
+
+      // 2.3 Left Shaded Facet
+      ctx.fillStyle = isHovered ? '#d97706' : '#0284c7';
+      ctx.beginPath();
+      ctx.moveTo(px, tipY);
+      ctx.lineTo(px - aw, tipY - ah);
+      ctx.lineTo(px, tipY - ah + 5);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2.4 Right Highlighted Facet
+      ctx.fillStyle = isHovered ? '#fef08a' : '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(px, tipY);
+      ctx.lineTo(px, tipY - ah + 5);
+      ctx.lineTo(px + aw, tipY - ah);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2.5 Center Specular Crest & Core Line
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(px, tipY);
+      ctx.lineTo(px - aw, tipY - ah);
+      ctx.lineTo(px, tipY - ah + 5);
+      ctx.lineTo(px + aw, tipY - ah);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Specular white glimmer at top
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 2, tipY - ah + 2, 4, 3);
+
+      // 3. Crisp Inner Target Glyph
+      ctx.font = `bold ${Math.round(11 * arrowScale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = isHovered ? '#78350f' : '#082f49';
+      ctx.fillText('▼', px, tipY - ah * 0.45);
+
+      // 4. Interactive Hover Badge (Only when hovered!)
+      if (isHovered) {
+        const badgeY = tipY - ah - 16;
+        const label = `🎯 เดินมาที่นี่`;
+        ctx.font = 'bold 10px "Kanit", "Prompt", sans-serif';
+        const txtW = ctx.measureText(label).width;
+        const boxW = txtW + 18;
+        const boxH = 20;
+
+        // Dark pill background with golden border
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.beginPath();
+        ctx.roundRect(px - boxW / 2, badgeY - boxH / 2, boxW, boxH, 10);
+        ctx.fill();
+
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, px, badgeY);
+      }
+
+      ctx.restore();
+    }
   }
 
   private drawDarkFantasyBiomeProp(
