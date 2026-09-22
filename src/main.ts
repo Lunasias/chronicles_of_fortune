@@ -450,9 +450,6 @@ class DokaponApp {
   }
 
   private triggerDiceRoll() {
-    // Smoothly ease camera zoom out to comfortable tactical viewing level
-    this.renderer.resetTacticalZoom(1.05);
-
     const totalRoll = this.game.rollMovementDice();
 
     const diceModal = document.getElementById('diceRollModal')!;
@@ -956,8 +953,8 @@ class DokaponApp {
 
   private onTurnStarted() {
     const p = this.game.activePlayer;
-    // 1. Smoothly center camera and zoom in onto active player
-    this.renderer.focusOnPlayer(p.gridX, p.gridY, p.gridZ, 1.25);
+    // 1. Smoothly center camera on active player without jarring zoom jumps
+    this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
     this.hud.update();
 
     // 2. Display Turn Start Banner

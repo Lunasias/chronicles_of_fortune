@@ -258,6 +258,9 @@ export class IsometricRenderer {
     // 2.5 Continuous 3D Isometric Continent Terrain (Biome-specific earth, cliffs & textures)
     isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
 
+    // 2.6 Natural Environmental Clutter (Direct pass, zero sorting overhead)
+    isometricTerrainEngine.renderClutter(ctx, minX, maxX, minY, maxY, time);
+
     // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
     this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
 
@@ -353,11 +356,10 @@ export class IsometricRenderer {
   private renderPathBreadcrumbs(ctx: CanvasRenderingContext2D, nodes: BoardNode[]) {
     if (this.previewPathNodeIds.length < 2) return;
 
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 6;
+    // Outer neon glow stroke (zero-lag)
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+    ctx.lineWidth = 10;
     ctx.lineCap = 'round';
-    ctx.shadowColor = '#06b6d4';
-    ctx.shadowBlur = 12;
 
     ctx.beginPath();
     for (let idx = 0; idx < this.previewPathNodeIds.length; idx++) {
@@ -368,7 +370,11 @@ export class IsometricRenderer {
       else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
-    ctx.shadowBlur = 0;
+
+    // Inner bright core beam
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.stroke();
   }
 
   private renderDepthSortedWorld(
@@ -506,12 +512,7 @@ export class IsometricRenderer {
                 ctx.fill();
                 ctx.strokeStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
                 ctx.lineWidth = isHighlighted || isHovered ? 2.0 : 1.2;
-                if (isHighlighted || isHovered) {
-                  ctx.shadowColor = '#00f0ff';
-                  ctx.shadowBlur = 8;
-                }
                 ctx.stroke();
-                ctx.shadowBlur = 0;
 
                 ctx.fillStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#fde047');
                 ctx.textAlign = 'center';
@@ -620,12 +621,7 @@ export class IsometricRenderer {
 
               ctx.strokeStyle = isHovered || isHighlighted ? '#00f0ff' : badge.borderColor;
               ctx.lineWidth = isHovered || isHighlighted ? 2.0 : 1.2;
-              if (isHovered || isHighlighted) {
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 8;
-              }
               ctx.stroke();
-              ctx.shadowBlur = 0;
 
               ctx.fillStyle = isHovered || isHighlighted ? '#ffffff' : badge.textColor;
               ctx.textAlign = 'center';
@@ -667,19 +663,7 @@ export class IsometricRenderer {
       }
     }
 
-    // 2. Add Environmental Clutter via Spatial Grid Buckets (Zero-lag O(visible) query)
-    const visibleProps = isometricTerrainEngine.getVisibleProps(minX, maxX, minY, maxY);
-    for (let i = 0; i < visibleProps.length; i++) {
-      const prop = visibleProps[i];
-      renderList.push({
-        depth: prop.depth,
-        draw: () => {
-          isometricTerrainEngine.drawEnvironmentProp(ctx, prop, time);
-        }
-      });
-    }
-
-    // 3. Add Animated Players
+    // 2. Add Animated Players
     players.forEach(player => {
       const p = this.toScreen(player.gridX, player.gridY, player.gridZ);
 
@@ -826,12 +810,9 @@ export class IsometricRenderer {
       ctx.closePath();
       ctx.fill();
 
-      // Sharp glowing border
-      ctx.save();
-      ctx.strokeStyle = ringColor;
-      ctx.shadowColor = ringColor;
-      ctx.shadowBlur = 10;
-      ctx.lineWidth = isHovered ? 3.5 : 3.0;
+      // Outer glow aura stroke (zero-lag hardware acceleration)
+      ctx.strokeStyle = fillGlow;
+      ctx.lineWidth = isHovered ? 6.5 : 5.5;
       ctx.beginPath();
       ctx.moveTo(cx, cy - hh);
       ctx.lineTo(cx + hw, cy);
@@ -839,23 +820,41 @@ export class IsometricRenderer {
       ctx.lineTo(cx - hw, cy);
       ctx.closePath();
       ctx.stroke();
-      ctx.restore();
 
-      // Floating Diamond Beacon above tile
+      // Sharp core border stroke
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = isHovered ? 2.8 : 2.2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - hh);
+      ctx.lineTo(cx + hw, cy);
+      ctx.lineTo(cx, cy + hh);
+      ctx.lineTo(cx - hw, cy);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Floating Diamond Beacon above tile (zero-lag dual fill)
       const floatY = Math.sin(time * 0.006) * 4;
       const beaconY = cy - hh - 18 + floatY;
-      ctx.save();
-      ctx.fillStyle = ringColor;
-      ctx.shadowColor = ringColor;
-      ctx.shadowBlur = 8;
+
+      // Outer beacon aura
+      ctx.fillStyle = fillGlow;
       ctx.beginPath();
-      ctx.moveTo(cx, beaconY - 8);
-      ctx.lineTo(cx + 6, beaconY);
-      ctx.lineTo(cx, beaconY + 8);
-      ctx.lineTo(cx - 6, beaconY);
+      ctx.moveTo(cx, beaconY - 11);
+      ctx.lineTo(cx + 8, beaconY);
+      ctx.lineTo(cx, beaconY + 11);
+      ctx.lineTo(cx - 8, beaconY);
       ctx.closePath();
       ctx.fill();
-      ctx.restore();
+
+      // Inner core beacon
+      ctx.fillStyle = ringColor;
+      ctx.beginPath();
+      ctx.moveTo(cx, beaconY - 7);
+      ctx.lineTo(cx + 5, beaconY);
+      ctx.lineTo(cx, beaconY + 7);
+      ctx.lineTo(cx - 5, beaconY);
+      ctx.closePath();
+      ctx.fill();
     }
   }
 
@@ -1028,6 +1027,7 @@ export class IsometricRenderer {
     ctx.globalCompositeOperation = 'lighter';
 
     // Warm radial torchlight glows on towns, inns, taverns
+    const townGlow = this.getTownGlowCanvas();
     nodes.forEach(n => {
       if (
         n.type === 'town' ||
@@ -1039,21 +1039,14 @@ export class IsometricRenderer {
         n.type === 'shop_magic'
       ) {
         const p = this.toScreen(n.gx, n.gy, n.gz);
-        if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
-          const grad = ctx.createRadialGradient(p.x, p.y - 18, 6, p.x, p.y - 18, 95);
-          grad.addColorStop(0, 'rgba(251, 191, 36, 0.40)');
-          grad.addColorStop(0.4, 'rgba(245, 158, 11, 0.18)');
-          grad.addColorStop(0.8, 'rgba(217, 119, 6, 0.06)');
-          grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y - 18, 95, 0, Math.PI * 2);
-          ctx.fill();
+        if (p.x >= minX - 95 && p.x <= maxX + 95 && p.y >= minY - 95 && p.y <= maxY + 95) {
+          ctx.drawImage(townGlow, p.x - 95, p.y - 113);
         }
       }
     });
 
-    // Soft warm player lantern glow cast on the ground under feet (deduplicated so standing together doesn't blow out)
+    // Soft warm player lantern glow cast on the ground under feet (deduplicated)
+    const playerGlow = this.getPlayerGlowCanvas();
     const renderedTiles = new Set<string>();
     players.forEach(pl => {
       const key = `${pl.gridX},${pl.gridY},${pl.gridZ}`;
@@ -1062,16 +1055,7 @@ export class IsometricRenderer {
 
       const p = this.toScreen(pl.gridX, pl.gridY, pl.gridZ);
       if (p.x >= minX - 80 && p.x <= maxX + 80 && p.y >= minY - 80 && p.y <= maxY + 80) {
-        // Soft ground illumination under player boots, without blinding white torso highlight
-        const grad = ctx.createRadialGradient(p.x, p.y + 8, 4, p.x, p.y + 8, 70);
-        grad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
-        grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.16)');
-        grad.addColorStop(0.75, 'rgba(245, 158, 11, 0.05)');
-        grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y + 8, 70, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.drawImage(playerGlow, p.x - 70, p.y - 62);
       }
     });
 
@@ -1148,6 +1132,47 @@ export class IsometricRenderer {
         ctx.fillRect(p.x, p.y, p.size, p.size);
       });
     }
+  }
+
+  private townGlowCanvas: HTMLCanvasElement | null = null;
+  private playerGlowCanvas: HTMLCanvasElement | null = null;
+
+  private getTownGlowCanvas(): HTMLCanvasElement {
+    if (this.townGlowCanvas) return this.townGlowCanvas;
+    const c = document.createElement('canvas');
+    c.width = 190;
+    c.height = 190;
+    const ctx = c.getContext('2d')!;
+    const grad = ctx.createRadialGradient(95, 95, 6, 95, 95, 95);
+    grad.addColorStop(0, 'rgba(251, 191, 36, 0.40)');
+    grad.addColorStop(0.4, 'rgba(245, 158, 11, 0.18)');
+    grad.addColorStop(0.8, 'rgba(217, 119, 6, 0.06)');
+    grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(95, 95, 95, 0, Math.PI * 2);
+    ctx.fill();
+    this.townGlowCanvas = c;
+    return c;
+  }
+
+  private getPlayerGlowCanvas(): HTMLCanvasElement {
+    if (this.playerGlowCanvas) return this.playerGlowCanvas;
+    const c = document.createElement('canvas');
+    c.width = 140;
+    c.height = 140;
+    const ctx = c.getContext('2d')!;
+    const grad = ctx.createRadialGradient(70, 70, 4, 70, 70, 70);
+    grad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+    grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.16)');
+    grad.addColorStop(0.75, 'rgba(245, 158, 11, 0.05)');
+    grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(70, 70, 70, 0, Math.PI * 2);
+    ctx.fill();
+    this.playerGlowCanvas = c;
+    return c;
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {

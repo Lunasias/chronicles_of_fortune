@@ -283,65 +283,35 @@ export class IsometricTerrainEngine {
   }
 
   // =========================================================================
-  // RENDER TERRAIN CONTINENT GROUND MESH
+  // PRE-RENDERED ISOMETRIC TILE SPRITE CACHE (60 FPS Hardware Blitting)
   // =========================================================================
-  public renderGround(
-    ctx: CanvasRenderingContext2D,
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
-    time: number,
-    timeOfDay: TimeOfDay
-  ) {
+  private tileSpriteCache = new Map<string, HTMLCanvasElement>();
+
+  public getTileSprite(biome: BiomeType, hasCliffs: boolean, isNight: boolean): HTMLCanvasElement {
+    const key = `${biome}_${hasCliffs ? 'c' : 'f'}_${isNight ? 'n' : 'd'}`;
+    if (this.tileSpriteCache.has(key)) {
+      return this.tileSpriteCache.get(key)!;
+    }
+
     const hw = this.tileWidth / 2;
     const hh = this.tileHeight / 2;
     const cliffHeight = 18;
 
-    // Zero-lag Frustum Query using Spatial Grid Buckets (~150-300 visible tiles only)
-    const visibleTiles = this.getVisibleTiles(minX, maxX, minY, maxY);
+    const cw = 104;
+    const ch = 82;
+    const canvas = document.createElement('canvas');
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
 
-    for (let i = 0; i < visibleTiles.length; i++) {
-      this.drawTerrainTile(ctx, visibleTiles[i], hw, hh, cliffHeight, time, timeOfDay);
-    }
-  }
+    const cx = 52;
+    const cy = 28;
 
-  // Draw an individual 3D isometric terrain block with biome textures, living ocean shore, and cliff drops
-  private drawTerrainTile(
-    ctx: CanvasRenderingContext2D,
-    tile: TerrainTile,
-    hw: number,
-    hh: number,
-    cliffHeight: number,
-    time: number,
-    timeOfDay: TimeOfDay
-  ) {
-    const cx = tile.x;
-    const cy = tile.y;
-
-    const colors = this.getBiomeColors(tile.biome, timeOfDay);
-
-    // 0. Living ocean shoreline foam & waves around perimeter cliffs
-    if (tile.isEdge) {
-      const wave = Math.sin(time * 0.003 + tile.gx * 1.8 + tile.gy * 1.2) * 2.8;
-      ctx.save();
-      // Translucent turquoise/deep ocean body
-      ctx.fillStyle = timeOfDay === 'NIGHT' ? 'rgba(8, 47, 73, 0.35)' : 'rgba(14, 165, 233, 0.25)';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + cliffHeight + 11 + wave, hw + 14, hh + 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Frothy white shoreline wave crest
-      ctx.strokeStyle = timeOfDay === 'NIGHT' ? 'rgba(186, 230, 253, 0.35)' : 'rgba(240, 249, 255, 0.55)';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + cliffHeight + 11 + wave, hw + 10, hh + 6, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
+    const colors = this.getBiomeColors(biome, isNight ? 'NIGHT' : 'DAY');
 
     // 1. 3D Cliff Faces (rendered on exposed edges)
-    if (tile.hasSouthCliff || tile.hasWestCliff || tile.hasEastCliff) {
+    if (hasCliffs) {
       // Left 3D Face
       ctx.fillStyle = colors.cliffLeft;
       ctx.beginPath();
@@ -415,12 +385,99 @@ export class IsometricTerrainEngine {
     ctx.fill();
 
     // 3. Biome-Specific Ground Surface Details
-    this.drawBiomeSurfaceDetails(ctx, cx, cy, hw, hh, tile.biome, time, colors);
+    this.drawBiomeSurfaceDetails(ctx, cx, cy, hw, hh, biome, 0, colors);
 
     // 4. Subtle Border Contour
     ctx.strokeStyle = colors.border;
     ctx.lineWidth = 1.0;
     ctx.stroke();
+
+    this.tileSpriteCache.set(key, canvas);
+    return canvas;
+  }
+
+  // =========================================================================
+  // RENDER TERRAIN CONTINENT GROUND MESH (Zero-Allocation 60 FPS GPU Blitting)
+  // =========================================================================
+  public renderGround(
+    ctx: CanvasRenderingContext2D,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    time: number,
+    timeOfDay: TimeOfDay
+  ) {
+    const isNight = timeOfDay === 'NIGHT';
+    const hw = this.tileWidth / 2;
+    const hh = this.tileHeight / 2;
+    const cliffHeight = 18;
+    const wave = Math.sin(time * 0.003) * 2.5;
+
+    // Direct iteration over pre-sorted terrainTiles with zero allocations!
+    const tiles = this.terrainTiles;
+    const len = tiles.length;
+
+    for (let i = 0; i < len; i++) {
+      const tile = tiles[i];
+      // Frustum culling check
+      if (tile.x < minX - 56 || tile.x > maxX + 56 || tile.y < minY - 32 || tile.y > maxY + 60) {
+        continue;
+      }
+
+      // Shoreline ocean foam waves around perimeter cliffs
+      if (tile.isEdge) {
+        this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + wave, hw, hh, isNight);
+      }
+
+      // Zero-lag hardware GPU texture blit
+      const hasCliffs = tile.hasSouthCliff || tile.hasWestCliff || tile.hasEastCliff;
+      const sprite = this.getTileSprite(tile.biome, hasCliffs, isNight);
+      ctx.drawImage(sprite, tile.x - 52, tile.y - 28);
+    }
+  }
+
+  private drawShoreWave(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    hw: number,
+    hh: number,
+    isNight: boolean
+  ) {
+    ctx.fillStyle = isNight ? 'rgba(8, 47, 73, 0.35)' : 'rgba(14, 165, 233, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, hw + 14, hh + 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = isNight ? 'rgba(186, 230, 253, 0.35)' : 'rgba(240, 249, 255, 0.55)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, hw + 10, hh + 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // =========================================================================
+  // RENDER ENVIRONMENTAL CLUTTER (Zero-Sort Ground Pass)
+  // =========================================================================
+  public renderClutter(
+    ctx: CanvasRenderingContext2D,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    time: number
+  ) {
+    const props = this.environmentProps;
+    const len = props.length;
+
+    for (let i = 0; i < len; i++) {
+      const prop = props[i];
+      if (prop.x < minX - 32 || prop.x > maxX + 32 || prop.y < minY - 32 || prop.y > maxY + 32) {
+        continue;
+      }
+      this.drawEnvironmentProp(ctx, prop, time);
+    }
   }
 
   // Get color palette for each biome adapted for day/night
@@ -599,7 +656,6 @@ export class IsometricTerrainEngine {
     prop: EnvironmentProp,
     time: number
   ) {
-    ctx.save();
     // Gentle wind sway animation for living vegetation props
     const windSway = (prop.type === 'grass' || prop.type === 'flower' || prop.type === 'shrub')
       ? Math.sin(time * 0.003 + prop.x * 0.05 + prop.y * 0.03) * 2.0
@@ -629,8 +685,6 @@ export class IsometricTerrainEngine {
         this.drawCrystalProp(ctx, px, py, prop.biome, time, prop.scale);
         break;
     }
-
-    ctx.restore();
   }
 
   // 1. ROCKS & BOULDERS (หิน)
