@@ -3,6 +3,7 @@ import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGen
 import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
+import { isometricTerrainEngine } from './IsometricTerrainEngine';
 
 export interface Camera2D {
   x: number;
@@ -91,6 +92,9 @@ export class IsometricRenderer {
   public initBoardCache(nodes: BoardNode[]) {
     this.nodeScreenCache.clear();
     this.roadwaySegments = [];
+
+    // Initialize 3D isometric continent terrain and environmental props
+    isometricTerrainEngine.initTerrain(nodes);
 
     const nodeMap = new Map<number, BoardNode>();
     nodes.forEach(n => {
@@ -225,13 +229,16 @@ export class IsometricRenderer {
     const minY = this.camera.y - halfH;
     const maxY = this.camera.y + halfH;
 
+    // 2.5 Continuous 3D Isometric Continent Terrain (Biome-specific earth, cliffs & textures)
+    isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
+
     // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
     this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
 
     // 4. Interactive Breadcrumb Stepping Stones for Previewed Path
     this.renderPathBreadcrumbs(ctx, nodes);
 
-    // 5. Depth-Sorted Entities (Terrain Blocks, Buildings, Props, Characters)
+    // 5. Depth-Sorted Entities (Terrain Blocks, Buildings, Props, Characters & Environmental Clutter)
     this.renderDepthSortedWorld(ctx, nodes, players, activePlayer, highlightedNodes, minX, maxX, minY, maxY, time);
 
     // 6. Running Dust Particles
@@ -505,7 +512,22 @@ export class IsometricRenderer {
       }
     }
 
-    // 2. Add Animated Players
+    // 2. Add Environmental Clutter (Rocks, Grass Tufts, Wildflowers, Shrubs, Crystals)
+    for (let i = 0; i < isometricTerrainEngine.environmentProps.length; i++) {
+      const prop = isometricTerrainEngine.environmentProps[i];
+      // Frustum culling
+      if (prop.x < minX - 80 || prop.x > maxX + 80 || prop.y < minY - 80 || prop.y > maxY + 80) {
+        continue;
+      }
+      renderList.push({
+        depth: prop.depth,
+        draw: () => {
+          isometricTerrainEngine.drawEnvironmentProp(ctx, prop, time);
+        }
+      });
+    }
+
+    // 3. Add Animated Players
     players.forEach(player => {
       const p = this.toScreen(player.gridX, player.gridY, player.gridZ);
 
@@ -882,31 +904,39 @@ export class IsometricRenderer {
       ) {
         const p = this.toScreen(n.gx, n.gy, n.gz);
         if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
-          const grad = ctx.createRadialGradient(p.x, p.y - 25, 6, p.x, p.y - 25, 110);
-          grad.addColorStop(0, 'rgba(254, 240, 138, 0.65)');
-          grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.35)');
-          grad.addColorStop(0.7, 'rgba(245, 158, 11, 0.12)');
+          const grad = ctx.createRadialGradient(p.x, p.y - 18, 6, p.x, p.y - 18, 95);
+          grad.addColorStop(0, 'rgba(251, 191, 36, 0.40)');
+          grad.addColorStop(0.4, 'rgba(245, 158, 11, 0.18)');
+          grad.addColorStop(0.8, 'rgba(217, 119, 6, 0.06)');
           grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
           ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.arc(p.x, p.y - 25, 110, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y - 18, 95, 0, Math.PI * 2);
           ctx.fill();
         }
       }
     });
 
-    // Warm player lantern glow
+    // Soft warm player lantern glow cast on the ground under feet (deduplicated so standing together doesn't blow out)
+    const renderedTiles = new Set<string>();
     players.forEach(pl => {
+      const key = `${pl.gridX},${pl.gridY},${pl.gridZ}`;
+      if (renderedTiles.has(key)) return;
+      renderedTiles.add(key);
+
       const p = this.toScreen(pl.gridX, pl.gridY, pl.gridZ);
-      const grad = ctx.createRadialGradient(p.x, p.y - 20, 6, p.x, p.y - 20, 95);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
-      grad.addColorStop(0.3, 'rgba(254, 240, 138, 0.55)');
-      grad.addColorStop(0.65, 'rgba(251, 191, 36, 0.22)');
-      grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y - 20, 95, 0, Math.PI * 2);
-      ctx.fill();
+      if (p.x >= minX - 80 && p.x <= maxX + 80 && p.y >= minY - 80 && p.y <= maxY + 80) {
+        // Soft ground illumination under player boots, without blinding white torso highlight
+        const grad = ctx.createRadialGradient(p.x, p.y + 8, 4, p.x, p.y + 8, 70);
+        grad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+        grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.16)');
+        grad.addColorStop(0.75, 'rgba(245, 158, 11, 0.05)');
+        grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y + 8, 70, 0, Math.PI * 2);
+        ctx.fill();
+      }
     });
 
     ctx.restore();
