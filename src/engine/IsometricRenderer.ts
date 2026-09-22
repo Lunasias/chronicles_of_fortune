@@ -207,16 +207,16 @@ export class IsometricRenderer {
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Dynamic Fantasy World Sky & Parallax Horizons
-    worldBackground.renderSky(ctx, this.camera, w, h, time);
+    // 1. Dynamic Fantasy World Sky & Parallax Horizons (Changes with Day/Night cycle)
+    worldBackground.renderSky(ctx, this.camera, w, h, time, ecosystemSystem.timeOfDay);
 
     ctx.save();
     ctx.translate(w / 2, h / 2);
     ctx.scale(this.camera.zoom, this.camera.zoom);
     ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 2. World Space Atmosphere
-    worldBackground.renderAtmosphere(ctx, this.camera, time);
+    // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
+    worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
 
     const halfW = (w / 2) / this.camera.zoom + 200;
     const halfH = (h / 2) / this.camera.zoom + 200;
@@ -882,13 +882,14 @@ export class IsometricRenderer {
       ) {
         const p = this.toScreen(n.gx, n.gy, n.gz);
         if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
-          const grad = ctx.createRadialGradient(p.x, p.y - 25, 5, p.x, p.y - 25, 95);
-          grad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
-          grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.2)');
+          const grad = ctx.createRadialGradient(p.x, p.y - 25, 6, p.x, p.y - 25, 110);
+          grad.addColorStop(0, 'rgba(254, 240, 138, 0.65)');
+          grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.35)');
+          grad.addColorStop(0.7, 'rgba(245, 158, 11, 0.12)');
           grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
           ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.arc(p.x, p.y - 25, 95, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y - 25, 110, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -897,13 +898,14 @@ export class IsometricRenderer {
     // Warm player lantern glow
     players.forEach(pl => {
       const p = this.toScreen(pl.gridX, pl.gridY, pl.gridZ);
-      const grad = ctx.createRadialGradient(p.x, p.y - 20, 5, p.x, p.y - 20, 80);
-      grad.addColorStop(0, 'rgba(254, 240, 138, 0.55)');
-      grad.addColorStop(0.6, 'rgba(251, 191, 36, 0.2)');
+      const grad = ctx.createRadialGradient(p.x, p.y - 20, 6, p.x, p.y - 20, 95);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      grad.addColorStop(0.3, 'rgba(254, 240, 138, 0.55)');
+      grad.addColorStop(0.65, 'rgba(251, 191, 36, 0.22)');
       grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(p.x, p.y - 20, 80, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y - 20, 95, 0, Math.PI * 2);
       ctx.fill();
     });
 

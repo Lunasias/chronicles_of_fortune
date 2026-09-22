@@ -129,16 +129,16 @@ export class EcosystemSystem {
     switch (this.timeOfDay) {
       case 'DAWN':
         // Soft pink-gold morning haze
-        return { color: 'rgba(251, 146, 60, 0.15)', alpha: 0.15, isNight: false };
+        return { color: 'rgba(251, 146, 60, 0.08)', alpha: 0.08, isNight: false };
       case 'DAY':
         // Crystal clear natural sunlight
         return { color: 'rgba(255, 255, 255, 0.0)', alpha: 0.0, isNight: false };
       case 'DUSK':
-        // Rich amber-violet sunset
-        return { color: 'rgba(124, 45, 18, 0.25)', alpha: 0.25, isNight: false };
+        // Rich warm amber-violet sunset
+        return { color: 'rgba(180, 83, 9, 0.14)', alpha: 0.14, isNight: false };
       case 'NIGHT':
-        // Deep twilight moonlight indigo with glowing torchlights
-        return { color: 'rgba(15, 23, 42, 0.48)', alpha: 0.48, isNight: true };
+        // Luminous moonlight navy (brightened for comfortable visibility and enchanted night atmosphere)
+        return { color: 'rgba(15, 23, 42, 0.18)', alpha: 0.18, isNight: true };
     }
   }
 

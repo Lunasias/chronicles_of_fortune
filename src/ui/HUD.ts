@@ -15,6 +15,19 @@ export class HUD {
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
     this.avatarCanvas = document.getElementById('hudAvatarCanvas') as HTMLCanvasElement;
     this.avatarCtx = this.avatarCanvas.getContext('2d')!;
+
+    // Make time of day badge interactive for instant testing and cycling
+    const timeBadge = document.getElementById('hudTimeOfDayBadge');
+    if (timeBadge) {
+      timeBadge.classList.add('cursor-pointer', 'hover:opacity-80', 'transition-opacity');
+      timeBadge.title = 'คลิกเพื่อสลับช่วงเวลา (ทดสอบ)';
+      timeBadge.addEventListener('click', () => {
+        ecosystemSystem.advanceTime();
+        const tInfo = ecosystemSystem.getTimeDisplay();
+        this.game.addLog(`⌛ สลับเวลา: ตอนนี้เป็นเวลา ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
+        this.update();
+      });
+    }
   }
 
   update() {
