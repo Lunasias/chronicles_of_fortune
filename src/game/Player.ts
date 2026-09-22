@@ -274,10 +274,12 @@ export class Player {
   // Equipment & Inventory
   public equipment: {
     weapon: EquipmentItem | null;
+    shield: EquipmentItem | null;
     armor: EquipmentItem | null;
     accessory: EquipmentItem | null;
   } = {
     weapon: null,
+    shield: null,
     armor: null,
     accessory: null
   };

@@ -167,7 +167,7 @@ export class IsometricRenderer {
   // =========================================================================
   // ISOMETRIC RAYCASTING: Detect which tile was hovered or clicked
   // =========================================================================
-  screenToNode(clientX: number, clientY: number, nodes: BoardNode[]): BoardNode | null {
+  screenToNode(clientX: number, clientY: number, nodes: BoardNode[], priorityIds?: number[]): BoardNode | null {
     if (!this.hasInitializedBoardCache) {
       this.initBoardCache(nodes);
     }
@@ -194,8 +194,11 @@ export class IsometricRenderer {
       const dy = Math.abs(worldY - ny);
       const dist = dx / hw + dy / hh;
 
-      if (dist <= 1.2 && dist < minDistance) {
-        minDistance = dist;
+      const isPriority = priorityIds && priorityIds.includes(node.id);
+      const effectiveDist = isPriority ? dist * 0.75 : dist;
+
+      if (dist <= 1.45 && effectiveDist < minDistance) {
+        minDistance = effectiveDist;
         closestNode = node;
       }
     }
@@ -507,30 +510,42 @@ export class IsometricRenderer {
                 const maxHp = node.townData.monsterMaxHp || curHp;
                 const hpPct = Math.max(0, Math.min(1, curHp / maxHp));
                 const isWeakened = hpPct < 1.0;
-                const badgeW = 94;
+                const bounce = Math.sin(Date.now() * 0.005) * 5;
+                const monsterName = node.townData.monsterName || 'มอนสเตอร์';
+                const labelText = `🆘 มอนสเตอร์บุก! ${monsterName}`;
+                ctx.save();
+                ctx.translate(0, bounce);
 
-                ctx.fillStyle = 'rgba(69, 10, 10, 0.95)';
+                ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+                const textMetrics = ctx.measureText(labelText);
+                const badgeW = Math.max(110, textMetrics.width + 16);
+
+                ctx.fillStyle = 'rgba(127, 29, 29, 0.95)';
                 ctx.beginPath();
-                ctx.roundRect(px - badgeW / 2, py - 70, badgeW, 26, 4);
+                ctx.roundRect(px - badgeW / 2, py - 82, badgeW, 28, 5);
                 ctx.fill();
-                ctx.strokeStyle = isWeakened ? '#ef4444' : '#f59e0b';
-                ctx.lineWidth = 1.5;
+
+                const pulseAlpha = 0.4 + 0.4 * Math.sin(Date.now() * 0.008);
+                ctx.strokeStyle = `rgba(239, 68, 68, ${pulseAlpha})`;
+                ctx.lineWidth = isWeakened ? 2.5 : 1.8;
                 ctx.stroke();
 
-                ctx.fillStyle = '#fca5a5';
+                ctx.fillStyle = '#fee2e2';
                 ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(`💀 มอนสเตอร์ยึดครอง!`, px, py - 58);
+                ctx.fillText(labelText, px, py - 68);
 
                 const barW = badgeW - 14;
                 ctx.fillStyle = '#0f172a';
-                ctx.fillRect(px - barW / 2, py - 54, barW, 5);
+                ctx.fillRect(px - barW / 2, py - 63, barW, 6);
                 ctx.fillStyle = hpPct < 0.35 ? '#ef4444' : '#f59e0b';
-                ctx.fillRect(px - barW / 2, py - 54, barW * hpPct, 5);
+                ctx.fillRect(px - barW / 2, py - 63, barW * hpPct, 6);
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '7px Silkscreen';
-                ctx.fillText(`${curHp}/${maxHp}`, px, py - 45);
+                ctx.font = 'bold 7px Silkscreen';
+                ctx.fillText(`${curHp}/${maxHp} HP`, px, py - 57);
+
+                ctx.restore();
               } else {
                 const townLvl = node.townData?.level || 1;
                 const townName = node.name || 'โอ๊คเชียร์';
@@ -616,13 +631,30 @@ export class IsometricRenderer {
                 bgColor: 'rgba(35, 25, 5, 0.92)'
               };
             } else if (node.type === 'boss') {
-              badge = {
-                title: 'รังมังกรโบราณ',
-                icon: '👑',
-                borderColor: '#ef4444',
-                textColor: '#fca5a5',
-                bgColor: 'rgba(69, 10, 10, 0.95)'
-              };
+              const bounce = Math.sin(Date.now() * 0.004) * 6;
+              const bossName = node.name || 'บอสประจำภูมิภาค';
+              const labelText = `👑 REALM BOSS [${bossName}]`;
+              ctx.save();
+              ctx.translate(0, bounce);
+              ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+              const textMetrics = ctx.measureText(labelText);
+              const bW = Math.max(120, textMetrics.width + 20);
+
+              ctx.fillStyle = 'rgba(88, 28, 135, 0.95)';
+              ctx.beginPath();
+              ctx.roundRect(px - bW / 2, py - 80, bW, 20, 5);
+              ctx.fill();
+
+              const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.006);
+              ctx.strokeStyle = `rgba(245, 158, 11, ${pulse})`;
+              ctx.lineWidth = 2.2;
+              ctx.stroke();
+
+              ctx.fillStyle = '#fef08a';
+              ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(labelText, px, py - 66);
+              ctx.restore();
             } else if (node.type === 'dark_gate') {
               badge = {
                 title: 'ประตูนรก',

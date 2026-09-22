@@ -20,6 +20,7 @@ export type SpaceType =
 export type BiomeType =
   | 'grass'
   | 'forest'
+  | 'waterfall_forest'
   | 'snow'
   | 'desert'
   | 'volcano'
@@ -33,7 +34,7 @@ export type BiomeType =
   | 'steampunk'
   | 'sakura_shrine';
 
-export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss' | 'celestial';
+export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss' | 'celestial' | 'emerald';
 
 export interface TownData {
   name: string;
@@ -90,7 +91,8 @@ export const DOKAPON_NODES: BoardNode[] = [
       21,
       146,
       199,
-      210
+      210,
+      248
     ],
     "townData": {
       "name": "Oakshire Capital",
@@ -3601,7 +3603,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "isGrandBridge": false,
     "neighbors": [
       166,
-      168
+      168,
+      292
     ]
   },
   {
@@ -3619,7 +3622,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "isGrandBridge": false,
     "neighbors": [
       42,
-      167
+      167,
+      290
     ]
   },
   {
@@ -4471,7 +4475,11 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [210, 212]
+    "neighbors": [
+      210,
+      212,
+      248
+    ]
   },
   {
     "id": 212,
@@ -4498,7 +4506,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterAtk": 19,
       "monsterDef": 12
     },
-    "neighbors": [211, 213]
+    "neighbors": [
+      211,
+      213
+    ]
   },
   {
     "id": 213,
@@ -4513,7 +4524,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [212, 214]
+    "neighbors": [
+      212,
+      214
+    ]
   },
   {
     "id": 214,
@@ -4528,7 +4542,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [213, 215]
+    "neighbors": [
+      213,
+      215
+    ]
   },
   {
     "id": 215,
@@ -4543,7 +4560,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [214, 216]
+    "neighbors": [
+      214,
+      216
+    ]
   },
   {
     "id": 216,
@@ -4558,7 +4578,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [215, 217]
+    "neighbors": [
+      215,
+      217
+    ]
   },
   {
     "id": 217,
@@ -4573,7 +4596,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [216, 218]
+    "neighbors": [
+      216,
+      218
+    ]
   },
   {
     "id": 218,
@@ -4588,7 +4614,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [217, 219]
+    "neighbors": [
+      217,
+      219
+    ]
   },
   {
     "id": 219,
@@ -4603,7 +4632,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [218, 220]
+    "neighbors": [
+      218,
+      220
+    ]
   },
   {
     "id": 220,
@@ -4630,7 +4662,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterAtk": 21,
       "monsterDef": 14
     },
-    "neighbors": [219, 221]
+    "neighbors": [
+      219,
+      221
+    ]
   },
   {
     "id": 221,
@@ -4645,7 +4680,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [220, 222]
+    "neighbors": [
+      220,
+      222
+    ]
   },
   {
     "id": 222,
@@ -4660,7 +4698,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [221, 223]
+    "neighbors": [
+      221,
+      223
+    ]
   },
   {
     "id": 223,
@@ -4675,7 +4716,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [222, 224]
+    "neighbors": [
+      222,
+      224
+    ]
   },
   {
     "id": 224,
@@ -4690,7 +4734,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [223, 225]
+    "neighbors": [
+      223,
+      225
+    ]
   },
   {
     "id": 225,
@@ -4705,7 +4752,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [224, 226]
+    "neighbors": [
+      224,
+      226
+    ]
   },
   {
     "id": 226,
@@ -4720,7 +4770,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [225, 227]
+    "neighbors": [
+      225,
+      227
+    ]
   },
   {
     "id": 227,
@@ -4735,7 +4788,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [226, 228]
+    "neighbors": [
+      226,
+      228
+    ]
   },
   {
     "id": 228,
@@ -4750,7 +4806,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [227, 229]
+    "neighbors": [
+      227,
+      229
+    ]
   },
   {
     "id": 229,
@@ -4765,7 +4824,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
     "isGrandBridge": true,
-    "neighbors": [228, 230]
+    "neighbors": [
+      228,
+      230
+    ]
   },
   {
     "id": 230,
@@ -4780,7 +4842,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [229, 231]
+    "neighbors": [
+      229,
+      231
+    ]
   },
   {
     "id": 231,
@@ -4795,7 +4860,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [230, 232]
+    "neighbors": [
+      230,
+      232
+    ]
   },
   {
     "id": 232,
@@ -4822,7 +4890,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterAtk": 20,
       "monsterDef": 13
     },
-    "neighbors": [231, 233]
+    "neighbors": [
+      231,
+      233
+    ]
   },
   {
     "id": 233,
@@ -4837,7 +4908,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [232, 234]
+    "neighbors": [
+      232,
+      234
+    ]
   },
   {
     "id": 234,
@@ -4852,7 +4926,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [233, 235]
+    "neighbors": [
+      233,
+      235
+    ]
   },
   {
     "id": 235,
@@ -4867,7 +4944,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [234, 236]
+    "neighbors": [
+      234,
+      236
+    ]
   },
   {
     "id": 236,
@@ -4882,7 +4962,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [235, 237]
+    "neighbors": [
+      235,
+      237
+    ]
   },
   {
     "id": 237,
@@ -4897,7 +4980,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [236, 238]
+    "neighbors": [
+      236,
+      238
+    ]
   },
   {
     "id": 238,
@@ -4912,7 +4998,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [237, 239]
+    "neighbors": [
+      237,
+      239
+    ]
   },
   {
     "id": 239,
@@ -4927,7 +5016,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [238, 240]
+    "neighbors": [
+      238,
+      240
+    ]
   },
   {
     "id": 240,
@@ -4942,7 +5034,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [239, 241]
+    "neighbors": [
+      239,
+      241
+    ]
   },
   {
     "id": 241,
@@ -4969,7 +5064,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "monsterAtk": 22,
       "monsterDef": 15
     },
-    "neighbors": [240, 242]
+    "neighbors": [
+      240,
+      242
+    ]
   },
   {
     "id": 242,
@@ -4984,7 +5082,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [241, 243]
+    "neighbors": [
+      241,
+      243
+    ]
   },
   {
     "id": 243,
@@ -4999,7 +5100,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [242, 244]
+    "neighbors": [
+      242,
+      244
+    ]
   },
   {
     "id": 244,
@@ -5014,7 +5118,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [243, 245]
+    "neighbors": [
+      243,
+      245
+    ]
   },
   {
     "id": 245,
@@ -5029,7 +5136,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [244, 246]
+    "neighbors": [
+      244,
+      246
+    ]
   },
   {
     "id": 246,
@@ -5044,7 +5154,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [245, 247]
+    "neighbors": [
+      245,
+      247
+    ]
   },
   {
     "id": 247,
@@ -5059,7 +5172,10 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [246, 248]
+    "neighbors": [
+      246,
+      248
+    ]
   },
   {
     "id": 248,
@@ -5074,7 +5190,1265 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
     "weather": "sunny",
     "isGrandBridge": false,
-    "neighbors": [247, 211, 0]
+    "neighbors": [
+      247,
+      211,
+      0,
+      249
+    ]
+  },
+  {
+    "id": 249,
+    "gx": 44,
+    "gy": 30,
+    "gz": 2,
+    "type": "blue",
+    "name": "Emerald Cascade Entrance",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      248,
+      250,
+      311
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 250,
+    "gx": 44,
+    "gy": 32,
+    "gz": 2,
+    "type": "empty",
+    "name": "Turquoise River Shallows",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      249,
+      251
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 251,
+    "gx": 44,
+    "gy": 34,
+    "gz": 2,
+    "type": "fishing",
+    "name": "Cascade Salmon Pool",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      250,
+      252
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 252,
+    "gx": 44,
+    "gy": 36,
+    "gz": 2,
+    "type": "town",
+    "name": "Cascade Mist Town",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      251,
+      253
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Cascade Mist Town",
+      "level": 1,
+      "baseValue": 500,
+      "taxYield": 60,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Catgirl Huntress Mia",
+      "monsterHp": 90,
+      "monsterAtk": 22,
+      "monsterDef": 12
+    }
+  },
+  {
+    "id": 253,
+    "gx": 44,
+    "gy": 38,
+    "gz": 2,
+    "type": "shop_item",
+    "name": "Mossy Basalt Bazaar",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      252,
+      254,
+      295
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 254,
+    "gx": 44,
+    "gy": 40,
+    "gz": 2,
+    "type": "red",
+    "name": "Slippery Waterfall Bluff",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      253,
+      255
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 255,
+    "gx": 44,
+    "gy": 42,
+    "gz": 2,
+    "type": "church",
+    "name": "Archon Water Sanctuary",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      254,
+      256
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 256,
+    "gx": 44,
+    "gy": 44,
+    "gz": 2,
+    "type": "blue",
+    "name": "Glistening Spring Rapids",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      255,
+      257
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 257,
+    "gx": 44,
+    "gy": 46,
+    "gz": 2,
+    "type": "empty",
+    "name": "Basalt Riverbed",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      256,
+      258
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 258,
+    "gx": 44,
+    "gy": 48,
+    "gz": 2,
+    "type": "town",
+    "name": "High Elf Riverport",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      257,
+      259
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "High Elf Riverport",
+      "level": 1,
+      "baseValue": 550,
+      "taxYield": 65,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Dryad Maiden Alura",
+      "monsterHp": 100,
+      "monsterAtk": 24,
+      "monsterDef": 14
+    }
+  },
+  {
+    "id": 259,
+    "gx": 44,
+    "gy": 50,
+    "gz": 2,
+    "type": "tavern",
+    "name": "Roaring Rapids Inn",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      258,
+      260
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 260,
+    "gx": 44,
+    "gy": 52,
+    "gz": 2,
+    "type": "mystery_chest",
+    "name": "Sunken Cascade Chest",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      259,
+      261
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 261,
+    "gx": 44,
+    "gy": 54,
+    "gz": 2,
+    "type": "blue",
+    "name": "Rainbow Mist Drop",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      260,
+      262
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 262,
+    "gx": 44,
+    "gy": 56,
+    "gz": 2,
+    "type": "home",
+    "name": "Emerald Riverfront Villa",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      261,
+      263
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "homeData": {
+      "ownerId": 0,
+      "ownerName": "ว่างเปล่า (ที่ดินสำหรับสร้างบ้าน)",
+      "level": 0
+    }
+  },
+  {
+    "id": 263,
+    "gx": 44,
+    "gy": 58,
+    "gz": 2,
+    "type": "shop_weapon",
+    "name": "Cascade Armory Forge",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      262,
+      264
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 264,
+    "gx": 44,
+    "gy": 60,
+    "gz": 2,
+    "type": "red",
+    "name": "Vortex Whirlpool Abyss",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      263,
+      265
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 265,
+    "gx": 46,
+    "gy": 60,
+    "gz": 2,
+    "type": "blue",
+    "name": "Turquoise Lake Coast",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      264,
+      266
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 266,
+    "gx": 48,
+    "gy": 60,
+    "gz": 2,
+    "type": "fishing",
+    "name": "Great Basin Fishing Docks",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      265,
+      267
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 267,
+    "gx": 50,
+    "gy": 60,
+    "gz": 2,
+    "type": "town",
+    "name": "Mermaid Basin Haven",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      266,
+      268
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Mermaid Basin Haven",
+      "level": 1,
+      "baseValue": 600,
+      "taxYield": 75,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Mermaid Siren Nerida",
+      "monsterHp": 115,
+      "monsterAtk": 26,
+      "monsterDef": 16
+    }
+  },
+  {
+    "id": 268,
+    "gx": 52,
+    "gy": 60,
+    "gz": 2,
+    "type": "vault",
+    "name": "Sunken Pearl Vault",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      267,
+      269
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 269,
+    "gx": 54,
+    "gy": 60,
+    "gz": 2,
+    "type": "empty",
+    "name": "Mossy Pebble Trail",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      268,
+      270
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 270,
+    "gx": 56,
+    "gy": 60,
+    "gz": 2,
+    "type": "blue",
+    "name": "Crystal Cascade Falls",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      269,
+      271
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 271,
+    "gx": 58,
+    "gy": 60,
+    "gz": 3,
+    "type": "church",
+    "name": "Water Nymph Shrine",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      270,
+      272
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 272,
+    "gx": 60,
+    "gy": 60,
+    "gz": 3,
+    "type": "shop_magic",
+    "name": "Arcane Stream Arcanum",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      271,
+      273
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 273,
+    "gx": 62,
+    "gy": 60,
+    "gz": 3,
+    "type": "red",
+    "name": "Rushing Rapids Hazard",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      272,
+      274
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 274,
+    "gx": 64,
+    "gy": 60,
+    "gz": 3,
+    "type": "town",
+    "name": "Sylphira Forest Borough",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      273,
+      275
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Sylphira Forest Borough",
+      "level": 1,
+      "baseValue": 620,
+      "taxYield": 80,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Elf Princess Sylphira",
+      "monsterHp": 130,
+      "monsterAtk": 30,
+      "monsterDef": 18
+    }
+  },
+  {
+    "id": 275,
+    "gx": 66,
+    "gy": 60,
+    "gz": 3,
+    "type": "blue",
+    "name": "Emerald Glade Point",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      274,
+      276
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 276,
+    "gx": 66,
+    "gy": 58,
+    "gz": 3,
+    "type": "empty",
+    "name": "Lush Pine Canopy",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      275,
+      277
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 277,
+    "gx": 66,
+    "gy": 56,
+    "gz": 3,
+    "type": "fishing",
+    "name": "Alpine Stream Bend",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      276,
+      278
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 278,
+    "gx": 66,
+    "gy": 54,
+    "gz": 3,
+    "type": "tavern",
+    "name": "High Falls Rest House",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      277,
+      279
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 279,
+    "gx": 66,
+    "gy": 52,
+    "gz": 3,
+    "type": "boss",
+    "name": "Water Archon Lair",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      278,
+      280
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 280,
+    "gx": 66,
+    "gy": 50,
+    "gz": 3,
+    "type": "blue",
+    "name": "Divine Mist Plateau",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      279,
+      281
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 281,
+    "gx": 66,
+    "gy": 48,
+    "gz": 3,
+    "type": "mystery_chest",
+    "name": "Ancient Archon Reliquary",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      280,
+      282
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 282,
+    "gx": 66,
+    "gy": 46,
+    "gz": 2,
+    "type": "town",
+    "name": "Cascadia River Citadel",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      281,
+      283
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Cascadia River Citadel",
+      "level": 1,
+      "baseValue": 680,
+      "taxYield": 85,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Naiad Sovereign Ondine",
+      "monsterHp": 140,
+      "monsterAtk": 32,
+      "monsterDef": 20
+    }
+  },
+  {
+    "id": 283,
+    "gx": 66,
+    "gy": 44,
+    "gz": 2,
+    "type": "red",
+    "name": "Flooded Timber Chasm",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      282,
+      284
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 284,
+    "gx": 66,
+    "gy": 42,
+    "gz": 2,
+    "type": "shop_item",
+    "name": "Stream Guild Emporium",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      283,
+      285
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 285,
+    "gx": 66,
+    "gy": 40,
+    "gz": 2,
+    "type": "blue",
+    "name": "Springhead Oasis",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      284,
+      286
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 286,
+    "gx": 66,
+    "gy": 38,
+    "gz": 2,
+    "type": "empty",
+    "name": "Basalt Stepping Stones",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      285,
+      287
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 287,
+    "gx": 64,
+    "gy": 38,
+    "gz": 2,
+    "type": "guild",
+    "name": "Cascade Adventurers Guild",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      286,
+      288
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 288,
+    "gx": 62,
+    "gy": 38,
+    "gz": 2,
+    "type": "blue",
+    "name": "Emerald Dew Trail",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      287,
+      289
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 289,
+    "gx": 60,
+    "gy": 38,
+    "gz": 2,
+    "type": "town",
+    "name": "Verdant River Town",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      288,
+      290
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Verdant River Town",
+      "level": 1,
+      "baseValue": 580,
+      "taxYield": 70,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Panther Huntress Kaelia",
+      "monsterHp": 105,
+      "monsterAtk": 25,
+      "monsterDef": 15
+    }
+  },
+  {
+    "id": 290,
+    "gx": 58,
+    "gy": 38,
+    "gz": 2,
+    "type": "fishing",
+    "name": "Crystal Current Shallows",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      289,
+      291,
+      168
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 291,
+    "gx": 56,
+    "gy": 38,
+    "gz": 2,
+    "type": "home",
+    "name": "Waterfall View Estate",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      290,
+      292
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false,
+    "homeData": {
+      "ownerId": 0,
+      "ownerName": "ว่างเปล่า (ที่ดินสำหรับสร้างบ้าน)",
+      "level": 0
+    }
+  },
+  {
+    "id": 292,
+    "gx": 54,
+    "gy": 38,
+    "gz": 2,
+    "type": "mystery_chest",
+    "name": "Sylvan Treasure Cache",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      291,
+      293,
+      167
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 293,
+    "gx": 52,
+    "gy": 38,
+    "gz": 2,
+    "type": "blue",
+    "name": "Dewdrop Passage",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      292,
+      294
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 294,
+    "gx": 50,
+    "gy": 38,
+    "gz": 2,
+    "type": "church",
+    "name": "River Chapel of Grace",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      293,
+      295
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 295,
+    "gx": 48,
+    "gy": 38,
+    "gz": 2,
+    "type": "red",
+    "name": "Mossy Cliff Crags",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      294,
+      296,
+      253,
+      311
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 296,
+    "gx": 46,
+    "gy": 38,
+    "gz": 2,
+    "type": "tavern",
+    "name": "Emerald Basin Lodge",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      295,
+      297,
+      297
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 297,
+    "gx": 48,
+    "gy": 42,
+    "gz": 2,
+    "type": "empty",
+    "name": "Central Stream Islet",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      296,
+      298
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 298,
+    "gx": 50,
+    "gy": 42,
+    "gz": 2,
+    "type": "fishing",
+    "name": "Deep Pool Shallows",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      297,
+      299
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 299,
+    "gx": 52,
+    "gy": 42,
+    "gz": 2,
+    "type": "town",
+    "name": "Lotus Blossom Village",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      298,
+      300
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Lotus Blossom Village",
+      "level": 1,
+      "baseValue": 560,
+      "taxYield": 68,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Lotus Maiden Nelumbo",
+      "monsterHp": 95,
+      "monsterAtk": 21,
+      "monsterDef": 13
+    }
+  },
+  {
+    "id": 300,
+    "gx": 54,
+    "gy": 42,
+    "gz": 2,
+    "type": "blue",
+    "name": "Water Lily Lagoon",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      299,
+      301
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 301,
+    "gx": 56,
+    "gy": 42,
+    "gz": 2,
+    "type": "shop_weapon",
+    "name": "Lotus Smithy",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      300,
+      302
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 302,
+    "gx": 58,
+    "gy": 42,
+    "gz": 2,
+    "type": "mystery_chest",
+    "name": "Submerged Lockbox",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      301,
+      303
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 303,
+    "gx": 60,
+    "gy": 42,
+    "gz": 2,
+    "type": "blue",
+    "name": "Sparkling Brook",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      302,
+      304
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 304,
+    "gx": 62,
+    "gy": 42,
+    "gz": 2,
+    "type": "town",
+    "name": "Emerald Bridge Town",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      303,
+      305
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Emerald Bridge Town",
+      "level": 1,
+      "baseValue": 600,
+      "taxYield": 75,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "River Nymph Sabrina",
+      "monsterHp": 110,
+      "monsterAtk": 26,
+      "monsterDef": 15
+    }
+  },
+  {
+    "id": 305,
+    "gx": 62,
+    "gy": 46,
+    "gz": 2,
+    "type": "fishing",
+    "name": "Cascade Brook Docks",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      304,
+      306
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 306,
+    "gx": 60,
+    "gy": 46,
+    "gz": 2,
+    "type": "blue",
+    "name": "Turquoise Ripples",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      305,
+      307
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 307,
+    "gx": 58,
+    "gy": 46,
+    "gz": 2,
+    "type": "tavern",
+    "name": "River Bend Cantina",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      306,
+      308
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
+  },
+  {
+    "id": 308,
+    "gx": 56,
+    "gy": 46,
+    "gz": 2,
+    "type": "church",
+    "name": "Sanctuary of Rapids",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      307,
+      309
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 309,
+    "gx": 54,
+    "gy": 46,
+    "gz": 2,
+    "type": "home",
+    "name": "Lotus Haven Manor",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      308,
+      310
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false,
+    "homeData": {
+      "ownerId": 0,
+      "ownerName": "ว่างเปล่า (ที่ดินสำหรับสร้างบ้าน)",
+      "level": 0
+    }
+  },
+  {
+    "id": 310,
+    "gx": 52,
+    "gy": 46,
+    "gz": 2,
+    "type": "blue",
+    "name": "Emerald Heart Crossing",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      309,
+      311
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "sunny",
+    "isGrandBridge": false
+  },
+  {
+    "id": 311,
+    "gx": 50,
+    "gy": 46,
+    "gz": 2,
+    "type": "empty",
+    "name": "Clearwater Shallows",
+    "biome": "waterfall_forest",
+    "neighbors": [
+      310,
+      249,
+      295
+    ],
+    "realmId": "emerald",
+    "realmName": "มหาป่าน้ำตกมรกตพันปี",
+    "subRegionName": "หุบเขาลำธารมรกตและม่านน้ำตกสวรรค์",
+    "weather": "rain",
+    "isGrandBridge": false
   }
 ];
 

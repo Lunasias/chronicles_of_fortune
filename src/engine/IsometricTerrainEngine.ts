@@ -153,10 +153,12 @@ export class IsometricTerrainEngine {
             const curBiome = t < 0.5 ? node.biome : neighbor.biome;
             const curRealm = t < 0.5 ? node.realmId : neighbor.realmId;
 
-            // 3-wide road embankment buffer (ox, oy in -1 to +1)
-            for (let ox = -1; ox <= 1; ox++) {
-              for (let oy = -1; oy <= 1; oy++) {
-                addCell(midGx + ox, midGy + oy, midGz, curBiome, curRealm);
+            // Smooth rounded road embankment buffer (ox, oy)
+            for (let ox = -2; ox <= 2; ox++) {
+              for (let oy = -2; oy <= 2; oy++) {
+                if (Math.abs(ox) + Math.abs(oy) <= 3) {
+                  addCell(midGx + ox, midGy + oy, midGz, curBiome, curRealm);
+                }
               }
             }
           }
@@ -169,11 +171,17 @@ export class IsometricTerrainEngine {
       const pos = this.toScreen(cell.gx, cell.gy, cell.gz);
       const depth = (cell.gx + cell.gy) * 1000 + cell.gz * 100;
 
-      // Check neighbor presence for 3D cliff edges
-      const hasSouth = !tempTileMap.has(`${cell.gx + 1},${cell.gy + 1}`);
-      const hasEast = !tempTileMap.has(`${cell.gx + 1},${cell.gy}`);
-      const hasWest = !tempTileMap.has(`${cell.gx},${cell.gy + 1}`);
-      const hasNorth = !tempTileMap.has(`${cell.gx - 1},${cell.gy - 1}`);
+      // Check neighbor presence OR lower elevation for 3D cliff edges (eliminates see-through holes)
+      const isCliffNeeded = (nx: number, ny: number) => {
+        const neighbor = tempTileMap.get(`${nx},${ny}`);
+        if (!neighbor) return true;
+        return neighbor.gz < cell.gz;
+      };
+
+      const hasSouth = isCliffNeeded(cell.gx + 1, cell.gy + 1);
+      const hasEast = isCliffNeeded(cell.gx + 1, cell.gy);
+      const hasWest = isCliffNeeded(cell.gx, cell.gy + 1);
+      const hasNorth = isCliffNeeded(cell.gx - 1, cell.gy - 1);
 
       const tile: TerrainTile = {
         gx: cell.gx,
@@ -607,6 +615,16 @@ export class IsometricTerrainEngine {
           border: isNight ? '#b45309' : '#d97706'
         };
 
+      case 'waterfall_forest':
+        // Lush emerald moss, turquoise water ripples, wet river basalt
+        return {
+          top: isNight ? '#064e3b' : '#047857',
+          accent: isNight ? '#34d399' : '#10b981',
+          cliffLeft: isNight ? '#022c22' : '#065f46',
+          cliffRight: isNight ? '#064e3b' : '#047857',
+          border: isNight ? '#059669' : '#34d399'
+        };
+
       case 'sakura_shrine':
         // Soft vermilion earth, cobblestone paths, and pink blossom grass
         return {
@@ -747,6 +765,21 @@ export class IsometricTerrainEngine {
       ctx.ellipse(cx + 10, cy + 4, 3.2, 2, -0.3, 0, Math.PI * 2);
       ctx.ellipse(cx - 2, cy + 6, 2.5, 1.5, 0.7, 0, Math.PI * 2);
       ctx.fill();
+    } else if (biome === 'waterfall_forest') {
+      // Cascading turquoise stream ripples and glistening river pebbles
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(cx - 8, cy - 2, 7, -0.2, Math.PI * 0.6);
+      ctx.stroke();
+      ctx.strokeStyle = '#67e8f9';
+      ctx.beginPath();
+      ctx.arc(cx + 6, cy + 3, 5, 0.4, Math.PI * 1.1);
+      ctx.stroke();
+      // River dew sparkle
+      ctx.fillStyle = '#a5f3fc';
+      ctx.fillRect(cx - 1, cy - 4, 2, 2);
+      ctx.fillRect(cx + 12, cy, 1.5, 1.5);
     }
 
     ctx.restore();

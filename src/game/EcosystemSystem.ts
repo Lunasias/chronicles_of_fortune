@@ -23,7 +23,8 @@ export class EcosystemSystem {
     frostpeak: 'snow',
     sunfire: 'heatwave',
     abyss: 'miasma',
-    celestial: 'sunny'
+    celestial: 'sunny',
+    emerald: 'rain'
   };
 
   private weatherCycleCount: number = 0;

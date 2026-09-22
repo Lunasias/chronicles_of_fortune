@@ -10,6 +10,7 @@ export class HUD {
   private avatarCanvas: HTMLCanvasElement;
   private avatarCtx: CanvasRenderingContext2D;
   public onInspectPlayerCallback?: (player: Player) => void;
+  public onFocusNodeCallback?: (node: any) => void;
 
   constructor(game: GameState) {
     this.game = game;
@@ -17,6 +18,26 @@ export class HUD {
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
     this.avatarCanvas = document.getElementById('hudAvatarCanvas') as HTMLCanvasElement;
     this.avatarCtx = this.avatarCanvas.getContext('2d')!;
+
+    // Quest Tracker Minimize Toggle
+    let isQuestMinimized = false;
+    const btnToggleQuest = document.getElementById('btnToggleQuestTracker');
+    if (btnToggleQuest) {
+      btnToggleQuest.addEventListener('click', () => {
+        isQuestMinimized = !isQuestMinimized;
+        const list = document.getElementById('questTrackerList');
+        const minBtn = document.getElementById('btnMinimizeQuestTracker');
+        if (list && minBtn) {
+          if (isQuestMinimized) {
+            list.classList.add('hidden');
+            minBtn.innerText = '▲';
+          } else {
+            list.classList.remove('hidden');
+            minBtn.innerText = '▼';
+          }
+        }
+      });
+    }
 
     // Make active player avatar wrapper clickable to inspect oneself
     const avatarWrapper = document.getElementById('hudPlayerAvatarWrapper');
@@ -145,6 +166,96 @@ export class HUD {
 
     // Render Mini Radar
     this.renderMinimap();
+
+    // Update Quest & Crisis Tracker HUD
+    this.updateQuestTracker();
+  }
+
+  private updateQuestTracker() {
+    const trackerModal = document.getElementById('questTrackerHUD');
+    if (!trackerModal) return;
+    trackerModal.classList.remove('hidden');
+
+    const listEl = document.getElementById('questTrackerList');
+    if (!listEl) return;
+
+    const p = this.game.activePlayer;
+    const occupiedTowns = this.game.allNodes.filter(n => n.townData?.isOccupiedByMonster);
+    const bossNodes = this.game.allNodes.filter(n => n.type === 'boss');
+
+    let html = '';
+
+    // Active Crisis Towns
+    if (occupiedTowns.length > 0) {
+      occupiedTowns.forEach(t => {
+        html += `
+          <div class="pixel-box p-1.5 bg-red-950/70 border-red-700/80 flex items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5 overflow-hidden">
+              <span class="text-sm animate-pulse">🆘</span>
+              <div class="overflow-hidden">
+                <div class="text-[10px] font-bold text-red-300 truncate">${t.name}</div>
+                <div class="text-[8px] text-amber-300 truncate">บอส: ${t.townData?.monsterName || 'มอนสเตอร์'} (${t.townData?.monsterHp} HP)</div>
+              </div>
+            </div>
+            <button class="focus-node-btn pixel-btn pixel-btn-gold px-1.5 py-0.5 text-[9px] font-bold text-slate-950 shrink-0" data-node-id="${t.id}" title="เลื่อนกล้องไปยังเมืองนี้">
+              🎯 ดู
+            </button>
+          </div>
+        `;
+      });
+    }
+
+    // Boss Lairs
+    bossNodes.forEach(b => {
+      html += `
+        <div class="pixel-box p-1.5 bg-amber-950/60 border-amber-600/70 flex items-center justify-between gap-1.5">
+          <div class="flex items-center gap-1.5 overflow-hidden">
+            <span class="text-sm">👑</span>
+            <div class="overflow-hidden">
+              <div class="text-[10px] font-bold text-amber-200 truncate">${b.name}</div>
+              <div class="text-[8px] text-slate-300 truncate">${b.subRegionName || 'บอสประจำภูมิภาค'}</div>
+            </div>
+          </div>
+          <button class="focus-node-btn pixel-btn pixel-btn-blue px-1.5 py-0.5 text-[9px] font-bold text-white shrink-0" data-node-id="${b.id}" title="เลื่อนกล้องไปยังรังบอส">
+            🎯 ดู
+          </button>
+        </div>
+      `;
+    });
+
+    // Guild Quest
+    if (p.activeGuildQuest) {
+      html += `
+        <div class="pixel-box p-1.5 bg-indigo-950/70 border-indigo-600/70 flex items-center justify-between gap-1.5">
+          <div class="flex items-center gap-1.5 overflow-hidden">
+            <span class="text-sm">📜</span>
+            <div class="overflow-hidden">
+              <div class="text-[10px] font-bold text-indigo-200 truncate">[${p.activeGuildQuest.rank}] ${p.activeGuildQuest.title}</div>
+              <div class="text-[8px] text-slate-300">ความคืบหน้า: ${p.activeGuildQuest.currentProgress}/${p.activeGuildQuest.targetCount}</div>
+            </div>
+          </div>
+          <span class="text-[8px] bg-indigo-800 text-indigo-200 px-1 py-0.5 rounded font-bold shrink-0">กิลด์</span>
+        </div>
+      `;
+    }
+
+    if (occupiedTowns.length === 0 && bossNodes.length === 0 && !p.activeGuildQuest) {
+      html = `<div class="text-slate-400 text-[9px] italic text-center py-2">ดินแดนสงบสุข ไม่มีวิกฤตเร่งด่วนในขณะนี้</div>`;
+    }
+
+    listEl.innerHTML = html;
+
+    // Attach click-to-focus camera
+    listEl.querySelectorAll('.focus-node-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const nodeId = parseInt((e.currentTarget as HTMLElement).getAttribute('data-node-id') || '0', 10);
+        const targetNode = this.game.allNodes.find(n => n.id === nodeId);
+        if (targetNode && this.onFocusNodeCallback) {
+          this.onFocusNodeCallback(targetNode);
+        }
+      });
+    });
   }
 
   private renderAvatar() {

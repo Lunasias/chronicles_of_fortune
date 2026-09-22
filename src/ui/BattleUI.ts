@@ -353,8 +353,8 @@ export class BattleUI {
 
     setTimeout(() => {
       // Fire companion laser beam & impact!
-      combatVFX.spawnMagicLaserBeam(summonX, summonY - 20, enemyX, enemyY, companion.color || '#f43f5e', 22);
-      combatVFX.spawnFloatingCombatText(enemyX, enemyY - 40, `-${dmg} HP!`, 'crit');
+      combatVFX.spawnMagicLaserBeam(summonX, summonY - 50, enemyX, enemyY - 50, companion.color || '#f43f5e', 22);
+      combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${dmg} HP!`, 'crit');
       audio.strikeHit();
       this.updateUI();
 
@@ -621,16 +621,16 @@ export class BattleUI {
           audio.skillCast();
           combatVFX.triggerSkillCutscene(
             b.attacker.skillName || 'DARK CLEAVE',
-            atkBaseX + targetAtkDX,
-            atkBaseY + targetAtkDY,
+            atkBaseX + targetAtkDX + (isPAtk ? 25 : -25),
+            atkBaseY + targetAtkDY - 80,
             hitX,
-            hitY,
+            hitY - 60,
             b.attacker.classKey || 'warrior',
             b.attacker.playerRef?.isDarkling || false
           );
         } else if (result.isStrikeSuccess) {
           audio.strikeHit();
-          combatVFX.spawnStrikeHit(hitX, hitY);
+          combatVFX.spawnStrikeHit(hitX, hitY - 50);
         } else if (atkAction === 'magic') {
           if (result.isMagicBlocked) {
             audio.magicGuardBlock();
@@ -638,14 +638,14 @@ export class BattleUI {
             audio.magicHit();
           }
           combatVFX.spawnMagicLaserBeam(
-            atkBaseX + targetAtkDX,
-            atkBaseY + targetAtkDY,
+            atkBaseX + targetAtkDX + (isPAtk ? 25 : -25),
+            atkBaseY + targetAtkDY - 80,
             hitX,
-            hitY,
+            hitY - 60,
             b.attacker.classKey === 'cleric' ? '#fde047' : '#c084fc',
             22
           );
-          combatVFX.spawnMagicHit(hitX, hitY, b.attacker.classKey === 'cleric');
+          combatVFX.spawnMagicHit(hitX, hitY - 60, b.attacker.classKey === 'cleric');
         } else {
           if (defAction === 'defend') {
             audio.defendBlock();
@@ -653,13 +653,13 @@ export class BattleUI {
             audio.attackHit();
           }
           if (isPAtk) {
-            combatVFX.spawnAttackHit(hitX, hitY);
+            combatVFX.spawnAttackHit(hitX, hitY - 50);
           } else {
             combatVFX.spawnMonsterAttack(
               atkBaseX + targetAtkDX,
-              atkBaseY + targetAtkDY,
+              atkBaseY + targetAtkDY - 50,
               hitX,
-              hitY,
+              hitY - 50,
               b.attacker.name,
               atkAction
             );

@@ -221,18 +221,22 @@ export class GameState {
     return { success: false, message: 'Spell effect failed.' };
   }
 
-  // Roll 1 die, or 2-3 dice if using spinner or in Darkling form
+  // Roll 1 die, or 2-3 dice if using spinner, or max 3 if in Darkling form
   rollMovementDice(): number {
     if (this.phase !== 'BOARD_TURN') return 0;
     this.phase = 'DICE_ROLLING';
 
     const p = this.activePlayer;
-    let numDice = p.activeSpinnerMultiplier;
-    if (p.isDarkling) numDice = 3;
-
     let totalRoll = 0;
-    for (let i = 0; i < numDice; i++) {
-      totalRoll += Math.floor(Math.random() * 6) + 1;
+
+    if (p.isDarkling) {
+      // Darkling dice is strictly capped at maximum 3 (1, 2, or 3)
+      totalRoll = Math.floor(Math.random() * 3) + 1;
+    } else {
+      const numDice = Math.max(1, p.activeSpinnerMultiplier);
+      for (let i = 0; i < numDice; i++) {
+        totalRoll += Math.floor(Math.random() * 6) + 1;
+      }
     }
 
     p.activeSpinnerMultiplier = 1;
@@ -311,9 +315,7 @@ export class GameState {
       }
 
       for (const nextId of neighbors) {
-        if (!path.includes(nextId)) {
-          queue.push({ path: [...path, nextId], prevId: currentId });
-        }
+        queue.push({ path: [...path, nextId], prevId: currentId });
       }
     }
 

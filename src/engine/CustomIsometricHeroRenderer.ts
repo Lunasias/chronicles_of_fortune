@@ -495,6 +495,132 @@ export class CustomIsometricHeroRenderer {
     ctx.fillRect(rightX - 2, cy + 17, 5, 1.5);
   }
 
+  /**
+   * Articulated feminine arms with graceful hands, sleeves/gauntlets, and dynamic combat stances:
+   * - 'magic': One arm raised high casting energy sparks, other holding focal point
+   * - 'attack' / 'strike': Weapon arm thrust/slashed forward dynamically with shoulder rotation
+   * - 'counter': Both arms raised bracing shield / parrying in guard stance
+   * - 'idle' / 'run': Natural feminine resting/swaying arm pose
+   */
+  private drawFeminineArms(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    isRight: boolean,
+    animState: CharacterAnimState,
+    skinTone: string,
+    sleeveColor?: string,
+    gauntletColor?: string
+  ) {
+    ctx.save();
+    const leftArmX = cx - 7;
+    const rightArmX = cx + 7;
+    const shoulderY = cy - 4;
+
+    if (animState === 'magic') {
+      // Casting pose: Main arm raised high, other hand channeling energy
+      const castingArmX = isRight ? cx + 9 : cx - 9;
+      const offArmX = isRight ? cx - 8 : cx + 8;
+
+      // Off-hand bent forward channeling
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.fillRect(offArmX - 1.5, shoulderY, 3, 7);
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(offArmX - (isRight ? 3 : -1), shoulderY + 6, 3, 3); // hand
+
+      // Casting arm raised up
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.beginPath();
+      ctx.moveTo(castingArmX - 1.5, shoulderY);
+      ctx.lineTo(castingArmX + 1.5, shoulderY);
+      ctx.lineTo(castingArmX + (isRight ? 4 : -4), shoulderY - 8);
+      ctx.lineTo(castingArmX + (isRight ? 2 : -2), shoulderY - 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hand reaching upward
+      ctx.fillStyle = skinTone;
+      ctx.beginPath();
+      ctx.arc(castingArmX + (isRight ? 3 : -3), shoulderY - 9, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glowing magical spark at fingertips
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(castingArmX + (isRight ? 2 : -4), shoulderY - 12, 2, 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillRect(castingArmX + (isRight ? 3 : -3), shoulderY - 11, 1, 1);
+    } else if (animState === 'attack' || animState === 'strike') {
+      // Dynamic slash / thrust forward
+      const leadX = isRight ? cx + 11 : cx - 11;
+      const rearX = isRight ? cx - 8 : cx + 8;
+
+      // Rear arm balancing back
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.beginPath();
+      ctx.moveTo(rearX, shoulderY);
+      ctx.lineTo(rearX - (isRight ? 4 : -4), shoulderY + 6);
+      ctx.lineTo(rearX - (isRight ? 6 : -6), shoulderY + 5);
+      ctx.lineTo(rearX, shoulderY - 1);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(rearX - (isRight ? 6 : -4), shoulderY + 5, 2.5, 2.5);
+
+      // Lead attacking arm lunging forward
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.beginPath();
+      ctx.moveTo(leadX - (isRight ? 4 : -4), shoulderY - 2);
+      ctx.lineTo(leadX + (isRight ? 4 : -4), shoulderY + 2);
+      ctx.lineTo(leadX + (isRight ? 3 : -3), shoulderY + 4);
+      ctx.lineTo(leadX - (isRight ? 5 : -5), shoulderY);
+      ctx.closePath();
+      ctx.fill();
+
+      if (gauntletColor) {
+        ctx.fillStyle = gauntletColor;
+        ctx.fillRect(leadX + (isRight ? 1 : -3), shoulderY + 1, 3, 3);
+      }
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(leadX + (isRight ? 3 : -5), shoulderY + 2, 2.5, 2.5);
+    } else if (animState === 'counter') {
+      // Defensive guard / shield brace
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.fillRect(leftArmX, shoulderY, 3, 6);
+      ctx.fillRect(rightArmX - 3, shoulderY, 3, 6);
+      ctx.fillRect(cx - 5, shoulderY + 5, 10, 2.5);
+      if (gauntletColor) {
+        ctx.fillStyle = gauntletColor;
+        ctx.fillRect(cx - 4, shoulderY + 4, 8, 2);
+      }
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(cx - 2, shoulderY + 4, 4, 2);
+    } else {
+      // Natural idle/run swaying arms
+      const armSway = animState === 'run' ? Math.sin(Date.now() * 0.01) * 3 : 0;
+      // Left arm
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.fillRect(leftArmX - 1, shoulderY, 2.5, 9 + armSway);
+      if (gauntletColor) {
+        ctx.fillStyle = gauntletColor;
+        ctx.fillRect(leftArmX - 1.5, shoulderY + 6, 3, 3);
+      }
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(leftArmX - 1, shoulderY + 9 + armSway, 2, 2);
+
+      // Right arm
+      ctx.fillStyle = sleeveColor || skinTone;
+      ctx.fillRect(rightArmX - 1.5, shoulderY, 2.5, 9 - armSway);
+      if (gauntletColor) {
+        ctx.fillStyle = gauntletColor;
+        ctx.fillRect(rightArmX - 1.5, shoulderY + 6, 3, 3);
+      }
+      ctx.fillStyle = skinTone;
+      ctx.fillRect(rightArmX - 1, shoulderY + 9 - armSway, 2, 2);
+    }
+    ctx.restore();
+  }
+
   private drawDiagonalSlashArc(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -635,6 +761,9 @@ export class CustomIsometricHeroRenderer {
     ctx.fillStyle = goldTrim;
     ctx.fillRect(cx - 10, cy - 7, 3, 2);
     ctx.fillRect(cx + 7, cy - 7, 3, 2);
+
+    // 4.5 Articulated Feminine Arms
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, steelBase, goldTrim);
 
     // 5. Shield in Offhand
     const shieldX = isRight ? cx - 12 : cx + 12;
@@ -825,6 +954,9 @@ export class CustomIsometricHeroRenderer {
       trim: '#facc15'
     }, true, skinTone);
 
+    // 3.5 Articulated Feminine Arms
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, robeBase);
+
     // 4. Staff with Levitating Arcane Crystal
     const staffX = isRight ? cx + 15 : cx - 15;
     const staffY = cy + 2;
@@ -989,6 +1121,9 @@ export class CustomIsometricHeroRenderer {
       trim: goldPrimary
     });
 
+    // 3.5 Articulated Feminine Arms
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, whiteBright, goldPrimary);
+
     // 4. Golden War Mace
     const maceX = isRight ? cx + 14 : cx - 14;
     const maceY = cy + 4;
@@ -1097,6 +1232,9 @@ export class CustomIsometricHeroRenderer {
       shadow: suitShadow,
       trim: '#ca8a04'
     }, true, skinTone);
+
+    // 3.5 Articulated Feminine Arms
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, suitBase, poisonGreen);
 
     // 4. Dual Venom Daggers
     const dagger1X = cx - 12;
@@ -1227,6 +1365,9 @@ export class CustomIsometricHeroRenderer {
       shadow: greenShadow,
       trim: '#ca8a04'
     }, true, skinTone);
+
+    // 4.5 Articulated Feminine Arms
+    this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, greenBase, '#78350f');
 
     // 5. Recurve Longbow
     const bowX = isRight ? cx + 14 : cx - 14;

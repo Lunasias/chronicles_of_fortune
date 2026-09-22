@@ -6,7 +6,7 @@ import { terrariaIsometricFoliageRenderer } from './TerrariaIsometricFoliageRend
 export interface EquipmentItem {
   id: string;
   name: string;
-  type: 'weapon' | 'armor' | 'accessory' | 'spinner' | 'potion' | 'spell';
+  type: 'weapon' | 'shield' | 'armor' | 'accessory' | 'spinner' | 'potion' | 'spell';
   cost: number;
   atk?: number;
   def?: number;

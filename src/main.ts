@@ -47,6 +47,8 @@ class DokaponApp {
   private isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
+  private initialDownX = 0;
+  private initialDownY = 0;
   private hasMovedWhileDragging = false;
   private bossCurrentHp = 380;
   private bossMaxHp = 380;
@@ -72,6 +74,12 @@ class DokaponApp {
 
     this.hud.onInspectPlayerCallback = (pl) => {
       this.inspectUI.openInspect(pl);
+    };
+
+    this.hud.onFocusNodeCallback = (node) => {
+      this.renderer.centerCameraOn(node.gx, node.gy, node.gz);
+      this.renderer.hoveredNodeId = node.id;
+      audio.click();
     };
 
     this.initCanvasResize();
@@ -115,7 +123,7 @@ class DokaponApp {
         return;
       }
 
-      const hoveredNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes);
+      const hoveredNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes, this.game.highlightedNodes);
 
       if (hoveredNode && this.game.highlightedNodes.includes(hoveredNode.id)) {
         this.renderer.hoveredNodeId = hoveredNode.id;
@@ -125,7 +133,10 @@ class DokaponApp {
         this.inspectUI.showMoveDestinationPreview(hoveredNode, this.game.activePlayer, e.clientX, e.clientY);
 
         // Calculate and preview path
-        const path = this.game.findPathToTarget(hoveredNode.id);
+        let path = this.game.findPathToTarget(hoveredNode.id);
+        if (!path || path.length <= 1) {
+          path = [this.game.activePlayer.nodeId, hoveredNode.id];
+        }
         this.renderer.previewPathNodeIds = path || [];
 
         // Turn hero dynamically to face path direction
@@ -154,9 +165,12 @@ class DokaponApp {
 
       if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
 
-      const clickedNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes);
+      const clickedNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes, this.game.highlightedNodes);
       if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
-        const path = this.game.findPathToTarget(clickedNode.id);
+        let path = this.game.findPathToTarget(clickedNode.id);
+        if (!path || path.length <= 1) {
+          path = [this.game.activePlayer.nodeId, clickedNode.id];
+        }
         if (path && path.length > 1) {
           this.inspectUI.hideMoveDestinationPreview();
 
@@ -375,15 +389,18 @@ class DokaponApp {
       this.hasMovedWhileDragging = false;
       this.dragStartX = e.clientX;
       this.dragStartY = e.clientY;
+      this.initialDownX = e.clientX;
+      this.initialDownY = e.clientY;
       this.canvas.style.cursor = 'grabbing';
     });
     window.addEventListener('mousemove', e => {
       if (this.isDragging) {
-        const dx = e.clientX - this.dragStartX;
-        const dy = e.clientY - this.dragStartY;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        const totalDist = Math.hypot(e.clientX - this.initialDownX, e.clientY - this.initialDownY);
+        if (totalDist > 8) {
           this.hasMovedWhileDragging = true;
         }
+        const dx = e.clientX - this.dragStartX;
+        const dy = e.clientY - this.dragStartY;
         this.renderer.camera.x -= dx;
         this.renderer.camera.y -= dy;
         this.renderer.camera.targetX = this.renderer.camera.x;
@@ -393,9 +410,13 @@ class DokaponApp {
         this.dragStartY = e.clientY;
       }
     });
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', e => {
       this.isDragging = false;
       this.canvas.style.cursor = 'grab';
+      const totalDist = Math.hypot(e.clientX - this.initialDownX, e.clientY - this.initialDownY);
+      if (totalDist <= 8) {
+        this.hasMovedWhileDragging = false;
+      }
     });
 
     // Inventory button
@@ -722,40 +743,15 @@ class DokaponApp {
         break;
 
       case 'blue':
-        if (Math.random() < 0.35) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else {
-          const bonus = 45 + Math.floor(Math.random() * 60);
-          p.gold += bonus;
-          audio.coin();
-          this.game.addLog(`🪙 ช่องโชคดี! ${p.displayName} ได้รับพรแห่งโชคลาภ (+${bonus}G)!`, 'gold');
-          this.advanceTurn();
-        }
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'red':
-        if (Math.random() < 0.35) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else {
-          const penalty = Math.min(p.gold, 35 + Math.floor(Math.random() * 40));
-          p.gold -= penalty;
-          p.hp = Math.max(10, p.hp - 15);
-          audio.hurt();
-          this.game.addLog(`💀 ช่องอันตราย! ${p.displayName} โดนกับดักหนาม (-${penalty}G, -15 HP)!`);
-          this.advanceTurn();
-        }
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'church':
-        if (Math.random() < 0.45) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else {
-          p.hp = p.maxHp;
-          p.mp = p.maxMp;
-          audio.levelUp();
-          this.game.addLog(`✨ วิหารศักดิ์สิทธิ์! ${p.displayName} ได้รับการชำระล้างและรับพร (ฟื้นฟูเต็มที่)!`);
-          this.advanceTurn();
-        }
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'dark_gate':
@@ -780,7 +776,7 @@ class DokaponApp {
         break;
 
       case 'boss':
-        if (!p.companion && Math.random() < 0.40) {
+        if (!p.companion && Math.random() < 0.50) {
           this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         } else {
           this.initiateBossBattle();
@@ -788,19 +784,11 @@ class DokaponApp {
         break;
 
       case 'tavern':
-        if (Math.random() < 0.45) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else {
-          this.isekaiEventUI.openTavern(p, () => this.advanceTurn());
-        }
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'guild':
-        if (Math.random() < 0.35) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else {
-          this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
-        }
+        this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
         break;
 
       case 'fishing':
@@ -826,27 +814,11 @@ class DokaponApp {
             () => this.advanceTurn(),
             () => {
               // If skipped buying plot, resolve empty tile event
-              if (Math.random() < 0.45) {
-                this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-              } else if (Math.random() < 0.25) {
-                this.isekaiEventUI.openBanditAmbush(
-                  p,
-                  () => this.advanceTurn(),
-                  () => this.initiateBanditCombat()
-                );
-              } else {
-                this.initiateRandomEncounter(tile);
-              }
+              this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
             }
           );
-        } else if (Math.random() < 0.45) {
+        } else if (Math.random() < 0.70) {
           this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-        } else if (Math.random() < 0.25) {
-          this.isekaiEventUI.openBanditAmbush(
-            p,
-            () => this.advanceTurn(),
-            () => this.initiateBanditCombat()
-          );
         } else {
           this.initiateRandomEncounter(tile);
         }
@@ -1514,23 +1486,47 @@ class DokaponApp {
   private openInventory() {
     const p = this.game.activePlayer;
     const modal = document.getElementById('inventoryModal')!;
-    document.getElementById('invHeroName')!.innerText = `${p.displayName}อุปกรณ์`;
+    document.getElementById('invHeroName')!.innerText = `${p.displayName} • จัดการสัมภาระ`;
     document.getElementById('invHeroStatsSummary')!.innerText = `LV ${p.level} ${p.className} • ${p.gold}G เงิน`;
 
-    document.getElementById('equippedSlotsList')!.innerHTML = `
-      <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>🗡️ อาวุธ:</span>
-        <span class="font-bold text-amber-300">${p.equipment.weapon?.name || 'ไม่มี'}</span>
-      </div>
-      <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>🦺 เกราะ:</span>
-        <span class="font-bold text-amber-300">${p.equipment.armor?.name || 'ไม่มี'}</span>
-      </div>
-      <div class="p-1 bg-slate-950 rounded border border-slate-800 flex justify-between items-center">
-        <span>💍 เครื่องประดับ:</span>
-        <span class="font-bold text-amber-300">${p.equipment.accessory?.name || 'None'}</span>
-      </div>
-    `;
+    // Render Equipped Slots (Weapon, Shield, Armor, Accessory) with Unequip [ถอด] buttons
+    const slots = [
+      { key: 'weapon' as const, label: '🗡️ อาวุธ', icon: '⚔️' },
+      { key: 'shield' as const, label: '🛡️ โล่', icon: '🛡️' },
+      { key: 'armor' as const, label: '🦺 เกราะ', icon: '🦺' },
+      { key: 'accessory' as const, label: '💍 เครื่องประดับ', icon: '💍' }
+    ];
+
+    document.getElementById('equippedSlotsList')!.innerHTML = slots.map(s => {
+      const eq = p.equipment[s.key];
+      return `
+        <div class="p-1.5 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
+          <div class="flex items-center gap-1.5">
+            <span>${s.label}:</span>
+            <span class="font-bold ${eq ? 'text-amber-300' : 'text-slate-500'}">${eq ? eq.name : 'ไม่มี'}</span>
+          </div>
+          ${eq ? `<button class="unequip-btn pixel-btn px-2 py-0.5 text-[9px] bg-slate-800 hover:bg-red-800 text-slate-300 hover:text-white" data-slot="${s.key}">ถอด</button>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // Unequip handlers
+    document.getElementById('equippedSlotsList')!.querySelectorAll('.unequip-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const slot = (e.currentTarget as HTMLElement).getAttribute('data-slot') as 'weapon' | 'shield' | 'armor' | 'accessory';
+        const eq = p.equipment[slot];
+        if (eq && p.inventory.length < 12) {
+          p.equipment[slot] = null;
+          p.inventory.push(eq);
+          audio.click();
+          this.game.addLog(`ถอด ${eq.name} เก็บเข้ากระเป๋า`);
+          this.openInventory();
+          this.hud.update();
+        } else if (p.inventory.length >= 12) {
+          this.game.addLog(`กระเป๋าเต็ม! ไม่สามารถถอดอุปกรณ์ได้`);
+        }
+      });
+    });
 
     document.getElementById('statBreakdownList')!.innerHTML = `
       <div class="flex justify-between"><span>ATK:</span> <strong class="text-white">${p.getTotalStat('atk')}</strong></div>
@@ -1540,50 +1536,106 @@ class DokaponApp {
       <div class="flex justify-between"><span>LUK:</span> <strong class="text-white">${p.getTotalStat('luk')}</strong></div>
     `;
 
-    document.getElementById('invCapacityCount')!.innerText = `${p.inventory.length}/12 Items`;
+    document.getElementById('invCapacityCount')!.innerText = `${p.inventory.length}/12 ช่อง`;
     const bagList = document.getElementById('satchelItemsList')!;
     bagList.innerHTML = '';
 
     p.inventory.forEach((item, idx) => {
+      const isEquip = item.type === 'weapon' || item.type === 'shield' || item.type === 'armor' || item.type === 'accessory';
       const row = document.createElement('div');
       row.className = 'pixel-box p-2 bg-slate-950 border-slate-800 flex justify-between items-center';
       row.innerHTML = `
         <div class="flex items-center gap-2">
-          <span>${item.icon}</span>
+          <span class="text-xl">${item.icon}</span>
           <div>
             <div class="text-xs text-amber-200 font-bold">${item.name}</div>
             <div class="text-[9px] text-slate-400">${item.desc}</div>
           </div>
         </div>
-        <button class="pixel-btn pixel-btn-blue px-2.5 py-1 text-[10px] font-bold text-white">
-          ${item.type === 'potion' || item.type === 'spinner' ? 'ใช้' : 'ใส่'}
+        <button class="pixel-btn ${isEquip ? 'pixel-btn-gold text-slate-950' : 'pixel-btn-blue text-white'} px-2.5 py-1 text-[10px] font-bold">
+          ${isEquip ? 'สวมใส่' : 'ใช้'}
         </button>
       `;
 
       row.querySelector('button')!.onclick = () => {
         if (item.type === 'potion') {
-          if (item.id === 'pot_hp') p.hp = Math.min(p.maxHp, p.hp + 50);
-          else if (item.id === 'pot_elixir') {
+          if (item.id === 'pot_hp') {
+            p.hp = Math.min(p.maxHp, p.hp + 60);
+            audio.magicCast();
+            this.game.addLog(`🧪 ${p.displayName} ดื่ม Life Potion (+60 HP)!`);
+          } else if (item.id === 'pot_elixir' || item.id === 'pot_phoenix_down') {
             p.hp = p.maxHp;
             p.mp = p.maxMp;
+            audio.levelUp();
+            this.game.addLog(`🏺 ${p.displayName} ดื่ม Full Elixir! ฟื้นฟู HP/MP จนเต็มเปี่ยม!`, 'level');
+          } else if (item.id === 'pot_str') {
+            p.atk += 3;
+            audio.levelUp();
+            this.game.addLog(`💪 ${p.displayName} ดื่ม STR Elixir (+3 ATK ถาวร)!`, 'level');
+          } else if (item.id === 'pot_def') {
+            p.def += 3;
+            audio.levelUp();
+            this.game.addLog(`🛡️ ${p.displayName} ดื่ม DEF Elixir (+3 DEF ถาวร)!`, 'level');
+          } else if (item.id === 'pot_mag') {
+            p.mag += 3;
+            audio.levelUp();
+            this.game.addLog(`🔮 ${p.displayName} ดื่ม MAG Elixir (+3 MAG ถาวร)!`, 'level');
+          } else if (item.id === 'pot_spd') {
+            p.spd += 3;
+            audio.levelUp();
+            this.game.addLog(`👟 ${p.displayName} ดื่ม SPD Elixir (+3 SPD ถาวร)!`, 'level');
+          } else if (item.id === 'pot_luk') {
+            p.luk += 3;
+            audio.levelUp();
+            this.game.addLog(`🍀 ${p.displayName} ดื่ม LUK Elixir (+3 LUK ถาวร)!`, 'level');
+          } else if (item.id === 'item_dispel') {
+            p.rustTurns = 0;
+            audio.magicCast();
+            this.game.addLog(`🫙 ${p.displayName} ใช้ Dispel Charm ลบล้างสถานะคำสาปสนิมหมดสิ้น!`, 'level');
+          } else if (item.id === 'item_bomb') {
+            // Field Bomb: damage nearest rival or active player
+            audio.strikeHit();
+            const rival = this.game.players.find(o => o.id !== p.id && o.hp > 0);
+            if (rival) {
+              rival.hp = Math.max(10, rival.hp - 40);
+              this.game.addLog(`💣 ${p.displayName} ปาระเบิดใส่ ${rival.displayName} (-40 HP)!`, 'battle');
+            } else {
+              this.game.addLog(`💣 ${p.displayName} จุดระเบิดไดนาไมต์ก้องกังวาน!`);
+            }
+          } else if (item.id === 'item_recall') {
+            // Warp Recall to Castle (Node 0)
+            p.nodeId = 0;
+            const startNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
+            p.gridX = startNode.gx;
+            p.gridY = startNode.gy;
+            p.gridZ = startNode.gz;
+            audio.magicCast();
+            this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+            this.game.addLog(`🚪 ${p.displayName} ใช้วาร์ปกลับสู่ปราสาทหลวงทันที!`, 'level');
+          } else {
+            p.hp = Math.min(p.maxHp, p.hp + 50);
+            audio.magicCast();
           }
-          audio.magicCast();
           p.inventory.splice(idx, 1);
           this.openInventory();
           this.hud.update();
         } else if (item.type === 'spinner') {
-          p.activeSpinnerMultiplier = item.id === 'spin_3' ? 3 : 2;
+          if (item.id === 'spin_5') p.activeSpinnerMultiplier = 5;
+          else if (item.id === 'spin_4') p.activeSpinnerMultiplier = 4;
+          else if (item.id === 'spin_3') p.activeSpinnerMultiplier = 3;
+          else p.activeSpinnerMultiplier = 2;
           p.inventory.splice(idx, 1);
           audio.coin();
-          this.game.addLog(`สวมใส่ ${item.name}! การทอยครั้งหน้าจะใช้ลูกเต๋า ${p.activeSpinnerMultiplier} ลูก!`);
+          this.game.addLog(`🌀 สวมใส่ ${item.name}! การทอยครั้งหน้าจะใช้ลูกเต๋า ${p.activeSpinnerMultiplier} ลูก!`, 'level');
           this.openInventory();
-        } else if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
-          const slot = item.type;
+        } else if (isEquip) {
+          const slot = item.type as 'weapon' | 'shield' | 'armor' | 'accessory';
           const old = p.equipment[slot];
           p.equipment[slot] = item;
           p.inventory.splice(idx, 1);
           if (old) p.inventory.push(old);
           audio.click();
+          this.game.addLog(`⚔️ สวมใส่ ${item.name} เข้าช่อง ${slot.toUpperCase()} เรียบร้อย!`);
           this.openInventory();
           this.hud.update();
         }
