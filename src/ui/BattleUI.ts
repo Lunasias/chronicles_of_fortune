@@ -1016,9 +1016,9 @@ export class BattleUI {
     const pFrame = Math.floor(time * 0.005);
 
     // Contextual Isometric Combat Orientation: Left Dais faces Right ('SE'), Right Dais faces Left ('SW')
-    // Neither combatant turns their back during battle; faces and expressions remain clearly visible!
-    const heroDir: IsoDirection = px <= ex ? 'SE' : 'SW';
-    const enemyDir: IsoDirection = ex >= px ? 'SW' : 'SE';
+    // Both combatants turn their entire body, stance, arms, and face toward each other across the arena!
+    const heroDir: IsoDirection = pxCenter <= exCenter ? 'SE' : 'SW';
+    const enemyDir: IsoDirection = exCenter >= pxCenter ? 'SW' : 'SE';
 
     const heroSprite = pixelSprites.getHeroSprite(
       p.classKey,
@@ -1034,14 +1034,15 @@ export class BattleUI {
     const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
     const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
-    let enemySprite: HTMLCanvasElement;
-    let enemyW = 140;
-    let enemyH = 140;
+    // Sizing: Grand prominent anime combatants (240x240 for standard, 290x290 for bosses)
+    const heroW = 240;
+    const heroH = 240;
+    const enemyW = enemyCombatant.isBoss ? 290 : 240;
+    const enemyH = enemyCombatant.isBoss ? 290 : 240;
 
+    let enemySprite: HTMLCanvasElement;
     if (enemyCombatant.isBoss) {
       enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', enemyDir, eAnim, pFrame);
-      enemyW = 140;
-      enemyH = 140;
     } else if (enemyCombatant.playerRef) {
       enemySprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
@@ -1053,8 +1054,6 @@ export class BattleUI {
         enemyCombatant.playerRef.prank,
         enemyCombatant.playerRef.skinVariant
       );
-      enemyW = 120;
-      enemyH = 120;
     } else {
       enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, pFrame);
     }
@@ -1068,20 +1067,20 @@ export class BattleUI {
         if (isPlayerAtk) {
           this.cutscene.ghostTrails.push({
             x: px,
-            y: py - 64,
+            y: py - 100,
             sprite: heroSprite,
-            w: 140,
-            h: 140,
+            w: heroW,
+            h: heroH,
             alpha: 0.6,
             decay: 0.045
           });
         } else {
           this.cutscene.ghostTrails.push({
             x: ex,
-            y: ey - (enemyCombatant.isBoss ? 67 : 64),
+            y: ey - (enemyCombatant.isBoss ? 120 : 100),
             sprite: enemySprite,
-            w: enemyCombatant.isBoss ? 150 : 140,
-            h: enemyCombatant.isBoss ? 150 : 140,
+            w: enemyW,
+            h: enemyH,
             alpha: 0.6,
             decay: 0.045
           });
@@ -1105,11 +1104,11 @@ export class BattleUI {
     // 5. DRAW COMBATANTS (PERFECTLY CENTERED ON DIAMOND DAIS CELLS)
     // -----------------------------------------------------------------------
     // In our 2.5D Isometric projection, the dais top surface is centered at (px, py).
-    // The hero and monster sprites are anchored so their ground feet align exactly with dais center!
+    // Anchored so characters stand proudly with feet planted on the dais diamond!
     const drawHero = () => {
       this.drawUnitTeamRing(ctx, px, py - 14, '#06b6d4', 0.9, true);
-      // Hero sprite enlarged to 140x140, centered on dais diamond surface
-      ctx.drawImage(heroSprite, px - 70, py - 134, 140, 140);
+      // Hero sprite enlarged to 240x240, anchored to dais diamond surface
+      ctx.drawImage(heroSprite, px - heroW / 2, py - 222, heroW, heroH);
     };
 
     const drawEnemy = () => {
@@ -1119,16 +1118,15 @@ export class BattleUI {
         ctx.shadowBlur = 28;
       }
 
-      if (enemyCombatant.isBoss) {
-        this.drawUnitTeamRing(ctx, ex, ey - 14, '#ef4444', 1.0, true);
-        ctx.drawImage(enemySprite, ex - 75, ey - 142, 150, 150);
-      } else if (enemyCombatant.playerRef) {
-        this.drawUnitTeamRing(ctx, ex, ey - 14, '#f43f5e', 0.9, true);
-        ctx.drawImage(enemySprite, ex - 70, ey - 134, 140, 140);
-      } else {
-        this.drawUnitTeamRing(ctx, ex, ey - 14, '#f59e0b', 0.9, true);
-        ctx.drawImage(enemySprite, ex - 70, ey - 134, 140, 140);
-      }
+      const ringColor = enemyCombatant.isBoss ? '#ef4444' : (enemyCombatant.playerRef ? '#f43f5e' : '#f59e0b');
+      this.drawUnitTeamRing(ctx, ex, ey - 14, ringColor, 0.95, true);
+      ctx.drawImage(
+        enemySprite,
+        ex - enemyW / 2,
+        ey - (enemyCombatant.isBoss ? 268 : 222),
+        enemyW,
+        enemyH
+      );
       ctx.restore();
     };
 
@@ -2486,11 +2484,11 @@ export class BattleUI {
     pulse = false
   ) {
     ctx.save();
-    const r = pulse ? 30 + Math.sin(Date.now() * 0.006) * 3 : 28;
+    const r = pulse ? 50 + Math.sin(Date.now() * 0.006) * 4 : 46;
     ctx.strokeStyle = color;
-    ctx.lineWidth = pulse ? 2.5 : 1.8;
+    ctx.lineWidth = pulse ? 2.8 : 2.0;
     ctx.shadowColor = color;
-    ctx.shadowBlur = pulse ? 12 : 6;
+    ctx.shadowBlur = pulse ? 16 : 8;
     ctx.globalAlpha = alpha;
 
     ctx.beginPath();
@@ -2498,9 +2496,9 @@ export class BattleUI {
     ctx.stroke();
 
     // Ground contact shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy, r * 0.8, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, r * 0.85, r * 0.38, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();

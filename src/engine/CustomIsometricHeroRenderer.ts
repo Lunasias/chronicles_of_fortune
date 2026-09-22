@@ -3,7 +3,7 @@ import { EquipmentItem, IsoDirection, CharacterAnimState, PrankState } from './P
 export class CustomIsometricHeroRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
 
-  private makeCanvas(w = 96, h = 96): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  private makeCanvas(w = 144, h = 144): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
@@ -40,45 +40,66 @@ export class CustomIsometricHeroRenderer {
       return this.cache.get(cacheKey)!;
     }
 
-    const { canvas, ctx } = this.makeCanvas(96, 96);
+    const { canvas, ctx } = this.makeCanvas(144, 144);
+
+    ctx.save();
+    // High-resolution supersampling scale from 96-grid to 144-canvas (1.5x)
+    ctx.scale(1.5, 1.5);
+
+    // 8-Directional Isometric Horizontal Transform:
+    // If facing West ('SW', 'W', 'NW'), mirror horizontally around center x = 48!
+    // This turns the ENTIRE body, legs, boots, arms, weapons, face and hair to face LEFT.
+    const isFacingWest = dir === 'SW' || dir === 'W' || dir === 'NW';
+    if (isFacingWest) {
+      ctx.translate(48, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-48, 0);
+    }
+
+    // Direction mapping for internal class renderers (rendered as East-facing, then mirrored)
+    const effectiveDir: IsoDirection = isFacingWest
+      ? (dir === 'SW' ? 'SE' : (dir === 'W' ? 'E' : (dir === 'NW' ? 'NE' : 'SE')))
+      : dir;
 
     // Calculate dynamic animation offsets
-    const animOffsets = this.getAnimationOffsets(dir, animState, f);
+    const animOffsets = this.getAnimationOffsets(effectiveDir, animState, f);
 
     // Render the custom 2.5D Isometric Character
     if (isDarkling) {
-      this.renderDarkling(ctx, dir, animState, f, animOffsets);
+      this.renderDarkling(ctx, effectiveDir, animState, f, animOffsets);
     } else {
       const normalizedClass = this.normalizeClassKey(classKey);
       switch (normalizedClass) {
         case 'warrior':
-          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderWarrior(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'magician':
-          this.renderMagician(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderMagician(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'cleric':
-          this.renderCleric(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderCleric(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'thief':
-          this.renderThief(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderThief(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'ranger':
-          this.renderRanger(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderRanger(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         case 'spellblade':
-          this.renderSpellblade(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderSpellblade(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
         default:
-          this.renderWarrior(ctx, dir, animState, f, animOffsets, equipment, skinVariant);
+          this.renderWarrior(ctx, effectiveDir, animState, f, animOffsets, equipment, skinVariant);
           break;
       }
     }
 
     // Render Prank overlays if applicable
     if (prank && (prank.hasGraffiti || prank.hasAfro) && !isDarkling) {
-      this.renderPrankOverlays(ctx, dir, animOffsets, prank);
+      this.renderPrankOverlays(ctx, effectiveDir, animOffsets, prank);
     }
+
+    ctx.restore();
 
     this.cache.set(cacheKey, canvas);
     return canvas;
@@ -571,57 +592,91 @@ export class CustomIsometricHeroRenderer {
     isRight: boolean,
     skinTone: string,
     eyeColor: string,
-    blushColor = '#f472b6'
+    blushColor = '#fb7185'
   ) {
-    // Soft contoured jawline
+    // Soft contoured petite anime chin & jawline
     ctx.fillStyle = skinTone;
     ctx.beginPath();
     ctx.moveTo(cx - 6, cy - 6);
     ctx.lineTo(cx + 6, cy - 6);
-    ctx.quadraticCurveTo(cx + 6, cy + 3, cx + (isRight ? 1.5 : -1.5), cy + 7);
-    ctx.quadraticCurveTo(cx - (isRight ? 1.5 : -1.5), cy + 3, cx - 6, cy - 6);
+    ctx.quadraticCurveTo(cx + 6.2, cy + 3.5, cx + (isRight ? 1.5 : -1.5), cy + 7.2);
+    ctx.quadraticCurveTo(cx - (isRight ? 1.5 : -1.5), cy + 3.5, cx - 6, cy - 6);
     ctx.closePath();
     ctx.fill();
 
-    // Subtle jawline ambient shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    // Soft chin/jawline ambient depth shadow
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.14)';
     ctx.beginPath();
-    ctx.moveTo(cx - 5, cy + 4);
-    ctx.lineTo(cx + 5, cy + 4);
-    ctx.lineTo(cx, cy + 7);
+    ctx.moveTo(cx - 5, cy + 4.5);
+    ctx.lineTo(cx + 5, cy + 4.5);
+    ctx.lineTo(cx, cy + 7.5);
     ctx.closePath();
     ctx.fill();
 
-    // Expressive Anime Eyes with lashes and catchlight
+    // Expressive Large Anime Eyes with lush lashes & double sparkles
     const leftEyeX = cx - (isRight ? 1.5 : 4.5);
     const rightEyeX = cx + (isRight ? 2.5 : -0.5);
-    const eyeY = cy - 1;
+    const eyeY = cy - 0.8;
 
-    // Eyelash line (Dark contour)
+    // Eyelash Wing (Dark anime lash line)
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(leftEyeX - 1.5, eyeY - 2, 3.5, 1.2);
-    ctx.fillRect(rightEyeX - 0.5, eyeY - 2, 3.5, 1.2);
+    ctx.beginPath();
+    ctx.moveTo(leftEyeX - 2, eyeY - 2.2);
+    ctx.lineTo(leftEyeX + 2, eyeY - 2.2);
+    ctx.lineTo(leftEyeX + 2.5, eyeY - 1.2);
+    ctx.lineTo(leftEyeX - 1.5, eyeY - 1.2);
+    ctx.closePath();
+    ctx.fill();
 
-    // Iris (Gleaming vibrant color)
+    ctx.beginPath();
+    ctx.moveTo(rightEyeX - 1, eyeY - 2.2);
+    ctx.lineTo(rightEyeX + 3, eyeY - 2.2);
+    ctx.lineTo(rightEyeX + 3.5, eyeY - 1.2);
+    ctx.lineTo(rightEyeX - 0.5, eyeY - 1.2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Iris (Gleaming vibrant anime color with gradient depth)
     ctx.fillStyle = eyeColor;
-    ctx.fillRect(leftEyeX - 1, eyeY - 1, 2.5, 3);
-    ctx.fillRect(rightEyeX, eyeY - 1, 2.5, 3);
+    ctx.fillRect(leftEyeX - 1.2, eyeY - 1.2, 2.6, 3.2);
+    ctx.fillRect(rightEyeX - 0.2, eyeY - 1.2, 2.6, 3.2);
 
-    // Catchlight highlight (Crisp white sparkle)
+    // Deep Pupil
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(leftEyeX - 0.6, eyeY - 0.5, 1.4, 1.6);
+    ctx.fillRect(rightEyeX + 0.4, eyeY - 0.5, 1.4, 1.6);
+
+    // Double Catchlight Highlights (Anime Sparkle: Primary large + Secondary petite)
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(leftEyeX - 1, eyeY - 1, 1, 1);
-    ctx.fillRect(rightEyeX, eyeY - 1, 1, 1);
+    // Primary catchlight (top-left of pupil)
+    ctx.fillRect(leftEyeX - 1.0, eyeY - 1.0, 1.1, 1.1);
+    ctx.fillRect(rightEyeX, eyeY - 1.0, 1.1, 1.1);
+    // Secondary catchlight (bottom-right twinkle)
+    ctx.fillRect(leftEyeX + 0.5, eyeY + 0.8, 0.7, 0.7);
+    ctx.fillRect(rightEyeX + 1.5, eyeY + 0.8, 0.7, 0.7);
 
-    // Soft maiden cheek blush
+    // Soft Rosy Anime Maiden Cheek Blush
     ctx.fillStyle = blushColor;
-    ctx.fillRect(leftEyeX - 2.5, eyeY + 2.5, 2, 1);
-    ctx.fillRect(rightEyeX + 1.5, eyeY + 2.5, 2, 1);
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.ellipse(leftEyeX - 1.2, eyeY + 3.0, 2.2, 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(rightEyeX + 1.8, eyeY + 3.0, 2.2, 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
 
-    // Small cute nose & soft lips
-    ctx.fillStyle = 'rgba(180, 83, 9, 0.4)';
-    ctx.fillRect(cx + (isRight ? 0.5 : -0.5), cy + 2, 1, 1);
-    ctx.fillStyle = '#fb7185';
-    ctx.fillRect(cx - 0.5, cy + 4.5, 1.5, 0.8);
+    // Small Cute Anime Nose & Sweet Lips
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.45)';
+    ctx.fillRect(cx + (isRight ? 0.4 : -0.4), cy + 2.2, 0.8, 0.8);
+    // Sweet smiling anime mouth
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 4.6, 1.4, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+    // Gloss highlight on lip
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 0.3, cy + 4.8, 0.7, 0.6);
   }
 
   /**
@@ -1313,48 +1368,68 @@ export class CustomIsometricHeroRenderer {
     // 3.5 Articulated Feminine Arms
     this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, robeBase);
 
-    // 4. Staff with Levitating Arcane Crystal
+    // 4. Staff with Levitating Arcane Crystal & Orbital Rings
     const staffX = isRight ? cx + 15 : cx - 15;
     const staffY = cy + 2;
     ctx.save();
-    ctx.strokeStyle = '#5c2c16';
+    // Ornate Golden Relic Shaft
+    ctx.strokeStyle = '#d97706';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(staffX, staffY + 26);
-    ctx.lineTo(staffX, staffY - 16);
+    ctx.lineTo(staffX, staffY - 14);
     ctx.stroke();
+
+    // Golden Caduceus Crown Finial
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(staffX, staffY - 16, 4, 0, Math.PI * 2);
+    ctx.fill();
 
     // Floating pulsing crystal
     const crystalHover = Math.sin((frame / 8) * Math.PI * 2) * 3;
-    const crystalY = staffY - 24 + crystalHover;
+    const crystalY = staffY - 25 + crystalHover;
     ctx.fillStyle = crystalColor;
     ctx.shadowColor = crystalColor;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 14;
     ctx.beginPath();
-    ctx.moveTo(staffX, crystalY - 7);
-    ctx.lineTo(staffX + 5, crystalY);
-    ctx.lineTo(staffX, crystalY + 7);
-    ctx.lineTo(staffX - 5, crystalY);
+    ctx.moveTo(staffX, crystalY - 8);
+    ctx.lineTo(staffX + 5.5, crystalY);
+    ctx.lineTo(staffX, crystalY + 8);
+    ctx.lineTo(staffX - 5.5, crystalY);
     ctx.closePath();
     ctx.fill();
+
+    // Orbiting Planetary Arcane Rings
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(staffX, crystalY, 8, 3, 0.4, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.restore();
 
-    // 5. Head, Flowing Twintails & Pointed Hat
+    // 5. Head, Long Flowing Wavy Hair & Grand Archmage Hat
     const headY = cy - 14;
 
-    // Twintails on sides
-    const twintailWave = Math.sin(frame * 0.8) * 2;
+    // Long cascading wavy hair locks billowing behind shoulders (NO puffs)
+    const hairWave = Math.sin((frame / 6) * Math.PI * 2) * 2.8;
     ctx.fillStyle = hairShadow;
     ctx.beginPath();
-    ctx.arc(cx - 9, headY + 3 + twintailWave, 4, 0, Math.PI * 2);
-    ctx.arc(cx + 9, headY + 3 - twintailWave, 4, 0, Math.PI * 2);
+    ctx.moveTo(cx - 7, headY);
+    ctx.quadraticCurveTo(cx - 12 + hairWave, headY + 8, cx - 10 + hairWave * 1.3, cy + 18);
+    ctx.lineTo(cx + 7 + hairWave * 1.3, cy + 18);
+    ctx.quadraticCurveTo(cx + 10 + hairWave, headY + 8, cx + 6, headY);
+    ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = hairColor;
     ctx.beginPath();
-    ctx.arc(cx - 9, headY + 2 + twintailWave, 3.5, 0, Math.PI * 2);
-    ctx.arc(cx + 9, headY + 2 - twintailWave, 3.5, 0, Math.PI * 2);
+    ctx.moveTo(cx - 6, headY);
+    ctx.quadraticCurveTo(cx - 9 + hairWave, headY + 8, cx - 7 + hairWave * 1.2, cy + 16);
+    ctx.lineTo(cx + 5 + hairWave * 1.2, cy + 16);
+    ctx.quadraticCurveTo(cx + 8 + hairWave, headY + 8, cx + 5, headY);
+    ctx.closePath();
     ctx.fill();
 
     // Face
@@ -1365,31 +1440,48 @@ export class CustomIsometricHeroRenderer {
     } else {
       ctx.fillStyle = hairColor;
       ctx.beginPath();
-      ctx.arc(cx, headY, 6, 0, Math.PI * 2);
+      ctx.arc(cx, headY, 6.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Furry Beastgirl Ears (Fox/Cat ears peeking below witch hat)
     this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, mageBeast, hairColor, '#fda4af');
 
-    // Wizard Witch Hat with Curved Tip
-    const hatTilt = isRight ? 2 : -2;
+    // Grand Archmage Witch Hat with Curved Tip & Celestial Star Buckle
+    const hatTilt = isRight ? 2.5 : -2.5;
+    // Outer wide undulating brim with gold edge
     ctx.fillStyle = robeShadow;
     ctx.beginPath();
-    ctx.ellipse(cx, headY - 2, 13, 5, hatTilt * 0.05, 0, Math.PI * 2);
+    ctx.ellipse(cx, headY - 3, 14, 5.5, hatTilt * 0.05, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = robeBase;
     ctx.beginPath();
-    ctx.moveTo(cx - 7, headY - 4);
-    ctx.lineTo(cx + 7, headY - 4);
-    ctx.quadraticCurveTo(cx + hatTilt * 3, headY - 18, cx - hatTilt * 5, headY - 26);
+    ctx.ellipse(cx, headY - 4, 12.5, 4.5, hatTilt * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Gold trim around hat brim
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(cx, headY - 4, 13, 5, hatTilt * 0.05, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Curving conical crown
+    ctx.fillStyle = robeBase;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, headY - 5);
+    ctx.lineTo(cx + 7, headY - 5);
+    ctx.quadraticCurveTo(cx + hatTilt * 3, headY - 19, cx - hatTilt * 6, headY - 27);
     ctx.closePath();
     ctx.fill();
 
-    // Gold Hat Ribbon
+    // Gold Hat Band with Celestial Star
     ctx.fillStyle = '#facc15';
-    ctx.fillRect(cx - 5, headY - 6, 10, 2.5);
+    ctx.fillRect(cx - 5, headY - 7, 10, 2.5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 1, headY - 8, 2, 4);
+    ctx.fillRect(cx - 2, headY - 7, 4, 2);
 
     // Magic Circle when casting
     if (animState === 'magic') {
@@ -1646,44 +1738,56 @@ export class CustomIsometricHeroRenderer {
     ctx.fillRect(-2.5, 0, 5, 2);
     ctx.restore();
 
-    // 5. Head, Assassin Cowl & Flowing Hair
+    // 5. Head, Flowing Layered Raven Hair & Assassin Cowl
     const headY = cy - 14;
 
-    // Flowing raven hair locks
+    // Flowing layered raven hair locks billowing behind
     const hairWave = Math.sin((frame / 6) * Math.PI * 2) * 3;
     ctx.fillStyle = suitShadow;
     ctx.beginPath();
-    ctx.moveTo(cx, headY - 4);
-    ctx.quadraticCurveTo(cx - 10, headY - 10, cx - 14 + hairWave, headY + 4);
-    ctx.lineTo(cx - 8 + hairWave, headY + 8);
+    ctx.moveTo(cx - 6, headY);
+    ctx.quadraticCurveTo(cx - 12 + hairWave, headY + 8, cx - 10 + hairWave * 1.3, cy + 18);
+    ctx.lineTo(cx + 6 + hairWave * 1.3, cy + 18);
+    ctx.quadraticCurveTo(cx + 10 + hairWave, headY + 8, cx + 5, headY);
     ctx.closePath();
     ctx.fill();
 
-    // Face
+    // Face (Expressive Golden Cat Anime Eyes, NO black bar covering eyes!)
     if (isProfile) {
-      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#eab308');
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(cx - (dir === 'E' ? 1 : 4), headY - 2, 6, 2);
+      this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, '#f59e0b');
     } else if (isFront) {
-      this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#eab308');
-      // Stylish rogue eye mask
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(cx - 5, headY - 2, 10, 2);
+      this.drawAnimeFemaleFace(ctx, cx, headY, isRight, skinTone, '#f59e0b');
     } else {
       ctx.fillStyle = hairColor;
       ctx.beginPath();
-      ctx.arc(cx, headY, 6, 0, Math.PI * 2);
+      ctx.arc(cx, headY, 6.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Framing side bangs
+    ctx.fillStyle = suitShadow;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, headY - 4);
+    ctx.lineTo(cx - 7, headY + 4);
+    ctx.lineTo(cx - 4, headY - 1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx + 5, headY - 4);
+    ctx.lineTo(cx + 7, headY + 4);
+    ctx.lineTo(cx + 4, headY - 1);
+    ctx.closePath();
+    ctx.fill();
 
     // Furry Beastgirl Ears (Neko / Fox stealth ears)
     this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, thiefBeast, hairColor, '#fda4af');
 
-    // Assassin Hood / Cowl
+    // Stylish Sleek Assassin Hood / Cowl draped gracefully around collar
     ctx.fillStyle = suitShadow;
     ctx.beginPath();
-    ctx.arc(cx, headY - 2, 7.5, Math.PI, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(cx, headY - 4, 7.5, Math.PI * 0.9, Math.PI * 2.1);
+    ctx.stroke();
 
     if (animState === 'attack' || animState === 'strike') {
       this.drawDiagonalSlashArc(ctx, cx, cy, dir, '#22c55e');
@@ -1975,9 +2079,10 @@ export class CustomIsometricHeroRenderer {
   }
 
   // =========================================================================
-  // 6. SPELLBLADE HEROINE: ELENA (จอมดาบเวทสาว เอเลน่า)
-  // Pure snow-white hair, alluring battle bikini armor with gold trim,
-  // toned midriff with cute navel, glowing runic lightning katana, and 8-directional rendering
+  // 6. SPELLBLADE HEROINE: VALERIA (จอมดาบเวทสาวผมขาว วาเลเรีย)
+  // Flowing long silky pure white hair past hips (NO buns / NO pigtails),
+  // seductive battle bikini armor with gold trim & push-up cleavage gem,
+  // exposed toned midriff with cute navel, glowing runic lightning katana, and 8-dir rendering
   // =========================================================================
   private renderSpellblade(
     ctx: CanvasRenderingContext2D,
@@ -1995,48 +2100,83 @@ export class CustomIsometricHeroRenderer {
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
-    // White Hair Palette (Pure Snow White)
+    // Pure Snow-White Hair Palette (Silky, Shimmering, Gorgeous)
     let hairHighlight = '#ffffff';
-    let hairBase = '#f1f5f9';
+    let hairBase = '#f8fafc';
     let hairShadow = '#cbd5e1';
 
-    // Battle Bikini Armor Palette (Metallic Silver + Rose Gold Trim + Magenta Gem)
+    // Battle Bikini Armor Palette (Metallic Silver + Royal Gold Trim + Cerulean Lightning Gem)
     let armorPlateBase = '#e2e8f0';
     let armorPlateLight = '#ffffff';
     let armorPlateShadow = '#64748b';
-    let goldTrim = '#facc15';
-    let auraColor = '#ec4899';
-    let eyeColor = '#ec4899';
+    let goldTrim = '#f59e0b';
+    let auraColor = '#38bdf8';
+    let eyeColor = '#0284c7';
     const skinTone = '#ffedd5';
 
     if (skinVariant === 1) {
-      // Midnight Eclipse variant: White hair with violet/cyan armor
-      armorPlateBase = '#334155';
-      armorPlateLight = '#64748b';
+      // Midnight Eclipse variant: White hair with obsidian/azure armor
+      armorPlateBase = '#1e293b';
+      armorPlateLight = '#475569';
       armorPlateShadow = '#0f172a';
       goldTrim = '#38bdf8';
-      auraColor = '#38bdf8';
+      auraColor = '#818cf8';
       eyeColor = '#38bdf8';
     }
 
     // 1. Ground Shadow
     this.drawIsoShadow(ctx, cx, cy + 34, 18, 8);
 
-    // 1.5 Furry Beastgirl Fluffy White Tail (Swaying gracefully behind back)
+    // 1.5 Furry Beastgirl Fluffy White Fox Tail (Swaying gracefully behind back)
     this.drawFurryBeastgirlTail(ctx, cx, cy, dir, frame, 'fox', hairBase, '#ffffff');
 
-    // 2. Battle Bikini Loincloth / Fluttering Hip Ribbon
-    const clothWave = Math.sin((frame / 6) * Math.PI * 2) * 3;
-    ctx.fillStyle = auraColor;
+    // 2. LONG FLOWING PURE WHITE HAIR (BACKGROUND LAYER - NO BUNS, NO PIGTAILS!)
+    // Silky white hair cascades from the crown all the way down past her waist and thighs
+    const headY = cy - 14;
+    const hairSway = Math.sin((frame / 6) * Math.PI * 2) * 3.0;
+
+    // Hair shadow back-curtain
+    ctx.fillStyle = hairShadow;
     ctx.beginPath();
-    ctx.moveTo(cx - 5, cy + 12);
-    ctx.lineTo(cx + 5, cy + 12);
-    ctx.lineTo(cx + (isRight ? 9 : 4) + clothWave, cy + 28);
-    ctx.lineTo(cx - (isRight ? 4 : 9) + clothWave, cy + 28);
+    ctx.moveTo(cx - 7, headY + 2);
+    ctx.quadraticCurveTo(cx - 13 + hairSway, headY + 12, cx - 11 + hairSway * 1.5, cy + 20);
+    ctx.lineTo(cx + 8 + hairSway * 1.5, cy + 20);
+    ctx.quadraticCurveTo(cx + 12 + hairSway, headY + 12, cx + 7, headY + 2);
     ctx.closePath();
     ctx.fill();
 
-    // 3. Slender Toned Legs with Armored Thigh-High Sabatons
+    // Hair base back-curtain
+    ctx.fillStyle = hairBase;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, headY + 2);
+    ctx.quadraticCurveTo(cx - 10 + hairSway, headY + 10, cx - 8 + hairSway * 1.5, cy + 18);
+    ctx.lineTo(cx + 6 + hairSway * 1.5, cy + 18);
+    ctx.quadraticCurveTo(cx + 9 + hairSway, headY + 10, cx + 6, headY + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Shimmering platinum white highlights along flowing hair strands
+    ctx.strokeStyle = hairHighlight;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, headY);
+    ctx.quadraticCurveTo(cx - 7 + hairSway, headY + 10, cx - 5 + hairSway * 1.5, cy + 16);
+    ctx.moveTo(cx + 2, headY);
+    ctx.quadraticCurveTo(cx + 5 + hairSway, headY + 10, cx + 4 + hairSway * 1.5, cy + 16);
+    ctx.stroke();
+
+    // 3. Battle Bikini Armor Loincloth / Fluttering Azure Hip Ribbon
+    const clothWave = Math.sin((frame / 6) * Math.PI * 2) * 3.5;
+    ctx.fillStyle = auraColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy + 12);
+    ctx.lineTo(cx + 4, cy + 12);
+    ctx.lineTo(cx + (isRight ? 8 : 3) + clothWave, cy + 28);
+    ctx.lineTo(cx - (isRight ? 3 : 8) + clothWave, cy + 28);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. Slender Toned Legs with Armored Thigh-High Sabatons
     const legStep = animState === 'run' ? Math.sin((frame / 6) * Math.PI * 2) * 5 : 0;
     this.drawFeminineLegs(ctx, cx, cy, isRight, legStep, skinTone, {
       base: armorPlateBase,
@@ -2044,7 +2184,7 @@ export class CustomIsometricHeroRenderer {
       shadow: armorPlateShadow
     });
 
-    // 4. Alluring Battle Bikini Armor (Exposed Toned Midriff with Cute Navel)
+    // 5. ALLURING BATTLE BIKINI ARMOR (Exposed Toned Midriff with Cute Navel & Push-up Cleavage)
     this.drawFeminineHourglassTorso(ctx, cx, cy, isRight, {
       base: armorPlateBase,
       highlight: armorPlateLight,
@@ -2052,67 +2192,61 @@ export class CustomIsometricHeroRenderer {
       trim: goldTrim
     }, true, skinTone);
 
-    // Mystical Arcane Core Jewel on Bikini Cleavage
+    // Glowing Arcane Cerulean Core Jewel on Bikini Cleavage
     ctx.fillStyle = auraColor;
     ctx.shadowColor = auraColor;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(cx, cy - 2, 2, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 2.5, 2.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // 4.5 Articulated Feminine Arms with Silver Gauntlets
+    // 5.5 Articulated Feminine Arms with Silver Gauntlets & Gold Vambraces
     this.drawFeminineArms(ctx, cx, cy, isRight, animState, skinTone, undefined, armorPlateBase);
 
-    // 5. Runic Lightning Katana / Spellblade
-    const swordX = isRight ? cx + 13 : cx - 13;
+    // 6. Masterwork Runic Lightning Katana / Spellblade
+    const swordX = isRight ? cx + 14 : cx - 14;
     const swordY = cy + 2;
     ctx.save();
     ctx.translate(swordX, swordY);
     ctx.rotate(isRight ? 0.35 : -0.35);
 
-    // Crackling Lightning Aura along blade
+    // Crackling Electric Lightning Aura along blade
     ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4.5;
     ctx.shadowColor = '#06b6d4';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.beginPath();
-    ctx.moveTo(0, -22);
+    ctx.moveTo(0, -24);
     ctx.lineTo(0, 10);
+    ctx.stroke();
+
+    // Electric sparks branching off the katana
+    const sparkOffset = Math.sin(frame * 1.5) * 4;
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(sparkOffset, -14);
+    ctx.lineTo(0, -10);
     ctx.stroke();
 
     // White Metallic Blade Core
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -22);
+    ctx.moveTo(0, -24);
     ctx.lineTo(0, 10);
     ctx.stroke();
 
     // Gold Guard & Ribbon Hilt
     ctx.fillStyle = goldTrim;
-    ctx.fillRect(-3, 10, 6, 2.5);
+    ctx.fillRect(-3.5, 10, 7, 2.5);
     ctx.fillStyle = auraColor;
-    ctx.fillRect(-1.5, 12.5, 3, 7);
+    ctx.fillRect(-1.5, 12.5, 3, 8);
     ctx.restore();
 
-    // 6. Head, Pure White Hair & Fluffy Animal Ears
-    const headY = cy - 14;
-
-    // Long cascading white hair locks flowing down behind back
-    const hairSway = Math.sin(frame * 0.7) * 2;
-    ctx.fillStyle = hairShadow;
-    ctx.beginPath();
-    ctx.arc(cx - 8, headY + 5 + hairSway, 4, 0, Math.PI * 2);
-    ctx.arc(cx + 8, headY + 5 - hairSway, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = hairBase;
-    ctx.beginPath();
-    ctx.arc(cx - 8, headY + 4 + hairSway, 3.5, 0, Math.PI * 2);
-    ctx.arc(cx + 8, headY + 4 - hairSway, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
+    // 7. Head, Front Face & Flowing Framing White Locks
     // Cute Anime Face with 8-Directional Support
     if (isProfile) {
       this.drawAnimeProfileFace(ctx, cx, headY, dir === 'E', skinTone, eyeColor);
@@ -2130,33 +2264,46 @@ export class CustomIsometricHeroRenderer {
       ctx.fill();
     }
 
-    // Bangs & Side Locks (Framing Face)
+    // Front framing locks & side bangs falling gracefully over chest
     if (!isBack) {
       ctx.fillStyle = hairBase;
+      // Left front framing lock
       ctx.beginPath();
-      ctx.moveTo(cx - 6, headY - 4);
-      ctx.lineTo(cx - 8, headY + 3);
-      ctx.lineTo(cx - 4, headY - 1);
+      ctx.moveTo(cx - 6, headY - 3);
+      ctx.quadraticCurveTo(cx - 8, headY + 5, cx - 6 + hairSway * 0.5, headY + 13);
+      ctx.lineTo(cx - 4 + hairSway * 0.5, headY + 13);
+      ctx.quadraticCurveTo(cx - 5, headY + 4, cx - 4, headY - 2);
       ctx.closePath();
       ctx.fill();
 
+      // Right front framing lock
       ctx.beginPath();
-      ctx.moveTo(cx + 6, headY - 4);
-      ctx.lineTo(cx + 8, headY + 3);
-      ctx.lineTo(cx + 4, headY - 1);
+      ctx.moveTo(cx + 6, headY - 3);
+      ctx.quadraticCurveTo(cx + 8, headY + 5, cx + 6 + hairSway * 0.5, headY + 13);
+      ctx.lineTo(cx + 4 + hairSway * 0.5, headY + 13);
+      ctx.quadraticCurveTo(cx + 5, headY + 4, cx + 4, headY - 2);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillRect(cx - 5, headY - 6, 10, 2);
+      // Delicate forehead fringe & bangs
+      ctx.fillStyle = hairHighlight;
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, headY - 6);
+      ctx.lineTo(cx + 5, headY - 6);
+      ctx.lineTo(cx + 3, headY - 3);
+      ctx.lineTo(cx - 1, headY - 4);
+      ctx.lineTo(cx - 4, headY - 3);
+      ctx.closePath();
+      ctx.fill();
     }
 
-    // White Ribbon Hairpin / Headpiece
+    // Elegant Golden Hair Ornament
+    ctx.fillStyle = goldTrim;
+    ctx.fillRect(cx - (isRight ? 6 : -4), headY - 6, 3, 2.5);
     ctx.fillStyle = auraColor;
-    ctx.fillRect(cx - (isRight ? 6 : -4), headY - 5, 3, 3);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx - (isRight ? 5 : -3), headY - 4, 1.5, 1.5);
+    ctx.fillRect(cx - (isRight ? 5 : -3), headY - 5, 1.5, 1.5);
 
-    // Fluffy White Fox/Wolf Ears with soft pink inner
+    // Fluffy White Fox Ears with soft pink inner
     this.drawFurryBeastgirlEars(ctx, cx, headY, dir, frame, 'fox', hairBase, '#fda4af');
 
     // Attack slash
