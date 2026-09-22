@@ -3,11 +3,12 @@ import { IsometricRenderer } from './engine/IsometricRenderer';
 import { HUD } from './ui/HUD';
 import { BattleUI } from './ui/BattleUI';
 import { TownUI } from './ui/TownUI';
-import { ShopUI } from './ui/ShopUI';
+import { ShopUI, SHOP_CATALOG } from './ui/ShopUI';
 import { PrankUI } from './ui/PrankUI';
 import { WeeklyReportUI } from './ui/WeeklyReportUI';
 import { IsekaiEventUI } from './ui/IsekaiEventUI';
 import { HERO_CLASSES, Player, FIELD_SPELLS } from './game/Player';
+import { EquipmentItem } from './engine/PixelSpriteGenerator';
 import { BoardNode } from './game/BoardMap';
 import { Combatant } from './game/BattleEngine';
 import { townManager } from './game/TownManager';
@@ -638,6 +639,53 @@ class DokaponApp {
     });
   }
 
+  private awardMonsterLoot(
+    player: Player,
+    monsterName: string,
+    isTownBoss = false,
+    isCalamityBoss = false
+  ): { gold: number; xp: number; droppedItem?: EquipmentItem } {
+    let gold = 45 + Math.floor(Math.random() * 45);
+    let xp = 50 + Math.floor(Math.random() * 30);
+    let dropChance = 0.40;
+
+    if (isCalamityBoss) {
+      gold = 400 + Math.floor(Math.random() * 250);
+      xp = 350;
+      dropChance = 1.0;
+    } else if (isTownBoss) {
+      gold = 150 + Math.floor(Math.random() * 120);
+      xp = 120;
+      dropChance = 0.75;
+    }
+
+    player.gold += gold;
+    player.gainXP(xp);
+
+    let droppedItem: EquipmentItem | undefined = undefined;
+    if (Math.random() < dropChance && SHOP_CATALOG.length > 0) {
+      const availableLoot = isTownBoss || isCalamityBoss
+        ? SHOP_CATALOG.filter(it => it.type === 'weapon' || it.type === 'armor' || it.type === 'accessory' || it.id === 'pot_elixir' || it.type === 'spell')
+        : SHOP_CATALOG;
+
+      const picked = availableLoot[Math.floor(Math.random() * availableLoot.length)];
+      if (picked) {
+        droppedItem = { ...picked };
+        if (picked.type === 'spell') {
+          player.fieldSpells.push(picked.id);
+        } else {
+          if (player.inventory.length < 12) {
+            player.inventory.push(droppedItem);
+          } else {
+            player.gold += Math.floor(picked.cost * 0.8);
+          }
+        }
+      }
+    }
+
+    return { gold, xp, droppedItem };
+  }
+
   private initiateTownLiberationBattle(townNode: BoardNode) {
     const data = townNode.townData!;
     this.game.addLog(`⚔️ ${townNode.name} ถูกยึดครองโดย ${data.monsterName}! ต่อสู้เพื่อปลดปล่อยเมือง!`, 'battle');
@@ -658,8 +706,12 @@ class DokaponApp {
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
         const rewards = townManager.liberateTown(townNode, winner.playerRef);
+        const loot = this.awardMonsterLoot(winner.playerRef, data.monsterName, true, false);
+        this.game.addLog(`👑 ปลดปล่อยเมืองสำเร็จ! ${winner.playerRef.displayName} ปลดปล่อย ${townNode.name} (+${rewards.goldReward + loot.gold}G, +${rewards.xpReward + loot.xp} XP)!`, 'level');
+        if (loot.droppedItem) {
+          this.game.addLog(`🎁 ปลดปล่อยเมืองสำเร็จ! ได้รับรางวัลพิเศษ: "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
+        }
         isekaiEventManager.onGameAction(winner.playerRef, 'town');
-        this.game.addLog(`👑 ปลดปล่อยเมืองสำเร็จ! ${winner.playerRef.displayName} ปลดปล่อย ${townNode.name} (+${rewards.goldReward}G, +${rewards.xpReward} XP)!`, 'level');
       } else {
         // Monster survived! Persist remaining HP for last-hit opportunity
         data.monsterHp = Math.max(1, Math.ceil(winner.hp));
@@ -694,29 +746,38 @@ class DokaponApp {
   }
 
   private initiateRandomEncounter(tile: BoardNode) {
-    const monsterNames = ['Forest Goblin', 'Slime Bloblet', 'Briar Kobold', 'Crypt Skeleton', 'Dune Bandit'];
-    const pickedName = monsterNames[Math.floor(Math.random() * monsterNames.length)];
+    // Biome-specific authentic monster rosters
+    const biomeMonsters: Record<string, string[]> = {
+      solaria: ['Forest Goblin Marauder', 'Briar Kobold', 'Royal Slime Bloblet', 'Meadow Wolf', 'Shadow Panther'],
+      frostpeak: ['Frost Skeleton Soldier', 'Glacial Yeti Scout', 'Ice Wyrmling', 'Ice Golem', 'Frost Crypt Bat'],
+      sunfire: ['Dune Bandit Raider', 'Sandstone Mummy', 'Brimstone Fire Imp', 'Magma Scorpion', 'Obsidian Automaton'],
+      abyss: ['Nether Shadow Knight', 'Chaos Slime', 'Abyssal Siren', 'Lesser Kraken', 'Void Bat']
+    };
+
+    const roster = biomeMonsters[tile.realmId] || ['Forest Goblin Marauder', 'Royal Slime Bloblet', 'Briar Kobold'];
+    const pickedName = roster[Math.floor(Math.random() * roster.length)];
 
     const monsterCombatant: Combatant = {
       name: pickedName,
-      hp: 60 + Math.floor(Math.random() * 35),
-      maxHp: 95,
-      mp: 20,
-      maxMp: 20,
-      atk: 12 + Math.floor(Math.random() * 6),
-      def: 7 + Math.floor(Math.random() * 5),
-      mag: 6,
-      spd: 8,
-      luk: 5
+      hp: 65 + Math.floor(Math.random() * 40),
+      maxHp: 105,
+      mp: 25,
+      maxMp: 25,
+      atk: 13 + Math.floor(Math.random() * 7),
+      def: 8 + Math.floor(Math.random() * 6),
+      mag: 8,
+      spd: 9,
+      luk: 6
     };
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
-        const goldWon = 40 + Math.floor(Math.random() * 40);
-        winner.playerRef.gold += goldWon;
-        winner.playerRef.gainXP(50);
+        const loot = this.awardMonsterLoot(winner.playerRef, pickedName, false, false);
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${pickedName} (+${loot.gold}G, +${loot.xp} EXP)!`);
+        if (loot.droppedItem) {
+          this.game.addLog(`🎁 มอนสเตอร์ทำไอเทมตก! ได้รับ "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
+        }
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
-        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${pickedName} (+${goldWon}G, +50 EXP)!`);
       }
       this.advanceTurn();
     });
@@ -1120,64 +1181,207 @@ class DokaponApp {
     modal.classList.remove('hidden');
 
     const canvas = document.getElementById('worldMapCanvas') as HTMLCanvasElement;
+    if (canvas.parentElement) {
+      canvas.width = canvas.parentElement.clientWidth || 800;
+      canvas.height = canvas.parentElement.clientHeight || 500;
+    }
     const ctx = canvas.getContext('2d')!;
     const w = canvas.width;
     const h = canvas.height;
 
-    ctx.fillStyle = '#0a0f1d';
+    // Tactical parchment / atlas backdrop
+    const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h));
+    bgGrad.addColorStop(0, '#0f172a');
+    bgGrad.addColorStop(0.7, '#090d16');
+    bgGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    const sx = w / 36;
-    const sy = h / 32;
-
-    // Roads
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2;
+    // Compute bounding box of all nodes
+    let minGx = Infinity, maxGx = -Infinity;
+    let minGy = Infinity, maxGy = -Infinity;
     this.game.allNodes.forEach(node => {
+      if (node.gx < minGx) minGx = node.gx;
+      if (node.gx > maxGx) maxGx = node.gx;
+      if (node.gy < minGy) minGy = node.gy;
+      if (node.gy > maxGy) maxGy = node.gy;
+    });
+
+    const paddingX = 55;
+    const paddingY = 45;
+    const rangeX = (maxGx - minGx) || 1;
+    const rangeY = (maxGy - minGy) || 1;
+    const scale = Math.min((w - paddingX * 2) / rangeX, (h - paddingY * 2 - 30) / rangeY);
+    const offsetX = (w - rangeX * scale) / 2;
+    const offsetY = (h - 30 - rangeY * scale) / 2 + 10;
+
+    const toMapX = (gx: number) => offsetX + (gx - minGx) * scale;
+    const toMapY = (gy: number) => offsetY + (gy - minGy) * scale;
+
+    // 1. Draw Realm Territory Backdrop Halos
+    const realms: Record<string, { color: string; label: string; minX: number; maxX: number; minY: number; maxY: number }> = {
+      solaria: { color: 'rgba(34, 197, 94, 0.12)', label: 'มหาอาณาจักรโซลาเรีย (Solaria)', minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+      frostpeak: { color: 'rgba(56, 189, 248, 0.12)', label: 'อาณาจักรเยือกแข็งฟรอสต์พีค (Frostpeak)', minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+      sunfire: { color: 'rgba(249, 115, 22, 0.12)', label: 'ดินแดนทะเลทรายและภูเขาไฟซันไฟร์ (Sunfire)', minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+      abyss: { color: 'rgba(168, 85, 247, 0.14)', label: 'ห้วงอเวจีแห่งริโก้ (The Abyss)', minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
+    };
+
+    this.game.allNodes.forEach(n => {
+      const r = realms[n.realmId];
+      if (r) {
+        const mx = toMapX(n.gx);
+        const my = toMapY(n.gy);
+        if (mx < r.minX) r.minX = mx;
+        if (mx > r.maxX) r.maxX = mx;
+        if (my < r.minY) r.minY = my;
+        if (my > r.maxY) r.maxY = my;
+      }
+    });
+
+    Object.values(realms).forEach(r => {
+      if (r.minX < Infinity) {
+        ctx.fillStyle = r.color;
+        ctx.beginPath();
+        ctx.roundRect(r.minX - 25, r.minY - 25, (r.maxX - r.minX) + 50, (r.maxY - r.minY) + 50, 16);
+        ctx.fill();
+
+        ctx.fillStyle = r.color.replace('0.12', '0.6').replace('0.14', '0.7');
+        ctx.font = '10px Kanit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(r.label, (r.minX + r.maxX) / 2, r.minY - 10);
+      }
+    });
+
+    // 2. Draw Roads with Clean Styled Lines
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2.0;
+    ctx.lineCap = 'round';
+    this.game.allNodes.forEach(node => {
+      const x1 = toMapX(node.gx);
+      const y1 = toMapY(node.gy);
       node.neighbors.forEach(nId => {
         if (nId > node.id) {
           const target = this.game.allNodes.find(n => n.id === nId);
           if (target) {
+            const x2 = toMapX(target.gx);
+            const y2 = toMapY(target.gy);
             ctx.beginPath();
-            ctx.moveTo(node.gx * sx, node.gy * sy);
-            ctx.lineTo(target.gx * sx, target.gy * sy);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
             ctx.stroke();
           }
         }
       });
     });
 
-    // Nodes
+    // 3. Draw Nodes with Clear Iconic Symbols
     this.game.allNodes.forEach(node => {
-      ctx.fillStyle =
-        node.type === 'town'
-          ? '#fbbf24'
-          : node.type === 'boss'
-          ? '#ef4444'
-          : node.type === 'dark_gate'
-          ? '#c084fc'
-          : '#3b82f6';
-      ctx.beginPath();
-      ctx.arc(node.gx * sx, node.gy * sy, node.type === 'town' ? 6 : 3.5, 0, Math.PI * 2);
-      ctx.fill();
+      const nx = toMapX(node.gx);
+      const ny = toMapY(node.gy);
 
-      if (node.type === 'town' || node.type === 'boss') {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '8px Silkscreen';
-        ctx.fillText(node.name, node.gx * sx - 15, node.gy * sy - 6);
+      let nodeColor = '#64748b';
+      let radius = 3.5;
+
+      if (node.type === 'town') {
+        nodeColor = node.townData?.ownerId ? '#22c55e' : '#f59e0b';
+        radius = 6.5;
+      } else if (node.type === 'shop_weapon') {
+        nodeColor = '#f97316';
+        radius = 5.0;
+      } else if (node.type === 'shop_item') {
+        nodeColor = '#10b981';
+        radius = 5.0;
+      } else if (node.type === 'shop_magic') {
+        nodeColor = '#a855f7';
+        radius = 5.0;
+      } else if (node.type === 'church') {
+        nodeColor = '#f8fafc';
+        radius = 5.0;
+      } else if (node.type === 'tavern') {
+        nodeColor = '#eab308';
+        radius = 5.0;
+      } else if (node.type === 'guild') {
+        nodeColor = '#38bdf8';
+        radius = 5.0;
+      } else if (node.type === 'boss') {
+        nodeColor = '#ef4444';
+        radius = 7.0;
+      } else if (node.type === 'dark_gate') {
+        nodeColor = '#c084fc';
+        radius = 7.0;
+      } else if (node.type === 'blue') {
+        nodeColor = '#3b82f6';
+      } else if (node.type === 'red') {
+        nodeColor = '#dc2626';
+      }
+
+      ctx.fillStyle = nodeColor;
+      ctx.beginPath();
+      ctx.arc(nx, ny, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // For towns and boss nodes, draw label
+      if (node.type === 'town') {
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 8.5px Kanit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`🏰 ${node.name}`, nx, ny - 9);
+      } else if (node.type === 'boss') {
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = 'bold 8.5px Kanit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`💀 ${node.name}`, nx, ny - 9);
       }
     });
 
-    // Players
+    // 4. Draw Players with Pulsing Halos and Labels
     this.game.players.forEach(pl => {
+      const px = toMapX(pl.gridX);
+      const py = toMapY(pl.gridY);
+
+      // Pulsing halo
+      ctx.strokeStyle = pl.isDarkling ? '#f43f5e' : '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(px, py, 11, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Player circle
       ctx.fillStyle = pl.isDarkling ? '#f43f5e' : pl.color;
       ctx.beginPath();
-      ctx.arc(pl.gridX * sx, pl.gridY * sy, 6, 0, Math.PI * 2);
+      ctx.arc(px, py, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      // Name banner
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(px - 28, py + 9, 56, 13, 3);
+      ctx.fill();
+      ctx.fillStyle = pl.color;
+      ctx.font = 'bold 8px Silkscreen, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(pl.displayName, px, py + 18);
     });
+
+    // 5. Legend at Bottom
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.beginPath();
+    ctx.roundRect(15, h - 30, w - 30, 24, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '10px Kanit, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏰 เมือง  |  ⚔️ อาวุธ  |  🧪 ไอเทม  |  🔮 เวท  |  ✨ โบสถ์  |  🍺 โรงเตี๊ยม  |  📜 กิลด์  |  💀 บอส  |  🪙 ช่องทอง  |  🔴 ช่องมอนสเตอร์', w / 2, h - 14);
   }
 
   private renderChronicleLog() {

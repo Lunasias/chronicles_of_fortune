@@ -62,18 +62,38 @@ export class CustomIsometricMonsterRenderer {
       else if (mName.includes('gold') || mName.includes('king')) element = 'gold';
 
       this.renderIsometricSlime(ctx, cx, cy, element, f, animState);
-    } else if (mName.includes('skeleton') || mName.includes('undead') || mName.includes('bone')) {
+    } else if (mName.includes('skeleton') || mName.includes('undead') || mName.includes('bone') || mName.includes('mummy')) {
       this.renderIsometricSkeleton(ctx, cx, cy, f, animState);
-    } else if (mName.includes('spider') || mName.includes('arachnid') || mName.includes('weaver')) {
+    } else if (mName.includes('knight') || mName.includes('commander') || mName.includes('paladin') || (mName.includes('captain') && !mName.includes('pirate'))) {
+      this.renderIsometricDarkKnight(ctx, cx, cy, f, animState);
+    } else if (mName.includes('marauder') || mName.includes('bandit') || mName.includes('raider') || mName.includes('pirate') || mName.includes('thief')) {
+      this.renderIsometricMarauder(ctx, cx, cy, f, animState, mName);
+    } else if (mName.includes('panther') || mName.includes('wolf') || mName.includes('hound') || mName.includes('chimera') || mName.includes('beast')) {
+      this.renderIsometricBeast(ctx, cx, cy, f, animState, mName);
+    } else if (mName.includes('colossus') || mName.includes('golem') || mName.includes('automaton') || mName.includes('dreadnought') || mName.includes('behemoth')) {
+      this.renderIsometricColossus(ctx, cx, cy, f, animState, mName);
+    } else if (mName.includes('yeti') || mName.includes('frost giant')) {
+      this.renderIsometricYeti(ctx, cx, cy, f, animState);
+    } else if (mName.includes('wyrm')) {
+      this.renderIsometricWyrm(ctx, cx, cy, f, animState, mName);
+    } else if (mName.includes('siren') || mName.includes('harpy') || mName.includes('demon') || mName.includes('archdemon')) {
+      this.renderIsometricSirenDemon(ctx, cx, cy, f, animState, mName);
+    } else if (mName.includes('kraken')) {
+      this.renderIsometricKraken(ctx, cx, cy, f, animState);
+    } else if (mName.includes('sphinx')) {
+      this.renderIsometricSphinx(ctx, cx, cy, f, animState);
+    } else if (mName.includes('ent') || mName.includes('treant')) {
+      this.renderIsometricEnt(ctx, cx, cy, f, animState);
+    } else if (mName.includes('spider') || mName.includes('arachnid') || mName.includes('weaver') || mName.includes('scorpion')) {
       this.renderIsometricSpider(ctx, cx, cy, f, animState);
     } else if (mName.includes('bat') || mName.includes('vampire') || mName.includes('gargoyle')) {
       this.renderIsometricBat(ctx, cx, cy, f, animState);
     } else if (mName.includes('ghost') || mName.includes('wraith') || mName.includes('phantom') || mName.includes('specter')) {
       this.renderIsometricGhost(ctx, cx, cy, f, animState);
-    } else if (mName.includes('dragon') || mName.includes('boss') || mName.includes('overlord') || mName.includes('demon')) {
+    } else if (mName.includes('dragon') || mName.includes('boss') || mName.includes('overlord')) {
       this.renderIsometricDragonBoss(ctx, cx, cy, f, animState);
     } else {
-      // Default: Kobold / Goblin / Forest Beast
+      // Default: Kobold / Goblin
       this.renderIsometricGoblin(ctx, cx, cy, f, animState);
     }
 
@@ -751,6 +771,673 @@ export class CustomIsometricMonsterRenderer {
     ctx.arc(cx - 8, headY + 12, 3, 0, Math.PI * 2);
     ctx.arc(cx + 8, headY + 12, 3, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // =========================================================================
+  // 7. MARAUDER / BANDIT / PIRATE (โจรป่า / จอมโจร / โจรสลัด)
+  // =========================================================================
+  private renderIsometricMarauder(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    name: string
+  ) {
+    const isPirate = name.includes('pirate');
+    const isDune = name.includes('dune') || name.includes('desert');
+
+    this.drawIsoShadow(ctx, cx, cy + 42, 22, 10);
+
+    // Leather Boots
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx - 10, cy + 26, 8, 14);
+    ctx.fillRect(cx + 3, cy + 26, 8, 14);
+
+    // Trousers
+    ctx.fillStyle = isPirate ? '#1e293b' : isDune ? '#78350f' : '#334155';
+    ctx.fillRect(cx - 12, cy + 12, 11, 16);
+    ctx.fillRect(cx + 2, cy + 12, 11, 16);
+
+    // Belt & Buckle
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 13, cy + 8, 26, 5);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(cx - 3, cy + 7, 6, 7);
+
+    // Torso / Vest
+    ctx.fillStyle = isPirate ? '#991b1b' : isDune ? '#d97706' : '#1e3a5f';
+    ctx.fillRect(cx - 12, cy - 8, 24, 18);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(cx - 4, cy - 8, 8, 12);
+
+    // Head
+    ctx.fillStyle = '#fed7aa';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 18, 10, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye Patch & Scars
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 6, cy - 20, 5, 5);
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 24);
+    ctx.lineTo(cx + 8, cy - 14);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#0f172a';
+    ctx.stroke();
+
+    // Fierce eye
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cx + 2, cy - 20, 3, 3);
+
+    // Bandanna / Pirate Hat
+    if (isPirate) {
+      // Tricorn Hat
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.moveTo(cx - 18, cy - 22);
+      ctx.lineTo(cx + 18, cy - 22);
+      ctx.lineTo(cx, cy - 36);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(cx - 3, cy - 27, 6, 4);
+    } else {
+      // Bandanna
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(cx - 11, cy - 28, 22, 9);
+      ctx.fillRect(cx + 8, cy - 24, 6, 12);
+    }
+
+    // Scimitar / Cutlass
+    const slash = animState === 'attack' ? -18 : 0;
+    ctx.save();
+    ctx.translate(cx - 14, cy + 2 + slash);
+    ctx.rotate(-0.5);
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-4, -28);
+    ctx.quadraticCurveTo(-14, -34, -18, -26);
+    ctx.lineTo(-4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-6, -2, 8, 4);
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // 8. DARK KNIGHT / NETHER COMMANDER (อัศวินทมิฬ / ขุนพลไร้พ่าย)
+  // =========================================================================
+  private renderIsometricDarkKnight(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string
+  ) {
+    this.drawIsoShadow(ctx, cx, cy + 42, 26, 12);
+
+    // Torn Cape
+    ctx.fillStyle = '#4c0519';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy - 14);
+    ctx.lineTo(cx - 24, cy + 34);
+    ctx.lineTo(cx + 20, cy + 32);
+    ctx.lineTo(cx + 14, cy - 14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Blackened Iron Greaves & Sabatons
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 12, cy + 18, 9, 22);
+    ctx.fillRect(cx + 3, cy + 18, 9, 22);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 11, cy + 19, 3, 20);
+    ctx.fillRect(cx + 4, cy + 19, 3, 20);
+
+    // Heavy Gothic Cuirass
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(cx - 15, cy - 12, 30, 30);
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(cx - 4, cy - 12, 8, 30);
+
+    // Great Pauldrons (Spiked Shoulders)
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.moveTo(cx - 15, cy - 8);
+    ctx.lineTo(cx - 26, cy - 18);
+    ctx.lineTo(cx - 10, cy - 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 15, cy - 8);
+    ctx.lineTo(cx + 26, cy - 18);
+    ctx.lineTo(cx + 10, cy - 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // Horned Greathelm
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 11, cy - 32, 22, 22);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 10, cy - 31, 4, 20);
+
+    // Glowing Crimson Visor T-Slit
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cx - 7, cy - 23, 14, 3);
+    ctx.fillRect(cx - 2, cy - 23, 4, 10);
+
+    // Demonic Horns on Helm
+    ctx.fillStyle = '#831843';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 28);
+    ctx.lineTo(cx - 22, cy - 42);
+    ctx.lineTo(cx - 6, cy - 32);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 10, cy - 28);
+    ctx.lineTo(cx + 22, cy - 42);
+    ctx.lineTo(cx + 6, cy - 32);
+    ctx.closePath();
+    ctx.fill();
+
+    // Massive Two-Handed Executioner Greatsword
+    const lunge = animState === 'attack' ? 12 : 0;
+    ctx.save();
+    ctx.translate(cx + 16, cy - 8 + lunge);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, -38, 8, 48);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(4, -38, 4, 48);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(2, -8, 4, 6);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(-6, 2, 20, 5);
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // 9. BEAST / PANTHER / CHIMERA (สัตว์อสูร / พยัคฆ์ทมิฬ / ไคเมร่า)
+  // =========================================================================
+  private renderIsometricBeast(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    name: string
+  ) {
+    const isPanther = name.includes('panther');
+    const bodyColor = isPanther ? '#0f172a' : '#78350f';
+    const accentColor = isPanther ? '#a855f7' : '#f59e0b';
+
+    this.drawIsoShadow(ctx, cx, cy + 38, 32, 14);
+
+    // Quadrupedal Body
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 10, 26, 14, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4 Muscular Paws
+    ctx.fillRect(cx - 22, cy + 18, 8, 18);
+    ctx.fillRect(cx - 10, cy + 20, 8, 16);
+    ctx.fillRect(cx + 8, cy + 20, 8, 16);
+    ctx.fillRect(cx + 18, cy + 18, 8, 18);
+
+    // Claws
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(cx - 24, cy + 34, 10, 3);
+    ctx.fillRect(cx + 16, cy + 34, 10, 3);
+
+    // Feline / Beast Head
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 18, cy - 2, 14, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spiked Ears
+    ctx.beginPath();
+    ctx.moveTo(cx - 26, cy - 10);
+    ctx.lineTo(cx - 28, cy - 22);
+    ctx.lineTo(cx - 18, cy - 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, cy - 10);
+    ctx.lineTo(cx - 10, cy - 22);
+    ctx.lineTo(cx - 8, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing Predatory Eyes
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(cx - 26, cy - 5, 5, 3);
+    ctx.fillRect(cx - 16, cy - 5, 5, 3);
+
+    // Sharp White Fangs
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 26, cy + 5, 3, 5);
+    ctx.fillRect(cx - 16, cy + 5, 3, 5);
+
+    // Spiked Whipping Tail
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(cx + 22, cy + 6);
+    ctx.quadraticCurveTo(cx + 38, cy - 8, cx + 32, cy - 22);
+    ctx.stroke();
+    ctx.fillStyle = accentColor;
+    ctx.beginPath();
+    ctx.arc(cx + 32, cy - 22, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // =========================================================================
+  // 10. COLOSSUS / GOLEM / AUTOMATON (อสูรยักษ์ศิลา / หุ่นกลทมิฬ)
+  // =========================================================================
+  private renderIsometricColossus(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    name: string
+  ) {
+    const isMagma = name.includes('magma') || name.includes('volcano');
+    const isIce = name.includes('ice') || name.includes('frost');
+    const stoneBase = isMagma ? '#18181b' : isIce ? '#334155' : '#475569';
+    const coreGlow = isMagma ? '#ea580c' : isIce ? '#38bdf8' : '#a855f7';
+
+    this.drawIsoShadow(ctx, cx, cy + 44, 34, 16);
+
+    // Massive Stone Pillar Legs
+    ctx.fillStyle = stoneBase;
+    ctx.fillRect(cx - 22, cy + 16, 16, 26);
+    ctx.fillRect(cx + 6, cy + 16, 16, 26);
+
+    // Heavy Torso with Monolithic Bricks
+    ctx.fillStyle = stoneBase;
+    ctx.fillRect(cx - 26, cy - 18, 52, 36);
+
+    // Massive Boulder Fists & Shoulders
+    ctx.fillRect(cx - 38, cy - 14, 16, 32);
+    ctx.fillRect(cx + 22, cy - 14, 16, 32);
+
+    // Glowing Power Core on Chest
+    ctx.fillStyle = coreGlow;
+    ctx.shadowColor = coreGlow;
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 2, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Glowing Magma/Ice Fissure Lines
+    ctx.strokeStyle = coreGlow;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 18, cy - 10);
+    ctx.lineTo(cx - 4, cy - 2);
+    ctx.lineTo(cx - 12, cy + 10);
+    ctx.moveTo(cx + 18, cy - 10);
+    ctx.lineTo(cx + 4, cy - 2);
+    ctx.lineTo(cx + 12, cy + 10);
+    ctx.stroke();
+
+    // Monolith Head
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 14, cy - 34, 28, 18);
+    ctx.fillStyle = coreGlow;
+    ctx.fillRect(cx - 8, cy - 26, 6, 3);
+    ctx.fillRect(cx + 2, cy - 26, 6, 3);
+  }
+
+  // =========================================================================
+  // 11. YETI / FROST GUARDIAN (เยติจอมพลัง / อสูรหิมะขาว)
+  // =========================================================================
+  private renderIsometricYeti(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string
+  ) {
+    this.drawIsoShadow(ctx, cx, cy + 42, 30, 14);
+
+    // Thick White Fur Body
+    ctx.fillStyle = '#f1f5f9';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 6, 26, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shaded Belly Fur
+    ctx.fillStyle = '#cbd5e1';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 10, 16, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Massive Yeti Arms with Icy Claws
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(cx - 32, cy - 8, 14, 32);
+    ctx.fillRect(cx + 18, cy - 8, 14, 32);
+    // Cyan Ice Claws
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cx - 34, cy + 22, 16, 5);
+    ctx.fillRect(cx + 18, cy + 22, 16, 5);
+
+    // Yeti Head
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 20, 16, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dark Face & Glowing Blue Eyes
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 10, cy - 24, 20, 12);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cx - 7, cy - 22, 4, 3);
+    ctx.fillRect(cx + 3, cy - 22, 4, 3);
+
+    // White Fangs
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 6, cy - 14, 3, 5);
+    ctx.fillRect(cx + 3, cy - 14, 3, 5);
+
+    // Curved Ram Horns
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy - 26);
+    ctx.quadraticCurveTo(cx - 28, cy - 40, cx - 22, cy - 14);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#64748b';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 12, cy - 26);
+    ctx.quadraticCurveTo(cx + 28, cy - 40, cx + 22, cy - 14);
+    ctx.stroke();
+  }
+
+  // =========================================================================
+  // 12. WYRM / SERPENT DRAGON (พญานาคราช / มังกรเลื้อยเวหา)
+  // =========================================================================
+  private renderIsometricWyrm(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    name: string
+  ) {
+    const isFire = name.includes('fire');
+    const scaleColor = isFire ? '#dc2626' : '#0284c7';
+    const underbelly = isFire ? '#f97316' : '#7dd3fc';
+
+    this.drawIsoShadow(ctx, cx, cy + 40, 32, 14);
+
+    // Coiled Serpentine Body (Tier 1 & 2)
+    ctx.fillStyle = scaleColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 24, 28, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = underbelly;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 24, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rising Coiled Neck
+    ctx.fillStyle = scaleColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 18);
+    ctx.quadraticCurveTo(cx - 24, cy - 6, cx - 12, cy - 26);
+    ctx.lineTo(cx + 8, cy - 24);
+    ctx.quadraticCurveTo(cx + 4, cy - 4, cx + 10, cy + 18);
+    ctx.closePath();
+    ctx.fill();
+
+    // Spiked Dorsal Fins
+    ctx.fillStyle = isFire ? '#fde047' : '#e0f2fe';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(cx - 22 + i * 4, cy + 4 - i * 8, 4, 8);
+    }
+
+    // Wyrm Head & Jaws
+    ctx.fillStyle = scaleColor;
+    ctx.beginPath();
+    ctx.ellipse(cx - 6, cy - 28, 16, 12, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing Elemental Gullet
+    ctx.fillStyle = isFire ? '#fde047' : '#38bdf8';
+    ctx.fillRect(cx - 18, cy - 26, 8, 4);
+
+    // Fangs
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 18, cy - 24, 2, 4);
+    ctx.fillRect(cx - 14, cy - 24, 2, 4);
+  }
+
+  // =========================================================================
+  // 13. SIREN / HARPY / DEMON (ไซเรน / ฮาร์ปี้ / จอมปีศาจ)
+  // =========================================================================
+  private renderIsometricSirenDemon(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    name: string
+  ) {
+    const isDemon = name.includes('demon');
+    const skinColor = isDemon ? '#881337' : '#0e7490';
+    const wingColor = isDemon ? '#4c0519' : '#0369a1';
+
+    this.drawIsoShadow(ctx, cx, cy + 42, 24, 11);
+
+    // Large Wings
+    ctx.fillStyle = wingColor;
+    // Left Wing
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy);
+    ctx.lineTo(cx - 36, cy - 28);
+    ctx.lineTo(cx - 24, cy + 14);
+    ctx.closePath();
+    ctx.fill();
+    // Right Wing
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy);
+    ctx.lineTo(cx + 36, cy - 28);
+    ctx.lineTo(cx + 24, cy + 14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 6, 10, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head & Horns
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 18, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Horns / Crown
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 24);
+    ctx.lineTo(cx - 16, cy - 38);
+    ctx.lineTo(cx - 2, cy - 26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy - 24);
+    ctx.lineTo(cx + 16, cy - 38);
+    ctx.lineTo(cx + 2, cy - 26);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing Eyes
+    ctx.fillStyle = isDemon ? '#fde047' : '#67e8f9';
+    ctx.fillRect(cx - 5, cy - 20, 3, 3);
+    ctx.fillRect(cx + 2, cy - 20, 3, 3);
+
+    // Dark Trident
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + 14, cy + 24);
+    ctx.lineTo(cx + 14, cy - 32);
+    ctx.stroke();
+  }
+
+  // =========================================================================
+  // 14. KRAKEN / SEA HORROR (คราเคน / อสูรหนวดใต้สมุทร)
+  // =========================================================================
+  private renderIsometricKraken(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string
+  ) {
+    this.drawIsoShadow(ctx, cx, cy + 38, 34, 15);
+
+    // Writhing Tentacles (6 tentacles)
+    ctx.fillStyle = '#581c87';
+    for (let t = -3; t <= 3; t++) {
+      if (t === 0) continue;
+      const wave = Math.sin((frame / 8) * Math.PI * 2 + t) * 6;
+      ctx.beginPath();
+      ctx.moveTo(cx + t * 7, cy + 18);
+      ctx.quadraticCurveTo(cx + t * 15 + wave, cy + 6, cx + t * 12, cy - 18);
+      ctx.lineTo(cx + t * 7, cy - 14);
+      ctx.quadraticCurveTo(cx + t * 10 + wave, cy + 8, cx + t * 4, cy + 20);
+      ctx.closePath();
+      ctx.fill();
+
+      // Suction Cups
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.arc(cx + t * 11, cy - 6, 2.5, 0, Math.PI * 2);
+      ctx.arc(cx + t * 9, cy + 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#581c87';
+    }
+
+    // Central Kraken Dome & Giant Eye
+    ctx.fillStyle = '#3b0764';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 8, 20, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Giant Glowing Eye
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 6, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(cx - 1.5, cy + 2, 3, 8);
+  }
+
+  // =========================================================================
+  // 15. SPHINX / SAND GUARDIAN (สฟิงซ์ศิลาทองคำ / ผู้พิทักษ์พีระมิด)
+  // =========================================================================
+  private renderIsometricSphinx(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string
+  ) {
+    this.drawIsoShadow(ctx, cx, cy + 42, 32, 14);
+
+    // Golden Sandstone Body
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 14, 26, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Paws Resting Forward
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(cx - 18, cy + 24, 12, 14);
+    ctx.fillRect(cx + 6, cy + 24, 12, 14);
+
+    // Golden Wings Spread
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy);
+    ctx.lineTo(cx - 32, cy - 24);
+    ctx.lineTo(cx - 14, cy + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy);
+    ctx.lineTo(cx + 32, cy - 24);
+    ctx.lineTo(cx + 14, cy + 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pharaoh Nemes Headdress & Sphinx Face
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(cx - 14, cy - 24, 28, 22);
+    // Blue Nemes Stripes
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(cx - 14, cy - 22, 4, 20);
+    ctx.fillRect(cx + 10, cy - 22, 4, 20);
+
+    // Glowing Cyan Eyes
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cx - 7, cy - 16, 4, 3);
+    ctx.fillRect(cx + 3, cy - 16, 4, 3);
+  }
+
+  // =========================================================================
+  // 16. ENT / FOREST GUARDIAN (ผู้พิทักษ์พฤกษา / มนุษย์ต้นไม้โบราณ)
+  // =========================================================================
+  private renderIsometricEnt(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string
+  ) {
+    this.drawIsoShadow(ctx, cx, cy + 42, 28, 13);
+
+    // Ancient Oak Bark Trunk
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx - 16, cy - 12, 32, 42);
+    ctx.fillStyle = '#290e02';
+    ctx.fillRect(cx - 6, cy - 12, 12, 42);
+
+    // Root Feet
+    ctx.fillRect(cx - 22, cy + 28, 12, 12);
+    ctx.fillRect(cx + 10, cy + 28, 12, 12);
+
+    // Leafy Canopy Crown (Top Foliage)
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.arc(cx - 12, cy - 22, 14, 0, Math.PI * 2);
+    ctx.arc(cx + 12, cy - 22, 14, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 32, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(cx - 6, cy - 26, 10, 0, Math.PI * 2);
+    ctx.arc(cx + 6, cy - 26, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing Emerald Eyes & Mouth
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(cx - 9, cy - 2, 5, 4);
+    ctx.fillRect(cx + 4, cy - 2, 5, 4);
+    ctx.fillStyle = '#14532d';
+    ctx.fillRect(cx - 5, cy + 8, 10, 3);
   }
 }
 

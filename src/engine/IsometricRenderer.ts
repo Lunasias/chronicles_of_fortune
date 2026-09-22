@@ -44,6 +44,7 @@ export class IsometricRenderer {
     y2: number;
     roadColor: string;
     dashColor: string;
+    edgeColor: string;
   }> = [];
   public hasInitializedBoardCache = false;
   private particles: Array<{
@@ -112,23 +113,48 @@ export class IsometricRenderer {
           if (!target) return;
           const p2 = this.nodeScreenCache.get(nId)!;
 
-          let roadColor = '#1e293b';
-          if (node.biome === 'snow') roadColor = '#1e293b';
-          else if (node.biome === 'volcano') roadColor = '#450a0a';
-          else if (node.biome === 'desert') roadColor = '#451a03';
-          else if (node.biome === 'forest') roadColor = '#052e16';
-          else if (node.biome === 'cavern') roadColor = '#0f172a';
-          else if (node.biome === 'coral') roadColor = '#083344';
-          else if (node.biome === 'abyss') roadColor = '#2e1065';
+          let roadColor = '#78553d';
+          let dashColor = '#a8896c';
+          let edgeColor = 'rgba(40, 25, 15, 0.35)';
 
-          const dashColor = node.biome === 'volcano' ? '#f97316' : node.biome === 'abyss' ? '#a855f7' : '#94a3b8';
+          if (node.biome === 'snow') {
+            roadColor = '#526173';
+            dashColor = '#94a3b8';
+            edgeColor = 'rgba(15, 23, 42, 0.3)';
+          } else if (node.biome === 'volcano') {
+            roadColor = '#451a1a';
+            dashColor = '#7f1d1d';
+            edgeColor = 'rgba(20, 5, 5, 0.4)';
+          } else if (node.biome === 'desert') {
+            roadColor = '#9a5814';
+            dashColor = '#ca8a04';
+            edgeColor = 'rgba(69, 26, 3, 0.35)';
+          } else if (node.biome === 'forest') {
+            roadColor = '#543d2b';
+            dashColor = '#78553d';
+            edgeColor = 'rgba(20, 35, 15, 0.35)';
+          } else if (node.biome === 'cavern') {
+            roadColor = '#3f3f46';
+            dashColor = '#71717a';
+            edgeColor = 'rgba(15, 15, 20, 0.35)';
+          } else if (node.biome === 'coral') {
+            roadColor = '#0e7490';
+            dashColor = '#38bdf8';
+            edgeColor = 'rgba(8, 51, 68, 0.3)';
+          } else if (node.biome === 'abyss') {
+            roadColor = '#4c1d95';
+            dashColor = '#a855f7';
+            edgeColor = 'rgba(24, 5, 39, 0.4)';
+          }
+
           this.roadwaySegments.push({
             x1: p1.x,
             y1: p1.y,
             x2: p2.x,
             y2: p2.y,
             roadColor,
-            dashColor
+            dashColor,
+            edgeColor
           });
         }
       });
@@ -284,30 +310,32 @@ export class IsometricRenderer {
         continue;
       }
 
-      // Deep Road Trench Shadow
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 20;
+      // Layer 1: Soft natural path edge blending into the continuous ground
+      ctx.strokeStyle = seg.edgeColor;
+      ctx.lineWidth = 10;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1 + 14);
-      ctx.lineTo(seg.x2, seg.y2 + 14);
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Textured Cobblestone Body
+      // Layer 2: Main packed dirt/cobblestone trail body
       ctx.strokeStyle = seg.roadColor;
-      ctx.lineWidth = 16;
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1 + 10);
-      ctx.lineTo(seg.x2, seg.y2 + 10);
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Paved center line flagstones
+      // Layer 3: Natural stone flagstone stepping pavers (subtle fantasy stepping stones, no modern dashed lane stripes)
       ctx.strokeStyle = seg.dashColor;
       ctx.lineWidth = 2.0;
-      ctx.setLineDash([6, 12]);
+      ctx.lineCap = 'round';
+      ctx.setLineDash([3, 9]);
       ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1 + 10);
-      ctx.lineTo(seg.x2, seg.y2 + 10);
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -398,85 +426,196 @@ export class IsometricRenderer {
               ? players.find(pl => pl.id === node.townData!.ownerId)?.color || null
               : null;
 
-            const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
-            ctx.drawImage(bld, px - 48, py - 74, 96, 96);
+            // Ground contact shadow to anchor building firmly to continuous terrain
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+            ctx.beginPath();
+            ctx.ellipse(px, py + 2, 36, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
 
-            // Town crest & monster last-hit indicator
+            const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
+            ctx.drawImage(bld, px - 48, py - 68, 96, 96);
+
+            // Overhead High-Contrast Badge / Signboard for Every Building
+            interface BadgeConfig {
+              title: string;
+              icon: string;
+              borderColor: string;
+              textColor: string;
+              bgColor: string;
+            }
+
+            let badge: BadgeConfig | null = null;
+
             if (node.type === 'town') {
               if (node.townData?.isOccupiedByMonster) {
                 const curHp = node.townData.monsterHp;
                 const maxHp = node.townData.monsterMaxHp || curHp;
                 const hpPct = Math.max(0, Math.min(1, curHp / maxHp));
                 const isWeakened = hpPct < 1.0;
-                const badgeW = isWeakened ? 84 : 64;
+                const badgeW = 94;
 
-                ctx.fillStyle = isWeakened ? 'rgba(69, 10, 10, 0.95)' : 'rgba(15, 23, 42, 0.9)';
+                ctx.fillStyle = 'rgba(69, 10, 10, 0.95)';
                 ctx.beginPath();
-                ctx.roundRect(px - badgeW / 2, py - 80, badgeW, isWeakened ? 26 : 15, 4);
+                ctx.roundRect(px - badgeW / 2, py - 84, badgeW, 26, 4);
                 ctx.fill();
                 ctx.strokeStyle = isWeakened ? '#ef4444' : '#f59e0b';
-                ctx.lineWidth = isWeakened ? 2.0 : 1.2;
-                ctx.stroke();
-
-                ctx.fillStyle = isWeakened ? '#fca5a5' : '#fbbf24';
-                ctx.font = '7px Silkscreen';
-                ctx.textAlign = 'center';
-                ctx.fillText(isWeakened ? `💀 LAST HIT!` : `👾 MONSTER`, px, py - (isWeakened ? 70 : 69));
-
-                if (isWeakened) {
-                  const barW = badgeW - 12;
-                  ctx.fillStyle = '#0f172a';
-                  ctx.fillRect(px - barW / 2, py - 66, barW, 4);
-                  ctx.fillStyle = hpPct < 0.35 ? '#ef4444' : '#f59e0b';
-                  ctx.fillRect(px - barW / 2, py - 66, barW * hpPct, 4);
-
-                  ctx.fillStyle = '#ffffff';
-                  ctx.font = '6px Silkscreen';
-                  ctx.fillText(`${curHp}/${maxHp}`, px, py - 58);
-                }
-              } else {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-                ctx.beginPath();
-                ctx.roundRect(px - 14, py - 74, 28, 14, 4);
-                ctx.fill();
-                ctx.strokeStyle = ownerColor || '#64748b';
-                ctx.lineWidth = 1.2;
-                ctx.stroke();
-
-                ctx.fillStyle = ownerColor || '#f8fafc';
-                ctx.font = '8px Silkscreen';
-                ctx.textAlign = 'center';
-                ctx.fillText(`★${node.townData?.level || 1}`, px, py - 64);
-              }
-
-              // Full Town Banner ONLY appears when hovered or highlighted
-              if (isHovered || isHighlighted) {
-                ctx.fillStyle = 'rgba(2, 6, 23, 0.95)';
-                ctx.beginPath();
-                ctx.roundRect(px - 52, py - 96, 104, 18, 4);
-                ctx.fill();
-                ctx.strokeStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                ctx.fillStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
-                ctx.font = '8px Silkscreen';
+                ctx.fillStyle = '#fca5a5';
+                ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(`${node.name} (LV ${node.townData?.level || 1})`, px, py - 84);
-              }
-            } else if (node.type === 'boss') {
-              ctx.fillStyle = 'rgba(69, 10, 10, 0.95)';
-              ctx.beginPath();
-              ctx.roundRect(px - 45, py - 82, 90, 16, 4);
-              ctx.fill();
-              ctx.strokeStyle = '#ef4444';
-              ctx.lineWidth = 1.5;
-              ctx.stroke();
+                ctx.fillText(`💀 มอนสเตอร์ยึดครอง!`, px, py - 72);
 
-              ctx.fillStyle = '#fca5a5';
-              ctx.font = '7px Silkscreen';
+                const barW = badgeW - 14;
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(px - barW / 2, py - 68, barW, 5);
+                ctx.fillStyle = hpPct < 0.35 ? '#ef4444' : '#f59e0b';
+                ctx.fillRect(px - barW / 2, py - 68, barW * hpPct, 5);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '7px Silkscreen';
+                ctx.fillText(`${curHp}/${maxHp}`, px, py - 59);
+              } else {
+                const townLvl = node.townData?.level || 1;
+                const townName = node.name || 'โอ๊คเชียร์';
+                const labelText = `🏰 ${townName} (Lv.${townLvl})`;
+                ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+                const textMetrics = ctx.measureText(labelText);
+                const bW = Math.max(76, textMetrics.width + 16);
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                ctx.beginPath();
+                ctx.roundRect(px - bW / 2, py - 82, bW, 16, 4);
+                ctx.fill();
+                ctx.strokeStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
+                ctx.lineWidth = isHighlighted || isHovered ? 2.0 : 1.2;
+                if (isHighlighted || isHovered) {
+                  ctx.shadowColor = '#00f0ff';
+                  ctx.shadowBlur = 8;
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#fde047');
+                ctx.textAlign = 'center';
+                ctx.fillText(labelText, px, py - 70);
+              }
+            } else if (node.type === 'shop_weapon') {
+              badge = {
+                title: 'ร้านอาวุธ',
+                icon: '⚔️',
+                borderColor: '#f97316',
+                textColor: '#fdba74',
+                bgColor: 'rgba(20, 12, 5, 0.92)'
+              };
+            } else if (node.type === 'shop_item') {
+              badge = {
+                title: 'ร้านไอเทม',
+                icon: '🧪',
+                borderColor: '#22c55e',
+                textColor: '#86efac',
+                bgColor: 'rgba(5, 20, 10, 0.92)'
+              };
+            } else if (node.type === 'shop_magic') {
+              badge = {
+                title: 'ร้านเวทมนตร์',
+                icon: '🔮',
+                borderColor: '#a855f7',
+                textColor: '#d8b4fe',
+                bgColor: 'rgba(25, 10, 35, 0.92)'
+              };
+            } else if (node.type === 'church') {
+              badge = {
+                title: 'โบสถ์ศักดิ์สิทธิ์',
+                icon: '✨',
+                borderColor: '#38bdf8',
+                textColor: '#bae6fd',
+                bgColor: 'rgba(10, 20, 35, 0.92)'
+              };
+            } else if (node.type === 'tavern') {
+              badge = {
+                title: 'โรงเตี๊ยม',
+                icon: '🍺',
+                borderColor: '#eab308',
+                textColor: '#fde047',
+                bgColor: 'rgba(30, 20, 5, 0.92)'
+              };
+            } else if (node.type === 'guild') {
+              badge = {
+                title: 'กิลด์นักผจญภัย',
+                icon: '📜',
+                borderColor: '#f59e0b',
+                textColor: '#fef08a',
+                bgColor: 'rgba(25, 18, 5, 0.92)'
+              };
+            } else if (node.type === 'fishing') {
+              badge = {
+                title: 'จุดตกปลา',
+                icon: '🎣',
+                borderColor: '#06b6d4',
+                textColor: '#67e8f9',
+                bgColor: 'rgba(5, 20, 30, 0.92)'
+              };
+            } else if (node.type === 'vault') {
+              badge = {
+                title: 'คลังสมบัติ',
+                icon: '🎁',
+                borderColor: '#fbbf24',
+                textColor: '#fef08a',
+                bgColor: 'rgba(35, 25, 5, 0.92)'
+              };
+            } else if (node.type === 'boss') {
+              badge = {
+                title: 'รังมังกรโบราณ',
+                icon: '👑',
+                borderColor: '#ef4444',
+                textColor: '#fca5a5',
+                bgColor: 'rgba(69, 10, 10, 0.95)'
+              };
+            } else if (node.type === 'dark_gate') {
+              badge = {
+                title: 'ประตูนรก',
+                icon: '😈',
+                borderColor: '#c084fc',
+                textColor: '#e9d5ff',
+                bgColor: 'rgba(40, 10, 50, 0.92)'
+              };
+            } else if (node.type === 'isekai_event') {
+              badge = {
+                title: 'ศาลเจ้าต่างโลก',
+                icon: '⚡',
+                borderColor: '#d946ef',
+                textColor: '#f5d0fe',
+                bgColor: 'rgba(30, 15, 60, 0.92)'
+              };
+            }
+
+            if (badge) {
+              const fullText = `${badge.icon} ${badge.title}`;
+              ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+              const textMetrics = ctx.measureText(fullText);
+              const bW = Math.max(70, textMetrics.width + 16);
+
+              ctx.fillStyle = badge.bgColor;
+              ctx.beginPath();
+              ctx.roundRect(px - bW / 2, py - 82, bW, 16, 4);
+              ctx.fill();
+
+              ctx.strokeStyle = isHovered || isHighlighted ? '#00f0ff' : badge.borderColor;
+              ctx.lineWidth = isHovered || isHighlighted ? 2.0 : 1.2;
+              if (isHovered || isHighlighted) {
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 8;
+              }
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+
+              ctx.fillStyle = isHovered || isHighlighted ? '#ffffff' : badge.textColor;
               ctx.textAlign = 'center';
-              ctx.fillText(`👑 DRAGON OVERLORD`, px, py - 71);
+              ctx.fillText(fullText, px, py - 70);
             }
           }
         });
@@ -556,7 +695,7 @@ export class IsometricRenderer {
   ) {
     const hw = this.tileWidth / 2;
     const hh = this.tileHeight / 2;
-    const blockHeight = 22;
+    const blockHeight = 4;
 
     // Palette per space type
     let topColor = '#334155';

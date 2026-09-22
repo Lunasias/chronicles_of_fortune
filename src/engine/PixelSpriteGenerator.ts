@@ -1330,47 +1330,47 @@ export class PixelSpriteGenerator {
     const { canvas, ctx } = this.makeCanvas(width, height);
     const hw = width / 2;
     const hh = 24; // Isometric 2:1 ratio (48h / 96w)
-    const blockHeight = 18;
+    const blockHeight = 4; // Flat, flush embedded stone paving
 
-    let topColor = '#1e293b';
+    let topColor = '#243042';
     let leftColor = '#0f172a';
     let rightColor = '#020617';
-    let rimColor = '#334155';
+    let rimColor = '#475569';
 
     if (biome === 'snow') {
-      topColor = '#1e293b'; // Black Ice
-      leftColor = '#0f172a';
-      rightColor = '#030712';
-      rimColor = '#38bdf8';
+      topColor = '#334155'; // Frosted stone
+      leftColor = '#1e293b';
+      rightColor = '#0f172a';
+      rimColor = '#64748b';
     } else if (biome === 'volcano') {
-      topColor = '#1f0709'; // Magma Basalt
-      leftColor = '#120304';
-      rightColor = '#050102';
-      rimColor = '#ef4444';
+      topColor = '#2b1114'; // Basalt slab
+      leftColor = '#170709';
+      rightColor = '#0a0203';
+      rimColor = '#991b1b';
     } else if (biome === 'desert') {
-      topColor = '#451a03'; // Blighted Sandstone
-      leftColor = '#290e02';
-      rightColor = '#170701';
-      rimColor = '#78350f';
+      topColor = '#5c3310'; // Sandstone flagstone
+      leftColor = '#3d200a';
+      rightColor = '#261304';
+      rimColor = '#b45309';
     } else if (biome === 'forest') {
-      topColor = '#064e3b'; // Gloomwood Moss
-      leftColor = '#022c22';
-      rightColor = '#011a14';
+      topColor = '#134027'; // Mossy cobblestone
+      leftColor = '#0b2617';
+      rightColor = '#06170d';
       rimColor = '#059669';
     } else if (biome === 'cavern') {
-      topColor = '#1e1b4b'; // Netherforge Ore
-      leftColor = '#0f0d24';
-      rightColor = '#050410';
-      rimColor = '#3b0764';
+      topColor = '#1f242d'; // Subterranean slate
+      leftColor = '#13171e';
+      rightColor = '#090b0e';
+      rimColor = '#4b5563';
     } else if (biome === 'coral') {
-      topColor = '#083344'; // Drowned Reef
-      leftColor = '#041c26';
-      rightColor = '#010f14';
+      topColor = '#0e495c'; // Tidal paver
+      leftColor = '#082f3b';
+      rightColor = '#04171d';
       rimColor = '#0891b2';
     } else if (biome === 'abyss') {
-      topColor = '#2e1065'; // Void Bone Slab
-      leftColor = '#180527';
-      rightColor = '#090112';
+      topColor = '#3b1563'; // Abyssal rune stone
+      leftColor = '#240b3d';
+      rightColor = '#120421';
       rimColor = '#9333ea';
     }
 
@@ -1394,15 +1394,6 @@ export class PixelSpriteGenerator {
     ctx.closePath();
     ctx.fill();
 
-    // Terraria-style subtle masonry layers on cliff sides
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, hh + blockHeight * 0.5);
-    ctx.lineTo(hw, hh * 2 + blockHeight * 0.5);
-    ctx.lineTo(width, hh + blockHeight * 0.5);
-    ctx.stroke();
-
     // Top Rhombus Face
     ctx.fillStyle = topColor;
     ctx.beginPath();
@@ -1415,7 +1406,7 @@ export class PixelSpriteGenerator {
 
     // Subtle stone rim
     ctx.strokeStyle = rimColor;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
 
     this.cache.set(key, canvas);
