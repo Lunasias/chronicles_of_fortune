@@ -16,13 +16,25 @@ export type SpaceType =
   | 'isekai_event'
   | 'mystery_chest';
 
-export type BiomeType = 'grass' | 'forest' | 'snow' | 'desert' | 'volcano' | 'cavern' | 'coral' | 'abyss';
+export type BiomeType =
+  | 'grass'
+  | 'forest'
+  | 'snow'
+  | 'desert'
+  | 'volcano'
+  | 'cavern'
+  | 'coral'
+  | 'abyss'
+  | 'castle'
+  | 'fairy_grove'
+  | 'crystal_cavern'
+  | 'celestial';
 
-export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss';
+export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss' | 'celestial';
 
 export interface TownData {
   name: string;
-  level: number; // 1 to 5 (Hamlet, Village, Town, Citadel, Metropolis)
+  level: number;
   baseValue: number;
   taxYield: number;
   ownerId: number | null;
@@ -38,7 +50,7 @@ export interface BoardNode {
   id: number;
   gx: number;
   gy: number;
-  gz: number; // Elevation (0 to 5)
+  gz: number;
   type: SpaceType;
   name: string;
   biome: BiomeType;
@@ -66,7 +78,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       1,
       21,
-      146
+      146,
+      199,
+      210
     ],
     "townData": {
       "name": "Oakshire Capital",
@@ -75,7 +89,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 50,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Royal Slime King",
+      "monsterName": "Slime Princess Aurelia",
       "monsterHp": 60,
       "monsterAtk": 11,
       "monsterDef": 5
@@ -165,7 +179,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 55,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Lake Goblin Chief",
+      "monsterName": "Lake Goblin Girl Mizuki",
       "monsterHp": 65,
       "monsterAtk": 12,
       "monsterDef": 6
@@ -292,7 +306,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 60,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "River Harpy",
+      "monsterName": "River Harpy Maiden Zephyra",
       "monsterHp": 70,
       "monsterAtk": 13,
       "monsterDef": 7
@@ -421,7 +435,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 65,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Highway Marauder",
+      "monsterName": "Highway Bandit Lass Scarlett",
       "monsterHp": 75,
       "monsterAtk": 14,
       "monsterDef": 7
@@ -519,7 +533,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       0,
-      20
+      20,
+      210
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -605,7 +620,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 70,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Briar Kobold Shaman",
+      "monsterName": "Briar Kobold Witch Maya",
       "monsterHp": 80,
       "monsterAtk": 15,
       "monsterDef": 8
@@ -713,7 +728,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 72,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Shadow Panther",
+      "monsterName": "Shadow Panther Huntress Kaelia",
       "monsterHp": 85,
       "monsterAtk": 16,
       "monsterDef": 8
@@ -828,7 +843,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       28,
       35,
-      37
+      37,
+      155
     ],
     "townData": {
       "name": "Willowbrook Outpost",
@@ -837,7 +853,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 75,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Great Ent Guardian",
+      "monsterName": "Dryad Matriarch Sylvana",
       "monsterHp": 95,
       "monsterAtk": 17,
       "monsterDef": 11
@@ -917,7 +933,9 @@ export const DOKAPON_NODES: BoardNode[] = [
       18,
       24,
       39,
-      41
+      41,
+      183,
+      198
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -946,7 +964,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 78,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Ancient Chimera",
+      "monsterName": "Chimera Empress Chimaria",
       "monsterHp": 100,
       "monsterAtk": 18,
       "monsterDef": 10
@@ -967,7 +985,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       22,
-      41
+      41,
+      168
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -1073,7 +1092,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 80,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Frost Wyrm",
+      "monsterName": "Frost Wyrm Princess Glacia",
       "monsterHp": 110,
       "monsterAtk": 19,
       "monsterDef": 12
@@ -1179,7 +1198,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 85,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Yeti Chieftain",
+      "monsterName": "Yeti Chieftain Maiden Borealia",
       "monsterHp": 120,
       "monsterAtk": 20,
       "monsterDef": 14
@@ -1304,7 +1323,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 88,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Ice Colossus",
+      "monsterName": "Glacial Golem Maiden Crystalina",
       "monsterHp": 130,
       "monsterAtk": 21,
       "monsterDef": 15
@@ -1411,7 +1430,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 90,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Ancient Frost Dragon",
+      "monsterName": "Ancient Frost Dragoness Saphira",
       "monsterHp": 140,
       "monsterAtk": 22,
       "monsterDef": 16
@@ -1518,7 +1537,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 75,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Desert Bandit Warlord",
+      "monsterName": "Desert Bandit Queen Shani",
       "monsterHp": 95,
       "monsterAtk": 17,
       "monsterDef": 9
@@ -1644,7 +1663,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 80,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Sandstone Sphinx",
+      "monsterName": "Sandstone Sphinx Queen Nefertia",
       "monsterHp": 110,
       "monsterAtk": 19,
       "monsterDef": 12
@@ -1770,7 +1789,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 85,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Sand Dune Behemoth",
+      "monsterName": "Dune Empress Scorpia",
       "monsterHp": 120,
       "monsterAtk": 20,
       "monsterDef": 13
@@ -1951,7 +1970,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 85,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Dwarven Automaton",
+      "monsterName": "Clockwork Maiden Nicole",
       "monsterHp": 125,
       "monsterAtk": 21,
       "monsterDef": 16
@@ -2077,7 +2096,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 90,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Cavern Behemoth",
+      "monsterName": "Crystal Cavern Behemoth Lithia",
       "monsterHp": 135,
       "monsterAtk": 22,
       "monsterDef": 15
@@ -2202,7 +2221,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 95,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Obsidian Dreadnought",
+      "monsterName": "Obsidian Golem Valkyrie Onyxia",
       "monsterHp": 145,
       "monsterAtk": 24,
       "monsterDef": 18
@@ -2298,7 +2317,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       86,
-      105
+      105,
+      169,
+      182
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2402,7 +2423,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 100,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Fire Wyrm Elder",
+      "monsterName": "Fire Wyrm Matriarch Pyra",
       "monsterHp": 150,
       "monsterAtk": 25,
       "monsterDef": 16
@@ -2527,7 +2548,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 110,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Magma Colossus",
+      "monsterName": "Magma Golem Queen Ignitia",
       "monsterHp": 165,
       "monsterAtk": 26,
       "monsterDef": 18
@@ -2652,7 +2673,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 120,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Infernal Archdemon",
+      "monsterName": "Infernal Archdemoness Lilith",
       "monsterHp": 180,
       "monsterAtk": 27,
       "monsterDef": 19
@@ -2834,7 +2855,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 75,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Pirate Captain Bloodhook",
+      "monsterName": "Corsair Siren Captain Morgana",
       "monsterHp": 100,
       "monsterAtk": 18,
       "monsterDef": 11
@@ -2960,7 +2981,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 80,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Abyssal Siren Queen",
+      "monsterName": "Abyssal Siren Empress Lorelei",
       "monsterHp": 115,
       "monsterAtk": 19,
       "monsterDef": 12
@@ -3087,7 +3108,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 85,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Lesser Kraken",
+      "monsterName": "Abyssal Kraken Maiden Ursula",
       "monsterHp": 130,
       "monsterAtk": 21,
       "monsterDef": 14
@@ -3175,7 +3196,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 95,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Nether Knight Commander",
+      "monsterName": "Nether Valkyrie Morrigan",
       "monsterHp": 155,
       "monsterAtk": 25,
       "monsterDef": 17
@@ -3283,7 +3304,7 @@ export const DOKAPON_NODES: BoardNode[] = [
       "taxYield": 100,
       "ownerId": null,
       "isOccupiedByMonster": true,
-      "monsterName": "Void Warden Behemoth",
+      "monsterName": "Void Warden Priestess Nihilia",
       "monsterHp": 170,
       "monsterAtk": 26,
       "monsterDef": 18
@@ -3312,5 +3333,1118 @@ export const DOKAPON_NODES: BoardNode[] = [
     "subRegionName": "มิติอเวจีแห่งริโก้",
     "weather": "miasma",
     "isGrandBridge": true
+  },
+  {
+    "id": 155,
+    "gx": 54,
+    "gy": 21,
+    "gz": 0,
+    "type": "blue",
+    "name": "Fairy Blossom Path",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      36,
+      156
+    ]
+  },
+  {
+    "id": 156,
+    "gx": 50,
+    "gy": 19,
+    "gz": 0,
+    "type": "town",
+    "name": "Sylveria Blossom Town",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Sylveria Blossom Town",
+      "level": 1,
+      "baseValue": 600,
+      "taxYield": 65,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Pixie Queen Titania",
+      "monsterHp": 110,
+      "monsterAtk": 20,
+      "monsterDef": 12
+    },
+    "neighbors": [
+      155,
+      157,
+      163
+    ]
+  },
+  {
+    "id": 157,
+    "gx": 46,
+    "gy": 17,
+    "gz": 0,
+    "type": "shop_magic",
+    "name": "Pixie Dust Emporium",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      156,
+      158
+    ]
+  },
+  {
+    "id": 158,
+    "gx": 42,
+    "gy": 15,
+    "gz": 0,
+    "type": "red",
+    "name": "Spore Thicket",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      157,
+      159
+    ]
+  },
+  {
+    "id": 159,
+    "gx": 38,
+    "gy": 15,
+    "gz": 0,
+    "type": "tavern",
+    "name": "Dewdrop Inn",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      158,
+      160
+    ]
+  },
+  {
+    "id": 160,
+    "gx": 38,
+    "gy": 19,
+    "gz": 0,
+    "type": "town",
+    "name": "Kitsune Shrine Hamlet",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Kitsune Shrine Hamlet",
+      "level": 1,
+      "baseValue": 650,
+      "taxYield": 70,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Kitsune Maiden Tamamo",
+      "monsterHp": 120,
+      "monsterAtk": 24,
+      "monsterDef": 13
+    },
+    "neighbors": [
+      159,
+      161
+    ]
+  },
+  {
+    "id": 161,
+    "gx": 42,
+    "gy": 21,
+    "gz": 0,
+    "type": "church",
+    "name": "Fairy Moon Shrine",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      160,
+      162
+    ]
+  },
+  {
+    "id": 162,
+    "gx": 46,
+    "gy": 23,
+    "gz": 0,
+    "type": "mystery_chest",
+    "name": "Treant Heart Glade",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      161,
+      163
+    ]
+  },
+  {
+    "id": 163,
+    "gx": 50,
+    "gy": 23,
+    "gz": 0,
+    "type": "blue",
+    "name": "Luminescent Meadow",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      156,
+      162,
+      164
+    ]
+  },
+  {
+    "id": 164,
+    "gx": 50,
+    "gy": 27,
+    "gz": 0,
+    "type": "isekai_event",
+    "name": "Fairy Spring Portal",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      163,
+      165
+    ]
+  },
+  {
+    "id": 165,
+    "gx": 50,
+    "gy": 31,
+    "gz": 0,
+    "type": "shop_item",
+    "name": "Floral Herb Shop",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      164,
+      166
+    ]
+  },
+  {
+    "id": 166,
+    "gx": 54,
+    "gy": 33,
+    "gz": 0,
+    "type": "blue",
+    "name": "Petal Trail",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      165,
+      167
+    ]
+  },
+  {
+    "id": 167,
+    "gx": 54,
+    "gy": 37,
+    "gz": 0,
+    "type": "vault",
+    "name": "Titania Secret Vault",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      166,
+      168
+    ]
+  },
+  {
+    "id": 168,
+    "gx": 58,
+    "gy": 35,
+    "gz": 0,
+    "type": "red",
+    "name": "Bramble Crossing",
+    "biome": "fairy_grove",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "ป่ามนตราภูตพราย",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      42,
+      167
+    ]
+  },
+  {
+    "id": 169,
+    "gx": 11,
+    "gy": 30,
+    "gz": 1,
+    "type": "blue",
+    "name": "Glittering Descent",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      106,
+      170
+    ]
+  },
+  {
+    "id": 170,
+    "gx": 11,
+    "gy": 26,
+    "gz": 1,
+    "type": "town",
+    "name": "Prism Grotto City",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Prism Grotto City",
+      "level": 1,
+      "baseValue": 700,
+      "taxYield": 80,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Crystal Golem Maiden Prismia",
+      "monsterHp": 155,
+      "monsterAtk": 27,
+      "monsterDef": 25
+    },
+    "neighbors": [
+      169,
+      171,
+      176
+    ]
+  },
+  {
+    "id": 171,
+    "gx": 7,
+    "gy": 26,
+    "gz": 1,
+    "type": "shop_weapon",
+    "name": "Crystal Edge Armory",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      170,
+      172
+    ]
+  },
+  {
+    "id": 172,
+    "gx": 7,
+    "gy": 22,
+    "gz": 1,
+    "type": "red",
+    "name": "Shard Hazard Pit",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      171,
+      173
+    ]
+  },
+  {
+    "id": 173,
+    "gx": 11,
+    "gy": 22,
+    "gz": 1,
+    "type": "guild",
+    "name": "Gem Miner Guild",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      172,
+      174
+    ]
+  },
+  {
+    "id": 174,
+    "gx": 15,
+    "gy": 22,
+    "gz": 1,
+    "type": "town",
+    "name": "Amethyst Web Bastion",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Amethyst Web Bastion",
+      "level": 1,
+      "baseValue": 720,
+      "taxYield": 85,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Arachne Weaver Sylvi",
+      "monsterHp": 135,
+      "monsterAtk": 28,
+      "monsterDef": 16
+    },
+    "neighbors": [
+      173,
+      175
+    ]
+  },
+  {
+    "id": 175,
+    "gx": 15,
+    "gy": 26,
+    "gz": 1,
+    "type": "mystery_chest",
+    "name": "Geode Crystal Chamber",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      174,
+      176
+    ]
+  },
+  {
+    "id": 176,
+    "gx": 15,
+    "gy": 30,
+    "gz": 1,
+    "type": "blue",
+    "name": "Stalactite Promenade",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      170,
+      175,
+      177
+    ]
+  },
+  {
+    "id": 177,
+    "gx": 19,
+    "gy": 30,
+    "gz": 1,
+    "type": "tavern",
+    "name": "Subterranean Tavern",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      176,
+      178
+    ]
+  },
+  {
+    "id": 178,
+    "gx": 19,
+    "gy": 34,
+    "gz": 1,
+    "type": "shop_magic",
+    "name": "Prismatic Spellshop",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      177,
+      179
+    ]
+  },
+  {
+    "id": 179,
+    "gx": 19,
+    "gy": 38,
+    "gz": 1,
+    "type": "blue",
+    "name": "Crystal Luster Way",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      178,
+      180
+    ]
+  },
+  {
+    "id": 180,
+    "gx": 15,
+    "gy": 38,
+    "gz": 1,
+    "type": "vault",
+    "name": "Diamond Vein Vault",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      179,
+      181
+    ]
+  },
+  {
+    "id": 181,
+    "gx": 15,
+    "gy": 34,
+    "gz": 1,
+    "type": "red",
+    "name": "Echoing Chasm",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      180,
+      182
+    ]
+  },
+  {
+    "id": 182,
+    "gx": 11,
+    "gy": 38,
+    "gz": 1,
+    "type": "blue",
+    "name": "Cavern Ascent",
+    "biome": "crystal_cavern",
+    "realmId": "frostpeak",
+    "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
+    "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
+    "weather": "snow",
+    "isGrandBridge": false,
+    "neighbors": [
+      106,
+      181
+    ]
+  },
+  {
+    "id": 183,
+    "gx": 72,
+    "gy": 33,
+    "gz": 3,
+    "type": "blue",
+    "name": "Stairway to the Heavens",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": true,
+    "neighbors": [
+      40,
+      184
+    ]
+  },
+  {
+    "id": 184,
+    "gx": 76,
+    "gy": 33,
+    "gz": 3,
+    "type": "blue",
+    "name": "Celestial Cloudway",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      183,
+      185
+    ]
+  },
+  {
+    "id": 185,
+    "gx": 80,
+    "gy": 33,
+    "gz": 3,
+    "type": "town",
+    "name": "Seraphim Sanctuary",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Seraphim Sanctuary",
+      "level": 1,
+      "baseValue": 800,
+      "taxYield": 95,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Celestial Archangel Seraphina",
+      "monsterHp": 180,
+      "monsterAtk": 35,
+      "monsterDef": 24
+    },
+    "neighbors": [
+      184,
+      186,
+      194
+    ]
+  },
+  {
+    "id": 186,
+    "gx": 84,
+    "gy": 33,
+    "gz": 3,
+    "type": "shop_weapon",
+    "name": "Holy Aegis Armory",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      185,
+      187
+    ]
+  },
+  {
+    "id": 187,
+    "gx": 88,
+    "gy": 33,
+    "gz": 3,
+    "type": "church",
+    "name": "Sacred Sun Cathedral",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      186,
+      188
+    ]
+  },
+  {
+    "id": 188,
+    "gx": 88,
+    "gy": 29,
+    "gz": 3,
+    "type": "town",
+    "name": "Sunspire Citadel",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Sunspire Citadel",
+      "level": 1,
+      "baseValue": 850,
+      "taxYield": 100,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Sun Valkyrie Aurora",
+      "monsterHp": 150,
+      "monsterAtk": 31,
+      "monsterDef": 20
+    },
+    "neighbors": [
+      187,
+      189
+    ]
+  },
+  {
+    "id": 189,
+    "gx": 84,
+    "gy": 29,
+    "gz": 3,
+    "type": "shop_magic",
+    "name": "Astral Miracle Sanctum",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      188,
+      190
+    ]
+  },
+  {
+    "id": 190,
+    "gx": 80,
+    "gy": 29,
+    "gz": 3,
+    "type": "blue",
+    "name": "Halo Plaza",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      189,
+      191
+    ]
+  },
+  {
+    "id": 191,
+    "gx": 80,
+    "gy": 25,
+    "gz": 3,
+    "type": "isekai_event",
+    "name": "Astral Warp Fountain",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      190,
+      192
+    ]
+  },
+  {
+    "id": 192,
+    "gx": 84,
+    "gy": 25,
+    "gz": 3,
+    "type": "tavern",
+    "name": "Ambrosia Tavern",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      191,
+      193
+    ]
+  },
+  {
+    "id": 193,
+    "gx": 88,
+    "gy": 25,
+    "gz": 3,
+    "type": "red",
+    "name": "Solar Flare Crest",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      192,
+      194
+    ]
+  },
+  {
+    "id": 194,
+    "gx": 88,
+    "gy": 21,
+    "gz": 3,
+    "type": "vault",
+    "name": "Seraphic Relic Vault",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      185,
+      193,
+      195
+    ]
+  },
+  {
+    "id": 195,
+    "gx": 84,
+    "gy": 21,
+    "gz": 3,
+    "type": "blue",
+    "name": "Golden Dais Walkway",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      194,
+      196
+    ]
+  },
+  {
+    "id": 196,
+    "gx": 80,
+    "gy": 21,
+    "gz": 3,
+    "type": "mystery_chest",
+    "name": "Starlight Chest Shrine",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      195,
+      197
+    ]
+  },
+  {
+    "id": 197,
+    "gx": 76,
+    "gy": 21,
+    "gz": 3,
+    "type": "blue",
+    "name": "Zephyr Terrace",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      196,
+      198
+    ]
+  },
+  {
+    "id": 198,
+    "gx": 72,
+    "gy": 21,
+    "gz": 3,
+    "type": "blue",
+    "name": "Skybridge Descent",
+    "biome": "celestial",
+    "realmId": "celestial",
+    "realmName": "วิหารลอยฟ้าเซเลสเชียล",
+    "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
+    "weather": "sunny",
+    "isGrandBridge": true,
+    "neighbors": [
+      197,
+      40
+    ]
+  },
+  {
+    "id": 199,
+    "gx": 20,
+    "gy": 16,
+    "gz": 1,
+    "type": "blue",
+    "name": "Palace Grand Promenade",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": true,
+    "neighbors": [
+      0,
+      200
+    ]
+  },
+  {
+    "id": 200,
+    "gx": 20,
+    "gy": 12,
+    "gz": 1,
+    "type": "town",
+    "name": "Royal Bastion Keep",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Royal Bastion Keep",
+      "level": 1,
+      "baseValue": 750,
+      "taxYield": 90,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Royal Guard Paladin Leonora",
+      "monsterHp": 160,
+      "monsterAtk": 32,
+      "monsterDef": 26
+    },
+    "neighbors": [
+      199,
+      201,
+      207
+    ]
+  },
+  {
+    "id": 201,
+    "gx": 24,
+    "gy": 12,
+    "gz": 1,
+    "type": "shop_weapon",
+    "name": "Royal Armory Foundry",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      200,
+      202
+    ]
+  },
+  {
+    "id": 202,
+    "gx": 24,
+    "gy": 16,
+    "gz": 1,
+    "type": "guild",
+    "name": "Grand Knights Academy",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      201,
+      203
+    ]
+  },
+  {
+    "id": 203,
+    "gx": 28,
+    "gy": 16,
+    "gz": 1,
+    "type": "town",
+    "name": "High Sorcery Academy",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "High Sorcery Academy",
+      "level": 1,
+      "baseValue": 780,
+      "taxYield": 92,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Sorceress Duchess Beatrice",
+      "monsterHp": 130,
+      "monsterAtk": 22,
+      "monsterDef": 15
+    },
+    "neighbors": [
+      202,
+      204
+    ]
+  },
+  {
+    "id": 204,
+    "gx": 28,
+    "gy": 20,
+    "gz": 1,
+    "type": "shop_magic",
+    "name": "Royal Court Arcanum",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      203,
+      205
+    ]
+  },
+  {
+    "id": 205,
+    "gx": 24,
+    "gy": 20,
+    "gz": 1,
+    "type": "vault",
+    "name": "Crown Royal Treasury",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      204,
+      206
+    ]
+  },
+  {
+    "id": 206,
+    "gx": 24,
+    "gy": 24,
+    "gz": 1,
+    "type": "tavern",
+    "name": "King's Feast Hall",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      205,
+      207
+    ]
+  },
+  {
+    "id": 207,
+    "gx": 20,
+    "gy": 24,
+    "gz": 1,
+    "type": "church",
+    "name": "Imperial Royal Chapel",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      200,
+      206,
+      208
+    ]
+  },
+  {
+    "id": 208,
+    "gx": 16,
+    "gy": 24,
+    "gz": 1,
+    "type": "red",
+    "name": "Royal Dungeons",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      207,
+      209
+    ]
+  },
+  {
+    "id": 209,
+    "gx": 16,
+    "gy": 20,
+    "gz": 1,
+    "type": "blue",
+    "name": "Courtyard Garden",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      208,
+      210
+    ]
+  },
+  {
+    "id": 210,
+    "gx": 16,
+    "gy": 16,
+    "gz": 1,
+    "type": "mystery_chest",
+    "name": "Royal Reliquary",
+    "biome": "castle",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "พระราชวังหลวงและลานอัศวิน",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [
+      209,
+      21,
+      0
+    ]
   }
 ];

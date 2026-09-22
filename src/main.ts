@@ -23,6 +23,7 @@ import { ecosystemSystem } from './game/EcosystemSystem';
 import { WonderChestUI } from './ui/WonderChestUI';
 import { InspectUI } from './ui/InspectUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
+import { SaveManager } from './game/SaveManager';
 
 
 class DokaponApp {
@@ -71,6 +72,7 @@ class DokaponApp {
     this.bindDOMEvents();
     this.bindInteractiveTileSelection();
     this.renderRosterSetup(3);
+    this.updateTitleSaveStatus();
   }
 
   private initCanvasResize() {
@@ -236,6 +238,13 @@ class DokaponApp {
       audio.click();
       document.getElementById('playerSetupBlock')?.classList.add('hidden');
       document.getElementById('titleButtonsBlock')?.classList.remove('hidden');
+      this.updateTitleSaveStatus();
+    });
+
+    // Title Screen Load Game
+    document.getElementById('btnTitleLoadGame')?.addEventListener('click', () => {
+      audio.click();
+      this.loadGameProgress();
     });
 
     // Party size buttons
@@ -433,6 +442,20 @@ class DokaponApp {
       document.getElementById('settingsModal')?.classList.add('hidden');
     });
 
+    // In-game Save & Load Handlers
+    document.getElementById('btnSaveGame')?.addEventListener('click', () => {
+      this.saveGameProgress(true);
+    });
+    document.getElementById('btnSettingsSave')?.addEventListener('click', () => {
+      this.saveGameProgress(true);
+    });
+    document.getElementById('btnSettingsLoad')?.addEventListener('click', () => {
+      this.loadGameProgress();
+    });
+    document.getElementById('btnSettingsResetSave')?.addEventListener('click', () => {
+      this.resetSavedGame();
+    });
+
     // Audio & scanline settings
     document.getElementById('checkSound')?.addEventListener('change', e => {
       audio.enabled = (e.target as HTMLInputElement).checked;
@@ -453,7 +476,7 @@ class DokaponApp {
 
     const container = document.getElementById('playerSetupRoster')!;
     container.innerHTML = '';
-    const defaultNames = ['Galahad', 'Lyra', 'Jax', 'Aria'];
+    const defaultNames = ['Valeria', 'Lyra', 'Jaxine', 'Aria'];
     const classKeys = Object.keys(HERO_CLASSES);
 
     for (let i = 0; i < playerCount; i++) {
@@ -576,8 +599,9 @@ class DokaponApp {
     const aiChecks = document.querySelectorAll('.is-ai-check') as NodeListOf<HTMLInputElement>;
     const winGoal = (document.getElementById('selectWinGoal') as HTMLSelectElement).value;
 
+    const defaultHeroines = ['Valeria', 'Lyra', 'Jaxine', 'Aria'];
     const partyConfig = Array.from(nameInputs).map((input, idx) => ({
-      name: input.value.trim() || `Hero ${idx + 1}`,
+      name: input.value.trim() || defaultHeroines[idx] || `Heroine ${idx + 1}`,
       classKey: classSelects[idx].value,
       isAI: aiChecks[idx].checked,
       skinVariant: parseInt(cards[idx]?.dataset.skinVariant || '0', 10)
@@ -1190,6 +1214,95 @@ class DokaponApp {
       banner.classList.add('opacity-0', 'scale-95');
       setTimeout(() => banner.classList.add('hidden'), 350);
     }, 1500);
+
+    // Auto-save game state at turn start
+    this.saveGameProgress(false);
+  }
+
+  private updateTitleSaveStatus() {
+    const meta = SaveManager.getSaveMetadata();
+    const btnLoad = document.getElementById('btnTitleLoadGame') as HTMLButtonElement | null;
+    const metaEl = document.getElementById('titleLoadGameMeta');
+    if (!btnLoad) return;
+    if (meta) {
+      btnLoad.classList.remove('opacity-50', 'cursor-not-allowed');
+      btnLoad.classList.add('hover:border-amber-400');
+      if (metaEl) {
+        metaEl.innerText = `${meta.activeHeroName} (${meta.activeHeroClass} Lv.${meta.activeHeroLevel}) • วันที่ ${meta.day} สัปดาห์ ${meta.week}`;
+      }
+    } else {
+      btnLoad.classList.add('opacity-50');
+      if (metaEl) {
+        metaEl.innerText = 'ยังไม่มีข้อมูลบันทึก';
+      }
+    }
+  }
+
+  private saveGameProgress(showToast = true) {
+    if (this.game.players.length === 0 || this.game.phase === 'TITLE') return;
+    const success = SaveManager.save(this.game, {
+      currentHp: this.bossCurrentHp,
+      maxHp: this.bossMaxHp
+    });
+    const statusEl = document.getElementById('settingsSaveStatusText');
+    if (success) {
+      if (showToast) {
+        audio.coin();
+        this.game.addLog(`💾 บันทึกความคืบหน้าสำเร็จ! (วันที่ ${this.game.dayCounter}, สัปดาห์ที่ ${this.game.weekCounter})`, 'level');
+      }
+      if (statusEl) {
+        statusEl.innerText = `✅ บันทึกสำเร็จล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+        statusEl.style.color = '#34d399';
+      }
+      this.updateTitleSaveStatus();
+    } else {
+      if (statusEl) {
+        statusEl.innerText = '❌ เกิดข้อผิดพลาดในการบันทึก';
+        statusEl.style.color = '#f87171';
+      }
+    }
+  }
+
+  private loadGameProgress() {
+    if (!SaveManager.hasSave()) {
+      audio.hurt();
+      alert('ยังไม่มีข้อมูลบันทึกความคืบหน้า');
+      return;
+    }
+    const res = SaveManager.load(this.game);
+    if (res.success) {
+      if (res.bossState) {
+        this.bossCurrentHp = res.bossState.currentHp;
+        this.bossMaxHp = res.bossState.maxHp;
+      }
+      audio.fanfare();
+      document.getElementById('titleScreen')?.classList.add('hidden');
+      document.getElementById('settingsModal')?.classList.add('hidden');
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+
+      this.onTurnStarted();
+      this.hud.update();
+      this.updateTitleSaveStatus();
+    } else {
+      audio.hurt();
+      alert('ไม่สามารถโหลดข้อมูลบันทึกได้');
+    }
+  }
+
+  private resetSavedGame() {
+    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเซฟเกมทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+      SaveManager.clear();
+      audio.hurt();
+      const statusEl = document.getElementById('settingsSaveStatusText');
+      if (statusEl) {
+        statusEl.innerText = '🗑️ ลบข้อมูลเซฟเรียบร้อยแล้ว';
+        statusEl.style.color = '#cbd5e1';
+      }
+      this.updateTitleSaveStatus();
+      this.game.addLog('🗑️ ลบข้อมูลเซฟเกมเรียบร้อยแล้ว', 'info');
+    }
   }
 
   private openRoyalDecreeModal(onClose?: () => void) {

@@ -4,6 +4,9 @@ import { pixelSprites, CharacterAnimState } from '../engine/PixelSpriteGenerator
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX } from '../engine/CombatVFXEngine';
+import { BoardNode } from '../game/BoardMap';
+import { ecosystemSystem } from '../game/EcosystemSystem';
+import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
 
 export class BattleUI {
   private game: GameState;
@@ -740,14 +743,21 @@ export class BattleUI {
     }
 
     // -----------------------------------------------------------------------
-    // 1. DARK FANTASY GOTHIC ISOMETRIC ARENA BACKDROP
+    // 1. DYNAMIC LOCATION / BIOME COMBAT ARENA BACKDROP
     // -----------------------------------------------------------------------
-    this.drawDarkFantasyArenaBackdrop(ctx, w, h, time);
+    const p = this.game.activePlayer;
+    const currentNode = (this.game.allNodes && p)
+      ? (this.game.allNodes.find(n => n.id === p.nodeId) || this.game.allNodes[0])
+      : null;
+    const biome = currentNode?.biome || 'grass';
+    const isBoss = !!b.defender.isBoss || !!b.attacker.isBoss;
+
+    this.drawDynamicLocationBackdrop(ctx, w, h, time, currentNode, isBoss);
 
     // -----------------------------------------------------------------------
-    // 2. GRAND EXPANSIVE 2.5D ISOMETRIC COLOSSEUM ARENA FLOOR
+    // 2. GRAND EXPANSIVE 2.5D ISOMETRIC ARENA FLOOR THEMED BY BIOME
     // -----------------------------------------------------------------------
-    this.drawGrandIsometricColosseumFloor(ctx, arenaCX, arenaCY, arenaW, arenaH, arenaDrop, time);
+    this.drawGrandIsometricColosseumFloor(ctx, arenaCX, arenaCY, arenaW, arenaH, arenaDrop, time, biome);
 
     const pxCenter = arenaCX - arenaW * 0.22;
     const pyCenter = arenaCY + arenaH * 0.12;
@@ -756,7 +766,9 @@ export class BattleUI {
     const zoneW = arenaW * 0.36;
     const zoneH = arenaH * 0.36;
 
-    // Elevated 2.5D Isometric Stone Slabs with glowing runic borders
+    // Themed Elevated 2.5D Dais Colors
+    const daisColors = this.getBiomeDaisTheme(biome);
+
     // Player Dais (Cyan/Azure Mystic Rune Trim)
     this.drawIsometricStoneDais(
       ctx,
@@ -766,8 +778,8 @@ export class BattleUI {
       zoneH,
       18,
       '#06b6d4',
-      '#1e293b',
-      '#0f172a',
+      daisColors.top,
+      daisColors.side,
       '#38bdf8'
     );
 
@@ -780,8 +792,8 @@ export class BattleUI {
       zoneH,
       18,
       '#f43f5e',
-      '#1f1722',
-      '#110c14',
+      daisColors.top,
+      daisColors.side,
       '#fb7185'
     );
 
@@ -809,7 +821,6 @@ export class BattleUI {
       combatVFX.monsterStaggerY +
       Math.sin(time * 0.005 + 1) * 3;
 
-    const p = this.game.activePlayer;
     const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
     const pFrame = Math.floor(time * 0.005);
 
@@ -832,9 +843,9 @@ export class BattleUI {
     let enemyH = 140;
 
     if (enemyCombatant.isBoss) {
-      enemySprite = pixelSprites.getDragonOverlordSprite(Math.floor(time * 0.003));
-      enemyW = 240;
-      enemyH = 240;
+      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', 'SW', eAnim, pFrame);
+      enemyW = 140;
+      enemyH = 140;
     } else if (enemyCombatant.playerRef) {
       enemySprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
@@ -861,7 +872,7 @@ export class BattleUI {
         if (isPlayerAtk) {
           this.cutscene.ghostTrails.push({
             x: px,
-            y: py,
+            y: py - 42,
             sprite: heroSprite,
             w: 120,
             h: 120,
@@ -871,7 +882,7 @@ export class BattleUI {
         } else {
           this.cutscene.ghostTrails.push({
             x: ex,
-            y: ey,
+            y: ey - (enemyCombatant.isBoss ? 60 : 34),
             sprite: enemySprite,
             w: enemyW,
             h: enemyH,
@@ -895,11 +906,14 @@ export class BattleUI {
     }
 
     // -----------------------------------------------------------------------
-    // 5. DRAW COMBATANTS (DEPTH-SORTED SO FOREGROUND UNIT OVERLAPS ACCURATELY)
+    // 5. DRAW COMBATANTS (PERFECTLY CENTERED ON DIAMOND DAIS CELLS)
     // -----------------------------------------------------------------------
+    // In our 2.5D Isometric projection, the dais top surface is centered at (px, py).
+    // The hero and monster sprites are anchored so their ground feet align exactly with (px, py)!
     const drawHero = () => {
       this.drawUnitTeamRing(ctx, px, py, '#06b6d4', 0.9, true);
-      ctx.drawImage(heroSprite, px - 60, py - 70, 120, 120);
+      // Hero sprite feet are at Y offset 102.5 inside the 120px sprite -> draw at py - 102
+      ctx.drawImage(heroSprite, px - 60, py - 102, 120, 120);
     };
 
     const drawEnemy = () => {
@@ -911,13 +925,15 @@ export class BattleUI {
 
       if (enemyCombatant.isBoss) {
         this.drawUnitTeamRing(ctx, ex, ey, '#ef4444', 1.0, true);
-        ctx.drawImage(enemySprite, ex - 120, ey - 118, 240, 240);
+        // Boss Dragon Princess feet anchor at exact dais center
+        ctx.drawImage(enemySprite, ex - 70, ey - 104, 140, 140);
       } else if (enemyCombatant.playerRef) {
         this.drawUnitTeamRing(ctx, ex, ey, '#f43f5e', 0.9, true);
-        ctx.drawImage(enemySprite, ex - 60, ey - 70, 120, 120);
+        ctx.drawImage(enemySprite, ex - 60, ey - 102, 120, 120);
       } else {
         this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);
-        ctx.drawImage(enemySprite, ex - 70, ey - 70, 140, 140);
+        // Monster 140x140 feet anchor at ~104
+        ctx.drawImage(enemySprite, ex - 70, ey - 104, 140, 140);
       }
       ctx.restore();
     };
@@ -997,88 +1013,847 @@ export class BattleUI {
   }
 
   // =========================================================================
-  // HELPER: DARK FANTASY GOTHIC ARENA BACKDROP WITH TORCHES & MIST
   // =========================================================================
-  private drawDarkFantasyArenaBackdrop(
+  // THEMED DAIS & FLOOR COLOR PALETTES PER BIOME
+  // =========================================================================
+  private getBiomeDaisTheme(biome: string): { top: string; side: string } {
+    switch (biome) {
+      case 'castle':
+        return { top: '#1e293b', side: '#0f172a' };
+      case 'forest':
+      case 'grass':
+        return { top: '#14291f', side: '#0b1913' };
+      case 'fairy_grove':
+        return { top: '#2e122b', side: '#190a18' };
+      case 'snow':
+        return { top: '#1c2d44', side: '#0e1a29' };
+      case 'volcano':
+        return { top: '#2c120f', side: '#170908' };
+      case 'desert':
+        return { top: '#2d2214', side: '#18120a' };
+      case 'cavern':
+      case 'crystal_cavern':
+        return { top: '#26173a', side: '#130a1e' };
+      case 'coral':
+        return { top: '#102936', side: '#07161e' };
+      case 'abyss':
+        return { top: '#1f0d2c', side: '#0f0517' };
+      case 'celestial':
+        return { top: '#2b2338', side: '#171120' };
+      default:
+        return { top: '#1e293b', side: '#0f172a' };
+    }
+  }
+
+  private getBiomeFloorColors(biome: string): { center: string; mid: string; edge: string; rim: string } {
+    switch (biome) {
+      case 'castle':
+        return { center: '#334155', mid: '#1e293b', edge: '#0f172a', rim: '#f59e0b' };
+      case 'forest':
+      case 'grass':
+        return { center: '#1b3b2b', mid: '#13281e', edge: '#0a1610', rim: '#10b981' };
+      case 'fairy_grove':
+        return { center: '#3b1d3d', mid: '#281329', edge: '#160a17', rim: '#f472b6' };
+      case 'snow':
+        return { center: '#2d4460', mid: '#1a2a3d', edge: '#0c1622', rim: '#38bdf8' };
+      case 'volcano':
+        return { center: '#3b1c14', mid: '#28120c', edge: '#140805', rim: '#ea580c' };
+      case 'desert':
+        return { center: '#3d311d', mid: '#292012', edge: '#171209', rim: '#eab308' };
+      case 'cavern':
+      case 'crystal_cavern':
+        return { center: '#321c47', mid: '#20122e', edge: '#110919', rim: '#a855f7' };
+      case 'coral':
+        return { center: '#163847', mid: '#0f2631', edge: '#07141a', rim: '#06b6d4' };
+      case 'abyss':
+        return { center: '#2b103b', mid: '#1c0926', edge: '#0d0412', rim: '#c084fc' };
+      case 'celestial':
+        return { center: '#3b324a', mid: '#282133', edge: '#17121f', rim: '#fbbf24' };
+      default:
+        return { center: '#1f293d', mid: '#161f30', edge: '#0f172a', rim: '#475569' };
+    }
+  }
+
+  // =========================================================================
+  // DYNAMIC LOCATION COMBAT ARENA BACKDROP ROUTER
+  // =========================================================================
+  private drawDynamicLocationBackdrop(
     ctx: CanvasRenderingContext2D,
     w: number,
     h: number,
-    time: number
+    time: number,
+    node: BoardNode | null,
+    isBoss: boolean
   ) {
-    // 1. Abyssal Atmospheric Vignette Gradient
+    const biome = node?.biome || 'grass';
+    const type = node?.type || 'empty';
+
+    if (isBoss || type === 'boss') {
+      this.drawBossDragonThroneBackdrop(ctx, w, h, time);
+    } else if (type === 'town' || biome === 'castle') {
+      this.drawCastlePalaceBackdrop(ctx, w, h, time, node);
+    } else if (biome === 'forest' || biome === 'grass') {
+      this.drawEnchantedForestBackdrop(ctx, w, h, time, biome === 'forest');
+    } else if (biome === 'fairy_grove') {
+      this.drawFairyBlossomBackdrop(ctx, w, h, time);
+    } else if (biome === 'snow') {
+      this.drawFrostpeakSnowBackdrop(ctx, w, h, time);
+    } else if (biome === 'volcano') {
+      this.drawVolcanicCalderaBackdrop(ctx, w, h, time);
+    } else if (biome === 'desert') {
+      this.drawDesertDunesBackdrop(ctx, w, h, time);
+    } else if (biome === 'cavern' || biome === 'crystal_cavern') {
+      this.drawCrystalCavernBackdrop(ctx, w, h, time);
+    } else if (biome === 'coral' || type === 'fishing') {
+      this.drawCoralOceanBackdrop(ctx, w, h, time);
+    } else if (biome === 'abyss' || type === 'dark_gate') {
+      this.drawAbyssalVoidBackdrop(ctx, w, h, time);
+    } else if (biome === 'celestial') {
+      this.drawCelestialSanctumBackdrop(ctx, w, h, time);
+    } else {
+      this.drawCastlePalaceBackdrop(ctx, w, h, time, node);
+    }
+  }
+
+  // 1. CASTLE & ROYAL PALACE INTERIOR (ปราสาทและพระราชวังหลวง)
+  private drawCastlePalaceBackdrop(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    time: number,
+    node: BoardNode | null
+  ) {
+    // Royal Deep Midnight Navy to Gothic Slate
     const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#030712');    // Abyssal black
-    bgGrad.addColorStop(0.35, '#0b1329'); // Deep midnight gothic slate
-    bgGrad.addColorStop(0.70, '#111827'); // Chiseled stone arena floor
+    bgGrad.addColorStop(0, '#060a17');
+    bgGrad.addColorStop(0.4, '#0f172a');
+    bgGrad.addColorStop(0.8, '#1e293b');
     bgGrad.addColorStop(1.0, '#030712');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // 2. Distant Gothic Stone Pillars & Wall Buttresses
-    const pillarCount = 5;
-    const pWidth = 34;
-    ctx.fillStyle = '#090d1a';
-    for (let i = 0; i < pillarCount; i++) {
-      const px = (i + 0.5) * (w / pillarCount);
-      // Main pillar shaft
-      ctx.fillRect(px - pWidth / 2, 0, pWidth, h * 0.52);
-
-      // Capital & base moulding
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(px - pWidth / 2 - 4, h * 0.50, pWidth + 8, 8);
-      ctx.fillRect(px - pWidth / 2 - 3, 0, pWidth + 6, 8);
-
-      // Iron Torch Sconce on alternate pillars
-      if (i % 2 === 1) {
-        const ty = h * 0.28;
-        // Iron bracket
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(px - 2, ty, 4, 12);
-        ctx.fillRect(px - 6, ty - 2, 12, 4);
-
-        // Torch flame glow aura
-        const flamePulse = 0.8 + Math.sin(time * 0.008 + i * 2) * 0.2;
-        const flameGrad = ctx.createRadialGradient(px, ty - 6, 2, px, ty - 6, 36 * flamePulse);
-        flameGrad.addColorStop(0, 'rgba(251, 146, 60, 0.7)');
-        flameGrad.addColorStop(0.4, 'rgba(234, 88, 12, 0.3)');
-        flameGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
-        ctx.fillStyle = flameGrad;
-        ctx.beginPath();
-        ctx.arc(px, ty - 6, 36 * flamePulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Core flame
-        ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(px, ty - 6, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Floating sparks / embers drifting upward
-        for (let s = 0; s < 3; s++) {
-          const sparkY = ty - 8 - ((time * 0.04 + s * 14) % 40);
-          const sparkX = px + Math.sin(time * 0.005 + s + i) * 6;
-          ctx.fillStyle = 'rgba(253, 186, 116, 0.7)';
-          ctx.fillRect(sparkX, sparkY, 1.8, 1.8);
-        }
-      }
-      ctx.fillStyle = '#090d1a';
+    // Grand Gothic Arches in Upper Hall
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 6;
+    for (let i = 0; i < 4; i++) {
+      const ax = (i + 0.5) * (w / 4);
+      ctx.beginPath();
+      ctx.arc(ax, h * 0.28, w * 0.12, Math.PI, 0);
+      ctx.stroke();
     }
 
-    // 3. Low Creeping Arena Fog / Ground Mist
-    ctx.save();
-    for (let f = 0; f < 6; f++) {
-      const fogX = ((time * 0.02 * (f + 1) * 8 + f * 140) % (w + 200)) - 100;
-      const fogY = h * 0.65 + (f % 3) * 22;
-      const fogGrad = ctx.createRadialGradient(fogX, fogY, 10, fogX, fogY, 110);
-      fogGrad.addColorStop(0, 'rgba(56, 189, 248, 0.04)');
-      fogGrad.addColorStop(0.5, 'rgba(30, 41, 59, 0.07)');
-      fogGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-      ctx.fillStyle = fogGrad;
+    // Grand Stained Glass Window in Center
+    const winCX = w * 0.5;
+    const winCY = h * 0.22;
+    const winR = Math.min(w * 0.14, 80);
+    const winPulse = 0.85 + Math.sin(time * 0.003) * 0.15;
+
+    // Glowing Rose Window Backlight
+    const winGlow = ctx.createRadialGradient(winCX, winCY, 10, winCX, winCY, winR * 1.5);
+    winGlow.addColorStop(0, `rgba(251, 191, 36, ${0.4 * winPulse})`);
+    winGlow.addColorStop(0.5, `rgba(56, 189, 248, ${0.25 * winPulse})`);
+    winGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+    ctx.fillStyle = winGlow;
+    ctx.beginPath();
+    ctx.arc(winCX, winCY, winR * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rose Window Frame
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(winCX, winCY, winR, 0, Math.PI * 2);
+    ctx.stroke();
+    // Rose Petal Traceries
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    for (let a = 0; a < 8; a++) {
+      const ang = (a / 8) * Math.PI * 2;
       ctx.beginPath();
-      ctx.ellipse(fogX, fogY, 110, 30, 0, 0, Math.PI * 2);
+      ctx.moveTo(winCX, winCY);
+      ctx.lineTo(winCX + Math.cos(ang) * winR, winCY + Math.sin(ang) * winR);
+      ctx.stroke();
+    }
+
+    // Carved Marble Pillars with Royal Banners
+    const pillarCount = 5;
+    for (let i = 0; i < pillarCount; i++) {
+      const px = (i + 0.5) * (w / pillarCount);
+      // Pillar Shaft
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 18, 0, 36, h * 0.55);
+      // Fluting Lines
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px - 8, 0);
+      ctx.lineTo(px - 8, h * 0.55);
+      ctx.moveTo(px + 8, 0);
+      ctx.lineTo(px + 8, h * 0.55);
+      ctx.stroke();
+
+      // Royal Tapestry Banners on alternate pillars
+      if (i === 1 || i === 3) {
+        const by = h * 0.16;
+        ctx.fillStyle = '#881337'; // Royal Crimson
+        ctx.beginPath();
+        ctx.moveTo(px - 14, by);
+        ctx.lineTo(px + 14, by);
+        ctx.lineTo(px + 14, by + 65);
+        ctx.lineTo(px, by + 80);
+        ctx.lineTo(px - 14, by + 65);
+        ctx.closePath();
+        ctx.fill();
+
+        // Golden Emblem Trim
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(px, by + 35, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Torches with Golden Sconces
+      if (i === 0 || i === 4 || i === 2) {
+        this.drawWallTorch(ctx, px, h * 0.32, time, i);
+      }
+    }
+  }
+
+  // 2. ENCHANTED FOREST (ป่าโบราณเห็ดเรืองแสง)
+  private drawEnchantedForestBackdrop(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    time: number,
+    isDeep: boolean
+  ) {
+    // Mystical Emerald Twilight Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#021810');
+    bgGrad.addColorStop(0.4, '#062d1d');
+    bgGrad.addColorStop(0.75, '#0b3d27');
+    bgGrad.addColorStop(1.0, '#020d07');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Sunbeams / Moonbeams Filtering Through Canopy
+    ctx.save();
+    ctx.globalAlpha = 0.08 + Math.sin(time * 0.002) * 0.03;
+    const beamGrad = ctx.createLinearGradient(0, 0, w, h * 0.8);
+    beamGrad.addColorStop(0, '#6ee7b7');
+    beamGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = beamGrad;
+    for (let b = 0; b < 5; b++) {
+      const bx = b * (w / 4) - 50;
+      ctx.beginPath();
+      ctx.moveTo(bx, 0);
+      ctx.lineTo(bx + 90, 0);
+      ctx.lineTo(bx + 240, h * 0.6);
+      ctx.lineTo(bx + 110, h * 0.6);
+      ctx.closePath();
       ctx.fill();
     }
     ctx.restore();
+
+    // Silhouetted Ancient Trees with Twisted Roots
+    const treeCount = 6;
+    for (let i = 0; i < treeCount; i++) {
+      const tx = (i + 0.3) * (w / (treeCount - 1)) + Math.sin(i * 3) * 20;
+      const trunkW = 28 + (i % 3) * 10;
+      ctx.fillStyle = '#03170e';
+      ctx.beginPath();
+      ctx.moveTo(tx - trunkW * 0.4, 0);
+      ctx.lineTo(tx + trunkW * 0.4, 0);
+      ctx.lineTo(tx + trunkW * 0.7, h * 0.55);
+      ctx.lineTo(tx - trunkW * 0.7, h * 0.55);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hanging Vine Strands
+      ctx.strokeStyle = '#064e3b';
+      ctx.lineWidth = 2;
+      for (let v = 0; v < 3; v++) {
+        const vx = tx - trunkW * 0.3 + v * (trunkW * 0.3);
+        const vLen = 40 + ((i + v) * 17) % 55;
+        ctx.beginPath();
+        ctx.moveTo(vx, h * 0.15);
+        ctx.quadraticCurveTo(vx + Math.sin(time * 0.003 + v) * 8, h * 0.15 + vLen * 0.5, vx + 4, h * 0.15 + vLen);
+        ctx.stroke();
+      }
+    }
+
+    // Giant Bioluminescent Mushroom Flora in Midground
+    for (let m = 0; m < 5; m++) {
+      const mx = (m + 0.5) * (w / 5) + Math.cos(m * 2) * 35;
+      const my = h * 0.42 + (m % 2) * 25;
+      const mR = 24 + (m % 3) * 8;
+      const mColor = m % 2 === 0 ? '#10b981' : '#06b6d4';
+      const mPulse = 0.8 + Math.sin(time * 0.005 + m * 1.5) * 0.2;
+
+      // Stem
+      ctx.fillStyle = '#062d1d';
+      ctx.fillRect(mx - 4, my, 8, h * 0.55 - my);
+
+      // Glow Aura
+      const mGlow = ctx.createRadialGradient(mx, my, 4, mx, my, mR * 1.4);
+      mGlow.addColorStop(0, mColor === '#10b981' ? `rgba(16, 185, 129, ${0.4 * mPulse})` : `rgba(6, 182, 212, ${0.4 * mPulse})`);
+      mGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = mGlow;
+      ctx.beginPath();
+      ctx.arc(mx, my, mR * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cap
+      ctx.fillStyle = mColor;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, mR, mR * 0.55, 0, Math.PI, 0);
+      ctx.fill();
+
+      // Cap Dots
+      ctx.fillStyle = '#ecfdf5';
+      ctx.beginPath();
+      ctx.arc(mx - mR * 0.4, my - mR * 0.2, 2.5, 0, Math.PI * 2);
+      ctx.arc(mx + mR * 0.35, my - mR * 0.25, 2.2, 0, Math.PI * 2);
+      ctx.arc(mx, my - mR * 0.35, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Drifting Fairy Fireflies / Spores
+    for (let s = 0; s < 18; s++) {
+      const fx = ((time * 0.03 * (s % 3 + 1) + s * 73) % (w + 40)) - 20;
+      const fy = h * 0.2 + ((time * 0.015 + s * 47) % (h * 0.4));
+      const fPulse = 0.5 + Math.sin(time * 0.007 + s) * 0.5;
+      ctx.fillStyle = s % 2 === 0 ? `rgba(110, 231, 183, ${0.8 * fPulse})` : `rgba(125, 211, 252, ${0.8 * fPulse})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 3. FAIRY BLOSSOM GLADE (ป่าภูตพฤกษาซากุระมนตรา)
+  private drawFairyBlossomBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Dreamy Twilight Sakura Pink to Lavender Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#1e0b24');
+    bgGrad.addColorStop(0.35, '#3b123f');
+    bgGrad.addColorStop(0.7, '#240f28');
+    bgGrad.addColorStop(1.0, '#0b040d');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Glowing Sacred Moon
+    const moonX = w * 0.75;
+    const moonY = h * 0.2;
+    const moonGrad = ctx.createRadialGradient(moonX, moonY, 8, moonX, moonY, 70);
+    moonGrad.addColorStop(0, 'rgba(253, 230, 138, 0.9)');
+    moonGrad.addColorStop(0.3, 'rgba(244, 114, 182, 0.4)');
+    moonGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = moonGrad;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, 70, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, 26, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Silhouetted Ancient Sakura Branches
+    ctx.strokeStyle = '#18071c';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.1);
+    ctx.quadraticCurveTo(w * 0.2, h * 0.18, w * 0.45, h * 0.08);
+    ctx.stroke();
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.2, h * 0.17);
+    ctx.lineTo(w * 0.28, h * 0.32);
+    ctx.stroke();
+
+    // Sakura Blossom Foliage Clouds
+    for (let b = 0; b < 7; b++) {
+      const bx = b * (w / 6) + 30;
+      const by = h * 0.12 + Math.sin(b * 1.7) * 20;
+      const bGrad = ctx.createRadialGradient(bx, by, 10, bx, by, 50);
+      bGrad.addColorStop(0, 'rgba(244, 114, 182, 0.75)');
+      bGrad.addColorStop(0.6, 'rgba(219, 39, 119, 0.4)');
+      bGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = bGrad;
+      ctx.beginPath();
+      ctx.arc(bx, by, 48, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Falling Sakura Petals & Magic Wisps
+    for (let p = 0; p < 24; p++) {
+      const px = ((time * 0.05 * (p % 3 + 1) + p * 60) % (w + 60)) - 30;
+      const py = ((time * 0.035 * (p % 2 + 1) + p * 45) % (h * 0.8));
+      const pSway = Math.sin(time * 0.005 + p) * 12;
+      ctx.save();
+      ctx.translate(px + pSway, py);
+      ctx.rotate(time * 0.004 + p);
+      ctx.fillStyle = p % 2 === 0 ? '#fbcfe8' : '#f472b6';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // 4. FROSTPEAK SNOW (ยอดเขาหิมะและแสงเหนือ)
+  private drawFrostpeakSnowBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Glacial Night to Deep Frost Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#020c1b');
+    bgGrad.addColorStop(0.35, '#08213f');
+    bgGrad.addColorStop(0.7, '#0e345c');
+    bgGrad.addColorStop(1.0, '#030812');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Waving Aurora Borealis Curtains
+    ctx.save();
+    for (let a = 0; a < 3; a++) {
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.08 + a * 20);
+      for (let x = 0; x <= w; x += 40) {
+        const wave = Math.sin((x * 0.008) + (time * 0.002) + a) * 35 + Math.cos((x * 0.004) + a) * 20;
+        ctx.lineTo(x, h * 0.12 + a * 25 + wave);
+      }
+      ctx.lineTo(w, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      const aGrad = ctx.createLinearGradient(0, 0, 0, h * 0.35);
+      aGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+      aGrad.addColorStop(0.4, a % 2 === 0 ? 'rgba(52, 211, 153, 0.22)' : 'rgba(56, 189, 248, 0.25)');
+      aGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = aGrad;
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Silhouetted Jagged Glacial Spun Mountains
+    ctx.fillStyle = '#06162d';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.55);
+    ctx.lineTo(w * 0.15, h * 0.25);
+    ctx.lineTo(w * 0.35, h * 0.45);
+    ctx.lineTo(w * 0.55, h * 0.18);
+    ctx.lineTo(w * 0.78, h * 0.42);
+    ctx.lineTo(w * 0.92, h * 0.28);
+    ctx.lineTo(w, h * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Frost Pine Silhouettes
+    for (let p = 0; p < 8; p++) {
+      const px = (p + 0.4) * (w / 8);
+      const py = h * 0.45 + (p % 3) * 15;
+      ctx.fillStyle = '#030c18';
+      ctx.beginPath();
+      ctx.moveTo(px, py - 45);
+      ctx.lineTo(px + 18, py);
+      ctx.lineTo(px - 18, py);
+      ctx.closePath();
+      ctx.fill();
+      // Snow cap
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.moveTo(px, py - 45);
+      ctx.lineTo(px + 7, py - 28);
+      ctx.lineTo(px - 7, py - 28);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Falling Snow Particles
+    for (let s = 0; s < 30; s++) {
+      const sx = ((time * 0.02 * (s % 4 + 1) + s * 45) % (w + 20)) - 10;
+      const sy = ((time * 0.04 * (s % 3 + 1) + s * 35) % (h * 0.85));
+      ctx.fillStyle = 'rgba(240, 249, 255, 0.85)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.5 + (s % 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 5. VOLCANIC CALDERA & MAGMA CORE (ภูเขาไฟและธารลาวา)
+  private drawVolcanicCalderaBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Dark Basalt to Scorching Orange Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#100503');
+    bgGrad.addColorStop(0.35, '#260a04');
+    bgGrad.addColorStop(0.7, '#451004');
+    bgGrad.addColorStop(1.0, '#080201');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Cascading Molten Lava Falls in Background
+    const lavaPulse = 0.85 + Math.sin(time * 0.007) * 0.15;
+    for (let l = 0; l < 3; l++) {
+      const lx = w * 0.25 + l * (w * 0.25);
+      const lGrad = ctx.createLinearGradient(lx, 0, lx, h * 0.55);
+      lGrad.addColorStop(0, '#ea580c');
+      lGrad.addColorStop(0.5, '#facc15');
+      lGrad.addColorStop(1, '#ea580c');
+      ctx.fillStyle = lGrad;
+      ctx.fillRect(lx - 12, 0, 24, h * 0.55);
+
+      // Lava Flow Glow Aura
+      const lGlow = ctx.createRadialGradient(lx, h * 0.4, 10, lx, h * 0.4, 80 * lavaPulse);
+      lGlow.addColorStop(0, 'rgba(249, 115, 22, 0.45)');
+      lGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = lGlow;
+      ctx.beginPath();
+      ctx.arc(lx, h * 0.4, 80 * lavaPulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Basalt Rock Formations
+    ctx.fillStyle = '#0f0503';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.52);
+    ctx.lineTo(w * 0.2, h * 0.32);
+    ctx.lineTo(w * 0.38, h * 0.48);
+    ctx.lineTo(w * 0.62, h * 0.26);
+    ctx.lineTo(w * 0.85, h * 0.50);
+    ctx.lineTo(w, h * 0.38);
+    ctx.lineTo(w, h * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Rising Fiery Embers & Sparks
+    for (let e = 0; e < 25; e++) {
+      const ex = ((e * 47 + Math.sin(time * 0.004 + e) * 30) % w);
+      const ey = h * 0.65 - ((time * 0.06 * (e % 3 + 1) + e * 35) % (h * 0.65));
+      ctx.fillStyle = e % 2 === 0 ? '#fbbf24' : '#f97316';
+      ctx.fillRect(ex, ey, 2.5, 2.5);
+    }
+  }
+
+  // 6. DESERT DUNES & ANCIENT RUINS (ทะเลทรายและซากอารยธรรม)
+  private drawDesertDunesBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Starry Desert Night to Warm Sand Horizon
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#060b1e');
+    bgGrad.addColorStop(0.4, '#171a33');
+    bgGrad.addColorStop(0.7, '#382b1c');
+    bgGrad.addColorStop(1.0, '#0f0c08');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Stars in Desert Sky
+    for (let s = 0; s < 30; s++) {
+      const sx = (s * 39 + 17) % w;
+      const sy = (s * 27 + 5) % (h * 0.35);
+      const sTwinkle = 0.5 + Math.sin(time * 0.006 + s) * 0.5;
+      ctx.fillStyle = `rgba(254, 240, 138, ${sTwinkle})`;
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+
+    // Distant Sand Dunes
+    ctx.fillStyle = '#453218';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.42);
+    ctx.quadraticCurveTo(w * 0.25, h * 0.32, w * 0.5, h * 0.44);
+    ctx.quadraticCurveTo(w * 0.75, h * 0.35, w, h * 0.45);
+    ctx.lineTo(w, h * 0.55);
+    ctx.lineTo(0, h * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ancient Sandstone Obelisks & Ruins
+    for (let o = 0; o < 4; o++) {
+      const ox = (o + 0.5) * (w / 4) + (o === 1 ? -20 : 30);
+      ctx.fillStyle = '#291e10';
+      ctx.beginPath();
+      ctx.moveTo(ox - 10, h * 0.55);
+      ctx.lineTo(ox - 6, h * 0.25);
+      ctx.lineTo(ox, h * 0.22); // Pyramidal top
+      ctx.lineTo(ox + 6, h * 0.25);
+      ctx.lineTo(ox + 10, h * 0.55);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // 7. CRYSTAL CAVERN (ถ้ำคริสตัลอัญมณีประกาย)
+  private drawCrystalCavernBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Deep Subterranean Amethyst & Teal Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#090312');
+    bgGrad.addColorStop(0.35, '#170929');
+    bgGrad.addColorStop(0.7, '#24103d');
+    bgGrad.addColorStop(1.0, '#05010a');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Cavern Ceiling Stalactites
+    ctx.fillStyle = '#0c0517';
+    for (let s = 0; s < 9; s++) {
+      const sx = (s + 0.5) * (w / 9);
+      const sLen = 35 + ((s * 23) % 45);
+      ctx.beginPath();
+      ctx.moveTo(sx - 14, 0);
+      ctx.lineTo(sx + 14, 0);
+      ctx.lineTo(sx, sLen);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Giant Faceted Crystals (Amethyst & Emerald)
+    for (let c = 0; c < 6; c++) {
+      const cx = (c + 0.5) * (w / 6) + Math.sin(c) * 20;
+      const cy = h * 0.48;
+      const cColor = c % 2 === 0 ? '#a855f7' : '#06b6d4';
+      const cHeight = 65 + (c % 3) * 25;
+      const cWidth = 18 + (c % 2) * 8;
+      const cPulse = 0.8 + Math.sin(time * 0.005 + c) * 0.2;
+
+      // Glow
+      const cGlow = ctx.createRadialGradient(cx, cy - cHeight * 0.5, 5, cx, cy - cHeight * 0.5, 60 * cPulse);
+      cGlow.addColorStop(0, cColor === '#a855f7' ? `rgba(168, 85, 247, ${0.45 * cPulse})` : `rgba(6, 182, 212, ${0.45 * cPulse})`);
+      cGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = cGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy - cHeight * 0.5, 60 * cPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Faceted Crystal Body
+      ctx.fillStyle = cColor;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - cHeight);
+      ctx.lineTo(cx + cWidth, cy - cHeight * 0.7);
+      ctx.lineTo(cx + cWidth * 0.6, cy);
+      ctx.lineTo(cx - cWidth * 0.6, cy);
+      ctx.lineTo(cx - cWidth, cy - cHeight * 0.7);
+      ctx.closePath();
+      ctx.fill();
+
+      // Highlight Edge
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - cHeight);
+      ctx.lineTo(cx, cy);
+      ctx.stroke();
+    }
+
+    // Sparkling Crystal Dust Particles
+    for (let d = 0; d < 20; d++) {
+      const dx = ((time * 0.02 * (d % 3 + 1) + d * 55) % (w + 20)) - 10;
+      const dy = h * 0.25 + ((time * 0.01 + d * 33) % (h * 0.35));
+      const dTwinkle = 0.4 + Math.sin(time * 0.008 + d) * 0.6;
+      ctx.fillStyle = `rgba(232, 121, 249, ${dTwinkle})`;
+      ctx.fillRect(dx, dy, 2, 2);
+    }
+  }
+
+  // 8. CORAL COAST & OCEAN PIER (ชายฝั่งทะเลและเกาะปะการัง)
+  private drawCoralOceanBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Tropical Azure Sky to Sea Horizon
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#082f49');
+    bgGrad.addColorStop(0.35, '#0e7490');
+    bgGrad.addColorStop(0.65, '#06b6d4');
+    bgGrad.addColorStop(1.0, '#021824');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Distant Tropical Island Silhouette
+    ctx.fillStyle = '#083344';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.1, h * 0.45);
+    ctx.quadraticCurveTo(w * 0.3, h * 0.32, w * 0.5, h * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    // Rolling Animated Ocean Waves
+    for (let wave = 0; wave < 4; wave++) {
+      const wy = h * 0.38 + wave * 18;
+      ctx.beginPath();
+      ctx.moveTo(0, wy);
+      for (let x = 0; x <= w; x += 30) {
+        const yOff = Math.sin((x * 0.015) + (time * 0.004) + wave) * 7;
+        ctx.lineTo(x, wy + yOff);
+      }
+      ctx.lineTo(w, h * 0.55);
+      ctx.lineTo(0, h * 0.55);
+      ctx.closePath();
+      ctx.fillStyle = wave % 2 === 0 ? '#0891b2' : '#06b6d4';
+      ctx.fill();
+
+      // White Sea Foam Crests
+      ctx.strokeStyle = '#cffafe';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+  }
+
+  // 9. ABYSSAL VOID GATE (มิติมืดและประตูสู่อเวจี)
+  private drawAbyssalVoidBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Cosmic Void Black to Darkling Magenta
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#030005');
+    bgGrad.addColorStop(0.4, '#170321');
+    bgGrad.addColorStop(0.75, '#2e0840');
+    bgGrad.addColorStop(1.0, '#040008');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Swirling Abyssal Vortex in Center
+    const vCX = w * 0.5;
+    const vCY = h * 0.25;
+    ctx.save();
+    ctx.translate(vCX, vCY);
+    ctx.rotate(time * 0.001);
+    for (let r = 0; r < 4; r++) {
+      ctx.rotate(Math.PI / 2);
+      const vGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 90);
+      vGrad.addColorStop(0, '#c084fc');
+      vGrad.addColorStop(0.5, '#7e22ce');
+      vGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = vGrad;
+      ctx.beginPath();
+      ctx.ellipse(30, 0, 60, 25, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Floating Shattered Dark Monoliths
+    for (let m = 0; m < 5; m++) {
+      const mx = (m + 0.5) * (w / 5) + Math.cos(time * 0.002 + m) * 15;
+      const my = h * 0.32 + Math.sin(time * 0.003 + m) * 12;
+      ctx.fillStyle = '#0f0217';
+      ctx.fillRect(mx - 12, my - 25, 24, 50);
+      // Glowing Runic Glyphs
+      ctx.strokeStyle = '#e879f9';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(mx - 8, my - 18, 16, 36);
+    }
+  }
+
+  // 10. CELESTIAL SANCTUM (เกาะลอยฟ้าวิหารสวรรค์)
+  private drawCelestialSanctumBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Divine Golden Dawn to Sky Azure Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#1e1b4b');
+    bgGrad.addColorStop(0.35, '#4338ca');
+    bgGrad.addColorStop(0.7, '#6366f1');
+    bgGrad.addColorStop(1.0, '#0f172a');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Radiant Sunbeams / God-Rays
+    ctx.save();
+    ctx.globalAlpha = 0.12 + Math.sin(time * 0.003) * 0.04;
+    const rayGrad = ctx.createRadialGradient(w * 0.5, 0, 10, w * 0.5, 0, w * 0.7);
+    rayGrad.addColorStop(0, '#fde047');
+    rayGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = rayGrad;
+    ctx.beginPath();
+    ctx.arc(w * 0.5, 0, w * 0.7, 0, Math.PI);
+    ctx.fill();
+    ctx.restore();
+
+    // Floating Greek/Roman White Marble Colonnade
+    for (let c = 0; c < 5; c++) {
+      const cx = (c + 0.5) * (w / 5);
+      // Pillar
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(cx - 14, h * 0.1, 28, h * 0.45);
+      // Gold Capital & Base
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(cx - 18, h * 0.1, 36, 8);
+      ctx.fillRect(cx - 18, h * 0.52, 36, 8);
+    }
+  }
+
+  // 11. BOSS: DRAGON OVERLORD PRINCESS THRONE ROOM
+  private drawBossDragonThroneBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    // Crimson Magma to Imperial Gold Throne
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#1c0505');
+    bgGrad.addColorStop(0.35, '#3b0d0c');
+    bgGrad.addColorStop(0.7, '#571310');
+    bgGrad.addColorStop(1.0, '#0d0202');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Grand Dragon Crest in Center
+    const crestCX = w * 0.5;
+    const crestCY = h * 0.22;
+    const crestPulse = 0.8 + Math.sin(time * 0.006) * 0.2;
+    const crestGlow = ctx.createRadialGradient(crestCX, crestCY, 10, crestCX, crestCY, 95 * crestPulse);
+    crestGlow.addColorStop(0, 'rgba(239, 68, 68, 0.5)');
+    crestGlow.addColorStop(0.6, 'rgba(245, 158, 11, 0.25)');
+    crestGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = crestGlow;
+    ctx.beginPath();
+    ctx.arc(crestCX, crestCY, 95 * crestPulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Imperial Throne Silhouette
+    ctx.fillStyle = '#1e0707';
+    ctx.beginPath();
+    ctx.moveTo(crestCX - 35, h * 0.52);
+    ctx.lineTo(crestCX - 25, h * 0.18);
+    ctx.lineTo(crestCX, h * 0.14);
+    ctx.lineTo(crestCX + 25, h * 0.18);
+    ctx.lineTo(crestCX + 35, h * 0.52);
+    ctx.closePath();
+    ctx.fill();
+
+    // Massive Dragon Wings Silhouette on Throne
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Flanking Great Pillars with Roaring Dragon Braziers
+    this.drawWallTorch(ctx, w * 0.15, h * 0.3, time, 0);
+    this.drawWallTorch(ctx, w * 0.85, h * 0.3, time, 1);
+  }
+
+  // HELPER: WALL TORCH SCONCE WITH ANIMATED FLAME & PARTICLES
+  private drawWallTorch(
+    ctx: CanvasRenderingContext2D,
+    px: number,
+    ty: number,
+    time: number,
+    seed: number
+  ) {
+    // Sconce bracket
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(px - 3, ty, 6, 16);
+    ctx.fillRect(px - 8, ty - 2, 16, 5);
+
+    // Flame aura
+    const flamePulse = 0.8 + Math.sin(time * 0.008 + seed * 2) * 0.2;
+    const flameGrad = ctx.createRadialGradient(px, ty - 8, 2, px, ty - 8, 40 * flamePulse);
+    flameGrad.addColorStop(0, 'rgba(251, 146, 60, 0.7)');
+    flameGrad.addColorStop(0.4, 'rgba(234, 88, 12, 0.3)');
+    flameGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = flameGrad;
+    ctx.beginPath();
+    ctx.arc(px, ty - 8, 40 * flamePulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core flame
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(px, ty - 8, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Floating ember sparks
+    for (let s = 0; s < 3; s++) {
+      const sparkY = ty - 10 - ((time * 0.04 + s * 14) % 45);
+      const sparkX = px + Math.sin(time * 0.005 + s + seed) * 7;
+      ctx.fillStyle = 'rgba(253, 186, 116, 0.75)';
+      ctx.fillRect(sparkX, sparkY, 2, 2);
+    }
   }
 
   // =========================================================================
@@ -1091,7 +1866,8 @@ export class BattleUI {
     w: number,
     h: number,
     drop: number,
-    time: number
+    time: number,
+    biome: string = 'grass'
   ) {
     ctx.save();
     const hw = w / 2;
@@ -1160,11 +1936,12 @@ export class BattleUI {
     ctx.lineTo(cx + hw, cy + drop);
     ctx.stroke();
 
-    // 4. Main Grand Isometric Flagstone Floor (Terraria-style dark slate flagstones)
+    // 4. Main Grand Isometric Flagstone Floor Themed by Biome
+    const floorColors = this.getBiomeFloorColors(biome);
     const floorGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, hw * 0.9);
-    floorGrad.addColorStop(0, '#1f293d');
-    floorGrad.addColorStop(0.5, '#161f30');
-    floorGrad.addColorStop(1, '#0f172a');
+    floorGrad.addColorStop(0, floorColors.center);
+    floorGrad.addColorStop(0.5, floorColors.mid);
+    floorGrad.addColorStop(1, floorColors.edge);
     ctx.fillStyle = floorGrad;
     ctx.beginPath();
     ctx.moveTo(cx, cy - hh);
@@ -1174,8 +1951,8 @@ export class BattleUI {
     ctx.closePath();
     ctx.fill();
 
-    // Chiseled Flagstone Rim Border
-    ctx.strokeStyle = '#475569';
+    // Chiseled Flagstone Rim Border Themed
+    ctx.strokeStyle = floorColors.rim;
     ctx.lineWidth = 2.5;
     ctx.stroke();
 

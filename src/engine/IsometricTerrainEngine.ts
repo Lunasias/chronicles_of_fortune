@@ -561,6 +561,42 @@ export class IsometricTerrainEngine {
           border: '#0891b2'
         };
 
+      case 'celestial':
+        return {
+          top: isNight ? '#1e1b4b' : '#fef08a',
+          accent: isNight ? '#818cf8' : '#ffffff',
+          cliffLeft: isNight ? '#0f172a' : '#cbd5e1',
+          cliffRight: isNight ? '#1e293b' : '#e2e8f0',
+          border: isNight ? '#4338ca' : '#f59e0b'
+        };
+
+      case 'fairy_grove':
+        return {
+          top: isNight ? '#2e1065' : '#ec4899',
+          accent: isNight ? '#d946ef' : '#f472b6',
+          cliffLeft: isNight ? '#1e1b4b' : '#831843',
+          cliffRight: isNight ? '#312e81' : '#9d174d',
+          border: isNight ? '#a21caf' : '#db2777'
+        };
+
+      case 'crystal_cavern':
+        return {
+          top: isNight ? '#083344' : '#0284c7',
+          accent: isNight ? '#06b6d4' : '#38bdf8',
+          cliffLeft: isNight ? '#082f49' : '#0369a1',
+          cliffRight: isNight ? '#0c4a6e' : '#075985',
+          border: isNight ? '#0284c7' : '#0ea5e9'
+        };
+
+      case 'castle':
+        return {
+          top: isNight ? '#1e293b' : '#475569',
+          accent: isNight ? '#334155' : '#64748b',
+          cliffLeft: isNight ? '#0f172a' : '#1e293b',
+          cliffRight: isNight ? '#1e293b' : '#334155',
+          border: isNight ? '#0f172a' : '#334155'
+        };
+
       case 'abyss':
       default:
         // Cursed void obsidian with arcane violet veins
@@ -642,6 +678,38 @@ export class IsometricTerrainEngine {
       ctx.moveTo(cx - 14, cy);
       ctx.lineTo(cx, cy - 6);
       ctx.lineTo(cx + 14, cy + 2);
+      ctx.stroke();
+    } else if (biome === 'celestial') {
+      // Golden starlight sparkles & holy runes
+      ctx.fillStyle = colors.accent;
+      ctx.fillRect(cx - 10, cy - 4, 3, 3);
+      ctx.fillRect(cx + 8, cy + 3, 3, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(cx - 9, cy - 3, 1, 1);
+      ctx.fillRect(cx + 9, cy + 4, 1, 1);
+    } else if (biome === 'fairy_grove') {
+      // Luminescent floral spores and blossom petals
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(cx - 12, cy - 2, 2.5, 0, Math.PI * 2);
+      ctx.arc(cx + 10, cy + 4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (biome === 'crystal_cavern') {
+      // Glowing crystal shards
+      ctx.fillStyle = colors.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx - 8, cy - 6);
+      ctx.lineTo(cx - 6, cy - 1);
+      ctx.lineTo(cx - 10, cy - 1);
+      ctx.closePath();
+      ctx.fill();
+    } else if (biome === 'castle') {
+      // Flagstone tile seams
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, cy);
+      ctx.lineTo(cx + 16, cy);
       ctx.stroke();
     }
 
