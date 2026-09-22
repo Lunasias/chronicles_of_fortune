@@ -426,11 +426,16 @@ export class IsometricRenderer {
               ? players.find(pl => pl.id === node.townData!.ownerId)?.color || null
               : null;
 
-            // Ground contact shadow to anchor building firmly to continuous terrain
+            // Soft two-tier ambient occlusion & ground contact shadow
             ctx.save();
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
             ctx.beginPath();
-            ctx.ellipse(px, py + 2, 36, 14, 0, 0, Math.PI * 2);
+            ctx.ellipse(px, py + 4, 42, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+            ctx.beginPath();
+            ctx.ellipse(px, py + 2, 34, 12, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
@@ -651,13 +656,10 @@ export class IsometricRenderer {
       }
     }
 
-    // 2. Add Environmental Clutter (Rocks, Grass Tufts, Wildflowers, Shrubs, Crystals)
-    for (let i = 0; i < isometricTerrainEngine.environmentProps.length; i++) {
-      const prop = isometricTerrainEngine.environmentProps[i];
-      // Frustum culling
-      if (prop.x < minX - 80 || prop.x > maxX + 80 || prop.y < minY - 80 || prop.y > maxY + 80) {
-        continue;
-      }
+    // 2. Add Environmental Clutter via Spatial Grid Buckets (Zero-lag O(visible) query)
+    const visibleProps = isometricTerrainEngine.getVisibleProps(minX, maxX, minY, maxY);
+    for (let i = 0; i < visibleProps.length; i++) {
+      const prop = visibleProps[i];
       renderList.push({
         depth: prop.depth,
         draw: () => {
@@ -938,10 +940,14 @@ export class IsometricRenderer {
     isActive: boolean,
     time: number
   ) {
-    // 1. Soft Ground Shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    // 1. Soft Ground Shadow with Ambient Occlusion
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
     ctx.beginPath();
-    ctx.ellipse(px, py + 8, 20, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, py + 9, 24, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.50)';
+    ctx.beginPath();
+    ctx.ellipse(px, py + 8, 18, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // 2. Active Player Halo

@@ -98,6 +98,15 @@ class DokaponApp {
         // Calculate and preview path
         const path = this.game.findPathToTarget(hoveredNode.id);
         this.renderer.previewPathNodeIds = path || [];
+
+        // Turn hero dynamically to face path direction
+        if (path && path.length > 1) {
+          const nextNode = this.game.allNodes.find(n => n.id === path[1]);
+          if (nextNode) {
+            const p = this.game.activePlayer;
+            p.facing = this.game.calculateIsoDirection(nextNode.gx - p.gridX, nextNode.gy - p.gridY);
+          }
+        }
       } else {
         this.renderer.hoveredNodeId = null;
         this.renderer.previewPathNodeIds = [];

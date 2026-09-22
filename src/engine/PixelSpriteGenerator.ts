@@ -17,7 +17,7 @@ export interface EquipmentItem {
   icon: string;
 }
 
-export type IsoDirection = 'SE' | 'SW' | 'NE' | 'NW';
+export type IsoDirection = 'SE' | 'SW' | 'NE' | 'NW' | 'S' | 'N' | 'E' | 'W';
 
 export type CharacterAnimState = 'idle' | 'run' | 'attack' | 'strike' | 'magic' | 'counter' | 'hurt' | 'victory';
 

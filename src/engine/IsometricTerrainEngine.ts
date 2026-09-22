@@ -41,6 +41,58 @@ export class IsometricTerrainEngine {
   private tileGrid = new Map<string, TerrainTile>();
   public isInitialized = false;
 
+  // Spatial Grid Partitioning (Zero-lag Frustum Culling)
+  public bucketSize = 400;
+  public tileBuckets = new Map<string, TerrainTile[]>();
+  public propBuckets = new Map<string, EnvironmentProp[]>();
+
+  public getBucketKey(x: number, y: number): string {
+    const bx = Math.floor(x / this.bucketSize);
+    const by = Math.floor(y / this.bucketSize);
+    return `${bx},${by}`;
+  }
+
+  public getVisibleTiles(minX: number, maxX: number, minY: number, maxY: number): TerrainTile[] {
+    const minBX = Math.floor((minX - this.tileWidth) / this.bucketSize);
+    const maxBX = Math.floor((maxX + this.tileWidth) / this.bucketSize);
+    const minBY = Math.floor((minY - this.tileHeight * 2) / this.bucketSize);
+    const maxBY = Math.floor((maxY + this.tileHeight * 2) / this.bucketSize);
+
+    const visible: TerrainTile[] = [];
+    for (let bx = minBX; bx <= maxBX; bx++) {
+      for (let by = minBY; by <= maxBY; by++) {
+        const bucket = this.tileBuckets.get(`${bx},${by}`);
+        if (bucket) {
+          for (let i = 0; i < bucket.length; i++) {
+            visible.push(bucket[i]);
+          }
+        }
+      }
+    }
+    visible.sort((a, b) => a.depth - b.depth);
+    return visible;
+  }
+
+  public getVisibleProps(minX: number, maxX: number, minY: number, maxY: number): EnvironmentProp[] {
+    const minBX = Math.floor((minX - 100) / this.bucketSize);
+    const maxBX = Math.floor((maxX + 100) / this.bucketSize);
+    const minBY = Math.floor((minY - 100) / this.bucketSize);
+    const maxBY = Math.floor((maxY + 100) / this.bucketSize);
+
+    const visible: EnvironmentProp[] = [];
+    for (let bx = minBX; bx <= maxBX; bx++) {
+      for (let by = minBY; by <= maxBY; by++) {
+        const bucket = this.propBuckets.get(`${bx},${by}`);
+        if (bucket) {
+          for (let i = 0; i < bucket.length; i++) {
+            visible.push(bucket[i]);
+          }
+        }
+      }
+    }
+    return visible;
+  }
+
   // Convert isometric grid coordinates to screen pixel coordinates
   public toScreen(gx: number, gy: number, gz: number): { x: number; y: number } {
     const x = (gx - gy) * (this.tileWidth / 2);
@@ -74,11 +126,13 @@ export class IsometricTerrainEngine {
       }
     };
 
-    // 1. Expand terrain around every board node (radius of 1 tile for solid ground)
+    // 1. Expand terrain around every board node (radius of 2 tiles for solid island ground)
     nodes.forEach(node => {
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-          addCell(node.gx + dx, node.gy + dy, node.gz, node.biome, node.realmId);
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dy = -2; dy <= 2; dy++) {
+          if (Math.abs(dx) + Math.abs(dy) <= 3) {
+            addCell(node.gx + dx, node.gy + dy, node.gz, node.biome, node.realmId);
+          }
         }
       }
     });
@@ -90,7 +144,7 @@ export class IsometricTerrainEngine {
           const neighbor = nodeMap.get(neighborId);
           if (!neighbor) return;
 
-          const steps = Math.max(Math.abs(neighbor.gx - node.gx), Math.abs(neighbor.gy - node.gy));
+          const steps = Math.max(Math.abs(neighbor.gx - node.gx), Math.abs(neighbor.gy - node.gy)) * 2;
           for (let s = 0; s <= steps; s++) {
             const t = steps === 0 ? 0 : s / steps;
             const midGx = Math.round(node.gx + (neighbor.gx - node.gx) * t);
@@ -99,7 +153,12 @@ export class IsometricTerrainEngine {
             const curBiome = t < 0.5 ? node.biome : neighbor.biome;
             const curRealm = t < 0.5 ? node.realmId : neighbor.realmId;
 
-            addCell(midGx, midGy, midGz, curBiome, curRealm);
+            // 3-wide road embankment buffer (ox, oy in -1 to +1)
+            for (let ox = -1; ox <= 1; ox++) {
+              for (let oy = -1; oy <= 1; oy++) {
+                addCell(midGx + ox, midGy + oy, midGz, curBiome, curRealm);
+              }
+            }
           }
         }
       });
@@ -142,6 +201,31 @@ export class IsometricTerrainEngine {
     // 4. Generate Environmental Clutter (Rocks, Grass, Wildflowers, Shrubs, Crystals)
     this.generateEnvironmentClutter(nodes);
 
+    // 5. Index into Spatial Grid Buckets for O(visible) zero-lag rendering
+    this.tileBuckets.clear();
+    for (let i = 0; i < this.terrainTiles.length; i++) {
+      const tile = this.terrainTiles[i];
+      const key = this.getBucketKey(tile.x, tile.y);
+      let list = this.tileBuckets.get(key);
+      if (!list) {
+        list = [];
+        this.tileBuckets.set(key, list);
+      }
+      list.push(tile);
+    }
+
+    this.propBuckets.clear();
+    for (let i = 0; i < this.environmentProps.length; i++) {
+      const prop = this.environmentProps[i];
+      const key = this.getBucketKey(prop.x, prop.y);
+      let list = this.propBuckets.get(key);
+      if (!list) {
+        list = [];
+        this.propBuckets.set(key, list);
+      }
+      list.push(prop);
+    }
+
     this.isInitialized = true;
   }
 
@@ -161,16 +245,16 @@ export class IsometricTerrainEngine {
       const rand2 = (seed * 1.5) - Math.floor(seed * 1.5);
       const rand3 = (seed * 2.3) - Math.floor(seed * 2.3);
 
-      // Tasteful, performance-friendly scattering of natural environment props (8% density, max 160 props total)
-      if (rand1 < 0.08 && this.environmentProps.length < 160) {
+      // Rich scattering of natural environment props (38% density on off-node terrain)
+      if (rand1 < 0.38) {
         let type: EnvironmentProp['type'] = 'grass';
-        if (rand2 < 0.32) {
+        if (rand2 < 0.30) {
           type = 'rock'; // Boulders and stones
-        } else if (rand2 < 0.52) {
+        } else if (rand2 < 0.55) {
           type = 'flower'; // Flower patches
-        } else if (rand2 < 0.72) {
+        } else if (rand2 < 0.78) {
           type = 'shrub'; // Bushes and shrubs
-        } else if (rand2 < 0.85 && (tile.biome === 'snow' || tile.biome === 'abyss' || tile.biome === 'cavern')) {
+        } else if (rand2 < 0.92 && (tile.biome === 'snow' || tile.biome === 'abyss' || tile.biome === 'cavern')) {
           type = 'crystal'; // Magical ice or void crystal
         }
 
@@ -214,19 +298,15 @@ export class IsometricTerrainEngine {
     const hh = this.tileHeight / 2;
     const cliffHeight = 18;
 
-    for (let i = 0; i < this.terrainTiles.length; i++) {
-      const tile = this.terrainTiles[i];
+    // Zero-lag Frustum Query using Spatial Grid Buckets (~150-300 visible tiles only)
+    const visibleTiles = this.getVisibleTiles(minX, maxX, minY, maxY);
 
-      // View frustum culling
-      if (tile.x + hw < minX || tile.x - hw > maxX || tile.y + hh + cliffHeight < minY || tile.y - hh > maxY) {
-        continue;
-      }
-
-      this.drawTerrainTile(ctx, tile, hw, hh, cliffHeight, time, timeOfDay);
+    for (let i = 0; i < visibleTiles.length; i++) {
+      this.drawTerrainTile(ctx, visibleTiles[i], hw, hh, cliffHeight, time, timeOfDay);
     }
   }
 
-  // Draw an individual 3D isometric terrain block with biome textures and cliff drops
+  // Draw an individual 3D isometric terrain block with biome textures, living ocean shore, and cliff drops
   private drawTerrainTile(
     ctx: CanvasRenderingContext2D,
     tile: TerrainTile,
@@ -240,6 +320,25 @@ export class IsometricTerrainEngine {
     const cy = tile.y;
 
     const colors = this.getBiomeColors(tile.biome, timeOfDay);
+
+    // 0. Living ocean shoreline foam & waves around perimeter cliffs
+    if (tile.isEdge) {
+      const wave = Math.sin(time * 0.003 + tile.gx * 1.8 + tile.gy * 1.2) * 2.8;
+      ctx.save();
+      // Translucent turquoise/deep ocean body
+      ctx.fillStyle = timeOfDay === 'NIGHT' ? 'rgba(8, 47, 73, 0.35)' : 'rgba(14, 165, 233, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + cliffHeight + 11 + wave, hw + 14, hh + 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Frothy white shoreline wave crest
+      ctx.strokeStyle = timeOfDay === 'NIGHT' ? 'rgba(186, 230, 253, 0.35)' : 'rgba(240, 249, 255, 0.55)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + cliffHeight + 11 + wave, hw + 10, hh + 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // 1. 3D Cliff Faces (rendered on exposed edges)
     if (tile.hasSouthCliff || tile.hasWestCliff || tile.hasEastCliff) {
@@ -458,7 +557,12 @@ export class IsometricTerrainEngine {
     time: number
   ) {
     ctx.save();
-    const px = prop.x;
+    // Gentle wind sway animation for living vegetation props
+    const windSway = (prop.type === 'grass' || prop.type === 'flower' || prop.type === 'shrub')
+      ? Math.sin(time * 0.003 + prop.x * 0.05 + prop.y * 0.03) * 2.0
+      : 0;
+
+    const px = prop.x + windSway;
     const py = prop.y;
 
     switch (prop.type) {

@@ -132,10 +132,26 @@ export class CustomIsometricHeroRenderer {
         stepX = s * 0.8;
         stepY = -s * 0.4;
         lean = 1.5;
-      } else {
+      } else if (dir === 'NW') {
         stepX = -s * 0.8;
         stepY = -s * 0.4;
         lean = -1.5;
+      } else if (dir === 'S') {
+        stepX = 0;
+        stepY = s * 0.8;
+        lean = 0;
+      } else if (dir === 'N') {
+        stepX = 0;
+        stepY = -s * 0.8;
+        lean = 0;
+      } else if (dir === 'E') {
+        stepX = s * 1.0;
+        stepY = 0;
+        lean = 1.8;
+      } else { // 'W'
+        stepX = -s * 1.0;
+        stepY = 0;
+        lean = -1.8;
       }
     } else if (animState === 'attack') {
       const lunges = [0, 8, 16, 22, 12, 4, 0, 0];
@@ -151,9 +167,21 @@ export class CustomIsometricHeroRenderer {
       } else if (dir === 'NE') {
         stepX = l * 0.9;
         stepY = -l * 0.45;
-      } else {
+      } else if (dir === 'NW') {
         stepX = -l * 0.9;
         stepY = -l * 0.45;
+      } else if (dir === 'S') {
+        stepX = 0;
+        stepY = l * 1.0;
+      } else if (dir === 'N') {
+        stepX = 0;
+        stepY = -l * 1.0;
+      } else if (dir === 'E') {
+        stepX = l * 1.1;
+        stepY = 0;
+      } else { // 'W'
+        stepX = -l * 1.1;
+        stepY = 0;
       }
       bob = -2;
     } else if (animState === 'strike') {
@@ -164,11 +192,12 @@ export class CustomIsometricHeroRenderer {
     } else if (animState === 'magic') {
       bob = -4 + Math.sin(frame * 0.9) * 2.5;
     } else if (animState === 'counter') {
-      stepX = dir === 'SE' || dir === 'NE' ? -5 : 5;
+      stepX = dir === 'SE' || dir === 'NE' || dir === 'E' ? -5 : (dir === 'SW' || dir === 'NW' || dir === 'W' ? 5 : 0);
+      stepY = dir === 'S' ? -4 : (dir === 'N' ? 4 : 0);
       bob = 2;
     } else if (animState === 'hurt') {
-      stepX = dir === 'SE' || dir === 'NE' ? -10 : 10;
-      stepY = dir === 'SE' || dir === 'SW' ? -6 : 6;
+      stepX = dir === 'SE' || dir === 'NE' || dir === 'E' ? -10 : (dir === 'SW' || dir === 'NW' || dir === 'W' ? 10 : 0);
+      stepY = dir === 'SE' || dir === 'SW' || dir === 'S' ? -6 : 6;
       bob = -4;
     } else if (animState === 'victory') {
       const victoryJumps = [0, -8, -14, -6, 0, -4, 0, 0];
@@ -269,8 +298,16 @@ export class CustomIsometricHeroRenderer {
       ctx.arc(cx - 8, cy - 4, 30, Math.PI * 0.55, Math.PI * 1.25);
     } else if (dir === 'NE') {
       ctx.arc(cx + 10, cy - 14, 30, -Math.PI * 0.65, Math.PI * 0.15);
-    } else {
+    } else if (dir === 'NW') {
       ctx.arc(cx - 10, cy - 14, 30, Math.PI * 0.85, Math.PI * 1.65);
+    } else if (dir === 'S') {
+      ctx.arc(cx, cy + 6, 30, -Math.PI * 0.1, Math.PI * 1.1);
+    } else if (dir === 'N') {
+      ctx.arc(cx, cy - 16, 30, Math.PI * 0.9, Math.PI * 2.1);
+    } else if (dir === 'E') {
+      ctx.arc(cx + 12, cy - 4, 30, -Math.PI * 0.4, Math.PI * 0.4);
+    } else { // 'W'
+      ctx.arc(cx - 12, cy - 4, 30, Math.PI * 0.6, Math.PI * 1.4);
     }
     ctx.stroke();
     ctx.restore();
@@ -288,8 +325,8 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
@@ -308,9 +345,9 @@ export class CustomIsometricHeroRenderer {
     // 1. Ground Shadow (2:1 Isometric Oval)
     this.drawIsoShadow(ctx, cx, cy + 34, 20, 9);
 
-    // 2. Flowing Cape (Drawn behind body when facing front, or in front when facing back)
+    // 2. Flowing Cape (Drawn behind body when facing front, or down back when facing away)
+    const capeFlutter = Math.sin((frame / 6) * Math.PI * 2) * 3.5;
     if (isFront) {
-      const capeFlutter = Math.sin((frame / 6) * Math.PI * 2) * 4;
       ctx.fillStyle = capeShadow;
       ctx.beginPath();
       ctx.moveTo(cx - 10, cy - 4);
@@ -326,6 +363,25 @@ export class CustomIsometricHeroRenderer {
       ctx.lineTo(cx + 8, cy - 2);
       ctx.lineTo(cx + (isRight ? 13 : 6) + capeFlutter, cy + 26);
       ctx.lineTo(cx - (isRight ? 6 : 13) + capeFlutter, cy + 26);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Rear View Cape (Spreads across back)
+      ctx.fillStyle = capeShadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy - 2);
+      ctx.lineTo(cx + 10, cy - 2);
+      ctx.lineTo(cx + 14 + capeFlutter, cy + 30);
+      ctx.lineTo(cx - 14 + capeFlutter, cy + 30);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = capeCrimson;
+      ctx.beginPath();
+      ctx.moveTo(cx - 8, cy);
+      ctx.lineTo(cx + 8, cy);
+      ctx.lineTo(cx + 11 + capeFlutter, cy + 28);
+      ctx.lineTo(cx - 11 + capeFlutter, cy + 28);
       ctx.closePath();
       ctx.fill();
     }
@@ -488,8 +544,8 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
@@ -687,8 +743,8 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
@@ -820,8 +876,8 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
@@ -928,8 +984,8 @@ export class CustomIsometricHeroRenderer {
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number },
     equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 
@@ -1033,8 +1089,8 @@ export class CustomIsometricHeroRenderer {
     frame: number,
     offsets: { bob: number; stepX: number; stepY: number; lean: number; slashProgress: number; jumpY: number }
   ) {
-    const isFront = dir === 'SE' || dir === 'SW';
-    const isRight = dir === 'SE' || dir === 'NE';
+    const isFront = dir === 'SE' || dir === 'SW' || dir === 'S';
+    const isRight = dir === 'SE' || dir === 'NE' || dir === 'E';
     const cx = 48 + offsets.stepX + offsets.lean;
     const cy = 48 + offsets.stepY + offsets.bob;
 

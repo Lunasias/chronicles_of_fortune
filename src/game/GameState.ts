@@ -1,4 +1,5 @@
 import { Player, FIELD_SPELLS } from './Player';
+import { IsoDirection } from '../engine/PixelSpriteGenerator';
 import { BoardNode, DOKAPON_NODES } from './BoardMap';
 import { BattleEngine, Combatant } from './BattleEngine';
 import { townManager } from './TownManager';
@@ -354,14 +355,10 @@ export class GameState {
     const p = this.activePlayer;
     const targetNode = this.allNodes.find(n => n.id === nextNodeId) || this.allNodes[0];
 
-    // Determine 2.5D Isometric direction
+    // Determine 2.5D Isometric direction (8 directions: SE, SW, NE, NW, S, N, E, W)
     const dgx = targetNode.gx - p.gridX;
     const dgy = targetNode.gy - p.gridY;
-
-    if (dgx > 0 && dgy >= 0) p.facing = 'SE';
-    else if (dgy > 0 && dgy <= 0) p.facing = 'SW';
-    else if (dgx < 0 && dgy <= 0) p.facing = 'NW';
-    else p.facing = 'NE';
+    p.facing = this.calculateIsoDirection(dgx, dgy);
 
     p.prevNodeId = p.nodeId;
     p.nodeId = nextNodeId;
@@ -435,4 +432,28 @@ export class GameState {
       }
     });
   }
+
+  public calculateIsoDirection(dgx: number, dgy: number): IsoDirection {
+    // Convert 2.5D Isometric grid step to screen vector
+    // Screen X = (dgx - dgy) * 48, Screen Y = (dgx + dgy) * 24
+    const screenDx = (dgx - dgy) * 48;
+    const screenDy = (dgx + dgy) * 24;
+
+    if (Math.abs(screenDx) < 0.001 && Math.abs(screenDy) < 0.001) {
+      return 'SE';
+    }
+
+    const angleDeg = Math.atan2(screenDy, screenDx) * (180 / Math.PI);
+
+    // 8-directional sectors: 45° sectors
+    if (angleDeg >= -22.5 && angleDeg < 22.5) return 'E';
+    if (angleDeg >= 22.5 && angleDeg < 67.5) return 'SE';
+    if (angleDeg >= 67.5 && angleDeg < 112.5) return 'S';
+    if (angleDeg >= 112.5 && angleDeg < 157.5) return 'SW';
+    if (angleDeg >= 157.5 || angleDeg < -157.5) return 'W';
+    if (angleDeg >= -157.5 && angleDeg < -112.5) return 'NW';
+    if (angleDeg >= -112.5 && angleDeg < -67.5) return 'N';
+    return 'NE';
+  }
 }
+
