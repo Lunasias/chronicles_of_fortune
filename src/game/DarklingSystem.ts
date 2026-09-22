@@ -6,10 +6,18 @@ export class DarklingSystem {
   // Check if player qualifies for Darkling transformation
   canTransform(player: Player, allPlayers: Player[], allNodes: BoardNode[]): boolean {
     if (player.isDarkling) return false;
-    if (allPlayers.length < 2) return true;
+    if (allPlayers.length < 2) return false;
 
-    // Player is in last place by Net Worth
+    // Player must be strictly in last place and trailing the leader by at least 400G
     const sorted = [...allPlayers].sort((a, b) => b.getNetWorth(allNodes) - a.getNetWorth(allNodes));
+    const leaderWorth = sorted[0].getNetWorth(allNodes);
+    const playerWorth = player.getNetWorth(allNodes);
+
+    // Prevent turn 1 Darkling when all players are tied with starter gold
+    if (leaderWorth === playerWorth || leaderWorth - playerWorth < 400) {
+      return false;
+    }
+
     const isLastPlace = sorted[sorted.length - 1].id === player.id;
     return isLastPlace;
   }

@@ -680,13 +680,6 @@ export class WorldBackground {
     ctx.closePath();
     ctx.fill();
 
-    // Floating Sanctuaries & Citadels
-    for (let i = 0; i < 5; i++) {
-      const islandX = ((i * 380 - p1 * 1.5) % (w + 400)) - 100;
-      const islandY = horizonY - 260 - Math.sin(i * 2.3 + time * 0.0007) * 18;
-      this.drawSkyIsland(ctx, islandX, islandY, 80, 70, monolithCore, timeOfDay);
-    }
-
     // Layer 2: Mid Crags & Ridges (Parallax factor 0.09)
     const p2 = camera.x * 0.09;
     ctx.fillStyle = layer2Color;
@@ -732,59 +725,6 @@ export class WorldBackground {
 
     ctx.fillStyle = mistGrad;
     ctx.fillRect(0, horizonY - 50, w, h - (horizonY - 50));
-  }
-
-  private drawSkyIsland(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    w: number,
-    h: number,
-    coreColor: string,
-    timeOfDay: TimeOfDay
-  ) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, w * 0.45, h * 0.2, 0, 0, Math.PI * 2);
-    ctx.fillStyle = timeOfDay === 'DAY' ? '#1e3a5f' : timeOfDay === 'NIGHT' ? '#0f172a' : '#2d1537';
-    ctx.fill();
-
-    // Inverted stalactite underside
-    ctx.beginPath();
-    ctx.moveTo(cx - w * 0.42, cy);
-    ctx.lineTo(cx + w * 0.42, cy);
-    ctx.lineTo(cx + 4, cy + h);
-    ctx.lineTo(cx - 4, cy + h);
-    ctx.closePath();
-    ctx.fillStyle = timeOfDay === 'DAY' ? '#172554' : timeOfDay === 'NIGHT' ? '#090d16' : '#1e0828';
-    ctx.fill();
-
-    // Spire / Castle Tower on Top
-    ctx.fillStyle = timeOfDay === 'DAY' ? '#334155' : '#1e293b';
-    ctx.fillRect(cx - 8, cy - 18, 16, 18);
-    ctx.beginPath();
-    ctx.moveTo(cx - 10, cy - 18);
-    ctx.lineTo(cx, cy - 32);
-    ctx.lineTo(cx + 10, cy - 18);
-    ctx.closePath();
-    ctx.fill();
-
-    // Glowing core crystal / beacon
-    ctx.fillStyle = coreColor;
-    ctx.beginPath();
-    ctx.arc(cx, cy + h * 0.35, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (timeOfDay === 'NIGHT') {
-      // Moonlight halo on island top
-      ctx.strokeStyle = 'rgba(186, 230, 253, 0.55)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, w * 0.45, h * 0.2, 0, Math.PI, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    ctx.restore();
   }
 
   // --- ATMOSPHERE: CLOUDS, BIRDS & MOTES ---

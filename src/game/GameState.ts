@@ -240,7 +240,7 @@ export class GameState {
     return totalRoll;
   }
 
-  // Calculate all reachable destination nodes for ANY distance <= remainingMoves (1 to remainingMoves steps)
+  // Calculate all reachable destination nodes: Requires EXACT dice count landing (or Castle node 0 stop)
   updateReachableHighlights() {
     if (this.remainingMoves <= 0) {
       this.highlightedNodes = [];
@@ -254,7 +254,7 @@ export class GameState {
 
     while (queue.length > 0) {
       const curr = queue.shift()!;
-      if (curr.nodeId !== this.activePlayer.nodeId) {
+      if (curr.nodeId !== this.activePlayer.nodeId && (curr.movesLeft === 0 || curr.nodeId === 0)) {
         reachable.add(curr.nodeId);
       }
 
@@ -278,7 +278,7 @@ export class GameState {
     this.highlightedNodes = Array.from(reachable);
   }
 
-  // Pathfinding: Find shortest valid route from current position to target node with length <= remainingMoves
+  // Pathfinding: Find shortest valid route from current position to target node with length === remainingMoves (or stopping at Castle 0)
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
 
@@ -290,9 +290,12 @@ export class GameState {
       const { path, prevId } = queue.shift()!;
       const currentId = path[path.length - 1];
 
-      // Reached target within remainingMoves
+      // Reached target: exact roll required, unless reaching Dokapon Castle (node 0)
       if (currentId === targetNodeId && path.length > 1) {
-        return path;
+        const steps = path.length - 1;
+        if (steps === this.remainingMoves || targetNodeId === 0) {
+          return path;
+        }
       }
 
       if (path.length - 1 >= this.remainingMoves) {

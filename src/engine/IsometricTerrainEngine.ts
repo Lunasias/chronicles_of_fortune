@@ -352,6 +352,16 @@ export class IsometricTerrainEngine {
       ctx.closePath();
       ctx.fill();
 
+      // Sedimentary strata fissures on Left Face
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw * 0.85, cy + cliffHeight * 0.35);
+      ctx.lineTo(cx, cy + hh + cliffHeight * 0.35);
+      ctx.moveTo(cx - hw * 0.65, cy + cliffHeight * 0.72);
+      ctx.lineTo(cx, cy + hh + cliffHeight * 0.72);
+      ctx.stroke();
+
       // Right 3D Face
       ctx.fillStyle = colors.cliffRight;
       ctx.beginPath();
@@ -362,19 +372,40 @@ export class IsometricTerrainEngine {
       ctx.closePath();
       ctx.fill();
 
-      // Cliff base shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      // Sedimentary strata fissures on Right Face
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + hh + cliffHeight * 0.4);
+      ctx.lineTo(cx + hw * 0.85, cy + cliffHeight * 0.4);
+      ctx.moveTo(cx, cy + hh + cliffHeight * 0.76);
+      ctx.lineTo(cx + hw * 0.65, cy + cliffHeight * 0.76);
+      ctx.stroke();
+
+      // Cliff base ambient occlusion drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
       ctx.beginPath();
       ctx.moveTo(cx - hw, cy + cliffHeight);
       ctx.lineTo(cx, cy + hh + cliffHeight);
       ctx.lineTo(cx + hw, cy + cliffHeight);
-      ctx.lineTo(cx, cy + hh + cliffHeight + 6);
+      ctx.lineTo(cx, cy + hh + cliffHeight + 7);
       ctx.closePath();
       ctx.fill();
+
+      // Natural grass/soil overhang lip on cliff crest
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw, cy);
+      ctx.lineTo(cx, cy + hh);
+      ctx.lineTo(cx + hw, cy);
+      ctx.stroke();
     }
 
-    // 2. Isometric Diamond Top Face
-    ctx.fillStyle = colors.top;
+    // 2. Isometric Diamond Top Face with Depth Shading Gradient
+    const topGrad = ctx.createLinearGradient(cx, cy - hh, cx, cy + hh);
+    topGrad.addColorStop(0, colors.accent); // Light on upper corner
+    topGrad.addColorStop(0.45, colors.top);  // Midtone body
+    topGrad.addColorStop(1, colors.top);    // Shadowed lower corner
+    ctx.fillStyle = topGrad;
     ctx.beginPath();
     ctx.moveTo(cx, cy - hh);
     ctx.lineTo(cx + hw, cy);
@@ -404,43 +435,43 @@ export class IsometricTerrainEngine {
 
     switch (biome) {
       case 'grass':
-        // Solaria rolling green grasslands
+        // Solaria rolling green grasslands (Authentic Dark Fantasy Olive Meadow)
         return {
-          top: isNight ? '#144322' : '#22c55e',
-          accent: isNight ? '#166534' : '#4ade80',
-          cliffLeft: isNight ? '#1c1917' : '#573318',
-          cliffRight: isNight ? '#292524' : '#78350f',
-          border: isNight ? '#166534' : '#15803d'
+          top: isNight ? '#0e2917' : '#276239',
+          accent: isNight ? '#164324' : '#39834e',
+          cliffLeft: isNight ? '#141210' : '#382012',
+          cliffRight: isNight ? '#1d1917' : '#4d2d19',
+          border: isNight ? '#0a1d10' : '#1b4327'
         };
 
       case 'forest':
         // Deep mossy Gloomwood forest
         return {
-          top: isNight ? '#0b2b18' : '#15803d',
-          accent: isNight ? '#14532d' : '#22c55e',
-          cliffLeft: isNight ? '#111827' : '#3d2514',
-          cliffRight: isNight ? '#1f2937' : '#573318',
-          border: isNight ? '#14532d' : '#166534'
+          top: isNight ? '#081f12' : '#174728',
+          accent: isNight ? '#10301c' : '#226038',
+          cliffLeft: isNight ? '#0f141f' : '#2a1a10',
+          cliffRight: isNight ? '#17202e' : '#3b2516',
+          border: isNight ? '#06160d' : '#11331c'
         };
 
       case 'snow':
         // Frostpeak glacial tundra & snowy crags
         return {
-          top: isNight ? '#1e293b' : '#f1f5f9',
-          accent: isNight ? '#38bdf8' : '#e0f2fe',
-          cliffLeft: isNight ? '#090d16' : '#64748b',
-          cliffRight: isNight ? '#0f172a' : '#94a3b8',
+          top: isNight ? '#1e293b' : '#e2e8f0',
+          accent: isNight ? '#38bdf8' : '#f8fafc',
+          cliffLeft: isNight ? '#090d16' : '#475569',
+          cliffRight: isNight ? '#0f172a' : '#64748b',
           border: isNight ? '#38bdf8' : '#cbd5e1'
         };
 
       case 'desert':
         // Sunfire golden sand dunes
         return {
-          top: isNight ? '#3f2512' : '#f59e0b',
-          accent: isNight ? '#78350f' : '#fef08a',
-          cliffLeft: isNight ? '#261205' : '#78350f',
-          cliffRight: isNight ? '#451a03' : '#9a3412',
-          border: isNight ? '#78350f' : '#d97706'
+          top: isNight ? '#3f2512' : '#d97706',
+          accent: isNight ? '#78350f' : '#f59e0b',
+          cliffLeft: isNight ? '#261205' : '#652b09',
+          cliffRight: isNight ? '#451a03' : '#883b0c',
+          border: isNight ? '#78350f' : '#b45309'
         };
 
       case 'volcano':
@@ -457,7 +488,7 @@ export class IsometricTerrainEngine {
         // Subterranean slate & mineral stone
         return {
           top: isNight ? '#0f172a' : '#334155',
-          accent: isNight ? '#38bdf8' : '#64748b',
+          accent: isNight ? '#38bdf8' : '#475569',
           cliffLeft: '#090d16',
           cliffRight: '#1e293b',
           border: '#1e293b'
@@ -466,8 +497,8 @@ export class IsometricTerrainEngine {
       case 'coral':
         // Shallow turquoise reef waters
         return {
-          top: isNight ? '#083344' : '#06b6d4',
-          accent: isNight ? '#0e7490' : '#67e8f9',
+          top: isNight ? '#083344' : '#0891b2',
+          accent: isNight ? '#0e7490' : '#22d3ee',
           cliffLeft: '#042f2e',
           cliffRight: '#0d9488',
           border: '#0891b2'
@@ -477,11 +508,11 @@ export class IsometricTerrainEngine {
       default:
         // Cursed void obsidian with arcane violet veins
         return {
-          top: isNight ? '#150624' : '#2e1065',
-          accent: '#c084fc',
+          top: isNight ? '#150624' : '#250e4f',
+          accent: '#a855f7',
           cliffLeft: '#090214',
           cliffRight: '#180527',
-          border: '#581c87'
+          border: '#4c1d95'
         };
     }
   }
@@ -500,12 +531,20 @@ export class IsometricTerrainEngine {
     ctx.save();
 
     if (biome === 'grass' || biome === 'forest') {
-      // Grass blade speckles & earth specks
+      // Textured grass blade tufts & dark earth speckles
       ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 14, cy - 6, 4, 2);
-      ctx.fillRect(cx + 10, cy + 4, 5, 2);
-      ctx.fillRect(cx - 4, cy + 8, 4, 2);
-      ctx.fillRect(cx + 18, cy - 8, 3, 2);
+      ctx.fillRect(cx - 16, cy - 8, 3, 2);
+      ctx.fillRect(cx - 15, cy - 10, 1, 2);
+      ctx.fillRect(cx + 12, cy + 3, 3, 2);
+      ctx.fillRect(cx + 13, cy + 1, 1, 2);
+      ctx.fillRect(cx - 6, cy + 7, 4, 2);
+      ctx.fillRect(cx + 18, cy - 7, 3, 2);
+
+      // Subdued stone pebble clusters
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.fillRect(cx - 10, cy + 4, 2, 2);
+      ctx.fillRect(cx + 8, cy - 10, 3, 2);
+      ctx.fillRect(cx + 2, cy - 5, 2, 1);
     } else if (biome === 'snow') {
       // Snowdrift ripple highlights & ice sparkle
       ctx.fillStyle = colors.accent;
@@ -514,12 +553,16 @@ export class IsometricTerrainEngine {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(cx - 2, cy - 8, 2, 2);
       ctx.fillRect(cx + 14, cy - 2, 2, 2);
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+      ctx.fillRect(cx - 10, cy + 6, 4, 2);
     } else if (biome === 'desert') {
-      // Wind-blown sand ripples
+      // Wind-blown sand ripples & desert pebbles
       ctx.fillStyle = colors.accent;
       ctx.fillRect(cx - 20, cy - 4, 12, 1.5);
       ctx.fillRect(cx - 6, cy + 4, 16, 1.5);
       ctx.fillRect(cx + 8, cy - 8, 10, 1.5);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(cx + 3, cy - 1, 2, 2);
     } else if (biome === 'volcano') {
       // Glowing magma fissures
       ctx.fillStyle = '#f97316';
@@ -536,7 +579,7 @@ export class IsometricTerrainEngine {
     } else if (biome === 'abyss') {
       // Pulsing arcane rune veins
       const pulse = 0.5 + Math.sin(time * 0.003) * 0.3;
-      ctx.strokeStyle = `rgba(192, 132, 252, ${pulse})`;
+      ctx.strokeStyle = `rgba(168, 85, 247, ${pulse})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(cx - 14, cy);

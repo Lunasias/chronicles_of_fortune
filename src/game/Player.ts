@@ -348,11 +348,12 @@ export class Player {
 
   gainXP(amount: number): boolean {
     this.xp += amount;
-    if (this.xp >= this.xpNeeded) {
+    let leveled = false;
+    while (this.xp >= this.xpNeeded) {
       this.levelUp();
-      return true;
+      leveled = true;
     }
-    return false;
+    return leveled;
   }
 
   levelUp() {

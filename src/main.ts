@@ -266,18 +266,18 @@ class DokaponApp {
     // Zoom Controls
     document.getElementById('btnZoomIn')?.addEventListener('click', () => {
       audio.click();
-      this.setZoom(this.renderer.camera.targetZoom + 0.25);
+      this.setZoom(this.renderer.camera.targetZoom + 0.15);
     });
     document.getElementById('btnZoomOut')?.addEventListener('click', () => {
       audio.click();
-      this.setZoom(this.renderer.camera.targetZoom - 0.25);
+      this.setZoom(this.renderer.camera.targetZoom - 0.15);
     });
 
     this.canvas.addEventListener(
       'wheel',
       e => {
         e.preventDefault();
-        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        const delta = e.deltaY < 0 ? 0.10 : -0.10;
         this.setZoom(this.renderer.camera.targetZoom + delta);
       },
       { passive: false }
@@ -377,7 +377,7 @@ class DokaponApp {
   }
 
   private setZoom(val: number) {
-    this.renderer.camera.targetZoom = Math.max(0.65, Math.min(1.8, val));
+    this.renderer.camera.targetZoom = Math.max(0.95, Math.min(1.40, val));
     document.getElementById('zoomLabel')!.innerText = `${this.renderer.camera.targetZoom.toFixed(1)}x`;
   }
 
@@ -657,7 +657,7 @@ class DokaponApp {
       loserPlayer.hp = 1;
       this.game.addLog(`🚑 ${loserPlayer.displayName} ถูกน็อคและถูกพากลับไปที่ Dokapon Castle!`, 'battle');
 
-      this.prankUI.open(loserPlayer, () => this.advanceTurn());
+      this.prankUI.open(winnerPlayer, loserPlayer, () => this.advanceTurn());
     });
   }
 

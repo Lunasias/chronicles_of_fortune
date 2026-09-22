@@ -18,7 +18,7 @@ export class TerrariaIsometricFoliageRenderer {
   // =========================================================================
   // PUBLIC ENTRY POINT: Deterministic Zero-Lag Tree Sprite
   // =========================================================================
-  public getTreeSprite(type: string = 'blood_willow', variant: number = 0): HTMLCanvasElement {
+  public getTreeSprite(type: string = 'dark_oak', variant: number = 0): HTMLCanvasElement {
     const v = Math.abs(Math.floor(variant)) % 4;
     const cacheKey = `terraria_dark_tree_${type}_v${v}`;
 
@@ -36,9 +36,11 @@ export class TerrariaIsometricFoliageRenderer {
       this.renderTerrariaGloomsporeTree(ctx, cx, cy, v);
     } else if (type === 'ash_thorn') {
       this.renderTerrariaAshThornTree(ctx, cx, cy, v);
-    } else {
-      // Default: Crimson Bloodwillow (Dark Fantasy replacement for verdant oak)
+    } else if (type === 'blood_willow') {
       this.renderTerrariaBloodWillow(ctx, cx, cy, v);
+    } else {
+      // Default: Ancient Dark Oak (Solaria Grasslands & High-Detail Dark Fantasy)
+      this.renderAncientDarkOak(ctx, cx, cy, v);
     }
 
     this.cache.set(cacheKey, canvas);
@@ -60,13 +62,13 @@ export class TerrariaIsometricFoliageRenderer {
     ctx.ellipse(cx, cy + 30, 24, 11, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(153, 27, 27, 0.2)';
+    ctx.fillStyle = 'rgba(80, 10, 10, 0.35)';
     ctx.beginPath();
     ctx.ellipse(cx, cy + 29, 18, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // 2. Clawed Thorn Roots clutching the earth
-    ctx.fillStyle = '#1c070a';
+    ctx.fillStyle = '#140305';
     // Left root
     ctx.beginPath();
     ctx.moveTo(cx - 5, cy + 18);
@@ -86,24 +88,24 @@ export class TerrariaIsometricFoliageRenderer {
 
     // 3. Gnarled, Charred Trunk with Blood Bark Ridges
     // Dark charred wood (Left Shadow)
-    ctx.fillStyle = '#2b0c10';
+    ctx.fillStyle = '#1a0608';
     ctx.fillRect(cx - 6, cy + 4, 6, 24);
-    ctx.fillStyle = '#150406';
+    ctx.fillStyle = '#0f0304';
     ctx.fillRect(cx - 7, cy + 6, 2, 22);
 
     // Weathered Dark Crimson Bark (Right Light)
-    ctx.fillStyle = '#4a131a';
+    ctx.fillStyle = '#2d0a0f';
     ctx.fillRect(cx, cy + 4, 6, 24);
-    ctx.fillStyle = '#611a23';
+    ctx.fillStyle = '#450f16';
     ctx.fillRect(cx + 3, cy + 6, 2, 20);
 
     // Pulsing Corrupted Blood Rune Fissure in trunk
-    ctx.fillStyle = '#991b1b';
+    ctx.fillStyle = '#7f1d1d';
     ctx.fillRect(cx - 2, cy + 12, 3, 7);
-    ctx.fillStyle = '#ef4444';
+    ctx.fillStyle = '#991b1b';
     ctx.fillRect(cx - 1, cy + 14, 2, 3);
 
-    // 4. Layered Terraria Foliage Clusters (Deep Blood / Wine Crimson)
+    // 4. Layered Terraria Foliage Clusters (Deep Wine / Blood Carmine)
     const puffOffsets = [
       { ox: 0, oy: -14, r: 21 },
       { ox: -13, oy: -4, r: 16 },
@@ -117,38 +119,38 @@ export class TerrariaIsometricFoliageRenderer {
     if (v === 3) puffOffsets[0].oy -= 3;
 
     // Pass 1: Blight Void Outline
-    ctx.fillStyle = '#180407';
+    ctx.fillStyle = '#0d0204';
     puffOffsets.forEach(p => {
       this.drawLeafPuff(ctx, cx + p.ox, cy + p.oy, p.r + 2);
     });
 
     // Pass 2: Deep Carmine Shadow
-    ctx.fillStyle = '#450a0a';
+    ctx.fillStyle = '#2b060a';
     puffOffsets.forEach(p => {
       this.drawLeafPuff(ctx, cx + p.ox, cy + p.oy, p.r);
     });
 
     // Pass 3: Blood Crimson Midtone
-    ctx.fillStyle = '#7f1d1d';
+    ctx.fillStyle = '#4f0d14';
     puffOffsets.forEach(p => {
       this.drawLeafPuff(ctx, cx + p.ox + 1, cy + p.oy - 2, p.r - 3);
     });
 
-    // Pass 4: Bright Crimson / Sanguine Edges
-    ctx.fillStyle = '#b91c1c';
+    // Pass 4: Weathered Sanguine Edges
+    ctx.fillStyle = '#771520';
     puffOffsets.forEach(p => {
       this.drawLeafPuff(ctx, cx + p.ox + 2, cy + p.oy - 4, p.r - 5);
     });
 
-    // Pass 5: Ember Pixel Highlights (Terraria Style)
-    ctx.fillStyle = '#f87171';
+    // Pass 5: Ember Pixel Highlights (Subtle Dark Fantasy)
+    ctx.fillStyle = '#991b1b';
     puffOffsets.forEach(p => {
       ctx.fillRect(cx + p.ox + 1, cy + p.oy - p.r + 3, 4, 3);
       ctx.fillRect(cx + p.ox + 4, cy + p.oy - p.r + 6, 3, 2);
     });
 
     // 5. Weeping Thorny Tendrils dripping downwards
-    ctx.fillStyle = '#7f1d1d';
+    ctx.fillStyle = '#4f0d14';
     // Tendril 1
     ctx.fillRect(cx - 14, cy + 6, 2, 10);
     ctx.fillRect(cx - 15, cy + 12, 1, 3);
@@ -161,8 +163,8 @@ export class TerrariaIsometricFoliageRenderer {
     // Tendril 4
     ctx.fillRect(cx + 15, cy + 6, 2, 9);
 
-    // Glowing ember tips at end of tendrils
-    ctx.fillStyle = '#ef4444';
+    // Dark ember tips at end of tendrils
+    ctx.fillStyle = '#7f1d1d';
     ctx.fillRect(cx - 6, cy + 24, 2, 2);
     ctx.fillRect(cx + 8, cy + 20, 2, 2);
   }
@@ -424,6 +426,179 @@ export class TerrariaIsometricFoliageRenderer {
     ctx.fillRect(cx - 12, cy - 28, 2, 2);
     ctx.fillRect(cx + 14, cy - 32, 2, 2);
     ctx.fillRect(cx + 4, cy - 22, 2, 2);
+  }
+
+  // =========================================================================
+  // 5. ANCIENT DARK OAK (Gothic / Dark Fantasy Gnarled Ancient Tree)
+  // Deep charcoal/moss-covered bark, layered olive & emerald canopy, hanging moss
+  // =========================================================================
+  private renderAncientDarkOak(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    v: number
+  ) {
+    // 1. Isometric Ground Shadow with deep woodland ambient occlusion
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 30, 26, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(15, 30, 15, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 29, 20, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Thick Gnarled Charcoal-Bark Oak Trunk & Creeping Roots
+    ctx.fillStyle = '#141210'; // Deep obsidian-bark shadow
+    // Left root
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy + 16);
+    ctx.lineTo(cx - 18, cy + 28);
+    ctx.lineTo(cx - 11, cy + 30);
+    ctx.lineTo(cx - 3, cy + 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right root
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy + 16);
+    ctx.lineTo(cx + 17, cy + 28);
+    ctx.lineTo(cx + 10, cy + 30);
+    ctx.lineTo(cx + 2, cy + 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // Central ancient trunk (dark aged oak wood)
+    ctx.fillStyle = '#1c1917'; // Left shadow side
+    ctx.fillRect(cx - 7, cy + 2, 7, 26);
+    ctx.fillStyle = '#292524'; // Right midtone side
+    ctx.fillRect(cx, cy + 2, 7, 26);
+
+    // Weathered bark striations & moss growth
+    ctx.fillStyle = '#44403c';
+    ctx.fillRect(cx + 3, cy + 5, 2, 18);
+    ctx.fillRect(cx - 4, cy + 10, 2, 12);
+
+    // Deep forest moss patches on trunk
+    ctx.fillStyle = '#14532d';
+    ctx.fillRect(cx - 6, cy + 14, 3, 8);
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(cx - 5, cy + 16, 2, 4);
+    ctx.fillRect(cx + 1, cy + 20, 3, 3);
+
+    // Ancient twisting branches reaching out
+    ctx.fillStyle = '#1c1917';
+    // Left major bough
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy + 4);
+    ctx.lineTo(cx - 18, cy - 8);
+    ctx.lineTo(cx - 14, cy - 11);
+    ctx.lineTo(cx - 1, cy - 1);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right major bough
+    ctx.fillStyle = '#292524';
+    ctx.beginPath();
+    ctx.moveTo(cx + 1, cy + 2);
+    ctx.lineTo(cx + 19, cy - 10);
+    ctx.lineTo(cx + 15, cy - 13);
+    ctx.lineTo(cx - 1, cy - 3);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Dense, Layered Dark Fantasy Foliage Canopy
+    const puffOffsets = [
+      { ox: 0, oy: -15, rx: 22, ry: 17 },
+      { ox: -15, oy: -6, rx: 17, ry: 14 },
+      { ox: 15, oy: -7, rx: 18, ry: 15 },
+      { ox: -8, oy: -26, rx: 16, ry: 13 },
+      { ox: 9, oy: -25, rx: 17, ry: 14 },
+      { ox: 0, oy: -32, rx: 14, ry: 11 },
+    ];
+
+    if (v === 1) {
+      puffOffsets[1].ox -= 3;
+      puffOffsets[3].oy -= 2;
+    } else if (v === 2) {
+      puffOffsets[2].ox += 3;
+      puffOffsets[4].oy -= 2;
+    } else if (v === 3) {
+      puffOffsets[0].ry += 2;
+      puffOffsets[5].oy -= 3;
+    }
+
+    // Pass 1: Deep shadow silhouette (Abyssal forest border)
+    ctx.fillStyle = '#051b0d';
+    puffOffsets.forEach(p => {
+      this.drawLeafCluster(ctx, cx + p.ox, cy + p.oy, p.rx + 2, p.ry + 2);
+    });
+
+    // Pass 2: Base Dark Woodland Evergreen
+    ctx.fillStyle = '#0f2915';
+    puffOffsets.forEach(p => {
+      this.drawLeafCluster(ctx, cx + p.ox, cy + p.oy, p.rx, p.ry);
+    });
+
+    // Pass 3: Rich Deep Olive-Emerald Midtone
+    ctx.fillStyle = '#164e2a';
+    puffOffsets.forEach(p => {
+      this.drawLeafCluster(ctx, cx + p.ox + 1, cy + p.oy - 2, p.rx - 3, p.ry - 3);
+    });
+
+    // Pass 4: Weathered Forest Sage Highlights
+    ctx.fillStyle = '#226938';
+    puffOffsets.forEach(p => {
+      this.drawLeafCluster(ctx, cx + p.ox + 2, cy + p.oy - 4, p.rx - 6, p.ry - 5);
+    });
+
+    // Pass 5: Subtle Autumn Moss & Amber Sunlit Leaf Pixels
+    ctx.fillStyle = '#3f7c46';
+    puffOffsets.forEach(p => {
+      ctx.fillRect(cx + p.ox + 2, cy + p.oy - p.ry + 4, 4, 3);
+      ctx.fillRect(cx + p.ox + 6, cy + p.oy - p.ry + 7, 3, 2);
+    });
+    ctx.fillStyle = '#847337'; // Amber acorn / golden autumn leaf fleck
+    ctx.fillRect(cx - 6, cy - 22, 2, 2);
+    ctx.fillRect(cx + 8, cy - 18, 2, 2);
+    ctx.fillRect(cx + 14, cy - 8, 2, 2);
+
+    // 4. Weeping Ivy & Spanish Moss tendrils hanging from lower boughs
+    ctx.fillStyle = '#14532d';
+    // Left hanging moss
+    ctx.fillRect(cx - 16, cy + 4, 2, 9);
+    ctx.fillRect(cx - 15, cy + 9, 1, 4);
+    // Center hanging moss
+    ctx.fillRect(cx - 5, cy + 6, 2, 11);
+    ctx.fillRect(cx - 4, cy + 13, 1, 3);
+    // Right hanging moss
+    ctx.fillRect(cx + 11, cy + 4, 2, 8);
+    ctx.fillRect(cx + 12, cy + 9, 1, 4);
+    ctx.fillRect(cx + 17, cy + 2, 2, 7);
+
+    // Light tips on ivy
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(cx - 16, cy + 13, 1, 2);
+    ctx.fillRect(cx - 5, cy + 17, 1, 2);
+    ctx.fillRect(cx + 11, cy + 12, 1, 2);
+  }
+
+  // =========================================================================
+  // HELPER: ORGANIC LEAF CLUSTER (ELLIPTICAL)
+  // =========================================================================
+  private drawLeafCluster(
+    ctx: CanvasRenderingContext2D,
+    px: number,
+    py: number,
+    rx: number,
+    ry: number
+  ) {
+    ctx.beginPath();
+    ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
+    ctx.ellipse(px - rx * 0.35, py + ry * 0.25, rx * 0.65, ry * 0.65, 0, 0, Math.PI * 2);
+    ctx.ellipse(px + rx * 0.35, py + ry * 0.25, rx * 0.65, ry * 0.65, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // =========================================================================

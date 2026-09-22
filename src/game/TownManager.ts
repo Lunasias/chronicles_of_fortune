@@ -10,8 +10,10 @@ export class TownManager {
 
     townNode.townData.isOccupiedByMonster = false;
     townNode.townData.ownerId = player.id;
-    player.townDeeds.push(townNode.id);
-    player.townsControlled++;
+    if (!player.townDeeds.includes(townNode.id)) {
+      player.townDeeds.push(townNode.id);
+    }
+    player.townsControlled = player.townDeeds.length;
 
     const goldReward = 150 + townNode.townData.level * 50;
     const xpReward = 80 + townNode.townData.level * 30;
@@ -86,14 +88,14 @@ export class TownManager {
 
     if (previousOwner) {
       previousOwner.townDeeds = previousOwner.townDeeds.filter(id => id !== townNode.id);
-      previousOwner.townsControlled = Math.max(0, previousOwner.townsControlled - 1);
+      previousOwner.townsControlled = previousOwner.townDeeds.length;
     }
 
     townNode.townData.ownerId = newOwner.id;
     if (!newOwner.townDeeds.includes(townNode.id)) {
       newOwner.townDeeds.push(townNode.id);
-      newOwner.townsControlled++;
     }
+    newOwner.townsControlled = newOwner.townDeeds.length;
   }
 
   // Collect daily turn income from all owned towns

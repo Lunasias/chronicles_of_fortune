@@ -27,8 +27,8 @@ export class IsometricRenderer {
     y: 0,
     targetX: 0,
     targetY: 0,
-    zoom: 1.0,
-    targetZoom: 1.0
+    zoom: 1.1,
+    targetZoom: 1.1
   };
 
   // Hover & Destination Selection
@@ -310,34 +310,43 @@ export class IsometricRenderer {
         continue;
       }
 
-      // Layer 1: Soft natural path edge blending into the continuous ground
+      // Layer 1: Soft natural path edge & worn earth embankment
       ctx.strokeStyle = seg.edgeColor;
-      ctx.lineWidth = 10;
+      ctx.lineWidth = 12;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Layer 2: Main packed dirt/cobblestone trail body
+      // Layer 2: Main packed dirt/cobblestone trail bed
       ctx.strokeStyle = seg.roadColor;
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 7;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Layer 3: Natural stone flagstone stepping pavers (subtle fantasy stepping stones, no modern dashed lane stripes)
+      // Layer 3: Weathered flagstone stepping pavers
       ctx.strokeStyle = seg.dashColor;
-      ctx.lineWidth = 2.0;
+      ctx.lineWidth = 3.0;
       ctx.lineCap = 'round';
-      ctx.setLineDash([3, 9]);
+      ctx.setLineDash([4, 8]);
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // Layer 4: Worn pathway rut & central stone fissure
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = 1.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
+      ctx.stroke();
     }
   }
 
@@ -634,11 +643,13 @@ export class IsometricRenderer {
             const treeType =
               node.biome === 'snow'
                 ? 'frost_pine'
-                : node.biome === 'forest' || node.biome === 'abyss'
+                : node.biome === 'abyss' || node.biome === 'cavern'
                 ? 'gloom_spore'
-                : node.biome === 'volcano' || node.biome === 'desert' || node.biome === 'cavern'
+                : node.biome === 'volcano' || node.biome === 'desert'
                 ? 'ash_thorn'
-                : 'blood_willow';
+                : node.biome === 'forest'
+                ? (node.id % 4 === 0 ? 'gloom_spore' : 'dark_oak')
+                : 'dark_oak';
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
             ctx.drawImage(tree, px + 20, py - 68, 64, 84);
           }
@@ -1154,7 +1165,7 @@ export class IsometricRenderer {
   }
 
   // Reset to default comfortable tactical board zoom
-  resetTacticalZoom(targetZoom = 1.0) {
+  resetTacticalZoom(targetZoom = 1.1) {
     this.camera.targetZoom = targetZoom;
   }
 }

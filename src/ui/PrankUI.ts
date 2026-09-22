@@ -5,6 +5,7 @@ import { townManager } from '../game/TownManager';
 
 export class PrankUI {
   private game: GameState;
+  private currentWinner: Player | null = null;
   private currentVictim: Player | null = null;
   private onFinishedCallback?: () => void;
   private selectedPrankType: 'mustache' | 'spiral' | 'clown' = 'mustache';
@@ -34,20 +35,20 @@ export class PrankUI {
     document.getElementById('btnConfirmPrank')?.addEventListener('click', () => this.handleConfirmPrank());
   }
 
-  open(victim: Player, onFinished: () => void) {
+  open(winner: Player, victim: Player, onFinished: () => void) {
+    this.currentWinner = winner;
     this.currentVictim = victim;
     this.onFinishedCallback = onFinished;
 
     const modal = document.getElementById('pvpSpoilsModal')!;
-    document.getElementById('pvpDefeatedPlayerDesc')!.innerText = `คุณบดขยี้ ${victim.name}! เลือกของรางวัลแห่งชัยชนะ หรือจะลงโทษให้ขายหน้าดี:`;
+    document.getElementById('pvpDefeatedPlayerDesc')!.innerText = `${winner.displayName} บดขยี้ ${victim.name}! เลือกของรางวัลแห่งชัยชนะ หรือจะลงโทษให้ขายหน้าดี:`;
     document.getElementById('spoilsGoldAmount')!.innerText = `ยึด ${victim.gold}G`;
 
     document.getElementById('prankCanvasContainer')?.classList.add('hidden');
     modal.classList.remove('hidden');
 
-    // AI bot choice
-    const p = this.game.activePlayer;
-    if (p.isAI) {
+    // AI bot choice (check if WINNER is AI)
+    if (winner.isAI) {
       setTimeout(() => {
         if (victim.townDeeds.length > 0) {
           this.handleStealTown();
@@ -64,7 +65,7 @@ export class PrankUI {
 
   private handleStealGold() {
     if (!this.currentVictim) return;
-    const p = this.game.activePlayer;
+    const p = this.currentWinner || this.game.activePlayer;
     const amount = this.currentVictim.gold;
 
     this.currentVictim.gold = 0;
@@ -77,7 +78,7 @@ export class PrankUI {
 
   private handleStealEquip() {
     if (!this.currentVictim) return;
-    const p = this.game.activePlayer;
+    const p = this.currentWinner || this.game.activePlayer;
     const v = this.currentVictim;
 
     if (v.equipment.weapon) {
@@ -102,7 +103,7 @@ export class PrankUI {
 
   private handleStealTown() {
     if (!this.currentVictim) return;
-    const p = this.game.activePlayer;
+    const p = this.currentWinner || this.game.activePlayer;
     const v = this.currentVictim;
 
     if (v.townDeeds.length > 0) {
@@ -130,7 +131,7 @@ export class PrankUI {
 
   private handleConfirmPrank() {
     if (!this.currentVictim) return;
-    const p = this.game.activePlayer;
+    const p = this.currentWinner || this.game.activePlayer;
     const sillyName = (document.getElementById('inputPrankName') as HTMLInputElement).value.trim() || 'Dummy';
 
     this.currentVictim.applyPrank(this.selectedPrankType, sillyName, 14);
@@ -142,6 +143,7 @@ export class PrankUI {
 
   private close() {
     document.getElementById('pvpSpoilsModal')?.classList.add('hidden');
+    this.currentWinner = null;
     this.currentVictim = null;
     if (this.onFinishedCallback) {
       this.onFinishedCallback();
