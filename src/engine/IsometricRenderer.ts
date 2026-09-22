@@ -443,30 +443,34 @@ export class IsometricRenderer {
         node.type === 'guild' ||
         node.type === 'fishing' ||
         node.type === 'isekai_event' ||
-        node.type === 'mystery_chest'
+        node.type === 'mystery_chest' ||
+        node.type === 'home'
       ) {
         renderList.push({
           depth: depth + 40,
           draw: () => {
             const ownerColor = node.townData?.ownerId
               ? players.find(pl => pl.id === node.townData!.ownerId)?.color || null
+              : node.homeData?.ownerId
+              ? players.find(pl => pl.id === node.homeData!.ownerId)?.color || null
               : null;
 
             // Soft two-tier ambient occlusion & ground contact shadow
             ctx.save();
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
             ctx.beginPath();
-            ctx.ellipse(px, py + 4, 42, 16, 0, 0, Math.PI * 2);
+            ctx.ellipse(px, py + 16, 42, 16, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.beginPath();
-            ctx.ellipse(px, py + 2, 34, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(px, py + 14, 34, 12, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
             const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
-            ctx.drawImage(bld, px - 48, py - 68, 96, 96);
+            // Solidly seated directly on the circular node dais (Y offset py - 52)
+            ctx.drawImage(bld, px - 48, py - 52, 96, 96);
 
             // Overhead High-Contrast Badge / Signboard for Every Building
             interface BadgeConfig {
@@ -479,7 +483,25 @@ export class IsometricRenderer {
 
             let badge: BadgeConfig | null = null;
 
-            if (node.type === 'town') {
+            if (node.type === 'home') {
+              const homeOwner = node.homeData?.ownerName || 'ผู้กล้า';
+              const labelText = `🏡 บ้านพักของ ${homeOwner}`;
+              ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
+              const textMetrics = ctx.measureText(labelText);
+              const bW = Math.max(80, textMetrics.width + 16);
+
+              ctx.fillStyle = 'rgba(6, 78, 59, 0.94)';
+              ctx.beginPath();
+              ctx.roundRect(px - bW / 2, py - 68, bW, 16, 4);
+              ctx.fill();
+              ctx.strokeStyle = '#10b981';
+              ctx.lineWidth = isHighlighted || isHovered ? 2.0 : 1.2;
+              ctx.stroke();
+
+              ctx.fillStyle = '#6ee7b7';
+              ctx.textAlign = 'center';
+              ctx.fillText(labelText, px, py - 56);
+            } else if (node.type === 'town') {
               if (node.townData?.isOccupiedByMonster) {
                 const curHp = node.townData.monsterHp;
                 const maxHp = node.townData.monsterMaxHp || curHp;
@@ -489,7 +511,7 @@ export class IsometricRenderer {
 
                 ctx.fillStyle = 'rgba(69, 10, 10, 0.95)';
                 ctx.beginPath();
-                ctx.roundRect(px - badgeW / 2, py - 84, badgeW, 26, 4);
+                ctx.roundRect(px - badgeW / 2, py - 70, badgeW, 26, 4);
                 ctx.fill();
                 ctx.strokeStyle = isWeakened ? '#ef4444' : '#f59e0b';
                 ctx.lineWidth = 1.5;
@@ -498,17 +520,17 @@ export class IsometricRenderer {
                 ctx.fillStyle = '#fca5a5';
                 ctx.font = 'bold 9px "Kanit", "Prompt", sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(`💀 มอนสเตอร์ยึดครอง!`, px, py - 72);
+                ctx.fillText(`💀 มอนสเตอร์ยึดครอง!`, px, py - 58);
 
                 const barW = badgeW - 14;
                 ctx.fillStyle = '#0f172a';
-                ctx.fillRect(px - barW / 2, py - 68, barW, 5);
+                ctx.fillRect(px - barW / 2, py - 54, barW, 5);
                 ctx.fillStyle = hpPct < 0.35 ? '#ef4444' : '#f59e0b';
-                ctx.fillRect(px - barW / 2, py - 68, barW * hpPct, 5);
+                ctx.fillRect(px - barW / 2, py - 54, barW * hpPct, 5);
 
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '7px Silkscreen';
-                ctx.fillText(`${curHp}/${maxHp}`, px, py - 59);
+                ctx.fillText(`${curHp}/${maxHp}`, px, py - 45);
               } else {
                 const townLvl = node.townData?.level || 1;
                 const townName = node.name || 'โอ๊คเชียร์';
@@ -519,7 +541,7 @@ export class IsometricRenderer {
 
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
                 ctx.beginPath();
-                ctx.roundRect(px - bW / 2, py - 82, bW, 16, 4);
+                ctx.roundRect(px - bW / 2, py - 68, bW, 16, 4);
                 ctx.fill();
                 ctx.strokeStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#f59e0b');
                 ctx.lineWidth = isHighlighted || isHovered ? 2.0 : 1.2;
@@ -527,7 +549,7 @@ export class IsometricRenderer {
 
                 ctx.fillStyle = isHighlighted ? '#00f0ff' : (ownerColor || '#fde047');
                 ctx.textAlign = 'center';
-                ctx.fillText(labelText, px, py - 70);
+                ctx.fillText(labelText, px, py - 56);
               }
             } else if (node.type === 'shop_weapon') {
               badge = {
@@ -635,7 +657,7 @@ export class IsometricRenderer {
 
               ctx.fillStyle = badge.bgColor;
               ctx.beginPath();
-              ctx.roundRect(px - bW / 2, py - 82, bW, 16, 4);
+              ctx.roundRect(px - bW / 2, py - 68, bW, 16, 4);
               ctx.fill();
 
               ctx.strokeStyle = isHovered || isHighlighted ? '#00f0ff' : badge.borderColor;
@@ -644,7 +666,7 @@ export class IsometricRenderer {
 
               ctx.fillStyle = isHovered || isHighlighted ? '#ffffff' : badge.textColor;
               ctx.textAlign = 'center';
-              ctx.fillText(fullText, px, py - 70);
+              ctx.fillText(fullText, px, py - 56);
             }
           }
         });

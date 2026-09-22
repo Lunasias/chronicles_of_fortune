@@ -64,6 +64,9 @@ export class TerrariaIsometricBuildingRenderer {
       case 'mystery_chest':
         this.renderIsometricWonderChest(ctx, cx, cy);
         break;
+      case 'home':
+        this.renderIsometricCozyHome(ctx, cx, cy, ownerColor);
+        break;
       default:
         this.renderIsometricCastleCitadel(ctx, cx, cy, ownerColor);
         break;
@@ -1126,6 +1129,73 @@ export class TerrariaIsometricBuildingRenderer {
     ctx.lineTo(cx + w / 2, cy);
     ctx.lineTo(cx, cy + h / 2);
     ctx.lineTo(cx - w / 2, cy);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // -------------------------------------------------------------------------
+  // 13. ISOMETRIC COZY HOME (บ้านพักผ่อนของผู้กล้า)
+  // Stone foundation, warm timber walls, smoking chimney, flower window box
+  // -------------------------------------------------------------------------
+  private renderIsometricCozyHome(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    ownerColor: string | null
+  ) {
+    const flagColor = ownerColor || '#10b981';
+
+    // 1. Soft Ground Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 16, 36, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Timber & Stone Cottage Walls
+    // Left Wall (Shadow side)
+    this.drawIsoWallLeft(ctx, cx, cy + 14, 26, 24, '#78350f', '#451a03', '#92400e');
+    // Right Wall (Sunlit side)
+    this.drawIsoWallRight(ctx, cx, cy + 14, 26, 24, '#b45309', '#78350f', '#d97706');
+
+    // 3. Front Door on SE Wall
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(cx + 4, cy + 1, 6, 11);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(cx + 8, cy + 6, 1.5, 1.5); // Brass handle
+
+    // 4. Glowing Window with Flower Box
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(cx - 10, cy - 1, 5, 5);
+    ctx.fillStyle = '#f472b6';
+    ctx.fillRect(cx - 11, cy + 4, 7, 2.5); // Flowers
+
+    // 5. Terracotta Pitched Roof
+    this.drawIsoPitchedRoof(ctx, cx, cy - 10, 30, 30, 16, '#047857', '#065f46', '#10b981', '#34d399');
+
+    // 6. Brick Fireplace Chimney with Rising Smoke
+    const chx = cx - 11;
+    const chy = cy - 24;
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(chx, chy, 7, 16);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(chx - 1, chy, 9, 3);
+
+    // Puffing smoke motes
+    ctx.fillStyle = 'rgba(241, 245, 249, 0.7)';
+    ctx.beginPath();
+    ctx.arc(chx + 3, chy - 5, 3, 0, Math.PI * 2);
+    ctx.arc(chx + 6, chy - 11, 4, 0, Math.PI * 2);
+    ctx.arc(chx + 10, chy - 18, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 7. Player Crest Flag
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(cx + 6, cy - 32, 2, 16); // Pole
+    ctx.fillStyle = flagColor;
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy - 32);
+    ctx.lineTo(cx + 18, cy - 27);
+    ctx.lineTo(cx + 8, cy - 22);
     ctx.closePath();
     ctx.fill();
   }

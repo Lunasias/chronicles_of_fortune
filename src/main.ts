@@ -22,6 +22,8 @@ import { ecosystemSystem } from './game/EcosystemSystem';
 
 import { WonderChestUI } from './ui/WonderChestUI';
 import { InspectUI } from './ui/InspectUI';
+import { HomeUI } from './ui/HomeUI';
+import { FantasyEventUI } from './ui/FantasyEventUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { SaveManager } from './game/SaveManager';
 
@@ -39,6 +41,8 @@ class DokaponApp {
   private isekaiEventUI: IsekaiEventUI;
   private wonderChestUI: WonderChestUI;
   private inspectUI: InspectUI;
+  private homeUI: HomeUI;
+  private fantasyEventUI: FantasyEventUI;
 
   private isDragging = false;
   private dragStartX = 0;
@@ -63,6 +67,8 @@ class DokaponApp {
     this.isekaiEventUI = new IsekaiEventUI(this.game);
     this.wonderChestUI = new WonderChestUI(this.game);
     this.inspectUI = new InspectUI(this.game);
+    this.homeUI = new HomeUI(this.game);
+    this.fantasyEventUI = new FantasyEventUI(this.game);
 
     this.hud.onInspectPlayerCallback = (pl) => {
       this.inspectUI.openInspect(pl);
@@ -711,29 +717,45 @@ class DokaponApp {
         this.shopUI.open(tile.type, () => this.advanceTurn());
         break;
 
+      case 'home':
+        this.homeUI.openHome(tile, p, () => this.advanceTurn());
+        break;
+
       case 'blue':
-        const bonus = 45 + Math.floor(Math.random() * 60);
-        p.gold += bonus;
-        audio.coin();
-        this.game.addLog(`🪙 ช่องโชคดี! ${p.displayName} ได้รับพรแห่งโชคลาภ (+${bonus}G)!`, 'gold');
-        this.advanceTurn();
+        if (Math.random() < 0.35) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          const bonus = 45 + Math.floor(Math.random() * 60);
+          p.gold += bonus;
+          audio.coin();
+          this.game.addLog(`🪙 ช่องโชคดี! ${p.displayName} ได้รับพรแห่งโชคลาภ (+${bonus}G)!`, 'gold');
+          this.advanceTurn();
+        }
         break;
 
       case 'red':
-        const penalty = Math.min(p.gold, 35 + Math.floor(Math.random() * 40));
-        p.gold -= penalty;
-        p.hp = Math.max(10, p.hp - 15);
-        audio.hurt();
-        this.game.addLog(`💀 ช่องอันตราย! ${p.displayName} โดนกับดักหนาม (-${penalty}G, -15 HP)!`);
-        this.advanceTurn();
+        if (Math.random() < 0.35) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          const penalty = Math.min(p.gold, 35 + Math.floor(Math.random() * 40));
+          p.gold -= penalty;
+          p.hp = Math.max(10, p.hp - 15);
+          audio.hurt();
+          this.game.addLog(`💀 ช่องอันตราย! ${p.displayName} โดนกับดักหนาม (-${penalty}G, -15 HP)!`);
+          this.advanceTurn();
+        }
         break;
 
       case 'church':
-        p.hp = p.maxHp;
-        p.mp = p.maxMp;
-        audio.levelUp();
-        this.game.addLog(`✨ วิหารศักดิ์สิทธิ์! ${p.displayName} ได้รับการชำระล้างและรับพร (ฟื้นฟูเต็มที่)!`);
-        this.advanceTurn();
+        if (Math.random() < 0.45) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          p.hp = p.maxHp;
+          p.mp = p.maxMp;
+          audio.levelUp();
+          this.game.addLog(`✨ วิหารศักดิ์สิทธิ์! ${p.displayName} ได้รับการชำระล้างและรับพร (ฟื้นฟูเต็มที่)!`);
+          this.advanceTurn();
+        }
         break;
 
       case 'dark_gate':
@@ -758,15 +780,27 @@ class DokaponApp {
         break;
 
       case 'boss':
-        this.initiateBossBattle();
+        if (!p.companion && Math.random() < 0.40) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          this.initiateBossBattle();
+        }
         break;
 
       case 'tavern':
-        this.isekaiEventUI.openTavern(p, () => this.advanceTurn());
+        if (Math.random() < 0.45) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          this.isekaiEventUI.openTavern(p, () => this.advanceTurn());
+        }
         break;
 
       case 'guild':
-        this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
+        if (Math.random() < 0.35) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else {
+          this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
+        }
         break;
 
       case 'fishing':
@@ -778,13 +812,36 @@ class DokaponApp {
         break;
 
       case 'isekai_event':
-        this.isekaiEventUI.openShrine(p, () => this.advanceTurn());
+        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'empty':
       default:
-        // 25% chance of Highway Bandit Ambush on open roads!
-        if (Math.random() < 0.25) {
+        if (tile.homeData) {
+          this.homeUI.openHome(tile, p, () => this.advanceTurn());
+        } else if (p.homeNodeId === null && p.gold >= 150) {
+          this.homeUI.openHome(
+            tile,
+            p,
+            () => this.advanceTurn(),
+            () => {
+              // If skipped buying plot, resolve empty tile event
+              if (Math.random() < 0.45) {
+                this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+              } else if (Math.random() < 0.25) {
+                this.isekaiEventUI.openBanditAmbush(
+                  p,
+                  () => this.advanceTurn(),
+                  () => this.initiateBanditCombat()
+                );
+              } else {
+                this.initiateRandomEncounter(tile);
+              }
+            }
+          );
+        } else if (Math.random() < 0.45) {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        } else if (Math.random() < 0.25) {
           this.isekaiEventUI.openBanditAmbush(
             p,
             () => this.advanceTurn(),
@@ -831,17 +888,41 @@ class DokaponApp {
         return;
       }
 
-      // Dokapon Kingdom rule: Send knocked-out player back to Dokapon Castle (node 0)
-      const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
-      loserPlayer.nodeId = castleNode.id;
-      loserPlayer.gridX = castleNode.gx;
-      loserPlayer.gridY = castleNode.gy;
-      loserPlayer.gridZ = castleNode.gz;
-      loserPlayer.hp = Math.max(1, Math.floor(loserPlayer.maxHp * 0.5));
-      this.game.addLog(`🚑 ${loserPlayer.displayName} ถูกน็อคและถูกพากลับไปฟื้นฟูที่ Dokapon Castle!`, 'battle');
+      // Respawn knocked-out player at personal Home (if owned) or Dokapon Castle
+      this.respawnPlayer(loserPlayer, winnerPlayer.displayName, 0);
 
       this.prankUI.open(winnerPlayer, loserPlayer, () => this.advanceTurn());
     });
+  }
+
+  private respawnPlayer(player: Player, causeName: string, lostGold: number) {
+    if (player.homeNodeId !== null) {
+      const homeNode = this.game.allNodes.find(n => n.id === player.homeNodeId);
+      if (homeNode) {
+        player.nodeId = homeNode.id;
+        player.gridX = homeNode.gx;
+        player.gridY = homeNode.gy;
+        player.gridZ = homeNode.gz;
+        player.hp = player.maxHp; // Safe haven Home provides 100% full recovery!
+        player.mp = player.maxMp;
+        this.game.addLog(
+          `🏡 จุดเกิดใหม่บ้านพัก! ${player.displayName} พ่ายแพ้ต่อ ${causeName} (สูญเสีย ${lostGold}G) แต่วาร์ปกลับมารักษาตัวที่บ้านพักส่วนตัวอันอบอุ่นจนฟื้นฟูเต็ม 100%!`,
+          'battle'
+        );
+        return;
+      }
+    }
+
+    const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
+    player.nodeId = castleNode.id;
+    player.gridX = castleNode.gx;
+    player.gridY = castleNode.gy;
+    player.gridZ = castleNode.gz;
+    player.hp = Math.max(1, Math.floor(player.maxHp * 0.5));
+    this.game.addLog(
+      `🚑 ${player.displayName} ถูก ${causeName} ปราบลง เสียเงินสด ${lostGold}G และถูกส่งกลับไปรักษาตัวที่ Dokapon Castle! (ฟื้นฟู 50%)`,
+      'battle'
+    );
   }
 
 
@@ -928,13 +1009,7 @@ class DokaponApp {
             // Player knocked out by town monster!
             const lostGold = Math.floor(loser.playerRef.gold * 0.35);
             loser.playerRef.gold -= lostGold;
-            const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
-            loser.playerRef.nodeId = castleNode.id;
-            loser.playerRef.gridX = castleNode.gx;
-            loser.playerRef.gridY = castleNode.gy;
-            loser.playerRef.gridZ = castleNode.gz;
-            loser.playerRef.hp = Math.max(1, Math.floor(loser.playerRef.maxHp * 0.5));
-            this.game.addLog(`🚑 ${loser.playerRef.displayName} ถูก ${data.monsterName} ปราบลง เสียเงินสด ${lostGold}G และถูกนำตัวส่ง Dokapon Castle!`, 'battle');
+            this.respawnPlayer(loser.playerRef, data.monsterName, lostGold);
           } else {
             // Player retreated / fled!
             const bribeGold = Math.floor(loser.playerRef.gold * 0.10);
@@ -978,10 +1053,12 @@ class DokaponApp {
       solaria: ['Forest Goblin Marauder', 'Briar Kobold', 'Royal Slime Bloblet', 'Meadow Wolf', 'Shadow Panther'],
       frostpeak: ['Frost Skeleton Soldier', 'Glacial Yeti Scout', 'Ice Wyrmling', 'Ice Golem', 'Frost Crypt Bat'],
       sunfire: ['Dune Bandit Raider', 'Sandstone Mummy', 'Brimstone Fire Imp', 'Magma Scorpion', 'Obsidian Automaton'],
-      abyss: ['Nether Shadow Knight', 'Chaos Slime', 'Abyssal Siren', 'Lesser Kraken', 'Void Bat']
+      abyss: ['Nether Shadow Knight', 'Chaos Slime', 'Abyssal Siren', 'Lesser Kraken', 'Void Bat'],
+      steampunk: ['Steampunk Automaton Princess Alice', 'Steam Gear Gunner Victoria', 'Clockwork Maid Nicole'],
+      sakura_shrine: ['Kitsune Shrine Maiden Chiyo', 'Sakura Blossom Tengu Ayame', 'Dryad Nymph Alura']
     };
 
-    const roster = biomeMonsters[tile.realmId] || ['Forest Goblin Marauder', 'Royal Slime Bloblet', 'Briar Kobold'];
+    const roster = biomeMonsters[tile.biome || ''] || biomeMonsters[tile.realmId] || ['Forest Goblin Marauder', 'Royal Slime Bloblet', 'Briar Kobold'];
     const pickedName = roster[Math.floor(Math.random() * roster.length)];
 
     const monsterCombatant: Combatant = {
@@ -1010,13 +1087,7 @@ class DokaponApp {
           // Player knocked out by wild monster!
           const lostGold = Math.floor(loser.playerRef.gold * 0.35);
           loser.playerRef.gold -= lostGold;
-          const castleNode = this.game.allNodes.find(n => n.id === 0) || this.game.allNodes[0];
-          loser.playerRef.nodeId = castleNode.id;
-          loser.playerRef.gridX = castleNode.gx;
-          loser.playerRef.gridY = castleNode.gy;
-          loser.playerRef.gridZ = castleNode.gz;
-          loser.playerRef.hp = Math.max(1, Math.floor(loser.playerRef.maxHp * 0.5));
-          this.game.addLog(`🚑 ${loser.playerRef.displayName} ถูก ${pickedName} ปราบลง เสียเงินสด ${lostGold}G และถูกส่งกลับไปรักษาตัวที่ Dokapon Castle!`, 'battle');
+          this.respawnPlayer(loser.playerRef, pickedName, lostGold);
         } else {
           // Player fled successfully!
           const bribeGold = Math.floor(loser.playerRef.gold * 0.10);
@@ -1049,6 +1120,10 @@ class DokaponApp {
         winner.playerRef.gainXP(80);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${monsterName} (+120G, +80 EXP)!`);
+      } else if (loser.playerRef) {
+        const lostGold = Math.floor(loser.playerRef.gold * 0.25);
+        loser.playerRef.gold -= lostGold;
+        this.respawnPlayer(loser.playerRef, monsterName, lostGold);
       }
       this.advanceTurn();
     });
@@ -1075,6 +1150,10 @@ class DokaponApp {
         winner.playerRef.gainXP(90);
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น Bandit Chief Garak และยึด ${stolenGold}G (+90 EXP)!`);
+      } else if (loser.playerRef) {
+        const lostGold = Math.floor(loser.playerRef.gold * 0.35);
+        loser.playerRef.gold -= lostGold;
+        this.respawnPlayer(loser.playerRef, 'Bandit Chief Garak', lostGold);
       }
       this.advanceTurn();
     });
@@ -1084,7 +1163,7 @@ class DokaponApp {
     this.game.addLog(`⚠️ มังกรโบราณผู้ยิ่งใหญ่จุติลงมา! การต่อสู้แห่งตำนาน! (HP: ${this.bossCurrentHp}/${this.bossMaxHp})`, 'battle');
 
     const bossCombatant: Combatant = {
-      name: 'Dragon King Ignis',
+      name: 'Dragon Princess Ignis',
       hp: this.bossCurrentHp,
       maxHp: this.bossMaxHp,
       mp: 80,
@@ -1101,13 +1180,18 @@ class DokaponApp {
       if (winner.playerRef) {
         this.bossCurrentHp = 0;
         isekaiEventManager.onGameAction(winner.playerRef, 'boss');
-        this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารมังกรผู้ยิ่งใหญ่! ความรุ่งโรจน์นิรันดร์!`, 'level');
+        this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารเจ้าหญิงมังกรเพลิงบรรพกาล! ความรุ่งโรจน์นิรันดร์!`, 'level');
         this.game.phase = 'VICTORY';
-        this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon King Ignis');
+        this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon Princess Ignis');
       } else {
         // Dragon survived! Persist remaining boss HP
         this.bossCurrentHp = Math.max(1, Math.ceil(winner.hp));
-        this.game.addLog(`🐉 Dragon King Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${this.bossMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากเขาได้!`, 'battle');
+        this.game.addLog(`🐉 Dragon Princess Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${this.bossMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากได้!`, 'battle');
+        if (loser.playerRef) {
+          const lostGold = Math.floor(loser.playerRef.gold * 0.40);
+          loser.playerRef.gold -= lostGold;
+          this.respawnPlayer(loser.playerRef, 'Dragon Princess Ignis', lostGold);
+        }
         this.advanceTurn();
       }
     });

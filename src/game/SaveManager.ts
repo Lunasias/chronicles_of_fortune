@@ -58,6 +58,8 @@ export interface SerializedPlayer {
   className: string;
   avatar: string;
   skillName: string;
+  homeNodeId: number | null;
+  companion: any;
 }
 
 export interface SaveGameData {
@@ -71,6 +73,7 @@ export interface SaveGameData {
   phase: string;
   players: SerializedPlayer[];
   townStates: Array<{ nodeId: number; townData: TownData }>;
+  homeStates?: Array<{ nodeId: number; homeData: any; type: string }>;
   logs: Array<{ text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }>;
   bossCurrentHp?: number;
   bossMaxHp?: number;
@@ -105,13 +108,19 @@ export class SaveManager {
         isDarkling: p.isDarkling, darklingTurnsLeft: p.darklingTurnsLeft,
         backupNormalStats: p.backupNormalStats ? JSON.parse(JSON.stringify(p.backupNormalStats)) : null,
         prank: JSON.parse(JSON.stringify(p.prank)),
-        color: p.color, className: p.className, avatar: p.avatar, skillName: p.skillName
+        color: p.color, className: p.className, avatar: p.avatar, skillName: p.skillName,
+        homeNodeId: p.homeNodeId,
+        companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null
       }));
 
       const townStates: Array<{ nodeId: number; townData: TownData }> = [];
+      const homeStates: Array<{ nodeId: number; homeData: any; type: string }> = [];
       game.allNodes.forEach(n => {
         if (n.townData) {
           townStates.push({ nodeId: n.id, townData: JSON.parse(JSON.stringify(n.townData)) });
+        }
+        if (n.homeData) {
+          homeStates.push({ nodeId: n.id, homeData: JSON.parse(JSON.stringify(n.homeData)), type: n.type });
         }
       });
 
@@ -120,7 +129,7 @@ export class SaveManager {
         dayCounter: game.dayCounter, weekCounter: game.weekCounter,
         winGoal: game.winGoal, activePlayerIdx: game.activePlayerIdx,
         phase: (game.phase as string) === 'BATTLE' || (game.phase as string) === 'PVP_CHOICE' ? 'BOARD_TURN' : game.phase,
-        players: serializedPlayers, townStates,
+        players: serializedPlayers, townStates, homeStates,
         logs: JSON.parse(JSON.stringify(game.logs.slice(0, 30))),
         bossCurrentHp: bossState?.currentHp,
         bossMaxHp: bossState?.maxHp
@@ -178,6 +187,8 @@ export class SaveManager {
         p.className = sp.className || p.className;
         p.avatar = sp.avatar || p.avatar;
         p.skillName = sp.skillName || p.skillName;
+        p.homeNodeId = sp.homeNodeId ?? null;
+        p.companion = sp.companion ?? null;
         return p;
       });
 
@@ -187,6 +198,18 @@ export class SaveManager {
         game.allNodes.forEach(node => {
           if (townMap.has(node.id)) {
             node.townData = townMap.get(node.id);
+          }
+        });
+      }
+
+      if (data.homeStates && Array.isArray(data.homeStates)) {
+        const homeMap = new Map<number, { homeData: any; type: string }>();
+        data.homeStates.forEach(hs => homeMap.set(hs.nodeId, hs));
+        game.allNodes.forEach(node => {
+          if (homeMap.has(node.id)) {
+            const hs = homeMap.get(node.id)!;
+            node.homeData = hs.homeData;
+            node.type = hs.type as any;
           }
         });
       }

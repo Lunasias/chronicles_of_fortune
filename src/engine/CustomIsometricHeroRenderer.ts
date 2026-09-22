@@ -291,8 +291,95 @@ export class CustomIsometricHeroRenderer {
     cx: number,
     cy: number,
     isRight: boolean,
-    colors: { base: string; highlight: string; shadow: string; trim?: string }
+    colors: { base: string; highlight: string; shadow: string; trim?: string },
+    exposedMidriff = false,
+    skinTone = '#ffedd5'
   ) {
+    if (exposedMidriff) {
+      // 1. Crop-top bustier / bra-armor with cleavage
+      ctx.fillStyle = colors.shadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, cy - 8);
+      ctx.lineTo(cx + 6, cy - 8);
+      ctx.quadraticCurveTo(cx + 7, cy - 2, cx + 4.5, cy + 2);
+      ctx.lineTo(cx - 4.5, cy + 2);
+      ctx.quadraticCurveTo(cx - 7, cy - 2, cx - 6, cy - 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = colors.base;
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, cy - 7);
+      ctx.lineTo(cx + 5, cy - 7);
+      ctx.quadraticCurveTo(cx + 6, cy - 2, cx + 4, cy + 1);
+      ctx.lineTo(cx - 4, cy + 1);
+      ctx.quadraticCurveTo(cx - 6, cy - 2, cx - 5, cy - 7);
+      ctx.closePath();
+      ctx.fill();
+
+      // Volumetric Bust Curves with cleavage
+      ctx.fillStyle = colors.highlight;
+      ctx.beginPath();
+      ctx.ellipse(cx - 2.8, cy - 2.5, 3.2, 2.6, -0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 2.8, cy - 2.5, 3.2, 2.6, 0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = colors.shadow;
+      ctx.fillRect(cx - 0.5, cy - 4.5, 1, 4);
+
+      // Gold/color trim on bustier underbust
+      if (colors.trim) {
+        ctx.fillStyle = colors.trim;
+        ctx.fillRect(cx - 4.5, cy + 1, 9, 1.2);
+      }
+
+      // 2. EXPOSED TONED MIDRIFF (ชุดโชว์หน้าท้อง เอวเอส สะดือชัดเจน)
+      // Soft feminine skin fill for bare tummy
+      ctx.fillStyle = skinTone;
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy + 2);
+      ctx.lineTo(cx + 4, cy + 2);
+      ctx.quadraticCurveTo(cx + 6, cy + 6, cx + 5.5, cy + 8);
+      ctx.lineTo(cx - 5.5, cy + 8);
+      ctx.quadraticCurveTo(cx - 6, cy + 6, cx - 4, cy + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle abdominal midline contour (11-line abs)
+      ctx.fillStyle = 'rgba(180, 83, 9, 0.18)';
+      ctx.fillRect(cx - 0.4, cy + 2.5, 0.8, 4);
+      ctx.fillRect(cx - 4.5, cy + 3.5, 1, 3);
+      ctx.fillRect(cx + 3.5, cy + 3.5, 1, 3);
+
+      // Cute feminine navel with depth shadow & highlight
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(cx - 0.6, cy + 6.2, 1.2, 1.2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillRect(cx - 0.3, cy + 5.8, 0.6, 0.6);
+
+      // 3. Low-Rise Belt & Shorts/Skirt
+      ctx.fillStyle = colors.shadow;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, cy + 8);
+      ctx.lineTo(cx + 6, cy + 8);
+      ctx.lineTo(cx + 6.5, cy + 12);
+      ctx.lineTo(cx - 6.5, cy + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = colors.base;
+      ctx.fillRect(cx - 5.5, cy + 8.5, 11, 3);
+
+      if (colors.trim) {
+        ctx.fillStyle = colors.trim;
+        ctx.fillRect(cx - 6, cy + 8, 12, 1.5);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(cx - 1.5, cy + 7.5, 3, 2.5);
+      }
+      return;
+    }
+
     // 1. Breastplate / Bodice with distinct curved bustline
     ctx.fillStyle = colors.shadow;
     ctx.beginPath();
@@ -730,13 +817,13 @@ export class CustomIsometricHeroRenderer {
     ctx.fillStyle = '#facc15';
     ctx.fillRect(cx - 10 + robeSway, cy + 28, 20, 2);
 
-    // 3. Corseted Hourglass Bodice
+    // 3. Corseted Hourglass Bodice with Exposed Midriff
     this.drawFeminineHourglassTorso(ctx, cx, cy, isRight, {
       base: robeBase,
       highlight: robeLight,
       shadow: robeShadow,
       trim: '#facc15'
-    });
+    }, true, skinTone);
 
     // 4. Staff with Levitating Arcane Crystal
     const staffX = isRight ? cx + 15 : cx - 15;
@@ -1003,13 +1090,13 @@ export class CustomIsometricHeroRenderer {
     ctx.fillStyle = '#f8fafc';
     ctx.fillRect(cx - (isRight ? 3 : -1), cy + 14, 1.5, 3);
 
-    // 3. Contoured Hourglass Leather Bodice & Utility Belt
+    // 3. Contoured Hourglass Leather Bodice with Exposed Midriff
     this.drawFeminineHourglassTorso(ctx, cx, cy, isRight, {
       base: suitBase,
       highlight: suitLight,
       shadow: suitShadow,
       trim: '#ca8a04'
-    });
+    }, true, skinTone);
 
     // 4. Dual Venom Daggers
     const dagger1X = cx - 12;
@@ -1133,13 +1220,13 @@ export class CustomIsometricHeroRenderer {
       shadow: '#451a03'
     });
 
-    // 4. Woodland Hourglass Corseted Tunic
+    // 4. Woodland Hourglass Corseted Tunic with Exposed Midriff
     this.drawFeminineHourglassTorso(ctx, cx, cy, isRight, {
       base: greenBase,
       highlight: greenLight,
       shadow: greenShadow,
       trim: '#ca8a04'
-    });
+    }, true, skinTone);
 
     // 5. Recurve Longbow
     const bowX = isRight ? cx + 14 : cx - 14;

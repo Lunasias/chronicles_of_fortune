@@ -20,6 +20,7 @@ export class BattleUI {
   public isExecutingRound = false;
   public isScoutOpen = false;
   public pendingAttackerAction: AttackerAction | null = null;
+  public companionUsedThisBattle = false;
 
   // Cinematic Combat Cutscene State
   public cutscene = {
@@ -99,6 +100,10 @@ export class BattleUI {
     document.getElementById('btnCmdCounter')?.addEventListener('click', () => this.handleDefenderInput('counter'));
     document.getElementById('btnCmdMagicGuard')?.addEventListener('click', () => this.handleDefenderInput('magic_guard'));
     document.getElementById('btnCmdGiveUp')?.addEventListener('click', () => this.handleDefenderInput('give_up'));
+
+    // Companion Summon Assistant
+    document.getElementById('btnCmdSummonCompanion')?.addEventListener('click', () => this.handleCompanionSummon());
+    document.getElementById('btnDefSummonCompanion')?.addEventListener('click', () => this.handleCompanionSummon());
 
     // Tactical Scout & Intel ("2" button / Spy System)
     document.getElementById('btnBattleScout')?.addEventListener('click', () => this.toggleScoutDrawer());
@@ -181,6 +186,7 @@ export class BattleUI {
     this.defenderAnim = 'idle';
     this.isExecutingRound = false;
     this.isScoutOpen = false;
+    this.companionUsedThisBattle = false;
 
     // Switch to battle chiptune theme
     if (enemy.isBoss) {
@@ -282,11 +288,86 @@ export class BattleUI {
           }
         }
       } else {
-
         defGroup.classList.add('hidden');
-        document.getElementById('battleTurnText')!.innerText = `⚔️ กำลังประมวลผลการต่อสู้...`;
       }
     }
+
+    // Update companion summon assistant visibility
+    const activeP = this.game.activePlayer;
+    const btnSummonAtk = document.getElementById('btnCmdSummonCompanion');
+    const btnSummonDef = document.getElementById('btnDefSummonCompanion');
+
+    if (activeP && activeP.companion && !this.companionUsedThisBattle) {
+      if (btnSummonAtk) {
+        btnSummonAtk.classList.remove('hidden');
+        const iconEl = document.getElementById('battleCompanionIcon');
+        if (iconEl) iconEl.innerText = activeP.companion.avatar;
+        const nameEl = document.getElementById('battleCompanionName');
+        if (nameEl) nameEl.innerText = activeP.companion.name.split(' ')[0] || 'คู่หู';
+        const skillEl = document.getElementById('battleCompanionSkill');
+        if (skillEl) skillEl.innerText = activeP.companion.skillName.split(' ')[0] || 'ช่วยสู้';
+      }
+      if (btnSummonDef) {
+        btnSummonDef.classList.remove('hidden');
+      }
+    } else {
+      btnSummonAtk?.classList.add('hidden');
+      btnSummonDef?.classList.add('hidden');
+    }
+  }
+
+  public handleCompanionSummon() {
+    if (this.companionUsedThisBattle || this.isExecutingRound) return;
+    const b = this.game.activeBattle;
+    if (!b) return;
+
+    const player = this.game.activePlayer;
+    if (!player || !player.companion) return;
+
+    this.companionUsedThisBattle = true;
+    document.getElementById('btnCmdSummonCompanion')?.classList.add('hidden');
+    document.getElementById('btnDefSummonCompanion')?.classList.add('hidden');
+
+    audio.fanfare();
+
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const arenaCX = w * 0.50;
+    const arenaCY = h * 0.56;
+    const isPAtk = b.isPlayerAttacking;
+    const summonX = isPAtk ? arenaCX - 120 : arenaCX + 120;
+    const summonY = arenaCY + 20;
+    const enemyX = isPAtk ? arenaCX + 130 : arenaCX - 130;
+    const enemyY = arenaCY - 25;
+
+    const companion = player.companion;
+
+    // Spawn magical companion warp portal
+    combatVFX.spawnCompanionSummonPortal(summonX, summonY, companion.color || '#ec4899');
+    combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${companion.name}!`, 'crit');
+    combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, enemyX, enemyY, 'mage', false);
+
+    const enemy = isPAtk ? b.defender : b.attacker;
+    const dmg = 45 + Math.floor(player.getTotalStat('atk') * 0.85);
+    enemy.hp = Math.max(0, enemy.hp - dmg);
+
+    setTimeout(() => {
+      // Fire companion laser beam & impact!
+      combatVFX.spawnMagicLaserBeam(summonX, summonY - 20, enemyX, enemyY, companion.color || '#f43f5e', 22);
+      combatVFX.spawnFloatingCombatText(enemyX, enemyY - 40, `-${dmg} HP!`, 'crit');
+      audio.strikeHit();
+      this.updateUI();
+
+      const logMsg = `💖 [คู่หูเข้าช่วยรบ!] ${companion.name} ปรากฏตัวจากประตูมิติ ร่าย [${companion.skillName}] สร้างความเสียหายรุนแรง ${dmg} แก่ ${enemy.name}!`;
+      document.getElementById('battleNarration')!.innerText = logMsg;
+      this.game.addLog(logMsg, 'battle');
+
+      if (enemy.hp <= 0) {
+        setTimeout(() => {
+          this.concludeBattle(b.attacker.hp > 0 ? b.attacker : b.defender, enemy);
+        }, 1200);
+      }
+    }, 450);
   }
 
   private checkAITurn() {
@@ -556,6 +637,14 @@ export class BattleUI {
           } else {
             audio.magicHit();
           }
+          combatVFX.spawnMagicLaserBeam(
+            atkBaseX + targetAtkDX,
+            atkBaseY + targetAtkDY,
+            hitX,
+            hitY,
+            b.attacker.classKey === 'cleric' ? '#fde047' : '#c084fc',
+            22
+          );
           combatVFX.spawnMagicHit(hitX, hitY, b.attacker.classKey === 'cleric');
         } else {
           if (defAction === 'defend') {
@@ -872,20 +961,20 @@ export class BattleUI {
         if (isPlayerAtk) {
           this.cutscene.ghostTrails.push({
             x: px,
-            y: py - 42,
+            y: py - 64,
             sprite: heroSprite,
-            w: 120,
-            h: 120,
+            w: 140,
+            h: 140,
             alpha: 0.6,
             decay: 0.045
           });
         } else {
           this.cutscene.ghostTrails.push({
             x: ex,
-            y: ey - (enemyCombatant.isBoss ? 60 : 34),
+            y: ey - (enemyCombatant.isBoss ? 67 : 64),
             sprite: enemySprite,
-            w: enemyW,
-            h: enemyH,
+            w: enemyCombatant.isBoss ? 150 : 140,
+            h: enemyCombatant.isBoss ? 150 : 140,
             alpha: 0.6,
             decay: 0.045
           });
@@ -909,11 +998,11 @@ export class BattleUI {
     // 5. DRAW COMBATANTS (PERFECTLY CENTERED ON DIAMOND DAIS CELLS)
     // -----------------------------------------------------------------------
     // In our 2.5D Isometric projection, the dais top surface is centered at (px, py).
-    // The hero and monster sprites are anchored so their ground feet align exactly with (px, py)!
+    // The hero and monster sprites are anchored so their ground feet align exactly with dais center!
     const drawHero = () => {
-      this.drawUnitTeamRing(ctx, px, py, '#06b6d4', 0.9, true);
-      // Hero sprite feet are at Y offset 102.5 inside the 120px sprite -> draw at py - 102
-      ctx.drawImage(heroSprite, px - 60, py - 102, 120, 120);
+      this.drawUnitTeamRing(ctx, px, py - 14, '#06b6d4', 0.9, true);
+      // Hero sprite enlarged to 140x140, centered on dais diamond surface
+      ctx.drawImage(heroSprite, px - 70, py - 134, 140, 140);
     };
 
     const drawEnemy = () => {
@@ -924,16 +1013,14 @@ export class BattleUI {
       }
 
       if (enemyCombatant.isBoss) {
-        this.drawUnitTeamRing(ctx, ex, ey, '#ef4444', 1.0, true);
-        // Boss Dragon Princess feet anchor at exact dais center
-        ctx.drawImage(enemySprite, ex - 70, ey - 104, 140, 140);
+        this.drawUnitTeamRing(ctx, ex, ey - 14, '#ef4444', 1.0, true);
+        ctx.drawImage(enemySprite, ex - 75, ey - 142, 150, 150);
       } else if (enemyCombatant.playerRef) {
-        this.drawUnitTeamRing(ctx, ex, ey, '#f43f5e', 0.9, true);
-        ctx.drawImage(enemySprite, ex - 60, ey - 102, 120, 120);
+        this.drawUnitTeamRing(ctx, ex, ey - 14, '#f43f5e', 0.9, true);
+        ctx.drawImage(enemySprite, ex - 70, ey - 134, 140, 140);
       } else {
-        this.drawUnitTeamRing(ctx, ex, ey, '#f59e0b', 0.9, true);
-        // Monster 140x140 feet anchor at ~104
-        ctx.drawImage(enemySprite, ex - 70, ey - 104, 140, 140);
+        this.drawUnitTeamRing(ctx, ex, ey - 14, '#f59e0b', 0.9, true);
+        ctx.drawImage(enemySprite, ex - 70, ey - 134, 140, 140);
       }
       ctx.restore();
     };
@@ -2292,7 +2379,7 @@ export class BattleUI {
     pulse = false
   ) {
     ctx.save();
-    const r = pulse ? 28 + Math.sin(Date.now() * 0.006) * 3 : 26;
+    const r = pulse ? 30 + Math.sin(Date.now() * 0.006) * 3 : 28;
     ctx.strokeStyle = color;
     ctx.lineWidth = pulse ? 2.5 : 1.8;
     ctx.shadowColor = color;
@@ -2300,13 +2387,13 @@ export class BattleUI {
     ctx.globalAlpha = alpha;
 
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 12, r, r * 0.44, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, r, r * 0.44, 0, 0, Math.PI * 2);
     ctx.stroke();
 
     // Ground contact shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 12, r * 0.8, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, r * 0.8, r * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();

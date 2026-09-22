@@ -63,6 +63,25 @@
       border-radius: 12px;
     }
 
+    .pixel-box-pink {
+      backdrop-filter: blur(12px);
+      background: rgba(45, 15, 30, 0.92);
+      border: 2px solid rgba(244, 114, 182, 0.5);
+      box-shadow: 0 8px 32px rgba(236, 72, 153, 0.25), inset 0 1px 0 rgba(244, 114, 182, 0.15);
+      border-radius: 12px;
+    }
+
+    .pixel-btn-pink {
+      background: #db2777;
+      box-shadow: 
+        inset -3px -3px 0px 0px #831843,
+        inset 3px 3px 0px 0px #fbcfe8,
+        0 4px 0 0 #500724;
+    }
+    .pixel-btn-pink:hover {
+      background: #ec4899;
+    }
+
     /* Tactile Dokapon Buttons */
     .pixel-btn {
       position: relative;
@@ -559,8 +578,8 @@
     <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
     <div class="h-48 bg-slate-900 p-3 flex flex-col md:flex-row gap-3 border-t-2 border-slate-800">
       
-      <!-- Attacker 4-Choice Cards -->
-      <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+      <!-- Attacker 4-Choice Cards + Companion Summon -->
+      <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-5 gap-2 flex-1">
         <!-- Attack -->
         <button id="btnCmdAttack" class="command-card pixel-btn-red p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">⚔️</span>
@@ -585,10 +604,16 @@
           <span class="text-xs font-bold" id="battleSkillLabel">ท่าไม้ตาย</span>
           <span class="text-[8px] opacity-80 text-purple-200">เฉพาะอาชีพ</span>
         </button>
+        <!-- Companion Summon Assistant -->
+        <button id="btnCmdSummonCompanion" class="hidden command-card pixel-btn-pink p-2 flex flex-col items-center justify-center text-white border-2 border-pink-400">
+          <span class="text-xl mb-0.5" id="battleCompanionIcon">💖🐉</span>
+          <span class="text-xs font-bold" id="battleCompanionName">เรียกคู่หู</span>
+          <span class="text-[8px] text-pink-200" id="battleCompanionSkill">โจมตีประสาน</span>
+        </button>
       </div>
 
-      <!-- Defender 4-Choice Cards -->
-      <div id="defenderCommandGroup" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+      <!-- Defender 4-Choice Cards + Companion Guard -->
+      <div id="defenderCommandGroup" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-2 flex-1">
         <!-- Defend -->
         <button id="btnCmdDefend" class="command-card pixel-btn-blue p-2 flex flex-col items-center justify-center text-white">
           <span class="text-xl mb-0.5">🛡️</span>
@@ -612,6 +637,12 @@
           <span class="text-xl mb-0.5">🏳️</span>
           <span class="text-xs font-bold">ยอมแพ้</span>
           <span class="text-[8px] text-slate-400">ยอมจำนน</span>
+        </button>
+        <!-- Companion Defender Support -->
+        <button id="btnDefSummonCompanion" class="hidden command-card pixel-btn-pink p-2 flex flex-col items-center justify-center text-white border-2 border-pink-400">
+          <span class="text-xl mb-0.5">💖🛡️</span>
+          <span class="text-xs font-bold">คู่หูป้องกาย</span>
+          <span class="text-[8px] text-pink-200">เกราะคุ้มภัย</span>
         </button>
       </div>
 
@@ -1331,6 +1362,128 @@
         </button>
         <button id="btnBeginGame" class="pixel-btn pixel-btn-gold px-6 py-2 text-xs font-bold text-slate-950">
           เข้าสู่อาณาจักร ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FANTASY 3-CHOICE RANDOM EVENT MODAL (z-50) -->
+  <div id="fantasyEventModal" class="hidden absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
+    <div class="pixel-box-pink max-w-lg w-full p-5 text-center shadow-2xl relative border-2 border-pink-500/60">
+      <!-- Badge and Title -->
+      <div class="flex justify-between items-center mb-3">
+        <span id="feModalBadge" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border border-pink-400 text-pink-300 bg-pink-950/60">
+          เหตุการณ์แฟนตาซี
+        </span>
+        <span id="feModalIcon" class="text-3xl">🌸</span>
+      </div>
+      <h3 id="feModalTitle" class="text-lg text-pink-200 font-bold tracking-wide mb-0.5">
+        บ่อน้ำพุร้อนกลางป่าลับแล
+      </h3>
+      <h4 id="feModalSubtitle" class="text-[10px] text-pink-300/80 mb-3 italic">
+        Secret Hot Springs Maiden
+      </h4>
+
+      <!-- Story Narration Text -->
+      <div class="pixel-box p-3 bg-slate-950/80 text-xs text-slate-200 text-left leading-relaxed mb-4 border border-pink-900/50">
+        <p id="feModalDesc">
+          เรื่องราวเหตุการณ์จะปรากฏขึ้นที่นี่...
+        </p>
+      </div>
+
+      <!-- 3 Choices Container -->
+      <div id="feChoicesContainer" class="flex flex-col gap-2.5 mb-2">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Outcome Result Container (Hidden initially) -->
+      <div id="feOutcomeContainer" class="hidden flex flex-col items-center gap-3">
+        <span id="feOutcomeIcon" class="text-4xl animate-bounce">✨</span>
+        <h4 id="feOutcomeTitle" class="text-sm font-bold text-amber-300">ผลลัพธ์</h4>
+        <p id="feOutcomeText" class="text-xs text-slate-200 bg-slate-950/90 p-3 rounded border border-amber-600/40 text-left w-full leading-relaxed">
+          ข้อความผลลัพธ์...
+        </p>
+        <button id="btnFeDismiss" class="pixel-btn pixel-btn-pink px-6 py-2 text-xs font-bold text-white shadow-lg">
+          เข้าใจแล้ว ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME & COMPANION ESTATE MODAL (z-50) -->
+  <div id="homeEstateModal" class="hidden absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
+    <div class="pixel-box max-w-md w-full p-5 text-center shadow-2xl relative border-2 border-emerald-500/60 bg-slate-900/95">
+      <!-- Section 1: Buy Unbuilt Plot -->
+      <div id="homeBuySection" class="hidden flex flex-col gap-3">
+        <div class="text-4xl mb-1">🏡✨</div>
+        <h3 class="text-base text-amber-300 font-bold">ที่ดินผืนนี้ยังว่างเปล่า!</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          คุณต้องการซื้อที่ดินผืนนี้เพื่อสร้าง <strong class="text-emerald-400">[บ้านพักส่วนตัว (Home Villa)]</strong> หรือไม่?<br>
+          <span class="text-[10px] text-slate-400 mt-1 block">• ใช้เป็นจุดเกิดใหม่ (Respawn Point) เมื่อหมดสติในการต่อสู้<br>• เป็นที่พักอาศัยของคู่หูที่คุณรวบรวมได้ระหว่างผจญภัย</span>
+        </p>
+        <div class="bg-slate-950/80 p-2.5 rounded border border-slate-800 text-xs flex justify-between items-center my-1">
+          <span class="text-slate-400">ราคาที่ดิน:</span>
+          <span id="homePlotCost" class="font-bold text-amber-400 text-sm">150G</span>
+        </div>
+        <div class="bg-slate-950/80 p-2.5 rounded border border-slate-800 text-xs flex justify-between items-center mb-2">
+          <span class="text-slate-400">ทองของคุณ:</span>
+          <span id="homePlayerGold" class="font-bold text-yellow-300 text-sm">300G</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btnBuyHomePlot" class="pixel-btn pixel-btn-gold py-2 text-xs font-bold text-slate-950">
+            🏡 ซื้อและสร้างบ้าน
+          </button>
+          <button id="btnSkipHomePlot" class="pixel-btn py-2 text-xs text-slate-300 hover:text-white">
+            🚶 เดินทางต่อ
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 2: Manage / Rest at Own Home -->
+      <div id="homeManageSection" class="hidden flex flex-col gap-3">
+        <div class="text-4xl mb-1">🏡🛌</div>
+        <h3 id="homeOwnerTitle" class="text-base text-emerald-300 font-bold">ยินดีต้อนรับกลับบ้าน!</h3>
+        <p class="text-xs text-slate-300">
+          บ้านพักอันแสนอบอุ่นและปลอดภัยของคุณ จุดเกิดใหม่เมื่อพ่ายศึก
+        </p>
+
+        <!-- Companion Living at Home -->
+        <div id="homeCompanionBox" class="hidden pixel-box-pink p-3 text-left flex items-start gap-3 my-1">
+          <span id="homeCompanionAvatar" class="text-3xl">🐉💖</span>
+          <div class="flex-1">
+            <div class="text-xs font-bold text-pink-300 flex items-center gap-1.5">
+              <span id="homeCompanionName">เจ้าหญิงมังกร อิกนิส</span>
+              <span class="text-[9px] bg-pink-900/60 px-1 rounded text-pink-200 border border-pink-500/40">คู่หูประจำบ้าน</span>
+            </div>
+            <div id="homeCompanionDesc" class="text-[10px] text-pink-200/90 mt-0.5 mb-1.5">
+              เพลิงมังกรเทวะ: อัญเชิญช่วยโจมตีในฉากต่อสู้
+            </div>
+            <div id="homeCompanionSpeech" class="text-[10px] text-amber-200 italic bg-black/40 p-1.5 rounded border border-pink-700/50">
+              "กลับมาแล้วเหรอคะนายท่าน! วันนี้เหนื่อยไหม?"
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <button id="btnHomeRest" class="pixel-btn pixel-btn-green py-2 text-xs font-bold text-white flex items-center justify-center gap-1">
+            <span>🛌</span>
+            <span>พักผ่อน (ฟรี!)</span>
+          </button>
+          <button id="btnHomeLeave" class="pixel-btn py-2 text-xs text-slate-300 hover:text-white">
+            🚶 ออกเดินทาง
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 3: Visitor Fee at Other Player's Home -->
+      <div id="homeVisitorSection" class="hidden flex flex-col gap-3">
+        <div class="text-4xl mb-1">🏡🚪</div>
+        <h3 class="text-base text-amber-300 font-bold">บ้านพักของนักผจญภัยอื่น!</h3>
+        <p class="text-xs text-slate-300">
+          คุณแวะผ่านบ้านพักส่วนตัวของ <strong id="homeVisitorOwnerName" class="text-amber-400">เพื่อน</strong> จ่ายค่าเยี่ยมชมผ่านทาง 25G
+        </p>
+        <button id="btnHomeVisitorDismiss" class="pixel-btn pixel-btn-blue py-2 text-xs font-bold text-white mt-2">
+          ตกลง ➔
         </button>
       </div>
     </div>

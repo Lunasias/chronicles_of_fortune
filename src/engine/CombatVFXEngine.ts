@@ -68,12 +68,37 @@ export interface FloatingText {
   shadowColor: string;
 }
 
+export interface MagicLaserBeam {
+  casterX: number;
+  casterY: number;
+  targetX: number;
+  targetY: number;
+  color: string;
+  width: number;
+  alpha: number;
+  decay: number;
+  rings: number;
+}
+
+export interface SummonPortal {
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  alpha: number;
+  decay: number;
+  angle: number;
+  pillarHeight: number;
+}
+
 export class CombatVFXEngine {
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
   public groundCracks: GroundCrack[] = [];
   public runicRings: RunicRing[] = [];
   public floatingTexts: FloatingText[] = [];
+  public magicLaserBeams: MagicLaserBeam[] = [];
+  public summonPortals: SummonPortal[] = [];
 
   public hitstopTimer = 0;
   public screenShakeAmount = 0;
@@ -341,9 +366,6 @@ export class CombatVFXEngine {
       alpha: 1.0,
       decay: 0.035
     });
-
-    this.heroStaggerX = -24;
-    this.heroFlashAlpha = 0.95;
   }
 
   // =========================================================================
@@ -596,6 +618,117 @@ export class CombatVFXEngine {
     }
   }
 
+  // =========================================================================
+  // 6. HIGH-ENERGY RADIANT MAGIC LASER BEAM
+  // =========================================================================
+  spawnMagicLaserBeam(casterX: number, casterY: number, targetX: number, targetY: number, color = '#c084fc', width = 16) {
+    this.triggerScreenShake(18);
+    this.triggerSpeedLines(color, 24);
+
+    this.magicLaserBeams.push({
+      casterX,
+      casterY,
+      targetX,
+      targetY,
+      color,
+      width,
+      alpha: 1.0,
+      decay: 0.04,
+      rings: 6
+    });
+
+    // Impact explosion particles at target
+    for (let i = 0; i < 35; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 9;
+      this.particles.push({
+        x: targetX,
+        y: targetY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color: Math.random() > 0.4 ? color : '#ffffff',
+        size: 3 + Math.random() * 5,
+        alpha: 1.0,
+        decay: 0.035
+      });
+    }
+
+    // Target stagger & flash
+    this.monsterStaggerX = 20;
+    this.monsterFlashAlpha = 0.95;
+    this.monsterFlashColor = color;
+  }
+
+  // =========================================================================
+  // 7. COMPANION WARP SUMMON PORTAL WITH LIGHT PILLAR
+  // =========================================================================
+  spawnCompanionSummonPortal(x: number, y: number, color = '#ec4899') {
+    this.triggerScreenShake(12);
+    this.triggerSpeedLines(color, 20);
+
+    this.summonPortals.push({
+      x,
+      y,
+      radius: 48,
+      color,
+      alpha: 1.0,
+      decay: 0.016, // Lasts ~60 frames
+      angle: 0,
+      pillarHeight: 180
+    });
+
+    // Ascending sparkle particles & glowing motes
+    for (let i = 0; i < 30; i++) {
+      this.particles.push({
+        x: x + (Math.random() * 60 - 30),
+        y: y + (Math.random() * 20 - 10),
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -2 - Math.random() * 4,
+        color: Math.random() > 0.4 ? color : '#fde047',
+        size: 3 + Math.random() * 4,
+        alpha: 1.0,
+        decay: 0.02,
+        gravity: -0.05
+      });
+    }
+  }
+
+  // =========================================================================
+  // 8. EXPLOSION NOVA SHOCKWAVE
+  // =========================================================================
+  spawnExplosionNova(x: number, y: number, color = '#f59e0b') {
+    this.triggerScreenShake(22);
+    this.triggerSpeedLines(color, 25);
+
+    // Shockwave ring
+    this.runicRings.push({
+      x,
+      y,
+      radius: 20,
+      color,
+      alpha: 1.0,
+      decay: 0.04,
+      angle: 0,
+      isNested: true
+    });
+
+    for (let i = 0; i < 45; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 10;
+      this.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color: Math.random() > 0.5 ? color : '#fbbf24',
+        size: 4 + Math.random() * 5,
+        alpha: 1.0,
+        decay: 0.03,
+        gravity: 0.12
+      });
+    }
+  }
+
   update() {
     // 0. Hitstop micro-pause
     if (this.hitstopTimer > 0) {
@@ -693,6 +826,25 @@ export class CombatVFXEngine {
         this.floatingTexts.splice(i, 1);
       }
     }
+
+    // 10. Update Magic Laser Beams
+    for (let i = this.magicLaserBeams.length - 1; i >= 0; i--) {
+      const b = this.magicLaserBeams[i];
+      b.alpha -= b.decay;
+      if (b.alpha <= 0) {
+        this.magicLaserBeams.splice(i, 1);
+      }
+    }
+
+    // 11. Update Summon Portals
+    for (let i = this.summonPortals.length - 1; i >= 0; i--) {
+      const p = this.summonPortals[i];
+      p.angle += 0.06;
+      p.alpha -= p.decay;
+      if (p.alpha <= 0) {
+        this.summonPortals.splice(i, 1);
+      }
+    }
   }
 
   render(ctx: CanvasRenderingContext2D, arenaWidth: number = 800, arenaHeight: number = 450) {
@@ -781,6 +933,56 @@ export class CombatVFXEngine {
       ctx.restore();
     });
 
+    // 2.5 Draw Summon Portals & Rising Light Pillars
+    this.summonPortals.forEach(p => {
+      ctx.save();
+      // Ground Runic Disc
+      ctx.translate(p.x, p.y);
+      ctx.scale(1, 0.48);
+      ctx.strokeStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 24;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, p.radius * 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Rotating glyphs
+      ctx.save();
+      ctx.rotate(p.angle);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * p.radius * 0.7, Math.sin(a) * p.radius * 0.7);
+        ctx.lineTo(Math.cos(a) * p.radius, Math.sin(a) * p.radius);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.restore();
+
+      // Rising Light Pillar
+      ctx.save();
+      ctx.globalAlpha = p.alpha * 0.75;
+      const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y - p.pillarHeight);
+      grad.addColorStop(0, p.color);
+      grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 20;
+
+      ctx.beginPath();
+      ctx.rect(p.x - p.radius * 0.6, p.y - p.pillarHeight, p.radius * 1.2, p.pillarHeight);
+      ctx.fill();
+      ctx.restore();
+    });
+
     // 3. Draw Diagonal Slash Arcs
     this.slashArcs.forEach(arc => {
       ctx.save();
@@ -794,6 +996,76 @@ export class CombatVFXEngine {
       ctx.beginPath();
       ctx.arc(arc.x, arc.y, arc.radius, arc.startAngle, arc.endAngle);
       ctx.stroke();
+      ctx.restore();
+    });
+
+    // 3.5 Draw Magic Laser Beams
+    this.magicLaserBeams.forEach(b => {
+      ctx.save();
+      const dx = b.targetX - b.casterX;
+      const dy = b.targetY - b.casterY;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+
+      ctx.translate(b.casterX, b.casterY);
+      ctx.rotate(angle);
+
+      // Outer Glow
+      ctx.globalAlpha = b.alpha * 0.5;
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = b.width * 2.2;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 30;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(dist, 0);
+      ctx.stroke();
+
+      // Intense Beam Body
+      ctx.globalAlpha = b.alpha * 0.9;
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = b.width;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(dist, 0);
+      ctx.stroke();
+
+      // White-hot core
+      ctx.globalAlpha = b.alpha;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = b.width * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(dist, 0);
+      ctx.stroke();
+
+      // Spiral Energy Rings
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      const ringSpacing = 35;
+      for (let rx = 20; rx < dist - 15; rx += ringSpacing) {
+        ctx.beginPath();
+        ctx.ellipse(rx, 0, 8, b.width * 0.75, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Muzzle flare
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, b.width * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Target impact flare
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(dist, 0, b.width * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(dist, 0, b.width * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     });
 

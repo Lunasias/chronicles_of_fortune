@@ -509,6 +509,120 @@ export const REALM_MONSTER_ROSTERS: Record<string, MonsterProfile[]> = {
       icon: '🔮',
       weakness: 'ชาร์จฟัน (Strike)'
     }
+  ],
+  steampunk: [
+    {
+      name: 'Steampunk Automaton Princess Alice',
+      title: 'เจ้าหญิงจักรกลไอน้ำ อลิซ',
+      realmId: 'solaria',
+      level: 7,
+      hp: 120,
+      maxHp: 120,
+      mp: 25,
+      maxMp: 25,
+      atk: 22,
+      def: 20,
+      mag: 14,
+      spd: 8,
+      luk: 8,
+      skillName: 'Overclock Steam Drill',
+      skillDesc: 'เร่งรอบสว่านไอน้ำเจาะทะลวงการป้องกัน',
+      lootDrop: 'Brass Gear Core',
+      goldReward: 120,
+      xpReward: 85,
+      icon: '⚙️',
+      weakness: 'เวทสายฟ้า (Magic)'
+    },
+    {
+      name: 'Steam Gear Gunner Victoria',
+      title: 'สาวมือปืนปืนยาวเฟืองจักร วิกตอเรีย',
+      realmId: 'solaria',
+      level: 6,
+      hp: 105,
+      maxHp: 105,
+      mp: 28,
+      maxMp: 28,
+      atk: 24,
+      def: 12,
+      mag: 10,
+      spd: 16,
+      luk: 14,
+      skillName: 'Sniper Vapor Blast',
+      skillDesc: 'สไนเปอร์กระสุนไอน้ำแรงดันสูงระยะไกล',
+      lootDrop: 'Steampunk Goggles',
+      goldReward: 110,
+      xpReward: 78,
+      icon: '🔫',
+      weakness: 'สวนกลับ (Counter)'
+    },
+    {
+      name: 'Clockwork Maid Nicole',
+      title: 'หุ่นกลเมดสาวพลังไอน้ำ นิโคล',
+      realmId: 'solaria',
+      level: 5,
+      hp: 95,
+      maxHp: 95,
+      mp: 20,
+      maxMp: 20,
+      atk: 18,
+      def: 16,
+      mag: 8,
+      spd: 10,
+      luk: 7,
+      skillName: 'Mechanical Sweep',
+      skillDesc: 'กวาดล้างด้วยไม้กวาดจักรกลไอน้ำ',
+      lootDrop: 'Silver Key',
+      goldReward: 85,
+      xpReward: 60,
+      icon: '🧹',
+      weakness: 'ชาร์จฟัน (Strike)'
+    }
+  ],
+  sakura_shrine: [
+    {
+      name: 'Kitsune Shrine Maiden Chiyo',
+      title: 'มิโกะจิ้งจอกขาวเก้าหาง ชิโยะ',
+      realmId: 'solaria',
+      level: 7,
+      hp: 115,
+      maxHp: 115,
+      mp: 40,
+      maxMp: 40,
+      atk: 18,
+      def: 13,
+      mag: 26,
+      spd: 15,
+      luk: 16,
+      skillName: 'Foxfire Blossom Burst',
+      skillDesc: 'เพลิงจิ้งจอกบุปผาซากุระเผาผลาญวิญญาณ',
+      lootDrop: 'Sacred Miko Amulet',
+      goldReward: 130,
+      xpReward: 90,
+      icon: '🦊',
+      weakness: 'ชาร์จฟัน (Strike)'
+    },
+    {
+      name: 'Sakura Blossom Tengu Ayame',
+      title: 'เทนกุสาวปีกทมิฬแห่งป่าซากุระ อายาเมะ',
+      realmId: 'solaria',
+      level: 6,
+      hp: 110,
+      maxHp: 110,
+      mp: 30,
+      maxMp: 30,
+      atk: 22,
+      def: 14,
+      mag: 18,
+      spd: 18,
+      luk: 12,
+      skillName: 'Kamaitachi Whirlwind',
+      skillDesc: 'พายุหมุนเคียวสายลมซากุระฟาดฟัน',
+      lootDrop: 'Tengu Feather Fan',
+      goldReward: 115,
+      xpReward: 80,
+      icon: '🪶',
+      weakness: 'สวนกลับ (Counter)'
+    }
   ]
 };
 
@@ -522,7 +636,7 @@ export function getNodeEncounterPreview(node: BoardNode): {
   roster: MonsterProfile[];
 } {
   const realmKey = node.realmId || 'solaria';
-  const roster = REALM_MONSTER_ROSTERS[realmKey] || REALM_MONSTER_ROSTERS.solaria;
+  const roster = REALM_MONSTER_ROSTERS[node.biome || ''] || REALM_MONSTER_ROSTERS[realmKey] || REALM_MONSTER_ROSTERS.solaria;
 
   if (node.type === 'town' && node.townData?.isOccupiedByMonster) {
     const td = node.townData;

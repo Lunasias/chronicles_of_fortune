@@ -597,6 +597,26 @@ export class IsometricTerrainEngine {
           border: isNight ? '#0f172a' : '#334155'
         };
 
+      case 'steampunk':
+        // Brass, bronze, and copper clockwork plates
+        return {
+          top: isNight ? '#29180b' : '#78350f',
+          accent: isNight ? '#d97706' : '#fbbf24',
+          cliffLeft: isNight ? '#170c05' : '#451a03',
+          cliffRight: isNight ? '#261205' : '#5b2204',
+          border: isNight ? '#b45309' : '#d97706'
+        };
+
+      case 'sakura_shrine':
+        // Soft vermilion earth, cobblestone paths, and pink blossom grass
+        return {
+          top: isNight ? '#2e1026' : '#831843',
+          accent: isNight ? '#f472b6' : '#fbcfe8',
+          cliffLeft: isNight ? '#1a0815' : '#500724',
+          cliffRight: isNight ? '#240a1d' : '#700c35',
+          border: isNight ? '#db2777' : '#f43f5e'
+        };
+
       case 'abyss':
       default:
         // Cursed void obsidian with arcane violet veins
@@ -711,6 +731,22 @@ export class IsometricTerrainEngine {
       ctx.moveTo(cx - 16, cy);
       ctx.lineTo(cx + 16, cy);
       ctx.stroke();
+    } else if (biome === 'steampunk') {
+      // Brass cogs & copper pipe rivets
+      ctx.fillStyle = colors.accent;
+      ctx.fillRect(cx - 10, cy - 3, 5, 5);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(cx - 9, cy - 2, 3, 3);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(cx + 8, cy + 2, 4, 4);
+    } else if (biome === 'sakura_shrine') {
+      // Delicate falling cherry blossom petals
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.ellipse(cx - 12, cy - 3, 3, 1.8, 0.4, 0, Math.PI * 2);
+      ctx.ellipse(cx + 10, cy + 4, 3.2, 2, -0.3, 0, Math.PI * 2);
+      ctx.ellipse(cx - 2, cy + 6, 2.5, 1.5, 0.7, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.restore();

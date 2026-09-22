@@ -179,6 +179,19 @@ export interface GuildQuest {
   rewardXp: number;
 }
 
+export interface CompanionData {
+  id: string;
+  name: string;
+  title: string;
+  avatar: string;
+  role: 'striker' | 'healer' | 'guardian' | 'mage';
+  skillName: string;
+  skillDesc: string;
+  affinity: number;
+  dialogue: string;
+  color?: string;
+}
+
 export interface SkinVariantData {
   id: number;
   name: string;
@@ -289,6 +302,10 @@ export class Player {
     hasGraffiti: false,
     turnsRemaining: 0
   };
+
+  // Home & Companion Housing System
+  public homeNodeId: number | null = null;
+  public companion: CompanionData | null = null;
 
   // Color & Info
   public color: string;

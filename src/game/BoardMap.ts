@@ -14,7 +14,8 @@ export type SpaceType =
   | 'guild'
   | 'fishing'
   | 'isekai_event'
-  | 'mystery_chest';
+  | 'mystery_chest'
+  | 'home';
 
 export type BiomeType =
   | 'grass'
@@ -28,7 +29,9 @@ export type BiomeType =
   | 'castle'
   | 'fairy_grove'
   | 'crystal_cavern'
-  | 'celestial';
+  | 'celestial'
+  | 'steampunk'
+  | 'sakura_shrine';
 
 export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss' | 'celestial';
 
@@ -46,6 +49,12 @@ export interface TownData {
   monsterDef: number;
 }
 
+export interface HomeData {
+  ownerId: number;
+  ownerName: string;
+  level: number;
+}
+
 export interface BoardNode {
   id: number;
   gx: number;
@@ -56,6 +65,7 @@ export interface BoardNode {
   biome: BiomeType;
   neighbors: number[];
   townData?: TownData;
+  homeData?: HomeData;
   realmId: RealmId;
   realmName: string;
   subRegionName: string;
@@ -4444,7 +4454,627 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       209,
       21,
-      0
+      0,
+      211
     ]
+  },
+  {
+    "id": 211,
+    "gx": 20,
+    "gy": 16,
+    "gz": 1,
+    "type": "empty",
+    "name": "Gearwheel Gate",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [210, 212]
+  },
+  {
+    "id": 212,
+    "gx": 22,
+    "gy": 16,
+    "gz": 1,
+    "type": "town",
+    "name": "Brass Foundry Town",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Brass Foundry Town",
+      "level": 2,
+      "baseValue": 260,
+      "taxYield": 65,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Steam Gear Gunner Victoria",
+      "monsterHp": 90,
+      "monsterAtk": 19,
+      "monsterDef": 12
+    },
+    "neighbors": [211, 213]
+  },
+  {
+    "id": 213,
+    "gx": 24,
+    "gy": 16,
+    "gz": 1,
+    "type": "blue",
+    "name": "Steam Boiler Lane",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [212, 214]
+  },
+  {
+    "id": 214,
+    "gx": 26,
+    "gy": 16,
+    "gz": 1,
+    "type": "shop_weapon",
+    "name": "Clockwork Emporium",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [213, 215]
+  },
+  {
+    "id": 215,
+    "gx": 26,
+    "gy": 14,
+    "gz": 1,
+    "type": "empty",
+    "name": "Piston Plaza",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [214, 216]
+  },
+  {
+    "id": 216,
+    "gx": 26,
+    "gy": 12,
+    "gz": 1,
+    "type": "mystery_chest",
+    "name": "Aether Dynamo Tower",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [215, 217]
+  },
+  {
+    "id": 217,
+    "gx": 28,
+    "gy": 12,
+    "gz": 1,
+    "type": "red",
+    "name": "Automaton Foundry",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [216, 218]
+  },
+  {
+    "id": 218,
+    "gx": 30,
+    "gy": 12,
+    "gz": 1,
+    "type": "guild",
+    "name": "Cogwheel Guildhall",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [217, 219]
+  },
+  {
+    "id": 219,
+    "gx": 32,
+    "gy": 12,
+    "gz": 1,
+    "type": "tavern",
+    "name": "Brass Boiler Tavern",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [218, 220]
+  },
+  {
+    "id": 220,
+    "gx": 34,
+    "gy": 12,
+    "gz": 2,
+    "type": "town",
+    "name": "Steamforge Borough",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Steamforge Borough",
+      "level": 2,
+      "baseValue": 300,
+      "taxYield": 75,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Clockwork Automaton Princess Alice",
+      "monsterHp": 110,
+      "monsterAtk": 21,
+      "monsterDef": 14
+    },
+    "neighbors": [219, 221]
+  },
+  {
+    "id": 221,
+    "gx": 34,
+    "gy": 14,
+    "gz": 2,
+    "type": "blue",
+    "name": "Pressure Valve Crossing",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [220, 222]
+  },
+  {
+    "id": 222,
+    "gx": 34,
+    "gy": 16,
+    "gz": 2,
+    "type": "empty",
+    "name": "Copper Pipe Viaduct",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [221, 223]
+  },
+  {
+    "id": 223,
+    "gx": 36,
+    "gy": 16,
+    "gz": 2,
+    "type": "shop_item",
+    "name": "Steam Engine Depot",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [222, 224]
+  },
+  {
+    "id": 224,
+    "gx": 36,
+    "gy": 18,
+    "gz": 2,
+    "type": "vault",
+    "name": "Grand Chronometer Spire",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [223, 225]
+  },
+  {
+    "id": 225,
+    "gx": 34,
+    "gy": 18,
+    "gz": 2,
+    "type": "isekai_event",
+    "name": "Automaton Laboratory",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [224, 226]
+  },
+  {
+    "id": 226,
+    "gx": 32,
+    "gy": 18,
+    "gz": 1,
+    "type": "blue",
+    "name": "Clockmaker's Square",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [225, 227]
+  },
+  {
+    "id": 227,
+    "gx": 30,
+    "gy": 18,
+    "gz": 1,
+    "type": "red",
+    "name": "Boilerworks Bastion",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [226, 228]
+  },
+  {
+    "id": 228,
+    "gx": 30,
+    "gy": 20,
+    "gz": 1,
+    "type": "empty",
+    "name": "Overclock Junction",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [227, 229]
+  },
+  {
+    "id": 229,
+    "gx": 30,
+    "gy": 22,
+    "gz": 1,
+    "type": "empty",
+    "name": "Skybridge to Sakura Shrine",
+    "biome": "steampunk",
+    "realmId": "solaria",
+    "realmName": "มหาอาณาจักรโซลาเรีย",
+    "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
+    "weather": "sunny",
+    "isGrandBridge": true,
+    "neighbors": [228, 230]
+  },
+  {
+    "id": 230,
+    "gx": 32,
+    "gy": 22,
+    "gz": 1,
+    "type": "empty",
+    "name": "Vermilion Torii Gate",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [229, 231]
+  },
+  {
+    "id": 231,
+    "gx": 34,
+    "gy": 22,
+    "gz": 1,
+    "type": "blue",
+    "name": "Cherry Blossom Pathway",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [230, 232]
+  },
+  {
+    "id": 232,
+    "gx": 36,
+    "gy": 22,
+    "gz": 1,
+    "type": "town",
+    "name": "Kitsune Village",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Kitsune Village",
+      "level": 2,
+      "baseValue": 280,
+      "taxYield": 70,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Sakura Blossom Tengu Ayame",
+      "monsterHp": 95,
+      "monsterAtk": 20,
+      "monsterDef": 13
+    },
+    "neighbors": [231, 233]
+  },
+  {
+    "id": 233,
+    "gx": 38,
+    "gy": 22,
+    "gz": 1,
+    "type": "church",
+    "name": "Petal Pool Shrine",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [232, 234]
+  },
+  {
+    "id": 234,
+    "gx": 40,
+    "gy": 22,
+    "gz": 2,
+    "type": "mystery_chest",
+    "name": "Spirit Bell Pavilion",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [233, 235]
+  },
+  {
+    "id": 235,
+    "gx": 40,
+    "gy": 24,
+    "gz": 2,
+    "type": "empty",
+    "name": "Sacred Fox Grove",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [234, 236]
+  },
+  {
+    "id": 236,
+    "gx": 40,
+    "gy": 26,
+    "gz": 2,
+    "type": "tavern",
+    "name": "Paper Lantern Tea House",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [235, 237]
+  },
+  {
+    "id": 237,
+    "gx": 38,
+    "gy": 26,
+    "gz": 2,
+    "type": "blue",
+    "name": "Moonlit Blossom Garden",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [236, 238]
+  },
+  {
+    "id": 238,
+    "gx": 36,
+    "gy": 26,
+    "gz": 2,
+    "type": "shop_magic",
+    "name": "Celestial Talisman Shop",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [237, 239]
+  },
+  {
+    "id": 239,
+    "gx": 34,
+    "gy": 26,
+    "gz": 2,
+    "type": "red",
+    "name": "Tengu Wind Peak",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [238, 240]
+  },
+  {
+    "id": 240,
+    "gx": 32,
+    "gy": 26,
+    "gz": 1,
+    "type": "fishing",
+    "name": "Spiritual Koi Lake",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [239, 241]
+  },
+  {
+    "id": 241,
+    "gx": 32,
+    "gy": 28,
+    "gz": 2,
+    "type": "town",
+    "name": "Nine-Tails Sanctum",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "townData": {
+      "name": "Nine-Tails Sanctum",
+      "level": 3,
+      "baseValue": 350,
+      "taxYield": 95,
+      "ownerId": null,
+      "isOccupiedByMonster": true,
+      "monsterName": "Kitsune Shrine Maiden Chiyo",
+      "monsterHp": 125,
+      "monsterAtk": 22,
+      "monsterDef": 15
+    },
+    "neighbors": [240, 242]
+  },
+  {
+    "id": 242,
+    "gx": 34,
+    "gy": 28,
+    "gz": 2,
+    "type": "isekai_event",
+    "name": "Omikuji Fortune Dais",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [241, 243]
+  },
+  {
+    "id": 243,
+    "gx": 36,
+    "gy": 28,
+    "gz": 2,
+    "type": "empty",
+    "name": "Ancestral Torii Stairway",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [242, 244]
+  },
+  {
+    "id": 244,
+    "gx": 38,
+    "gy": 28,
+    "gz": 2,
+    "type": "blue",
+    "name": "Falling Petals Bridge",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [243, 245]
+  },
+  {
+    "id": 245,
+    "gx": 40,
+    "gy": 28,
+    "gz": 2,
+    "type": "empty",
+    "name": "Cherry Blossom Hot Spring",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [244, 246]
+  },
+  {
+    "id": 246,
+    "gx": 42,
+    "gy": 28,
+    "gz": 3,
+    "type": "vault",
+    "name": "Kagura Dance Stage",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [245, 247]
+  },
+  {
+    "id": 247,
+    "gx": 42,
+    "gy": 26,
+    "gz": 3,
+    "type": "blue",
+    "name": "Astral Sakura Crest",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [246, 248]
+  },
+  {
+    "id": 248,
+    "gx": 42,
+    "gy": 24,
+    "gz": 3,
+    "type": "mystery_chest",
+    "name": "Spiritual Horizon",
+    "biome": "sakura_shrine",
+    "realmId": "celestial",
+    "realmName": "อาณาจักรดวงดาราและสรวงสวรรค์",
+    "subRegionName": "ศาลเจ้าจิ้งจอกซากุระพันปี",
+    "weather": "sunny",
+    "isGrandBridge": false,
+    "neighbors": [247, 211, 0]
   }
 ];
+

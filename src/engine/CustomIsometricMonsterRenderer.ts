@@ -94,6 +94,8 @@ export class CustomIsometricMonsterRenderer {
       this.renderVampireCountess(ctx, cx, cy, f, animState);
     } else if (mName.includes('ghost') || mName.includes('wraith') || mName.includes('phantom') || mName.includes('specter')) {
       this.renderGhostMaiden(ctx, cx, cy, f, animState);
+    } else if (mName.includes('tengu') || mName.includes('kitsune') || mName.includes('chiyo') || mName.includes('ayame') || mName.includes('sakura') || mName.includes('shrine')) {
+      this.renderSakuraShrineMaiden(ctx, cx, cy, f, animState, mName);
     } else if (mName.includes('dragon') || mName.includes('boss') || mName.includes('overlord') || mName.includes('ignis')) {
       this.renderDragonPrincessIgnis(ctx, cx, cy, f, animState);
     } else {
@@ -175,7 +177,15 @@ export class CustomIsometricMonsterRenderer {
     ctx: CanvasRenderingContext2D,
     cx: number,
     cy: number,
-    colors: { base: string; highlight: string; shadow: string; trim?: string }
+    colors: {
+      base: string;
+      highlight: string;
+      shadow: string;
+      trim?: string;
+      exposedMidriff?: boolean;
+      skinTone?: string;
+      skinShadow?: string;
+    }
   ) {
     // Torso silhouette (Bust -> narrow waist -> wider hips)
     ctx.fillStyle = colors.shadow;
@@ -216,9 +226,23 @@ export class CustomIsometricMonsterRenderer {
     ctx.fillStyle = colors.shadow;
     ctx.fillRect(cx - 0.5, cy - 4.5, 1, 4.5);
 
+    // Exposed toned midriff with 11-line abs and cute navel
+    if (colors.exposedMidriff !== false) {
+      const skin = colors.skinTone || '#ffedd5';
+      const skinShadow = colors.skinShadow || '#fca5a5';
+      ctx.fillStyle = skin;
+      ctx.fillRect(cx - 3.5, cy + 1.5, 7, 5.5);
+      // Toned vertical abs definition
+      ctx.fillStyle = skinShadow;
+      ctx.fillRect(cx - 0.5, cy + 2, 1, 4);
+      // Navel indentation
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(cx - 0.5, cy + 5, 1, 1);
+    }
+
     if (colors.trim) {
       ctx.fillStyle = colors.trim;
-      ctx.fillRect(cx - 5, cy + 6, 10, 1.5);
+      ctx.fillRect(cx - 5, cy + 6.5, 10, 1.5);
     }
   }
 
@@ -1313,6 +1337,167 @@ export class CustomIsometricMonsterRenderer {
     ctx.fillRect(cx - 5, headY - 6, 10, 3);
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(cx - 1, headY - 8, 2, 2);
+  }
+
+  // =========================================================================
+  // 18. SAKURA SHRINE MAIDEN: CHIYO / AYAME (มิโกะจิ้งจอกเก้าหาง / เทนกุดอกซากุระ)
+  // Traditional red & white shrine maiden miko outfit with crop top, exposed tummy,
+  // fox ears & bushy tail or feathered tengu wings, paper prayer charms
+  // =========================================================================
+  private renderSakuraShrineMaiden(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    frame: number,
+    animState: string,
+    mName: string
+  ) {
+    const isTengu = mName.includes('tengu') || mName.includes('ayame');
+    this.drawIsoShadow(ctx, cx, cy + 34, 19, 8);
+
+    // Animated Fox Tail or Crow Wings
+    if (!isTengu) {
+      // Golden/White Fox Tail swishing
+      const tailSway = Math.sin((frame / 8) * Math.PI * 2) * 5;
+      ctx.fillStyle = '#fed7aa';
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx + 4, cy + 8);
+      ctx.quadraticCurveTo(cx + 22 + tailSway, cy - 2, cx + 18 + tailSway, cy - 14);
+      ctx.quadraticCurveTo(cx + 10, cy - 6, cx + 2, cy + 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // White tail tip
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx + 18 + tailSway, cy - 14, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Tengu Black Feather Wings
+      const wingFlap = Math.sin((frame / 6) * Math.PI * 2) * 4;
+      ctx.fillStyle = '#1e1b4b';
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, cy - 4);
+      ctx.lineTo(cx - 24 + wingFlap, cy - 18);
+      ctx.lineTo(cx - 16, cy + 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + 6, cy - 4);
+      ctx.lineTo(cx + 24 - wingFlap, cy - 18);
+      ctx.lineTo(cx + 16, cy + 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Traditional red hakama pleated skirt & legs
+    const legStep = animState === 'idle' ? 0 : Math.sin(frame * 0.9) * 3;
+    ctx.fillStyle = '#ffedd5';
+    ctx.fillRect(cx - 5 + legStep, cy + 13, 4, 8);
+    ctx.fillRect(cx + 1 - legStep, cy + 13, 4, 8);
+
+    // Red Hakama Skirt
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy + 7);
+    ctx.lineTo(cx + 6, cy + 7);
+    ctx.lineTo(cx + 9, cy + 22);
+    ctx.lineTo(cx - 9, cy + 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // White sandals (Zori)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(cx - 5 + legStep, cy + 26, 4, 3);
+    ctx.fillRect(cx + 1 - legStep, cy + 26, 4, 3);
+
+    // Miko White Top with Exposed Midriff
+    this.drawMonsterHourglassBody(ctx, cx, cy, {
+      base: '#ffffff',
+      highlight: '#f8fafc',
+      shadow: '#cbd5e1',
+      trim: '#dc2626',
+      exposedMidriff: true,
+      skinTone: '#ffedd5',
+      skinShadow: '#fca5a5'
+    });
+
+    // Red ribbons on sleeves
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cx - 9, cy - 4, 3, 10);
+    ctx.fillRect(cx + 6, cy - 4, 3, 10);
+
+    // Gohei Staff or Sacred Fan
+    ctx.save();
+    ctx.translate(cx + 12, cy + 2);
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(-1, -16, 2, 22);
+    // White paper zigzags (Shide)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-5, -16, 5, 4);
+    ctx.fillRect(-2, -12, 5, 4);
+    ctx.fillRect(-5, -8, 5, 4);
+    ctx.restore();
+
+    // Anime Shrine Maiden Face
+    const headY = cy - 14;
+    this.drawMonsterGirlFace(ctx, cx, headY, '#ffedd5', isTengu ? '#dc2626' : '#ec4899', false);
+
+    // Kitsune Fox Ears or Tengu Tokin Cap
+    if (!isTengu) {
+      // Fluffy Fox Ears with pink interior
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, headY - 4);
+      ctx.lineTo(cx - 10, headY - 14);
+      ctx.lineTo(cx - 3, headY - 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, headY - 5);
+      ctx.lineTo(cx - 8, headY - 12);
+      ctx.lineTo(cx - 4, headY - 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.moveTo(cx + 7, headY - 4);
+      ctx.lineTo(cx + 10, headY - 14);
+      ctx.lineTo(cx + 3, headY - 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(cx + 6, headY - 5);
+      ctx.lineTo(cx + 8, headY - 12);
+      ctx.lineTo(cx + 4, headY - 8);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Small black Tengu box hat (Tokin) with red cord
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(cx - 3, headY - 9, 6, 4);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(cx - 1, headY - 6, 2, 2);
+    }
+
+    // Sakura blossoms drifting around
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.75)';
+    ctx.beginPath();
+    ctx.arc(cx - 12 + Math.sin(frame * 0.5) * 3, cy - 8 + Math.cos(frame * 0.5) * 4, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + 14 + Math.cos(frame * 0.5) * 3, cy + 6 + Math.sin(frame * 0.5) * 4, 1.8, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
