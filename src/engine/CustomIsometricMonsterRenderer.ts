@@ -2,6 +2,8 @@ import { IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
+  private currentDir: IsoDirection = 'SW';
+  private isBack: boolean = false;
 
   private makeCanvas(w = 140, h = 140): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
     const canvas = document.createElement('canvas');
@@ -21,6 +23,8 @@ export class CustomIsometricMonsterRenderer {
     animState: CharacterAnimState = 'idle',
     frame: number = 0
   ): HTMLCanvasElement {
+    this.currentDir = dir;
+    this.isBack = dir === 'N' || dir === 'NE' || dir === 'NW';
     const normAnim: 'idle' | 'attack' | 'hurt' =
       animState === 'attack' || animState === 'strike'
         ? 'attack'
@@ -145,6 +149,11 @@ export class CustomIsometricMonsterRenderer {
     hasFangs = false,
     hairColor = '#a855f7'
   ) {
+    if (this.isBack) {
+      this.drawMonsterGirlBackHead(ctx, cx, cy, skinColor, hairColor);
+      return;
+    }
+
     // 1. Soft Contoured Anime Jawline & Petite Chin
     ctx.fillStyle = skinColor;
     ctx.beginPath();
@@ -236,6 +245,63 @@ export class CustomIsometricMonsterRenderer {
     ctx.lineTo(cx + 5, cy + 2);
     ctx.closePath();
     ctx.fill();
+  }
+
+  /**
+   * Helper to draw delicate feminine back of head & hair when facing backwards (N, NE, NW)
+   * Guaranteed ZERO front facial features (no eyes, no mouth, no blush!)
+   */
+  private drawMonsterGirlBackHead(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    skinColor: string,
+    hairColor = '#a855f7'
+  ) {
+    // 1. Back of slender neck / nape (graceful skin connecting cranium to shoulders)
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3.5, cy + 1);
+    ctx.lineTo(cx + 3.5, cy + 1);
+    ctx.lineTo(cx + 4.2, cy + 8);
+    ctx.lineTo(cx - 4.2, cy + 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Soft nape shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(cx - 3, cy + 3.5, 6, 2.5);
+
+    // 2. Full voluminous cranium covered completely with hair
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 1.2, 7.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Curved lower hairline at the nape
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 2);
+    ctx.quadraticCurveTo(cx - 7.5, cy + 5, cx - 2, cy + 6.8);
+    ctx.quadraticCurveTo(cx, cy + 5.8, cx + 2, cy + 6.8);
+    ctx.quadraticCurveTo(cx + 7.5, cy + 5, cx + 7, cy - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Back hair locks falling down over the nape and spine
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 3);
+    ctx.lineTo(cx + 5, cy + 3);
+    ctx.lineTo(cx + 4, cy + 12);
+    ctx.lineTo(cx - 4, cy + 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Hair luster / sheen highlight arc across the upper crown
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 3, 5.5, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
   }
 
   /**
@@ -378,6 +444,11 @@ export class CustomIsometricMonsterRenderer {
     bootColor = '#1e1b4b',
     bootTrim = '#facc15'
   ) {
+    if (this.isBack) {
+      this.drawFeminineMonsterLegsBack(ctx, cx, cy, skinColor, bootColor, bootTrim);
+      return;
+    }
+
     // Thighs
     ctx.fillStyle = skinColor;
     ctx.fillRect(cx - 5.5, cy + 12, 4.2, 8);
@@ -410,6 +481,61 @@ export class CustomIsometricMonsterRenderer {
   }
 
   /**
+   * Helper to draw slender feminine legs and boots from behind
+   */
+  private drawFeminineMonsterLegsBack(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    skinColor = '#ffedd5',
+    bootColor = '#1e1b4b',
+    bootTrim = '#facc15'
+  ) {
+    // Back of Thighs with subtle inner shadow
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(cx - 5.5, cy + 12, 4.2, 8);
+    ctx.fillRect(cx + 1.3, cy + 12, 4.2, 8);
+
+    // Inner thigh shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fillRect(cx - 1.8, cy + 12, 3.6, 6);
+
+    // Fitted Boots / Greaves (Viewed from Behind: prominent heels & back seam)
+    ctx.fillStyle = bootColor;
+    // Left leg from behind
+    ctx.beginPath();
+    ctx.moveTo(cx - 5.5, cy + 18);
+    ctx.lineTo(cx - 1.5, cy + 18);
+    ctx.lineTo(cx - 1.5, cy + 34);
+    ctx.lineTo(cx - 5.5, cy + 34);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right leg from behind
+    ctx.beginPath();
+    ctx.moveTo(cx + 1.5, cy + 18);
+    ctx.lineTo(cx + 5.5, cy + 18);
+    ctx.lineTo(cx + 5.5, cy + 34);
+    ctx.lineTo(cx + 1.5, cy + 34);
+    ctx.closePath();
+    ctx.fill();
+
+    // Back vertical boot seam
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(cx - 3.8, cy + 19, 1, 14);
+    ctx.fillRect(cx + 3.2, cy + 19, 1, 14);
+
+    // High heel / plate heel block
+    ctx.fillStyle = bootTrim;
+    ctx.fillRect(cx - 5.5, cy + 32, 2.5, 2.5);
+    ctx.fillRect(cx + 3.0, cy + 32, 2.5, 2.5);
+
+    // Boot top cuffs
+    ctx.fillRect(cx - 5.5, cy + 18, 4, 1.5);
+    ctx.fillRect(cx + 1.5, cy + 18, 4, 1.5);
+  }
+
+  /**
    * Helper to draw voluptuous feminine hourglass curves for monster girls
    */
   private drawMonsterHourglassBody(
@@ -426,6 +552,11 @@ export class CustomIsometricMonsterRenderer {
       skinShadow?: string;
     }
   ) {
+    if (this.isBack) {
+      this.drawMonsterHourglassBodyBack(ctx, cx, cy, colors);
+      return;
+    }
+
     // Torso silhouette (Bust -> narrow waist -> wider hips)
     ctx.fillStyle = colors.shadow;
     ctx.beginPath();
@@ -483,6 +614,111 @@ export class CustomIsometricMonsterRenderer {
       ctx.fillStyle = colors.trim;
       ctx.fillRect(cx - 5, cy + 6.5, 10, 1.5);
     }
+  }
+
+  /**
+   * Helper to draw voluptuous feminine hourglass curves from behind (Back of Bikini Armor)
+   */
+  private drawMonsterHourglassBodyBack(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    colors: {
+      base: string;
+      highlight: string;
+      shadow: string;
+      trim?: string;
+      exposedMidriff?: boolean;
+      skinTone?: string;
+      skinShadow?: string;
+    }
+  ) {
+    const skin = colors.skinTone || '#ffedd5';
+    const skinShadow = colors.skinShadow || '#fca5a5';
+
+    // 1. Back Torso Silhouette (Shoulders -> tapered waist -> flaring hips)
+    ctx.fillStyle = colors.shadow;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 8);
+    ctx.lineTo(cx + 7, cy - 8);
+    ctx.quadraticCurveTo(cx + 8.5, cy - 2, cx + 4.2, cy + 3); // narrow waist
+    ctx.quadraticCurveTo(cx + 7.8, cy + 9, cx + 7.8, cy + 13); // wide hips
+    ctx.lineTo(cx - 7.8, cy + 13);
+    ctx.quadraticCurveTo(cx - 7.8, cy + 9, cx - 4.2, cy + 3);
+    ctx.quadraticCurveTo(cx - 8.5, cy - 2, cx - 7, cy - 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Smooth Back Skin Tone (Exposed back between shoulder blades and waist)
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 7);
+    ctx.lineTo(cx + 6, cy - 7);
+    ctx.quadraticCurveTo(cx + 7, cy - 2, cx + 3.6, cy + 3);
+    ctx.quadraticCurveTo(cx + 6.8, cy + 8, cx + 6.8, cy + 12);
+    ctx.lineTo(cx - 6.8, cy + 12);
+    ctx.quadraticCurveTo(cx - 6.8, cy + 8, cx - 3.6, cy + 3);
+    ctx.quadraticCurveTo(cx - 7, cy - 2, cx - 6, cy - 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Delicate Shoulder Blades (Scapula contours) & Subtle Spine Groove
+    ctx.fillStyle = skinShadow;
+    // Left shoulder blade
+    ctx.beginPath();
+    ctx.moveTo(cx - 4.5, cy - 5);
+    ctx.lineTo(cx - 2, cy - 4.5);
+    ctx.lineTo(cx - 3.5, cy - 1);
+    ctx.closePath();
+    ctx.fill();
+    // Right shoulder blade
+    ctx.beginPath();
+    ctx.moveTo(cx + 4.5, cy - 5);
+    ctx.lineTo(cx + 2, cy - 4.5);
+    ctx.lineTo(cx + 3.5, cy - 1);
+    ctx.closePath();
+    ctx.fill();
+    // Vertical spinal groove
+    ctx.fillRect(cx - 0.5, cy - 6, 1, 9);
+
+    // 4. Bikini Armor Back Straps & Metal Buckle/Ring
+    // Upper horizontal strap crossing under shoulder blades
+    ctx.fillStyle = colors.base;
+    ctx.fillRect(cx - 6.5, cy - 1.5, 13, 2.2);
+
+    // Golden / metallic central clasp
+    ctx.fillStyle = colors.trim || colors.highlight;
+    ctx.fillRect(cx - 1.2, cy - 1.8, 2.4, 2.8);
+
+    // Vertical neck-tie straps rising toward nape
+    ctx.strokeStyle = colors.base;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3.5, cy - 7);
+    ctx.lineTo(cx - 1.5, cy - 1.5);
+    ctx.moveTo(cx + 3.5, cy - 7);
+    ctx.lineTo(cx + 1.5, cy - 1.5);
+    ctx.stroke();
+
+    // 5. Bikini Bottom Back & Waistline Belt
+    ctx.fillStyle = colors.base;
+    // Lower back strap / hip band
+    ctx.beginPath();
+    ctx.moveTo(cx - 6.5, cy + 7);
+    ctx.lineTo(cx + 6.5, cy + 7);
+    ctx.lineTo(cx + 6, cy + 12.5);
+    ctx.lineTo(cx - 6, cy + 12.5);
+    ctx.closePath();
+    ctx.fill();
+
+    if (colors.trim) {
+      ctx.fillStyle = colors.trim;
+      ctx.fillRect(cx - 6, cy + 7, 12, 1.3);
+    }
+
+    // Cute lower-back arch shadow
+    ctx.fillStyle = skinShadow;
+    ctx.fillRect(cx - 1.5, cy + 5.5, 3, 1.2);
   }
 
   // =========================================================================
@@ -956,9 +1192,11 @@ export class CustomIsometricMonsterRenderer {
     ctx.fill();
 
     // Inner ear pink
-    ctx.fillStyle = '#f472b6';
-    ctx.fillRect(cx - 7, headY - 11, 2, 4);
-    ctx.fillRect(cx + 5, headY - 11, 2, 4);
+    if (!this.isBack) {
+      ctx.fillStyle = '#f472b6';
+      ctx.fillRect(cx - 7, headY - 11, 2, 4);
+      ctx.fillRect(cx + 5, headY - 11, 2, 4);
+    }
 
     // Face & fangs
     this.drawMonsterGirlFace(ctx, cx, headY, skinTone, isPanther ? '#eab308' : '#38bdf8', true, hairColor);
@@ -1760,13 +1998,15 @@ export class CustomIsometricMonsterRenderer {
       ctx.lineTo(cx - 3, headY - 8);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#f472b6';
-      ctx.beginPath();
-      ctx.moveTo(cx - 6, headY - 5);
-      ctx.lineTo(cx - 8, headY - 12);
-      ctx.lineTo(cx - 4, headY - 8);
-      ctx.closePath();
-      ctx.fill();
+      if (!this.isBack) {
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.moveTo(cx - 6, headY - 5);
+        ctx.lineTo(cx - 8, headY - 12);
+        ctx.lineTo(cx - 4, headY - 8);
+        ctx.closePath();
+        ctx.fill();
+      }
 
       ctx.fillStyle = '#fed7aa';
       ctx.beginPath();
@@ -1775,13 +2015,15 @@ export class CustomIsometricMonsterRenderer {
       ctx.lineTo(cx + 3, headY - 8);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#f472b6';
-      ctx.beginPath();
-      ctx.moveTo(cx + 6, headY - 5);
-      ctx.lineTo(cx + 8, headY - 12);
-      ctx.lineTo(cx + 4, headY - 8);
-      ctx.closePath();
-      ctx.fill();
+      if (!this.isBack) {
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.moveTo(cx + 6, headY - 5);
+        ctx.lineTo(cx + 8, headY - 12);
+        ctx.lineTo(cx + 4, headY - 8);
+        ctx.closePath();
+        ctx.fill();
+      }
     } else {
       // Small black Tengu box hat (Tokin) with red cord
       ctx.fillStyle = '#0f172a';
