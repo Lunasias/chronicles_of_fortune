@@ -616,6 +616,10 @@ class DokaponApp {
       });
 
       updateSkinDisplay();
+
+      window.addEventListener('hero-assets-loaded', () => {
+        updateSkinDisplay();
+      }, { once: false });
     }
   }
 

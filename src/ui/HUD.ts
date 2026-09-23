@@ -49,6 +49,10 @@ export class HUD {
       });
     }
 
+    window.addEventListener('hero-assets-loaded', () => {
+      this.renderAvatar();
+    });
+
     // Make time of day badge interactive for instant testing and cycling
     const timeBadge = document.getElementById('hudTimeOfDayBadge');
     if (timeBadge) {
