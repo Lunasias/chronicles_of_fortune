@@ -461,7 +461,7 @@ export class InspectUI {
   // =========================================================================
   // 3. MOVE TARGET SELECTION: MONSTER ENCOUNTER & STAT PREVIEW TOOLTIP
   // =========================================================================
-  showMoveDestinationPreview(node: BoardNode, activePlayer: Player, screenX: number, screenY: number) {
+  showMoveDestinationPreview(node: BoardNode, activePlayer: Player, screenX: number, screenY: number, steps?: number, maxRoll?: number) {
     const preview = getNodeEncounterPreview(node);
     const m = preview.featuredMonster;
 
@@ -519,6 +519,12 @@ export class InspectUI {
           </span>
         </div>
 
+        ${steps ? `
+        <div class="flex items-center justify-between text-[9px] bg-cyan-950/80 border border-cyan-800/60 px-1.5 py-0.5 rounded mb-1 text-cyan-300 font-bold">
+          <span>🚶 ระยะทางเดิน:</span>
+          <span>${steps} ช่อง ${maxRoll ? `(ทอยได้ ${maxRoll})` : ''}</span>
+        </div>` : ''}
+
         <div class="flex items-center justify-between text-[9px] bg-slate-900/90 px-1.5 py-0.5 rounded mb-1 border border-slate-800">
           <span class="text-slate-300">โอกาสปะทะอสูร:</span>
           <strong class="font-bold" style="color: ${preview.threatColor};">${preview.encounterChancePercent}%</strong>
@@ -531,7 +537,7 @@ export class InspectUI {
         ${statComparisonHtml}
 
         <div class="mt-1.5 pt-1 border-t border-slate-800 text-[8px] text-slate-400 flex items-center justify-between">
-          <span>💡 คลิกช่องเพื่อยืนยันการเดิน</span>
+          <span>💡 ${steps ? `คลิกเพื่อเดิน ${steps} ช่องและหยุดที่นี่` : 'คลิกช่องเพื่อยืนยันการเดิน'}</span>
           <span class="text-amber-400 font-bold">Dokapon</span>
         </div>
       </div>

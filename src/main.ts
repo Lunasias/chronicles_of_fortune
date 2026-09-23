@@ -129,15 +129,24 @@ class DokaponApp {
         this.renderer.hoveredNodeId = hoveredNode.id;
         this.canvas.style.cursor = 'pointer';
 
-        // Monster Encounter & Stat Preview Tooltip
-        this.inspectUI.showMoveDestinationPreview(hoveredNode, this.game.activePlayer, e.clientX, e.clientY);
-
         // Calculate and preview path
         let path = this.game.findPathToTarget(hoveredNode.id);
         if (!path || path.length <= 1) {
           path = [this.game.activePlayer.nodeId, hoveredNode.id];
         }
         this.renderer.previewPathNodeIds = path || [];
+
+        const steps = path && path.length > 1 ? path.length - 1 : undefined;
+
+        // Monster Encounter & Stat Preview Tooltip
+        this.inspectUI.showMoveDestinationPreview(
+          hoveredNode,
+          this.game.activePlayer,
+          e.clientX,
+          e.clientY,
+          steps,
+          this.game.remainingMoves
+        );
 
         // Turn hero dynamically to face path direction
         if (path && path.length > 1) {
@@ -673,7 +682,7 @@ class DokaponApp {
         clearInterval(interval);
         diceCube.classList.remove('dice-rolling');
         diceCube.innerText = `${totalRoll}`;
-        diceResultText.innerText = `คุณทอยได้ ${totalRoll}!`;
+        diceResultText.innerText = `คุณทอยได้ ${totalRoll}! (เลือกเดินได้ 1 - ${totalRoll} ช่อง)`;
         audio.coin();
 
         setTimeout(() => {
@@ -697,7 +706,7 @@ class DokaponApp {
               );
             }
           } else {
-            this.game.addLog(`👉 คลิกที่จุดหมายปลายทางที่สว่างบนแผนที่เพื่อเดินไปที่นั่น!`, 'level');
+            this.game.addLog(`👉 ทอยได้ ${totalRoll}! คลิกเลือกช่องปลายทางบนแผนที่เพื่อเดิน (เลือกได้ตั้งแต่ 1 ถึง ${totalRoll} ช่อง)`, 'level');
           }
         }, 800);
       }

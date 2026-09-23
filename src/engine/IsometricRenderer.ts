@@ -1130,7 +1130,10 @@ export class IsometricRenderer {
       // 4. Interactive Hover Badge (Only when hovered!)
       if (isHovered) {
         const badgeY = tipY - ah - 16;
-        const label = `🎯 เดินมาที่นี่`;
+        const steps = this.previewPathNodeIds && this.previewPathNodeIds.length > 1
+          ? this.previewPathNodeIds.length - 1
+          : null;
+        const label = steps !== null ? `🎯 เดิน ${steps} ช่อง (คลิก)` : `🎯 เดินมาที่นี่`;
         ctx.font = 'bold 10px "Kanit", "Prompt", sans-serif';
         const txtW = ctx.measureText(label).width;
         const boxW = txtW + 18;

@@ -277,12 +277,8 @@ export class GameState {
       const { nodeId, prevId, steps } = queue.shift()!;
 
       // Valid landing destinations:
-      // 1. Exact dice roll consumption (steps === remainingMoves)
-      // 2. Major landmark stops: Royal Castle (node 0) or Player's own Home
-      const isLandmark = (nodeId === 0 && steps >= 1) ||
-                         (this.activePlayer.homeNodeId && nodeId === this.activePlayer.homeNodeId && steps >= 1);
-
-      if (steps === this.remainingMoves || isLandmark) {
+      // Allow flexible landing on any node reachable within 1 to remainingMoves steps (<= rolled dice count)
+      if (steps >= 1 && steps <= this.remainingMoves) {
         if (nodeId !== this.activePlayer.nodeId) {
           reachable.add(nodeId);
         }
@@ -318,10 +314,7 @@ export class GameState {
       const currentId = path[path.length - 1];
       const steps = path.length - 1;
 
-      const isLandmark = (targetNodeId === 0 && steps >= 1) ||
-                         (this.activePlayer.homeNodeId && targetNodeId === this.activePlayer.homeNodeId && steps >= 1);
-
-      if (currentId === targetNodeId && (steps === this.remainingMoves || isLandmark)) {
+      if (currentId === targetNodeId && steps >= 1 && steps <= this.remainingMoves) {
         return path;
       }
 
