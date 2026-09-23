@@ -52,7 +52,7 @@ export class CustomIsometricHeroRenderer {
   private preloadAllClassSprites() {
     const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
     const uniqueFolders = Array.from(new Set(Object.values(CLASS_ASSET_FOLDERS)));
-    const animatedFolders = ['A_fair-skinned_sorceress_with_long'];
+    const animatedFolders = ['A_fair-skinned_sorceress_with_long', 'A_female_magic_swordsman_with'];
 
     this.totalToLoad = uniqueFolders.length * directions.length + animatedFolders.length * directions.length * 8;
 
