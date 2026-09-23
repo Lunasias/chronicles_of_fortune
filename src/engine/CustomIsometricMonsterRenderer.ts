@@ -14,13 +14,13 @@ const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
 
 const DIR_NAME_MAP: Record<IsoDirection, string> = {
   S: 'south',
-  SE: 'south-east',
+  SE: 'south-west', // south-west.png visually faces down-right (SE)
   E: 'east',
   NE: 'north-east',
   N: 'north',
   NW: 'north-west',
   W: 'west',
-  SW: 'south-west'
+  SW: 'south-east' // south-east.png visually faces down-left (SW)
 };
 
 export class CustomIsometricMonsterRenderer {

@@ -15,13 +15,13 @@ const CLASS_ASSET_FOLDERS: Record<string, string> = {
 
 const DIR_FILE_MAP: Record<IsoDirection, string> = {
   S: 'south.png',
-  SE: 'south-east.png',
+  SE: 'south-west.png', // south-west.png visually faces down-right (SE)
   E: 'east.png',
   NE: 'north-east.png',
   N: 'north.png',
   NW: 'north-west.png',
   W: 'west.png',
-  SW: 'south-west.png'
+  SW: 'south-east.png' // south-east.png visually faces down-left (SW)
 };
 
 // Unit direction vectors for 2:1 Isometric Board and Battle Movement
