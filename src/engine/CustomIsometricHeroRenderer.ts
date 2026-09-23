@@ -513,8 +513,8 @@ export class CustomIsometricHeroRenderer {
       ctx.restore();
     }
 
-    // 6. Warrior / Spellblade: Feathered Wings Gentle Breathing Glow
-    if (cls === 'warrior' || cls === 'spellblade') {
+    // 6. Spellblade: Feathered Wings Gentle Breathing Glow (Warrior has NO wings!)
+    if (cls === 'spellblade') {
       const isBack = dir === 'N' || dir === 'NE' || dir === 'NW';
       if (isBack) {
         ctx.save();
@@ -526,6 +526,16 @@ export class CustomIsometricHeroRenderer {
         ctx.fill();
         ctx.restore();
       }
+    } else if (cls === 'warrior') {
+      // Heavy Steel Pauldrons Metallic Glint (No Wings!)
+      ctx.save();
+      const glint = (Math.sin(frame * 1.2) + 1) * 0.5;
+      ctx.fillStyle = `rgba(251, 191, 36, ${0.25 * glint})`;
+      ctx.beginPath();
+      ctx.arc(cx - 12, cy - 8, 4, 0, Math.PI * 2);
+      ctx.arc(cx + 12, cy - 8, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
 

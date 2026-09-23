@@ -119,6 +119,16 @@ export class TerrariaIsometricBuildingRenderer {
     // 7. Castle Banner & Flagpole (Terraria-style wind banner)
     ctx.fillStyle = '#94a3b8';
     ctx.fillRect(cx - 1, cy - 42, 3, 24);
+    // Floating Azure Mana Crystal (Matching Spellblade Magic Aesthetic)
+    ctx.save();
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 10;
+    this.drawPixelDiamond(ctx, cx, cy - 48, 6, 9);
+    ctx.fillStyle = '#ffffff';
+    this.drawPixelDiamond(ctx, cx, cy - 48, 2, 4);
+    ctx.restore();
+
     // Gold finial sphere
     ctx.fillStyle = '#fde047';
     ctx.fillRect(cx - 2, cy - 44, 5, 4);

@@ -640,9 +640,10 @@ export class BattleUI {
       targetAtkDX = fullDX - margin;
       targetAtkDY = fullDY - (isPAtk ? 28 : -28);
     } else if (atkAction === 'skill') {
-      // High-speed flank maneuver
-      targetAtkDX = fullDX + (isPAtk ? 32 : -32);
-      targetAtkDY = fullDY - (isPAtk ? 20 : -20);
+      // High-speed skill clash: Charge directly into defender's frontline face-to-face!
+      const margin = isPAtk ? 45 : -45;
+      targetAtkDX = fullDX - margin;
+      targetAtkDY = fullDY - (isPAtk ? 18 : -18);
     } else {
       // Dash directly into defender's face
       const margin = isPAtk ? 55 : -55;
@@ -1043,17 +1044,13 @@ export class BattleUI {
     const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
     // Dynamic 8-Directional Combat Stance & Orientation: Always face directly towards each other!
-    let heroDir: IsoDirection;
-    let enemyDir: IsoDirection;
+    let heroDir: IsoDirection = this.getIsoDirection(px, py, ex, ey);
+    let enemyDir: IsoDirection = this.getIsoDirection(ex, ey, px, py);
 
-    if (Math.hypot(ex - px, ey - py) < 18) {
-      // In close-quarters clash / impact, lock facing into each other
+    // When close in melee range or during skill/strike clash, lock strictly face-to-face (Hero NE <-> Enemy SW)
+    if (Math.hypot(ex - px, ey - py) < 65) {
       heroDir = 'NE';
       enemyDir = 'SW';
-    } else {
-      // Dynamic facing towards each other across the arena
-      heroDir = this.getIsoDirection(px, py, ex, ey);
-      enemyDir = this.getIsoDirection(ex, ey, px, py);
     }
 
     // Dynamic Attack Animation Frames synchronized with combat phases

@@ -70,6 +70,19 @@ export class CustomIsometricMonsterRenderer {
         };
         this.monsterImageStore.set(`${arch}_idle_${dir}`, idleImg);
 
+        // 4 Run frames per direction (32 Run frames per monster)
+        for (let f = 0; f < 4; f++) {
+          const runImg = new Image();
+          runImg.src = `/assets/monsters/${arch}/Run/rotations/${dirName}_${f}.png`;
+          runImg.onload = () => {
+            this.cache.clear();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+            }
+          };
+          this.monsterImageStore.set(`${arch}_run_${dir}_${f}`, runImg);
+        }
+
         // 4 Attack frames per direction (32 Attack frames per monster)
         for (let f = 0; f < 4; f++) {
           const atkImg = new Image();
@@ -196,6 +209,12 @@ export class CustomIsometricMonsterRenderer {
     if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
       const atkF = f % 4;
       mobImg = this.monsterImageStore.get(`${archKey}_attack_${dir}_${atkF}`);
+      if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
+        mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
+      }
+    } else if (animState === 'run') {
+      const runF = f % 4;
+      mobImg = this.monsterImageStore.get(`${archKey}_run_${dir}_${runF}`);
       if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
         mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
       }

@@ -50,8 +50,8 @@ class DokaponApp {
   private initialDownX = 0;
   private initialDownY = 0;
   private hasMovedWhileDragging = false;
-  private bossCurrentHp = 380;
-  private bossMaxHp = 380;
+  private bossCurrentHp = 950;
+  private bossMaxHp = 950;
   private worldMapFilter: string = 'all';
   private mapTransform = { minGx: 0, minGy: 0, scale: 1, offsetX: 0, offsetY: 0 };
 
@@ -899,19 +899,34 @@ class DokaponApp {
     player: Player,
     monsterName: string,
     isTownBoss = false,
-    isCalamityBoss = false
+    isCalamityBoss = false,
+    tier = 1
   ): { gold: number; xp: number; droppedItem?: EquipmentItem } {
-    let gold = 45 + Math.floor(Math.random() * 45);
-    let xp = 50 + Math.floor(Math.random() * 30);
-    let dropChance = 0.40;
+    let gold = 25 + Math.floor(Math.random() * 30);
+    let xp = 30 + Math.floor(Math.random() * 25);
+    let dropChance = 0.35;
+
+    if (tier === 2) {
+      gold = 70 + Math.floor(Math.random() * 70);
+      xp = 80 + Math.floor(Math.random() * 50);
+      dropChance = 0.40;
+    } else if (tier === 3) {
+      gold = 180 + Math.floor(Math.random() * 150);
+      xp = 180 + Math.floor(Math.random() * 100);
+      dropChance = 0.45;
+    } else if (tier >= 4) {
+      gold = 380 + Math.floor(Math.random() * 280);
+      xp = 350 + Math.floor(Math.random() * 180);
+      dropChance = 0.50;
+    }
 
     if (isCalamityBoss) {
-      gold = 400 + Math.floor(Math.random() * 250);
-      xp = 350;
+      gold = 800 + Math.floor(Math.random() * 450);
+      xp = 750;
       dropChance = 1.0;
     } else if (isTownBoss) {
-      gold = 150 + Math.floor(Math.random() * 120);
-      xp = 120;
+      gold = Math.round(gold * 2.2);
+      xp = Math.round(xp * 1.8);
       dropChance = 0.75;
     }
 
@@ -920,10 +935,19 @@ class DokaponApp {
 
     let droppedItem: EquipmentItem | undefined = undefined;
     if (Math.random() < dropChance && SHOP_CATALOG.length > 0) {
-      const availableLoot = isTownBoss || isCalamityBoss
-        ? SHOP_CATALOG.filter(it => it.type === 'weapon' || it.type === 'armor' || it.type === 'accessory' || it.id === 'pot_elixir' || it.type === 'spell')
-        : SHOP_CATALOG;
+      // Filter loot catalog by progressive tier threshold so early monsters don't drop endgame gear!
+      let availableLoot = SHOP_CATALOG;
+      if (tier === 1 && !isTownBoss && !isCalamityBoss) {
+        availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 400);
+      } else if (tier === 2 && !isTownBoss && !isCalamityBoss) {
+        availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 1500);
+      } else if (tier === 3 && !isTownBoss && !isCalamityBoss) {
+        availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 5000);
+      } else if (isTownBoss || isCalamityBoss) {
+        availableLoot = SHOP_CATALOG.filter(it => it.type === 'weapon' || it.type === 'armor' || it.type === 'accessory' || it.id === 'pot_elixir' || it.type === 'spell');
+      }
 
+      if (availableLoot.length === 0) availableLoot = SHOP_CATALOG;
       const picked = availableLoot[Math.floor(Math.random() * availableLoot.length)];
       if (picked) {
         droppedItem = { ...picked };
@@ -1245,23 +1269,64 @@ class DokaponApp {
     const roster = biomeMonsters[tile.biome || ''] || biomeMonsters[tile.realmId] || ['Forest Goblin Marauder', 'Royal Slime Bloblet', 'Briar Kobold'];
     const pickedName = roster[Math.floor(Math.random() * roster.length)];
 
+    // Progressive Tier-Based Monster Difficulty Curve
+    let tier = 1;
+    const rId = tile.realmId;
+    const biome = tile.biome || '';
+
+    if (rId === 'abyss' || biome === 'abyss' || tile.type === 'dark_gate') {
+      tier = 4;
+    } else if (rId === 'frostpeak' || biome === 'snow' || biome === 'volcano' || rId === 'celestial') {
+      tier = 3;
+    } else if (rId === 'sunfire' || biome === 'desert' || biome === 'steampunk' || biome === 'sakura_shrine' || biome === 'cavern') {
+      tier = 2;
+    } else {
+      tier = 1;
+    }
+
+    let hp = 55 + Math.floor(Math.random() * 25);
+    let atk = 12 + Math.floor(Math.random() * 3);
+    let def = 7 + Math.floor(Math.random() * 3);
+    let mag = 7 + Math.floor(Math.random() * 3);
+    let spd = 7 + Math.floor(Math.random() * 3);
+
+    if (tier === 2) {
+      hp = 110 + Math.floor(Math.random() * 45);
+      atk = 20 + Math.floor(Math.random() * 5);
+      def = 14 + Math.floor(Math.random() * 4);
+      mag = 15 + Math.floor(Math.random() * 6);
+      spd = 12 + Math.floor(Math.random() * 4);
+    } else if (tier === 3) {
+      hp = 230 + Math.floor(Math.random() * 70);
+      atk = 32 + Math.floor(Math.random() * 8);
+      def = 24 + Math.floor(Math.random() * 6);
+      mag = 26 + Math.floor(Math.random() * 8);
+      spd = 18 + Math.floor(Math.random() * 6);
+    } else if (tier === 4) {
+      hp = 420 + Math.floor(Math.random() * 120);
+      atk = 48 + Math.floor(Math.random() * 12);
+      def = 35 + Math.floor(Math.random() * 8);
+      mag = 42 + Math.floor(Math.random() * 10);
+      spd = 24 + Math.floor(Math.random() * 8);
+    }
+
     const monsterCombatant: Combatant = {
       name: pickedName,
-      hp: 65 + Math.floor(Math.random() * 40),
-      maxHp: 105,
-      mp: 25,
-      maxMp: 25,
-      atk: 13 + Math.floor(Math.random() * 7),
-      def: 8 + Math.floor(Math.random() * 6),
-      mag: 8,
-      spd: 9,
-      luk: 6
+      hp: hp,
+      maxHp: hp,
+      mp: 20 + tier * 10,
+      maxMp: 20 + tier * 10,
+      atk: atk,
+      def: def,
+      mag: mag,
+      spd: spd,
+      luk: 5 + tier * 2
     };
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
-        const loot = this.awardMonsterLoot(winner.playerRef, pickedName, false, false);
-        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${pickedName} (+${loot.gold}G, +${loot.xp} EXP)!`);
+        const loot = this.awardMonsterLoot(winner.playerRef, pickedName, false, false, tier);
+        this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น [T${tier}] ${pickedName} (+${loot.gold}G, +${loot.xp} EXP)!`);
         if (loot.droppedItem) {
           this.game.addLog(`🎁 มอนสเตอร์ทำไอเทมตก! ได้รับ "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
@@ -1353,13 +1418,13 @@ class DokaponApp {
       name: 'Dragon Princess Ignis',
       hp: this.bossCurrentHp,
       maxHp: this.bossMaxHp,
-      mp: 80,
-      maxMp: 80,
-      atk: 29,
-      def: 18,
-      mag: 18,
-      spd: 12,
-      luk: 10,
+      mp: 150,
+      maxMp: 150,
+      atk: 65,
+      def: 38,
+      mag: 48,
+      spd: 22,
+      luk: 15,
       isBoss: true
     };
 

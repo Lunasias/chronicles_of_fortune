@@ -92,10 +92,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       1,
       21,
-      146,
-      199,
-      210,
-      248
+      199
     ],
     "townData": {
       "name": "Oakshire Capital",
@@ -105,9 +102,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Slime Princess Aurelia",
-      "monsterHp": 60,
-      "monsterAtk": 11,
-      "monsterDef": 5
+      "monsterHp": 107,
+      "monsterAtk": 16,
+      "monsterDef": 9,
+      "monsterMaxHp": 107
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -125,8 +123,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       0,
-      2,
-      15
+      2
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -144,9 +141,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       1,
-      3,
-      18,
-      131
+      3
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -164,8 +159,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       2,
-      4,
-      19
+      4
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -183,9 +177,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       3,
-      5,
-      20,
-      22
+      5
     ],
     "townData": {
       "name": "Lakeview Keep",
@@ -195,9 +187,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Lake Goblin Girl Mizuki",
-      "monsterHp": 65,
-      "monsterAtk": 12,
-      "monsterDef": 6
+      "monsterHp": 105,
+      "monsterAtk": 13,
+      "monsterDef": 10,
+      "monsterMaxHp": 105
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -215,8 +208,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       4,
-      6,
-      17
+      6
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -234,8 +226,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       5,
-      7,
-      14
+      7
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -254,13 +245,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       6,
       8,
-      13
+      155
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 8,
@@ -272,9 +263,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       7,
-      9,
-      12,
-      30
+      9
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -292,8 +281,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       8,
-      10,
-      11
+      10
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -311,8 +299,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       9,
-      11,
-      45
+      11
     ],
     "townData": {
       "name": "Riverdale Borough",
@@ -322,9 +309,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "River Harpy Maiden Zephyra",
-      "monsterHp": 70,
-      "monsterAtk": 13,
-      "monsterDef": 7
+      "monsterHp": 87,
+      "monsterAtk": 14,
+      "monsterDef": 8,
+      "monsterMaxHp": 87
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -341,7 +329,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "กล่องสุ่มมหัศจรรย์โซลาเรีย",
     "biome": "grass",
     "neighbors": [
-      9,
       10,
       12
     ],
@@ -360,11 +347,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Royal Crossroad",
     "biome": "grass",
     "neighbors": [
-      8,
       11,
-      13,
-      43,
-      86
+      13
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -381,7 +365,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Goddess Lumina Shrine",
     "biome": "grass",
     "neighbors": [
-      7,
       12,
       14
     ],
@@ -400,10 +383,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Plains Mystic Tent",
     "biome": "grass",
     "neighbors": [
-      6,
       13,
-      15,
-      90
+      15
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -420,7 +401,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Briar Trench",
     "biome": "grass",
     "neighbors": [
-      1,
       14,
       16
     ],
@@ -440,8 +420,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "grass",
     "neighbors": [
       15,
-      17,
-      129
+      17
     ],
     "townData": {
       "name": "King's Crossing",
@@ -451,9 +430,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Highway Bandit Lass Scarlett",
-      "monsterHp": 75,
-      "monsterAtk": 14,
-      "monsterDef": 7
+      "monsterHp": 89,
+      "monsterAtk": 15,
+      "monsterDef": 8,
+      "monsterMaxHp": 89
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -470,7 +450,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Greenway Trail",
     "biome": "grass",
     "neighbors": [
-      5,
       16,
       18
     ],
@@ -489,10 +468,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Village Chapel",
     "biome": "grass",
     "neighbors": [
-      2,
       17,
-      19,
-      40
+      19
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -509,9 +486,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Orchard Spring",
     "biome": "grass",
     "neighbors": [
-      3,
-      18,
-      20
+      18
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -528,15 +503,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Pasture Hill",
     "biome": "grass",
     "neighbors": [
-      4,
-      19,
-      21
+      21,
+      175
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "ทุ่งหญ้าราชธานีโซลาเรีย",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 21,
@@ -566,9 +540,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Canopy Entrance",
     "biome": "forest",
     "neighbors": [
-      4,
-      23,
-      42
+      23
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -586,8 +558,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       22,
-      24,
-      41
+      24
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -605,8 +576,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       23,
-      25,
-      40
+      25
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -624,9 +594,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       24,
-      26,
-      39,
-      65
+      26
     ],
     "townData": {
       "name": "Sylva Village",
@@ -636,9 +604,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Briar Kobold Witch Maya",
-      "monsterHp": 80,
-      "monsterAtk": 15,
-      "monsterDef": 8
+      "monsterHp": 85,
+      "monsterAtk": 14,
+      "monsterDef": 10,
+      "monsterMaxHp": 85
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -656,8 +625,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       25,
-      27,
-      38
+      27
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -676,13 +644,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       26,
       28,
-      37
+      31
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 28,
@@ -694,8 +662,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       27,
-      29,
-      36
+      29
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -712,9 +679,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Druidic Monolith",
     "biome": "forest",
     "neighbors": [
-      28,
-      30,
-      33
+      28
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -731,10 +696,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mystic Pond Fishing Spot",
     "biome": "forest",
     "neighbors": [
-      8,
-      29,
-      31,
-      34
+      31
     ],
     "townData": {
       "name": "Deepwood Haven",
@@ -744,9 +706,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Shadow Panther Huntress Kaelia",
-      "monsterHp": 85,
+      "monsterHp": 91,
       "monsterAtk": 16,
-      "monsterDef": 8
+      "monsterDef": 10,
+      "monsterMaxHp": 91
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -763,6 +726,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Glowing Flora",
     "biome": "forest",
     "neighbors": [
+      27,
       30,
       32
     ],
@@ -770,7 +734,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "พงไพรมรกตเพรียกหา",
     "weather": "rain",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 32,
@@ -799,7 +763,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "กล่องสุ่มมหัศจรรย์เอลฟ์",
     "biome": "forest",
     "neighbors": [
-      29,
       32,
       34
     ],
@@ -818,7 +781,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Woodsman Bowyer",
     "biome": "forest",
     "neighbors": [
-      30,
       33,
       35
     ],
@@ -838,8 +800,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "forest",
     "neighbors": [
       34,
-      36,
-      71
+      36
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -856,7 +817,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Fairy Reincarnation Grove",
     "biome": "forest",
     "neighbors": [
-      28,
       35,
       37,
       155
@@ -869,9 +829,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Dryad Matriarch Sylvana",
-      "monsterHp": 95,
-      "monsterAtk": 17,
-      "monsterDef": 11
+      "monsterHp": 104,
+      "monsterAtk": 15,
+      "monsterDef": 8,
+      "monsterMaxHp": 104
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -888,7 +849,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Poison Spore Bog",
     "biome": "forest",
     "neighbors": [
-      27,
       36,
       38
     ],
@@ -907,7 +867,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sacred Pool",
     "biome": "forest",
     "neighbors": [
-      26,
       37,
       39
     ],
@@ -926,7 +885,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Hollow",
     "biome": "forest",
     "neighbors": [
-      25,
       38,
       40
     ],
@@ -945,12 +903,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Moon Temple",
     "biome": "forest",
     "neighbors": [
-      18,
-      24,
       39,
       41,
-      183,
-      198
+      183
     ],
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -967,10 +922,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Elderwood Spire",
     "biome": "forest",
     "neighbors": [
-      23,
       40,
-      42,
-      43
+      42
     ],
     "townData": {
       "name": "Elderwood Spire",
@@ -980,9 +933,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Chimera Empress Chimaria",
-      "monsterHp": 100,
-      "monsterAtk": 18,
-      "monsterDef": 10
+      "monsterHp": 109,
+      "monsterAtk": 16,
+      "monsterDef": 9,
+      "monsterMaxHp": 109
     },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
@@ -999,7 +953,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mystic Sylvan Cache",
     "biome": "forest",
     "neighbors": [
-      22,
       41,
       168
     ],
@@ -1018,10 +971,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frostfall Incline",
     "biome": "snow",
     "neighbors": [
-      12,
-      41,
-      44,
-      64
+      44
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1039,8 +989,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       43,
-      45,
-      62
+      45
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1057,10 +1006,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Alpine Outpost",
     "biome": "snow",
     "neighbors": [
-      10,
       44,
-      46,
-      61
+      46
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1078,8 +1025,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       45,
-      47,
-      63
+      47
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1097,8 +1043,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       46,
-      48,
-      59
+      48
     ],
     "townData": {
       "name": "Glacier Citadel",
@@ -1108,9 +1053,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Frost Wyrm Princess Glacia",
-      "monsterHp": 110,
-      "monsterAtk": 19,
-      "monsterDef": 12
+      "monsterHp": 312,
+      "monsterAtk": 38,
+      "monsterDef": 27,
+      "monsterMaxHp": 312
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1128,8 +1074,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       47,
-      49,
-      58
+      49
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1147,8 +1092,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       48,
-      50,
-      57
+      50
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1184,8 +1128,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       50,
-      52,
-      55
+      52
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1203,8 +1146,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "snow",
     "neighbors": [
       51,
-      53,
-      56
+      53
     ],
     "townData": {
       "name": "Highpeak Sanctuary",
@@ -1214,9 +1156,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Yeti Chieftain Maiden Borealia",
-      "monsterHp": 120,
-      "monsterAtk": 20,
-      "monsterDef": 14
+      "monsterHp": 291,
+      "monsterAtk": 36,
+      "monsterDef": 24,
+      "monsterMaxHp": 291
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1269,7 +1212,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icebreak Fishing Hole",
     "biome": "snow",
     "neighbors": [
-      51,
       54,
       56
     ],
@@ -1288,7 +1230,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frost Rune Hut",
     "biome": "snow",
     "neighbors": [
-      52,
       55,
       57
     ],
@@ -1307,7 +1248,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "กล่องสุ่มมหัศจรรย์ธารน้ำแข็ง",
     "biome": "snow",
     "neighbors": [
-      49,
       56,
       58
     ],
@@ -1326,10 +1266,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Frostfall Castle",
     "biome": "snow",
     "neighbors": [
-      48,
       57,
-      59,
-      115
+      59
     ],
     "townData": {
       "name": "Frostfall Castle",
@@ -1339,9 +1277,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Glacial Golem Maiden Crystalina",
-      "monsterHp": 130,
-      "monsterAtk": 21,
-      "monsterDef": 15
+      "monsterHp": 305,
+      "monsterAtk": 35,
+      "monsterDef": 24,
+      "monsterMaxHp": 305
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1358,7 +1297,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Glacial Vault",
     "biome": "snow",
     "neighbors": [
-      47,
       58,
       60
     ],
@@ -1395,7 +1333,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "St. Nicholas Abbey",
     "biome": "snow",
     "neighbors": [
-      45,
       60,
       62
     ],
@@ -1414,15 +1351,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icefall Cliff",
     "biome": "snow",
     "neighbors": [
-      44,
       61,
-      63
+      63,
+      223
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
     "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 63,
@@ -1433,10 +1370,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Icebound Bastion",
     "biome": "snow",
     "neighbors": [
-      46,
       62,
-      64,
-      107
+      64
     ],
     "townData": {
       "name": "Icebound Bastion",
@@ -1446,9 +1381,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Ancient Frost Dragoness Saphira",
-      "monsterHp": 140,
-      "monsterAtk": 22,
-      "monsterDef": 16
+      "monsterHp": 326,
+      "monsterAtk": 41,
+      "monsterDef": 24,
+      "monsterMaxHp": 326
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1465,9 +1401,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Glacier Causeway",
     "biome": "snow",
     "neighbors": [
-      43,
-      63,
-      154
+      63
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1484,9 +1418,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dune Gate",
     "biome": "desert",
     "neighbors": [
-      25,
-      66,
-      85
+      66
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1504,8 +1436,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       65,
-      67,
-      84
+      67
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1523,8 +1454,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       66,
-      68,
-      83
+      68
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1542,8 +1472,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       67,
-      69,
-      81
+      69
     ],
     "townData": {
       "name": "Duneport Haven",
@@ -1553,9 +1482,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Desert Bandit Queen Shani",
-      "monsterHp": 95,
-      "monsterAtk": 17,
-      "monsterDef": 9
+      "monsterHp": 194,
+      "monsterAtk": 25,
+      "monsterDef": 16,
+      "monsterMaxHp": 194
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1573,8 +1503,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       68,
-      70,
-      79
+      70
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1592,8 +1521,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       69,
-      71,
-      80
+      71
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1610,7 +1538,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Scorpion Oasis Saloon",
     "biome": "desert",
     "neighbors": [
-      35,
       70,
       72
     ],
@@ -1630,8 +1557,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       71,
-      73,
-      76
+      73
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1649,8 +1575,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       72,
-      74,
-      77
+      74
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1668,8 +1593,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "desert",
     "neighbors": [
       73,
-      75,
-      78
+      75
     ],
     "townData": {
       "name": "Mirage Citadel",
@@ -1679,9 +1603,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Sandstone Sphinx Queen Nefertia",
-      "monsterHp": 110,
-      "monsterAtk": 19,
-      "monsterDef": 12
+      "monsterHp": 211,
+      "monsterAtk": 23,
+      "monsterDef": 17,
+      "monsterMaxHp": 211
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1716,7 +1641,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Canyon Passage",
     "biome": "desert",
     "neighbors": [
-      72,
       75,
       77
     ],
@@ -1735,10 +1659,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sandstorm Maw",
     "biome": "desert",
     "neighbors": [
-      73,
       76,
-      78,
-      138
+      78
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1755,7 +1677,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Pyramid Hieroglyph Spire",
     "biome": "desert",
     "neighbors": [
-      74,
       77,
       79
     ],
@@ -1774,7 +1695,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Emerald Oasis",
     "biome": "desert",
     "neighbors": [
-      69,
       78,
       80
     ],
@@ -1793,7 +1713,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Wandering Isekai Merchant",
     "biome": "desert",
     "neighbors": [
-      70,
       79,
       81
     ],
@@ -1805,9 +1724,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Dune Empress Scorpia",
-      "monsterHp": 120,
-      "monsterAtk": 20,
-      "monsterDef": 13
+      "monsterHp": 214,
+      "monsterAtk": 25,
+      "monsterDef": 18,
+      "monsterMaxHp": 214
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1824,15 +1744,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sunfire Trail",
     "biome": "desert",
     "neighbors": [
-      68,
       80,
-      82
+      82,
+      134
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "เนินทรายทองคำสุริยัน",
     "weather": "heatwave",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 82,
@@ -1861,10 +1781,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "กล่องสุ่มมหัศจรรย์ฟาโรห์",
     "biome": "desert",
     "neighbors": [
-      67,
       82,
-      84,
-      143
+      84
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -1881,7 +1799,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Cactus Labyrinth",
     "biome": "desert",
     "neighbors": [
-      66,
       83,
       85
     ],
@@ -1900,7 +1817,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Desert Perimeter",
     "biome": "desert",
     "neighbors": [
-      65,
       84
     ],
     "realmId": "sunfire",
@@ -1918,9 +1834,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Cavern Mouth",
     "biome": "cavern",
     "neighbors": [
-      12,
-      87,
-      106
+      87
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1956,8 +1870,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       87,
-      89,
-      104
+      89
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -1975,8 +1888,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       88,
-      90,
-      103
+      90
     ],
     "townData": {
       "name": "Ironcrag Citadel",
@@ -1986,9 +1898,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Clockwork Maiden Nicole",
-      "monsterHp": 125,
-      "monsterAtk": 21,
-      "monsterDef": 16
+      "monsterHp": 328,
+      "monsterAtk": 34,
+      "monsterDef": 29,
+      "monsterMaxHp": 328
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2005,7 +1918,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Chasm Collapse",
     "biome": "cavern",
     "neighbors": [
-      14,
       89,
       91
     ],
@@ -2025,8 +1937,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       90,
-      92,
-      101
+      92
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2044,8 +1955,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       91,
-      93,
-      100
+      93
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2063,8 +1973,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       92,
-      94,
-      105
+      94
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2082,8 +1991,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       93,
-      95,
-      98
+      95
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2101,8 +2009,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "cavern",
     "neighbors": [
       94,
-      96,
-      99
+      96
     ],
     "townData": {
       "name": "Forgepost Hold",
@@ -2112,9 +2019,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Crystal Cavern Behemoth Lithia",
-      "monsterHp": 135,
-      "monsterAtk": 22,
-      "monsterDef": 15
+      "monsterHp": 291,
+      "monsterAtk": 41,
+      "monsterDef": 25,
+      "monsterMaxHp": 291
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2167,7 +2075,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Runic Cavern Altar",
     "biome": "cavern",
     "neighbors": [
-      94,
       97,
       99,
       110
@@ -2187,7 +2094,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Geothermal Vent",
     "biome": "cavern",
     "neighbors": [
-      95,
       98,
       100
     ],
@@ -2206,7 +2112,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Crystal Cascade",
     "biome": "cavern",
     "neighbors": [
-      92,
       99,
       101
     ],
@@ -2225,7 +2130,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mithril Gate Citadel",
     "biome": "cavern",
     "neighbors": [
-      91,
       100,
       102
     ],
@@ -2237,9 +2141,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Obsidian Golem Valkyrie Onyxia",
-      "monsterHp": 145,
-      "monsterAtk": 24,
-      "monsterDef": 18
+      "monsterHp": 355,
+      "monsterAtk": 35,
+      "monsterDef": 24,
+      "monsterMaxHp": 355
     },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
@@ -2274,7 +2179,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dwarven Tunnel",
     "biome": "cavern",
     "neighbors": [
-      89,
       102,
       104
     ],
@@ -2293,7 +2197,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Dwarf Cache",
     "biome": "cavern",
     "neighbors": [
-      88,
       103,
       105
     ],
@@ -2312,15 +2215,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Underground Steps",
     "biome": "cavern",
     "neighbors": [
-      93,
       104,
-      106
+      106,
+      150
     ],
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
     "subRegionName": "เตาหลอมศิลาคนแคระ",
     "weather": "snow",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 106,
@@ -2331,7 +2234,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Crystal Echo Cave",
     "biome": "cavern",
     "neighbors": [
-      86,
       105,
       169,
       182
@@ -2351,9 +2253,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Magma Causeway",
     "biome": "volcano",
     "neighbors": [
-      63,
-      108,
-      128
+      108
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2389,8 +2289,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       108,
-      110,
-      125
+      110
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2409,8 +2308,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       98,
       109,
-      111,
-      126
+      111
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2428,8 +2326,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       110,
-      112,
-      123
+      112
     ],
     "townData": {
       "name": "Brimstone Bastion",
@@ -2439,9 +2336,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Fire Wyrm Matriarch Pyra",
-      "monsterHp": 150,
-      "monsterAtk": 25,
-      "monsterDef": 16
+      "monsterHp": 356,
+      "monsterAtk": 41,
+      "monsterDef": 26,
+      "monsterMaxHp": 356
     },
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2459,8 +2357,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       111,
-      113,
-      122
+      113
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2478,8 +2375,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       112,
-      114,
-      121
+      114
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2514,10 +2410,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ancient Dragon Obelisk",
     "biome": "volcano",
     "neighbors": [
-      58,
       114,
-      116,
-      119
+      116
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2535,8 +2429,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "volcano",
     "neighbors": [
       115,
-      117,
-      120
+      117
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2564,9 +2457,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Magma Golem Queen Ignitia",
-      "monsterHp": 165,
-      "monsterAtk": 26,
-      "monsterDef": 18
+      "monsterHp": 303,
+      "monsterAtk": 34,
+      "monsterDef": 24,
+      "monsterMaxHp": 303
     },
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2601,7 +2495,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Volcanic Fissure",
     "biome": "volcano",
     "neighbors": [
-      115,
       118,
       120
     ],
@@ -2620,7 +2513,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Hellfire Arcana",
     "biome": "volcano",
     "neighbors": [
-      116,
       119,
       121
     ],
@@ -2639,7 +2531,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Smoldering Bridge",
     "biome": "volcano",
     "neighbors": [
-      113,
       120,
       122
     ],
@@ -2658,7 +2549,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon Hoard Vault",
     "biome": "volcano",
     "neighbors": [
-      112,
       121,
       123
     ],
@@ -2677,7 +2567,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Obsidian Citadel",
     "biome": "volcano",
     "neighbors": [
-      111,
       122,
       124
     ],
@@ -2689,9 +2578,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Infernal Archdemoness Lilith",
-      "monsterHp": 180,
-      "monsterAtk": 27,
-      "monsterDef": 19
+      "monsterHp": 334,
+      "monsterAtk": 39,
+      "monsterDef": 27,
+      "monsterMaxHp": 334
     },
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2726,7 +2616,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon Horn Crest",
     "biome": "volcano",
     "neighbors": [
-      109,
       124,
       126
     ],
@@ -2745,7 +2634,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Ignis Geyser",
     "biome": "volcano",
     "neighbors": [
-      110,
       125,
       127
     ],
@@ -2782,9 +2670,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Dragon King Ignis Keep",
     "biome": "volcano",
     "neighbors": [
-      107,
-      127,
-      150
+      127
     ],
     "realmId": "abyss",
     "realmName": "ปล่องภูเขาไฟมรณะเนเธอร์",
@@ -2801,9 +2687,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Tidepool Causeway",
     "biome": "coral",
     "neighbors": [
-      16,
-      130,
-      145
+      130
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2821,8 +2705,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       129,
-      131,
-      144
+      131
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2839,10 +2722,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Lagoon Angler Pier",
     "biome": "coral",
     "neighbors": [
-      2,
       130,
-      132,
-      143
+      132
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2860,8 +2741,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       131,
-      133,
-      142
+      133
     ],
     "townData": {
       "name": "Coral Bay Port",
@@ -2871,9 +2751,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Corsair Siren Captain Morgana",
-      "monsterHp": 100,
-      "monsterAtk": 18,
-      "monsterDef": 11
+      "monsterHp": 187,
+      "monsterAtk": 26,
+      "monsterDef": 17,
+      "monsterMaxHp": 187
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2891,8 +2772,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       132,
-      134,
-      141
+      134
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2909,15 +2789,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "The Salty Siren Pub",
     "biome": "coral",
     "neighbors": [
+      81,
       133,
-      135,
-      140
+      135
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 135,
@@ -2929,8 +2809,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       134,
-      136,
-      139
+      136
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2948,8 +2827,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       135,
-      137,
-      138
+      137
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -2967,13 +2845,14 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "coral",
     "neighbors": [
       136,
-      138
+      138,
+      184
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 138,
@@ -2984,8 +2863,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Siren Rock Citadel",
     "biome": "coral",
     "neighbors": [
-      77,
-      136,
       137,
       139
     ],
@@ -2997,9 +2874,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Abyssal Siren Empress Lorelei",
-      "monsterHp": 115,
-      "monsterAtk": 19,
-      "monsterDef": 12
+      "monsterHp": 192,
+      "monsterAtk": 22,
+      "monsterDef": 18,
+      "monsterMaxHp": 192
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -3016,15 +2894,15 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Deepsea Fishing Jetty",
     "biome": "coral",
     "neighbors": [
-      135,
       138,
-      140
+      140,
+      145
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 140,
@@ -3035,7 +2913,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Coral Walkway",
     "biome": "coral",
     "neighbors": [
-      134,
       139,
       141
     ],
@@ -3054,7 +2931,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Tide Arcana Hut",
     "biome": "coral",
     "neighbors": [
-      133,
       140,
       142
     ],
@@ -3073,7 +2949,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Bioluminescent Pool",
     "biome": "coral",
     "neighbors": [
-      132,
       141,
       143
     ],
@@ -3092,8 +2967,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Kraken Whirlpool",
     "biome": "coral",
     "neighbors": [
-      83,
-      131,
       142,
       144
     ],
@@ -3112,9 +2985,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Kraken Point Haven",
     "biome": "coral",
     "neighbors": [
-      130,
-      143,
-      145
+      143
     ],
     "townData": {
       "name": "Kraken Point Haven",
@@ -3124,9 +2995,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Abyssal Kraken Maiden Ursula",
-      "monsterHp": 130,
-      "monsterAtk": 21,
-      "monsterDef": 14
+      "monsterHp": 195,
+      "monsterAtk": 27,
+      "monsterDef": 17,
+      "monsterMaxHp": 195
     },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
@@ -3143,14 +3015,13 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Shoal Highway",
     "biome": "coral",
     "neighbors": [
-      129,
-      144
+      139
     ],
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "อ่าวปะการังและรังโจรสลัด",
     "weather": "sunny",
-    "isGrandBridge": false
+    "isGrandBridge": true
   },
   {
     "id": 146,
@@ -3161,10 +3032,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Void Fissure Entrance",
     "biome": "abyss",
     "neighbors": [
-      0,
-      147,
-      150,
-      154
+      147
     ],
     "realmId": "abyss",
     "realmName": "ห้วงอเวจีแห่งริโก้",
@@ -3182,8 +3050,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       146,
-      148,
-      153
+      148
     ],
     "realmId": "abyss",
     "realmName": "ห้วงอเวจีแห่งริโก้",
@@ -3201,8 +3068,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       147,
-      149,
-      152
+      149
     ],
     "townData": {
       "name": "Nether Watch Citadel",
@@ -3212,9 +3078,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Nether Valkyrie Morrigan",
-      "monsterHp": 155,
-      "monsterAtk": 25,
-      "monsterDef": 17
+      "monsterHp": 490,
+      "monsterAtk": 52,
+      "monsterDef": 40,
+      "monsterMaxHp": 490
     },
     "realmId": "abyss",
     "realmName": "ห้วงอเวจีแห่งริโก้",
@@ -3232,8 +3099,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "abyss",
     "neighbors": [
       148,
-      150,
-      151
+      150
     ],
     "realmId": "abyss",
     "realmName": "ห้วงอเวจีแห่งริโก้",
@@ -3250,8 +3116,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Altar of Rico (Darkling Throne)",
     "biome": "abyss",
     "neighbors": [
-      128,
-      146,
+      105,
       149,
       151
     ],
@@ -3270,7 +3135,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Abyssal Trap",
     "biome": "abyss",
     "neighbors": [
-      149,
       150,
       152
     ],
@@ -3289,7 +3153,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Nether Shrine",
     "biome": "abyss",
     "neighbors": [
-      148,
       151,
       153
     ],
@@ -3308,7 +3171,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Void Gate Citadel",
     "biome": "abyss",
     "neighbors": [
-      147,
       152,
       154
     ],
@@ -3320,9 +3182,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Void Warden Priestess Nihilia",
-      "monsterHp": 170,
-      "monsterAtk": 26,
-      "monsterDef": 18
+      "monsterHp": 540,
+      "monsterAtk": 56,
+      "monsterDef": 38,
+      "monsterMaxHp": 540
     },
     "realmId": "abyss",
     "realmName": "ห้วงอเวจีแห่งริโก้",
@@ -3339,8 +3202,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Rico Secret Vault",
     "biome": "abyss",
     "neighbors": [
-      64,
-      146,
       153
     ],
     "realmId": "abyss",
@@ -3361,8 +3222,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "ป่ามนตราภูตพราย",
     "weather": "sunny",
-    "isGrandBridge": false,
+    "isGrandBridge": true,
     "neighbors": [
+      7,
       36,
       156
     ]
@@ -3388,9 +3250,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Pixie Queen Titania",
-      "monsterHp": 110,
-      "monsterAtk": 20,
-      "monsterDef": 12
+      "monsterHp": 98,
+      "monsterAtk": 15,
+      "monsterDef": 10,
+      "monsterMaxHp": 98
     },
     "neighbors": [
       155,
@@ -3473,9 +3336,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Kitsune Maiden Tamamo",
-      "monsterHp": 120,
-      "monsterAtk": 24,
-      "monsterDef": 13
+      "monsterHp": 89,
+      "monsterAtk": 16,
+      "monsterDef": 8,
+      "monsterMaxHp": 89
     },
     "neighbors": [
       159,
@@ -3668,14 +3532,14 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Crystal Golem Maiden Prismia",
-      "monsterHp": 155,
-      "monsterAtk": 27,
-      "monsterDef": 25
+      "monsterHp": 311,
+      "monsterAtk": 36,
+      "monsterDef": 25,
+      "monsterMaxHp": 311
     },
     "neighbors": [
       169,
-      171,
-      176
+      171
     ]
   },
   {
@@ -3753,9 +3617,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Arachne Weaver Sylvi",
-      "monsterHp": 135,
-      "monsterAtk": 28,
-      "monsterDef": 16
+      "monsterHp": 324,
+      "monsterAtk": 37,
+      "monsterDef": 27,
+      "monsterMaxHp": 324
     },
     "neighbors": [
       173,
@@ -3774,8 +3639,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "realmName": "มหาเทือกเขาหิมะเยือกแข็ง",
     "subRegionName": "ถ้ำผลึกแก้วประกายรุ้ง",
     "weather": "snow",
-    "isGrandBridge": false,
+    "isGrandBridge": true,
     "neighbors": [
+      20,
       174,
       176
     ]
@@ -3794,7 +3660,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "snow",
     "isGrandBridge": false,
     "neighbors": [
-      170,
       175,
       177
     ]
@@ -3885,8 +3750,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "snow",
     "isGrandBridge": false,
     "neighbors": [
-      180,
-      182
+      180
     ]
   },
   {
@@ -3903,8 +3767,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "snow",
     "isGrandBridge": false,
     "neighbors": [
-      106,
-      181
+      106
     ]
   },
   {
@@ -3937,8 +3800,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "realmName": "วิหารลอยฟ้าเซเลสเชียล",
     "subRegionName": "สรวงสวรรค์ศักดิ์สิทธิ์",
     "weather": "sunny",
-    "isGrandBridge": false,
+    "isGrandBridge": true,
     "neighbors": [
+      137,
       183,
       185
     ]
@@ -3964,14 +3828,14 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Celestial Archangel Seraphina",
-      "monsterHp": 180,
-      "monsterAtk": 35,
-      "monsterDef": 24
+      "monsterHp": 519,
+      "monsterAtk": 54,
+      "monsterDef": 35,
+      "monsterMaxHp": 519
     },
     "neighbors": [
       184,
-      186,
-      194
+      186
     ]
   },
   {
@@ -4031,9 +3895,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Sun Valkyrie Aurora",
-      "monsterHp": 150,
-      "monsterAtk": 31,
-      "monsterDef": 20
+      "monsterHp": 476,
+      "monsterAtk": 52,
+      "monsterDef": 35,
+      "monsterMaxHp": 476
     },
     "neighbors": [
       187,
@@ -4144,7 +4009,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "sunny",
     "isGrandBridge": false,
     "neighbors": [
-      185,
       193,
       195
     ]
@@ -4217,8 +4081,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "sunny",
     "isGrandBridge": true,
     "neighbors": [
-      197,
-      40
+      197
     ]
   },
   {
@@ -4260,14 +4123,14 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Royal Guard Paladin Leonora",
-      "monsterHp": 160,
-      "monsterAtk": 32,
-      "monsterDef": 26
+      "monsterHp": 85,
+      "monsterAtk": 14,
+      "monsterDef": 10,
+      "monsterMaxHp": 85
     },
     "neighbors": [
       199,
-      201,
-      207
+      201
     ]
   },
   {
@@ -4327,9 +4190,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Sorceress Duchess Beatrice",
-      "monsterHp": 130,
-      "monsterAtk": 22,
-      "monsterDef": 15
+      "monsterHp": 107,
+      "monsterAtk": 14,
+      "monsterDef": 10,
+      "monsterMaxHp": 107
     },
     "neighbors": [
       202,
@@ -4404,7 +4268,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "sunny",
     "isGrandBridge": false,
     "neighbors": [
-      200,
       206,
       208
     ]
@@ -4459,9 +4322,8 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "sunny",
     "isGrandBridge": false,
     "neighbors": [
-      209,
       21,
-      0,
+      209,
       211
     ]
   },
@@ -4480,8 +4342,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "isGrandBridge": false,
     "neighbors": [
       210,
-      212,
-      248
+      212
     ]
   },
   {
@@ -4505,9 +4366,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Steam Gear Gunner Victoria",
-      "monsterHp": 90,
-      "monsterAtk": 19,
-      "monsterDef": 12
+      "monsterHp": 85,
+      "monsterAtk": 13,
+      "monsterDef": 10,
+      "monsterMaxHp": 85
     },
     "neighbors": [
       211,
@@ -4661,9 +4523,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Clockwork Automaton Princess Alice",
-      "monsterHp": 110,
-      "monsterAtk": 21,
-      "monsterDef": 14
+      "monsterHp": 91,
+      "monsterAtk": 14,
+      "monsterDef": 8,
+      "monsterMaxHp": 91
     },
     "neighbors": [
       219,
@@ -4718,8 +4581,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "มหานครจักรกลไอน้ำและหอนาฬิกาพันปี",
     "weather": "sunny",
-    "isGrandBridge": false,
+    "isGrandBridge": true,
     "neighbors": [
+      62,
       222,
       224
     ]
@@ -4889,9 +4753,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Sakura Blossom Tengu Ayame",
-      "monsterHp": 95,
-      "monsterAtk": 20,
-      "monsterDef": 13
+      "monsterHp": 215,
+      "monsterAtk": 25,
+      "monsterDef": 16,
+      "monsterMaxHp": 215
     },
     "neighbors": [
       231,
@@ -5063,9 +4928,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Kitsune Shrine Maiden Chiyo",
-      "monsterHp": 125,
-      "monsterAtk": 22,
-      "monsterDef": 15
+      "monsterHp": 192,
+      "monsterAtk": 24,
+      "monsterDef": 17,
+      "monsterMaxHp": 192
     },
     "neighbors": [
       240,
@@ -5194,10 +5060,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "weather": "sunny",
     "isGrandBridge": false,
     "neighbors": [
-      247,
-      211,
-      0,
-      249
+      247
     ]
   },
   {
@@ -5209,9 +5072,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Emerald Cascade Entrance",
     "biome": "waterfall_forest",
     "neighbors": [
-      248,
-      250,
-      311
+      250
     ],
     "realmId": "emerald",
     "realmName": "มหาป่าน้ำตกมรกตพันปี",
@@ -5280,9 +5141,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Catgirl Huntress Mia",
-      "monsterHp": 90,
-      "monsterAtk": 22,
-      "monsterDef": 12
+      "monsterHp": 95,
+      "monsterAtk": 15,
+      "monsterDef": 10,
+      "monsterMaxHp": 95
     }
   },
   {
@@ -5401,9 +5263,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Dryad Maiden Alura",
-      "monsterHp": 100,
-      "monsterAtk": 24,
-      "monsterDef": 14
+      "monsterHp": 102,
+      "monsterAtk": 13,
+      "monsterDef": 9,
+      "monsterMaxHp": 102
     }
   },
   {
@@ -5580,9 +5443,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Mermaid Siren Nerida",
-      "monsterHp": 115,
-      "monsterAtk": 26,
-      "monsterDef": 16
+      "monsterHp": 112,
+      "monsterAtk": 15,
+      "monsterDef": 10,
+      "monsterMaxHp": 112
     }
   },
   {
@@ -5718,9 +5582,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Elf Princess Sylphira",
-      "monsterHp": 130,
-      "monsterAtk": 30,
-      "monsterDef": 18
+      "monsterHp": 105,
+      "monsterAtk": 16,
+      "monsterDef": 10,
+      "monsterMaxHp": 105
     }
   },
   {
@@ -5874,9 +5739,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Naiad Sovereign Ondine",
-      "monsterHp": 140,
-      "monsterAtk": 32,
-      "monsterDef": 20
+      "monsterHp": 99,
+      "monsterAtk": 15,
+      "monsterDef": 8,
+      "monsterMaxHp": 99
     }
   },
   {
@@ -6012,9 +5878,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Panther Huntress Kaelia",
-      "monsterHp": 105,
-      "monsterAtk": 25,
-      "monsterDef": 15
+      "monsterHp": 113,
+      "monsterAtk": 15,
+      "monsterDef": 10,
+      "monsterMaxHp": 113
     }
   },
   {
@@ -6026,9 +5893,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Crystal Current Shallows",
     "biome": "waterfall_forest",
     "neighbors": [
+      168,
       289,
-      291,
-      168
+      291
     ],
     "realmId": "emerald",
     "realmName": "มหาป่าน้ำตกมรกตพันปี",
@@ -6068,9 +5935,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Sylvan Treasure Cache",
     "biome": "waterfall_forest",
     "neighbors": [
+      167,
       291,
-      293,
-      167
+      293
     ],
     "realmId": "emerald",
     "realmName": "มหาป่าน้ำตกมรกตพันปี",
@@ -6123,10 +5990,9 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Mossy Cliff Crags",
     "biome": "waterfall_forest",
     "neighbors": [
-      294,
-      296,
       253,
-      311
+      294,
+      296
     ],
     "realmId": "emerald",
     "realmName": "มหาป่าน้ำตกมรกตพันปี",
@@ -6144,7 +6010,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "biome": "waterfall_forest",
     "neighbors": [
       295,
-      297,
       297
     ],
     "realmId": "emerald",
@@ -6214,9 +6079,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "Lotus Maiden Nelumbo",
-      "monsterHp": 95,
-      "monsterAtk": 21,
-      "monsterDef": 13
+      "monsterHp": 89,
+      "monsterAtk": 13,
+      "monsterDef": 8,
+      "monsterMaxHp": 89
     }
   },
   {
@@ -6316,9 +6182,10 @@ export const DOKAPON_NODES: BoardNode[] = [
       "ownerId": null,
       "isOccupiedByMonster": true,
       "monsterName": "River Nymph Sabrina",
-      "monsterHp": 110,
-      "monsterAtk": 26,
-      "monsterDef": 15
+      "monsterHp": 109,
+      "monsterAtk": 13,
+      "monsterDef": 9,
+      "monsterMaxHp": 109
     }
   },
   {
@@ -6443,9 +6310,7 @@ export const DOKAPON_NODES: BoardNode[] = [
     "name": "Clearwater Shallows",
     "biome": "waterfall_forest",
     "neighbors": [
-      310,
-      249,
-      295
+      310
     ],
     "realmId": "emerald",
     "realmName": "มหาป่าน้ำตกมรกตพันปี",
@@ -6454,4 +6319,3 @@ export const DOKAPON_NODES: BoardNode[] = [
     "isGrandBridge": false
   }
 ];
-
