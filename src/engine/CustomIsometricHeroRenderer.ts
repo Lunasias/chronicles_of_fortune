@@ -52,8 +52,9 @@ export class CustomIsometricHeroRenderer {
   private preloadAllClassSprites() {
     const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
     const uniqueFolders = Array.from(new Set(Object.values(CLASS_ASSET_FOLDERS)));
+    const animatedFolders = ['A_fair-skinned_sorceress_with_long'];
 
-    this.totalToLoad = uniqueFolders.length * directions.length;
+    this.totalToLoad = uniqueFolders.length * directions.length + animatedFolders.length * directions.length * 8;
 
     for (const folder of uniqueFolders) {
       for (const dir of directions) {
@@ -75,11 +76,64 @@ export class CustomIsometricHeroRenderer {
         };
         img.src = src;
         this.imageStore.set(key, img);
+
+        // Preload multi-frame animations for classes with run/attack sheets
+        if (animatedFolders.includes(folder)) {
+          const baseName = fileName.replace('.png', '');
+          for (let f = 0; f < 4; f++) {
+            // Run state frame
+            const runKey = `${folder}_run_${dir}_${f}`;
+            const runImg = new Image();
+            runImg.onload = () => {
+              this.loadedCount++;
+              this.cache.clear();
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
+              }
+            };
+            runImg.src = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
+            this.imageStore.set(runKey, runImg);
+
+            // Attack state frame
+            const atkKey = `${folder}_attack_${dir}_${f}`;
+            const atkImg = new Image();
+            atkImg.onload = () => {
+              this.loadedCount++;
+              this.cache.clear();
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
+              }
+            };
+            atkImg.src = `/assets/${folder}/Attack/rotations/${baseName}_${f}.png`;
+            this.imageStore.set(atkKey, atkImg);
+          }
+        }
       }
     }
   }
 
-  private getImage(folder: string, dir: IsoDirection): HTMLImageElement | null {
+  private getImage(
+    folder: string,
+    dir: IsoDirection,
+    animState: CharacterAnimState = 'idle',
+    frame: number = 0
+  ): HTMLImageElement | null {
+    if (animState === 'run') {
+      const f = frame % 4;
+      const runKey = `${folder}_run_${dir}_${f}`;
+      const img = this.imageStore.get(runKey);
+      if (img && img.complete && img.naturalWidth > 0) {
+        return img;
+      }
+    } else if (animState === 'attack' || animState === 'strike' || animState === 'magic') {
+      const f = frame % 4;
+      const atkKey = `${folder}_attack_${dir}_${f}`;
+      const img = this.imageStore.get(atkKey);
+      if (img && img.complete && img.naturalWidth > 0) {
+        return img;
+      }
+    }
+
     const key = `${folder}_${dir}`;
     const img = this.imageStore.get(key);
     if (img && img.complete && img.naturalWidth > 0) {
@@ -166,9 +220,9 @@ export class CustomIsometricHeroRenderer {
     const k = (rawKey || '').toLowerCase();
     if (k.includes('spellblade') || k.includes('spell') || k.includes('ดาบเวท') || k.includes('magic_sword')) return 'spellblade';
     if (k.includes('warrior') || k.includes('knight') || k.includes('hero') || k === 'player') return 'warrior';
-    if (k.includes('magician') || k.includes('mage') || k.includes('wizard') || k.includes('warlock')) return 'magician';
-    if (k.includes('cleric') || k.includes('priest') || k.includes('monk')) return 'cleric';
-    if (k.includes('thief') || k.includes('rogue') || k.includes('ninja') || k.includes('assassin')) return 'thief';
+    if (k.includes('magician') || k.includes('mage') || k.includes('wizard') || k.includes('warlock') || k.includes('จอมเวท') || k.includes('witch') || k.includes('แม่มด')) return 'magician';
+    if (k.includes('cleric') || k.includes('priest') || k.includes('monk') || k.includes('นักบวช')) return 'cleric';
+    if (k.includes('thief') || k.includes('rogue') || k.includes('ninja') || k.includes('assassin') || k.includes('โจร')) return 'thief';
     if (k.includes('ranger') || k.includes('archer') || k.includes('hunter')) return 'thief';
     return 'warrior';
   }
@@ -497,14 +551,14 @@ export class CustomIsometricHeroRenderer {
     cy: number,
     cls: string,
     dir: IsoDirection,
-    _animState: CharacterAnimState,
-    _frame: number,
+    animState: CharacterAnimState,
+    frame: number,
     anim: ReturnType<typeof this.computeAnimation>,
     skinVariant: number,
     isDarkling: boolean
   ) {
     const folder = CLASS_ASSET_FOLDERS[cls] || CLASS_ASSET_FOLDERS['warrior'];
-    const img = this.getImage(folder, dir);
+    const img = this.getImage(folder, dir, animState, frame);
 
     ctx.save();
     ctx.translate(cx, cy);
