@@ -748,7 +748,6 @@ export class CustomIsometricMonsterRenderer {
     hairColor = '#a855f7'
   ) {
     if (this.isBack) {
-      this.drawMonsterGirlBackHead(ctx, cx, cy, skinColor, hairColor);
       return;
     }
 
@@ -845,62 +844,7 @@ export class CustomIsometricMonsterRenderer {
     ctx.fill();
   }
 
-  /**
-   * Helper to draw delicate feminine back of head & hair when facing backwards (N, NE, NW)
-   * Guaranteed ZERO front facial features (no eyes, no mouth, no blush!)
-   */
-  private drawMonsterGirlBackHead(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    skinColor: string,
-    hairColor = '#a855f7'
-  ) {
-    // 1. Back of slender neck / nape (graceful skin connecting cranium to shoulders)
-    ctx.fillStyle = skinColor;
-    ctx.beginPath();
-    ctx.moveTo(cx - 3.5, cy + 1);
-    ctx.lineTo(cx + 3.5, cy + 1);
-    ctx.lineTo(cx + 4.2, cy + 8);
-    ctx.lineTo(cx - 4.2, cy + 8);
-    ctx.closePath();
-    ctx.fill();
 
-    // Soft nape shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.fillRect(cx - 3, cy + 3.5, 6, 2.5);
-
-    // 2. Full voluminous cranium covered completely with hair
-    ctx.fillStyle = hairColor;
-    ctx.beginPath();
-    ctx.arc(cx, cy - 1.2, 7.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Curved lower hairline at the nape
-    ctx.beginPath();
-    ctx.moveTo(cx - 7, cy - 2);
-    ctx.quadraticCurveTo(cx - 7.5, cy + 5, cx - 2, cy + 6.8);
-    ctx.quadraticCurveTo(cx, cy + 5.8, cx + 2, cy + 6.8);
-    ctx.quadraticCurveTo(cx + 7.5, cy + 5, cx + 7, cy - 2);
-    ctx.closePath();
-    ctx.fill();
-
-    // Back hair locks falling down over the nape and spine
-    ctx.beginPath();
-    ctx.moveTo(cx - 5, cy + 3);
-    ctx.lineTo(cx + 5, cy + 3);
-    ctx.lineTo(cx + 4, cy + 12);
-    ctx.lineTo(cx - 4, cy + 12);
-    ctx.closePath();
-    ctx.fill();
-
-    // Hair luster / sheen highlight arc across the upper crown
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
-    ctx.lineWidth = 1.3;
-    ctx.beginPath();
-    ctx.arc(cx, cy - 3, 5.5, Math.PI * 1.1, Math.PI * 1.9);
-    ctx.stroke();
-  }
 
   /**
    * Universal Helper to draw long flowing feminine hair for monster girls (Drawn BEHIND body!)

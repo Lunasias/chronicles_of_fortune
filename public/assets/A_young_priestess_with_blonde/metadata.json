@@ -1,17 +1,19 @@
 {
-  "group_id": "young-priestess",
+  "group_id": "ba56e4d2-8d90-4793-847c-94ca611f41e0",
   "states": [
     {
       "character": {
-        "id": "young-priestess",
+        "id": "2fa6204d-55b4-4849-b52e-03f6799326c8",
         "name": "Idle",
         "prompt": "A young priestess with blonde hair and fair skin, wearing a ceremonial bikini-style vestment with gold trim, standing in a confident pose, low top-down perspective, medium detail.",
         "size": {
           "width": 48,
           "height": 48
         },
+        "template_id": "mannequin",
         "directions": 8,
-        "view": "low top-down"
+        "view": "low top-down",
+        "created_at": "2026-09-23T02:32:06.102212+00:00"
       },
       "folder": "Idle",
       "frames": {
@@ -24,26 +26,11 @@
           "north-west": "Idle/rotations/north-west.png",
           "west": "Idle/rotations/west.png",
           "south-west": "Idle/rotations/south-west.png"
-        }
+        },
+        "animations": {}
       }
-    },
-    {
-      "character": {
-        "id": "young-priestess-run",
-        "name": "Run",
-        "directions": 8,
-        "frames": 4
-      },
-      "folder": "Run"
-    },
-    {
-      "character": {
-        "id": "young-priestess-attack",
-        "name": "Attack",
-        "directions": 8,
-        "frames": 4
-      },
-      "folder": "Attack"
     }
-  ]
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-23T02:35:50.915613"
 }

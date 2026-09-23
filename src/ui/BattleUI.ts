@@ -1042,26 +1042,18 @@ export class BattleUI {
     const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
     const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
-    // Dynamic 8-Directional Combat Stance & Orientation
+    // Dynamic 8-Directional Combat Stance & Orientation: Always face directly towards each other!
     let heroDir: IsoDirection;
     let enemyDir: IsoDirection;
 
-    if (this.cutscene.active) {
-      if (this.cutscene.phase === 'leap_back') {
-        if (isPlayerAtk) {
-          heroDir = this.getIsoDirection(px, py, pxCenter, pyCenter);
-          enemyDir = this.getIsoDirection(ex, ey, px, py);
-        } else {
-          heroDir = this.getIsoDirection(px, py, ex, ey);
-          enemyDir = this.getIsoDirection(ex, ey, exCenter, eyCenter);
-        }
-      } else {
-        heroDir = this.getIsoDirection(px, py, ex, ey);
-        enemyDir = this.getIsoDirection(ex, ey, px, py);
-      }
+    if (Math.hypot(ex - px, ey - py) < 18) {
+      // In close-quarters clash / impact, lock facing into each other
+      heroDir = 'NE';
+      enemyDir = 'SW';
     } else {
-      heroDir = this.getIsoDirection(pxCenter, pyCenter, exCenter, eyCenter);
-      enemyDir = this.getIsoDirection(exCenter, eyCenter, pxCenter, pyCenter);
+      // Dynamic facing towards each other across the arena
+      heroDir = this.getIsoDirection(px, py, ex, ey);
+      enemyDir = this.getIsoDirection(ex, ey, px, py);
     }
 
     // Dynamic Attack Animation Frames synchronized with combat phases

@@ -442,27 +442,14 @@ export class CustomIsometricHeroRenderer {
       ctx.restore();
     }
 
-    // 2. Thief / Assassin: Looming Shadow Silhouette Smoke
+    // 2. Thief / Assassin: Subtle Shadow Footstep Motes
     if (cls === 'thief') {
       ctx.save();
-      const wave = Math.sin(frame * 0.6) * 3;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      const wave = Math.sin(frame * 0.6) * 2;
+      ctx.fillStyle = 'rgba(147, 51, 234, 0.35)';
       ctx.beginPath();
-      ctx.ellipse(cx, cy - 10, 16 + wave, 22, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Shadow demon wing shapes
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
-      ctx.beginPath();
-      ctx.moveTo(cx - 10, cy - 14);
-      ctx.quadraticCurveTo(cx - 24, cy - 24 + wave, cx - 18, cy - 6);
-      ctx.lineTo(cx - 10, cy - 10);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(cx + 10, cy - 14);
-      ctx.quadraticCurveTo(cx + 24, cy - 24 + wave, cx + 18, cy - 6);
-      ctx.lineTo(cx + 10, cy - 10);
+      ctx.arc(cx - 8 + wave, cy + 18, 2, 0, Math.PI * 2);
+      ctx.arc(cx + 8 - wave, cy + 19, 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
