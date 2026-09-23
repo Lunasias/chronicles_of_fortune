@@ -12,6 +12,17 @@ const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
   W: { x: -1.0, y: 0 }
 };
 
+const DIR_NAME_MAP: Record<IsoDirection, string> = {
+  S: 'south',
+  SE: 'south-east',
+  E: 'east',
+  NE: 'north-east',
+  N: 'north',
+  NW: 'north-west',
+  W: 'west',
+  SW: 'south-west'
+};
+
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private monsterImageStore = new Map<string, HTMLImageElement>();
@@ -30,7 +41,10 @@ export class CustomIsometricMonsterRenderer {
       'kraken_maiden', 'sphinx_queen', 'dryad_nymph', 'arachne_weaver',
       'vampire_countess', 'ghost_maiden'
     ];
+    const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
+
     for (const arch of archetypes) {
+      // 1. Portrait Preview
       const img = new Image();
       img.src = `/assets/monsters/${arch}.png`;
       img.onload = () => {
@@ -40,6 +54,35 @@ export class CustomIsometricMonsterRenderer {
         }
       };
       this.monsterImageStore.set(arch, img);
+
+      // 2. Preload 8-Directional Idle and Attack Frames referencing the spellblade model
+      for (const dir of directions) {
+        const dirName = DIR_NAME_MAP[dir];
+
+        // Idle frame
+        const idleImg = new Image();
+        idleImg.src = `/assets/monsters/${arch}/Idle/rotations/${dirName}.png`;
+        idleImg.onload = () => {
+          this.cache.clear();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+          }
+        };
+        this.monsterImageStore.set(`${arch}_idle_${dir}`, idleImg);
+
+        // 4 Attack frames per direction (32 Attack frames per monster)
+        for (let f = 0; f < 4; f++) {
+          const atkImg = new Image();
+          atkImg.src = `/assets/monsters/${arch}/Attack/rotations/${dirName}_${f}.png`;
+          atkImg.onload = () => {
+            this.cache.clear();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+            }
+          };
+          this.monsterImageStore.set(`${arch}_attack_${dir}_${f}`, atkImg);
+        }
+      }
     }
   }
 
@@ -146,30 +189,40 @@ export class CustomIsometricMonsterRenderer {
 
     const isFacingEast = dir === 'SE' || dir === 'E' || dir === 'NE';
 
-    // Route to fresh high-res AI-generated Monster Model or specialized Archetype Fallback
+    // Route to fresh 8-directional animated Monster Model referencing spellblade model
     const archKey = this.getMonsterArchetypeKey(mName);
-    const mobImg = this.monsterImageStore.get(archKey);
+    let mobImg: HTMLImageElement | undefined;
+
+    if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
+      const atkF = f % 4;
+      mobImg = this.monsterImageStore.get(`${archKey}_attack_${dir}_${atkF}`);
+      if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
+        mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
+      }
+    } else {
+      mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
+    }
+
+    if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
+      mobImg = this.monsterImageStore.get(archKey);
+    }
 
     if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
       // 1. Dynamic 2.5D ground shadow
-      this.drawIsoShadow(ctx, cx, cy + 42, 28, 12, 0.45);
+      this.drawIsoShadow(ctx, cx, cy + 38, 28, 12, 0.45);
 
       // 2. Render Monster Model with Directional Transform
       ctx.save();
       ctx.translate(cx, cy);
       if (tilt !== 0) ctx.rotate(tilt);
-      ctx.scale(isFacingEast ? -scaleX : scaleX, scaleY);
+      ctx.scale(scaleX, scaleY);
 
-      // High-res fresh AI model rendered crisp and prominent
-      ctx.drawImage(mobImg, -55, -62, 110, 110);
-
-      // 3. If turned backwards (N, NE, NW), render back of head & hair drape so face is concealed!
-      if (this.isBack) {
-        this.drawMonsterGirlBackHead(ctx, 0, -14, '#ffedd5', '#1e1b4b');
-      }
+      // Render 8-directional pixel sprite scaled up crisp to 100x100
+      const drawSize = 100;
+      ctx.drawImage(mobImg, -drawSize / 2, -drawSize / 2 - 8, drawSize, drawSize);
       ctx.restore();
 
-      // 4. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX
+      // 3. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX
       if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
         this.renderMonsterCombatVFX(ctx, cx, cy, archKey, dir, f, normAnim, this.isBack);
       }
