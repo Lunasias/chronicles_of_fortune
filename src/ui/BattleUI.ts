@@ -537,6 +537,23 @@ export class BattleUI {
     this.executeRoundWithAnimation(atkAction, defAction);
   }
 
+  private getIsoDirection(fromX: number, fromY: number, toX: number, toY: number): IsoDirection {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return 'SE';
+    // 2:1 isometric ratio compensation: vertical distance is compressed by 2 in 2.5D isometric perspective
+    const angle = Math.atan2(dy * 2.0, dx);
+    const deg = (angle * 180 / Math.PI + 360) % 360;
+    if (deg >= 337.5 || deg < 22.5) return 'E';
+    if (deg >= 22.5 && deg < 67.5) return 'SE';
+    if (deg >= 67.5 && deg < 112.5) return 'S';
+    if (deg >= 112.5 && deg < 157.5) return 'SW';
+    if (deg >= 157.5 && deg < 202.5) return 'W';
+    if (deg >= 202.5 && deg < 247.5) return 'NW';
+    if (deg >= 247.5 && deg < 292.5) return 'N';
+    return 'NE';
+  }
+
   private executeRoundWithAnimation(atkAction: AttackerAction, defAction: DefenderAction) {
     const b = this.game.activeBattle;
     if (!b) return;
@@ -617,6 +634,15 @@ export class BattleUI {
     } else if (atkAction === 'magic') {
       targetAtkDX = fullDX * 0.22;
       targetAtkDY = fullDY * 0.22;
+    } else if (atkAction === 'strike') {
+      // Heavy plunge strike leaping down from the North
+      const margin = isPAtk ? 50 : -50;
+      targetAtkDX = fullDX - margin;
+      targetAtkDY = fullDY - (isPAtk ? 28 : -28);
+    } else if (atkAction === 'skill') {
+      // High-speed flank maneuver
+      targetAtkDX = fullDX + (isPAtk ? 32 : -32);
+      targetAtkDY = fullDY - (isPAtk ? 20 : -20);
     } else {
       // Dash directly into defender's face
       const margin = isPAtk ? 55 : -55;
@@ -1013,12 +1039,55 @@ export class BattleUI {
       Math.sin(time * 0.005 + 1) * 3;
 
     const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
-    const pFrame = Math.floor(time * 0.005);
+    const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
+    const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
-    // Contextual Isometric Combat Orientation: Left Dais faces Right ('SE'), Right Dais faces Left ('SW')
-    // Both combatants turn their entire body, stance, arms, and face toward each other across the arena!
-    const heroDir: IsoDirection = pxCenter <= exCenter ? 'SE' : 'SW';
-    const enemyDir: IsoDirection = exCenter >= pxCenter ? 'SW' : 'SE';
+    // Dynamic 8-Directional Combat Stance & Orientation
+    let heroDir: IsoDirection;
+    let enemyDir: IsoDirection;
+
+    if (this.cutscene.active) {
+      if (this.cutscene.phase === 'leap_back') {
+        if (isPlayerAtk) {
+          heroDir = this.getIsoDirection(px, py, pxCenter, pyCenter);
+          enemyDir = this.getIsoDirection(ex, ey, px, py);
+        } else {
+          heroDir = this.getIsoDirection(px, py, ex, ey);
+          enemyDir = this.getIsoDirection(ex, ey, exCenter, eyCenter);
+        }
+      } else {
+        heroDir = this.getIsoDirection(px, py, ex, ey);
+        enemyDir = this.getIsoDirection(ex, ey, px, py);
+      }
+    } else {
+      heroDir = this.getIsoDirection(pxCenter, pyCenter, exCenter, eyCenter);
+      enemyDir = this.getIsoDirection(exCenter, eyCenter, pxCenter, pyCenter);
+    }
+
+    // Dynamic Attack Animation Frames synchronized with combat phases
+    let pFrame = Math.floor(time * 0.005);
+    let eFrame = Math.floor(time * 0.005);
+
+    if (this.cutscene.active) {
+      const elapsed = now - this.cutscene.phaseStartTime;
+      const progress = Math.min(1.0, Math.max(0, elapsed / Math.max(1, this.cutscene.phaseDuration)));
+
+      if (this.cutscene.phase === 'impact') {
+        const atkFrame = Math.min(7, Math.floor(progress * 8));
+        const flinchFrame = Math.min(7, Math.floor(progress * 6));
+        if (isPlayerAtk) {
+          pFrame = atkFrame;
+          eFrame = flinchFrame;
+        } else {
+          eFrame = atkFrame;
+          pFrame = flinchFrame;
+        }
+      } else if (this.cutscene.phase === 'dash' || this.cutscene.phase === 'leap_back') {
+        const moveFrame = Math.floor(progress * 8) % 4;
+        if (isPlayerAtk) pFrame = moveFrame;
+        else eFrame = moveFrame;
+      }
+    }
 
     const heroSprite = pixelSprites.getHeroSprite(
       p.classKey,
@@ -1031,9 +1100,6 @@ export class BattleUI {
       p.skinVariant
     );
 
-    const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
-    const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
-
     // Sizing: Grand prominent anime combatants (240x240 for standard, 290x290 for bosses)
     const heroW = 240;
     const heroH = 240;
@@ -1042,20 +1108,20 @@ export class BattleUI {
 
     let enemySprite: HTMLCanvasElement;
     if (enemyCombatant.isBoss) {
-      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', enemyDir, eAnim, pFrame);
+      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', enemyDir, eAnim, eFrame);
     } else if (enemyCombatant.playerRef) {
       enemySprite = pixelSprites.getHeroSprite(
         enemyCombatant.playerRef.classKey,
         enemyDir,
         eAnim,
-        pFrame,
+        eFrame,
         enemyCombatant.playerRef.equipment,
         enemyCombatant.playerRef.isDarkling,
         enemyCombatant.playerRef.prank,
         enemyCombatant.playerRef.skinVariant
       );
     } else {
-      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, pFrame);
+      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, eFrame);
     }
 
     // -----------------------------------------------------------------------

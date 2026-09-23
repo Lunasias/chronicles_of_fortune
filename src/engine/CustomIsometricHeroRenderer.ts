@@ -655,31 +655,117 @@ export class CustomIsometricHeroRenderer {
   ) {
     const vec = ISO_DIR_VECTORS[dir] || { x: 0, y: 0 };
 
-    // 1. Attack State: High-Velocity Slashing Arc & Blade Gleam
-    if (animState === 'attack' && frame % 8 >= 2 && frame % 8 <= 5) {
+    // 1. Attack / Strike / Magic Combat State: 8-Directional Slashing Arc & Blade Gleam
+    const attackAngle = Math.atan2(vec.y * 1.6, vec.x);
+
+    if (animState === 'attack' && frame % 8 >= 1 && frame % 8 <= 5) {
       ctx.save();
       const slashColor = cls === 'warrior' ? '#38bdf8' : cls === 'spellblade' ? '#ec4899' : cls === 'thief' ? '#f43f5e' : cls === 'magician' ? '#c084fc' : '#fbbf24';
-      const arcCenterX = cx + vec.x * 16;
-      const arcCenterY = cy + vec.y * 16 - 8;
+      const arcCenterX = cx + vec.x * 18;
+      const arcCenterY = cy + vec.y * 18 - 8;
 
+      // 8-Directional Rotating Blade Arc
       ctx.strokeStyle = slashColor;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(arcCenterX, arcCenterY, 18, -Math.PI * 0.6, Math.PI * 0.4);
+      ctx.arc(arcCenterX, arcCenterY, 20, attackAngle - Math.PI * 0.55, attackAngle + Math.PI * 0.55);
       ctx.stroke();
 
       // Slashing light core
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.arc(arcCenterX, arcCenterY, 17, -Math.PI * 0.5, Math.PI * 0.3);
+      ctx.arc(arcCenterX, arcCenterY, 19, attackAngle - Math.PI * 0.45, attackAngle + Math.PI * 0.45);
       ctx.stroke();
 
-      // Impact spark motes
+      // Impact spark motes along 8-directional attack angle
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(arcCenterX + 10, arcCenterY - 6, 2, 2);
-      ctx.fillRect(arcCenterX - 8, arcCenterY + 8, 2, 2);
+      ctx.fillRect(arcCenterX + Math.cos(attackAngle) * 16, arcCenterY + Math.sin(attackAngle) * 16, 3, 3);
+      ctx.fillStyle = slashColor;
+      ctx.fillRect(arcCenterX + Math.cos(attackAngle - 0.4) * 14, arcCenterY + Math.sin(attackAngle - 0.4) * 14, 2, 2);
+      ctx.fillRect(arcCenterX + Math.cos(attackAngle + 0.4) * 14, arcCenterY + Math.sin(attackAngle + 0.4) * 14, 2, 2);
+
+      // Spellblade Lightning Bolts in 8 directions
+      if (cls === 'spellblade') {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(arcCenterX, arcCenterY);
+        ctx.lineTo(arcCenterX + Math.cos(attackAngle) * 12 + 4, arcCenterY + Math.sin(attackAngle) * 12 - 4);
+        ctx.lineTo(arcCenterX + Math.cos(attackAngle) * 24, arcCenterY + Math.sin(attackAngle) * 24);
+        ctx.stroke();
+      }
+
+      // Thief Dual Poison Blade Slit in 8 directions
+      if (cls === 'thief') {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        const perp = attackAngle + Math.PI * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(arcCenterX + Math.cos(perp) * 10, arcCenterY + Math.sin(perp) * 10);
+        ctx.lineTo(arcCenterX - Math.cos(perp) * 10 + Math.cos(attackAngle) * 12, arcCenterY - Math.sin(perp) * 10 + Math.sin(attackAngle) * 12);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    } else if (animState === 'strike' && frame % 8 >= 3 && frame % 8 <= 6) {
+      // 8-Directional Heavy Crushing Strike
+      ctx.save();
+      const arcCenterX = cx + vec.x * 20;
+      const arcCenterY = cy + vec.y * 20 - 8;
+
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(arcCenterX, arcCenterY, 26, attackAngle - Math.PI * 0.65, attackAngle + Math.PI * 0.65);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(arcCenterX, arcCenterY, 25, attackAngle - Math.PI * 0.5, attackAngle + Math.PI * 0.5);
+      ctx.stroke();
+
+      // Shockwave wedge
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.beginPath();
+      ctx.moveTo(arcCenterX, arcCenterY);
+      ctx.arc(arcCenterX, arcCenterY, 32, attackAngle - 0.5, attackAngle + 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (animState === 'magic' && frame % 8 >= 2 && frame % 8 <= 6) {
+      // 8-Directional Magic Beam & Arcane Blast
+      ctx.save();
+      const beamColor = cls === 'cleric' ? '#fde047' : '#c084fc';
+      const originX = cx + vec.x * 14;
+      const originY = cy + vec.y * 14 - 10;
+      const targetX = originX + Math.cos(attackAngle) * 36;
+      const targetY = originY + Math.sin(attackAngle) * 36;
+
+      ctx.strokeStyle = beamColor;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+
+      // Mystic rune circle at tip
+      ctx.strokeStyle = beamColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, 6, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.restore();
     }
 

@@ -1,5 +1,17 @@
 import { IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 
+// Unit direction vectors for 2:1 Isometric Board and Battle Movement
+const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
+  SE: { x: 0.85, y: 0.42 },
+  SW: { x: -0.85, y: 0.42 },
+  NE: { x: 0.85, y: -0.42 },
+  NW: { x: -0.85, y: -0.42 },
+  S: { x: 0, y: 0.85 },
+  N: { x: 0, y: -0.85 },
+  E: { x: 1.0, y: 0 },
+  W: { x: -1.0, y: 0 }
+};
+
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private monsterImageStore = new Map<string, HTMLImageElement>();
@@ -73,8 +85,12 @@ export class CustomIsometricMonsterRenderer {
   ): HTMLCanvasElement {
     this.currentDir = dir;
     this.isBack = dir === 'N' || dir === 'NE' || dir === 'NW';
-    const normAnim: 'idle' | 'attack' | 'hurt' =
-      animState === 'attack' || animState === 'strike'
+    const normAnim: 'idle' | 'attack' | 'strike' | 'magic' | 'hurt' =
+      animState === 'strike'
+        ? 'strike'
+        : animState === 'magic'
+        ? 'magic'
+        : animState === 'attack'
         ? 'attack'
         : animState === 'hurt'
         ? 'hurt'
@@ -88,36 +104,47 @@ export class CustomIsometricMonsterRenderer {
 
     const { canvas, ctx } = this.makeCanvas(140, 140);
     const mName = monsterName.toLowerCase();
+    const vec = ISO_DIR_VECTORS[dir] || ISO_DIR_VECTORS['SW'];
 
-    // Animation offsets
+    // Animation offsets and dynamic physics
     let bob = Math.sin((f / 8) * Math.PI * 2) * 2.2;
     let lungeX = 0;
     let lungeY = 0;
+    let scaleX = 1.0;
+    let scaleY = 1.0;
+    let tilt = 0;
 
     if (normAnim === 'attack') {
-      const lunges = [0, 8, 18, 26, 14, 4, 0, 0];
+      const lunges = [0, 8, 22, 28, 16, 6, 2, 0];
       const l = lunges[f];
-      lungeX = -l * 0.9;
-      lungeY = l * 0.45;
+      lungeX = l * vec.x;
+      lungeY = l * vec.y;
       bob = -2;
+      if (f === 2 || f === 3) {
+        scaleX = 1.08;
+        scaleY = 0.94;
+        tilt = (vec.x >= 0 ? 1 : -1) * 0.08;
+      }
+    } else if (normAnim === 'strike') {
+      const leaps = [2, -12, -26, -30, -14, 0, 0, 0];
+      lungeY = leaps[f];
+      lungeX = (f >= 1 && f <= 4 ? vec.x * 10 : 0);
+      if (f === 0) { scaleX = 1.1; scaleY = 0.9; }
+      else if (f >= 1 && f <= 4) { scaleX = 0.92; scaleY = 1.1; }
+      else if (f === 5) { scaleX = 1.18; scaleY = 0.85; }
+    } else if (normAnim === 'magic') {
+      bob = -6 + Math.sin(f * 0.8) * 3;
+      scaleY = 1.03;
     } else if (normAnim === 'hurt') {
-      lungeX = 14;
-      lungeY = -7;
+      lungeX = -vec.x * 12;
+      lungeY = -vec.y * 12;
       bob = -5;
     }
 
     const cx = 70 + lungeX;
     const cy = 70 + lungeY + bob;
 
-    // 8-Directional Isometric Monster Transform
-    // East-facing angles ('SE', 'E', 'NE') mirror horizontally so monster faces East!
     const isFacingEast = dir === 'SE' || dir === 'E' || dir === 'NE';
-    if (isFacingEast) {
-      ctx.save();
-      ctx.translate(70, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-70, 0);
-    }
 
     // Route to fresh high-res AI-generated Monster Model or specialized Archetype Fallback
     const archKey = this.getMonsterArchetypeKey(mName);
@@ -127,64 +154,520 @@ export class CustomIsometricMonsterRenderer {
       // 1. Dynamic 2.5D ground shadow
       this.drawIsoShadow(ctx, cx, cy + 42, 28, 12, 0.45);
 
-      // 2. High-res fresh AI model rendered crisp and prominent
-      ctx.drawImage(mobImg, cx - 55, cy - 62, 110, 110);
+      // 2. Render Monster Model with Directional Transform
+      ctx.save();
+      ctx.translate(cx, cy);
+      if (tilt !== 0) ctx.rotate(tilt);
+      ctx.scale(isFacingEast ? -scaleX : scaleX, scaleY);
+
+      // High-res fresh AI model rendered crisp and prominent
+      ctx.drawImage(mobImg, -55, -62, 110, 110);
 
       // 3. If turned backwards (N, NE, NW), render back of head & hair drape so face is concealed!
       if (this.isBack) {
-        this.drawMonsterGirlBackHead(ctx, cx, cy - 14, '#ffedd5', '#1e1b4b');
+        this.drawMonsterGirlBackHead(ctx, 0, -14, '#ffedd5', '#1e1b4b');
       }
-    } else if (mName.includes('slime') || mName.includes('ooze') || mName.includes('jelly')) {
-      let element: 'flame' | 'ice' | 'sun' | 'blossom' | 'gold' = 'flame';
-      if (mName.includes('frost') || mName.includes('ice') || mName.includes('blue')) element = 'ice';
-      else if (mName.includes('sun') || mName.includes('volt') || mName.includes('yellow')) element = 'sun';
-      else if (mName.includes('blossom') || mName.includes('plant') || mName.includes('leaf') || mName.includes('green') || mName.includes('aurelia')) element = 'blossom';
-      else if (mName.includes('gold') || mName.includes('king') || mName.includes('queen')) element = 'gold';
-
-      this.renderSlimeGirl(ctx, cx, cy, element, f, animState);
-    } else if (mName.includes('skeleton') || mName.includes('undead') || mName.includes('bone') || mName.includes('mummy')) {
-      this.renderSkeletalMaid(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('knight') || mName.includes('commander') || mName.includes('paladin') || mName.includes('valkyrie') || (mName.includes('captain') && !mName.includes('pirate'))) {
-      this.renderDarkKnightress(ctx, cx, cy, f, animState);
-    } else if (mName.includes('marauder') || mName.includes('bandit') || mName.includes('raider') || mName.includes('pirate') || mName.includes('thief')) {
-      this.renderBanditPirateLass(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('panther') || mName.includes('wolf') || mName.includes('hound') || mName.includes('chimera') || mName.includes('beast') || mName.includes('fenra') || mName.includes('kaelia')) {
-      this.renderBeastMaiden(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('colossus') || mName.includes('golem') || mName.includes('automaton') || mName.includes('dreadnought') || mName.includes('behemoth') || mName.includes('clockwork')) {
-      this.renderClockworkOrGolemMaid(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('yeti') || mName.includes('frost giant') || mName.includes('borealia')) {
-      this.renderYetiMaiden(ctx, cx, cy, f, animState);
-    } else if (mName.includes('wyrm')) {
-      this.renderDragonWyrmGirl(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('siren') || mName.includes('harpy') || mName.includes('demon') || mName.includes('archdemon') || mName.includes('lilith')) {
-      this.renderSirenDemoness(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('kraken')) {
-      this.renderKrakenMaiden(ctx, cx, cy, f, animState);
-    } else if (mName.includes('sphinx')) {
-      this.renderSphinxQueen(ctx, cx, cy, f, animState);
-    } else if (mName.includes('ent') || mName.includes('treant') || mName.includes('dryad') || mName.includes('nymph') || mName.includes('flora')) {
-      this.renderDryadNymph(ctx, cx, cy, f, animState);
-    } else if (mName.includes('spider') || mName.includes('arachnid') || mName.includes('weaver') || mName.includes('scorpion') || mName.includes('arachne') || mName.includes('scorpia')) {
-      this.renderArachneWeaver(ctx, cx, cy, f, animState);
-    } else if (mName.includes('bat') || mName.includes('vampire') || mName.includes('gargoyle')) {
-      this.renderVampireCountess(ctx, cx, cy, f, animState);
-    } else if (mName.includes('ghost') || mName.includes('wraith') || mName.includes('phantom') || mName.includes('specter')) {
-      this.renderGhostMaiden(ctx, cx, cy, f, animState);
-    } else if (mName.includes('tengu') || mName.includes('kitsune') || mName.includes('chiyo') || mName.includes('ayame') || mName.includes('sakura') || mName.includes('shrine')) {
-      this.renderSakuraShrineMaiden(ctx, cx, cy, f, animState, mName);
-    } else if (mName.includes('dragon') || mName.includes('boss') || mName.includes('overlord') || mName.includes('ignis')) {
-      this.renderDragonPrincessIgnis(ctx, cx, cy, f, animState);
-    } else {
-      // Default: Cute Goblin Girl
-      this.renderGoblinGirl(ctx, cx, cy, f, animState);
-    }
-
-    if (isFacingEast) {
       ctx.restore();
+
+      // 4. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX
+      if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
+        this.renderMonsterCombatVFX(ctx, cx, cy, archKey, dir, f, normAnim, this.isBack);
+      }
+    } else {
+      if (isFacingEast) {
+        ctx.save();
+        ctx.translate(70, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-70, 0);
+      }
+
+      if (mName.includes('slime') || mName.includes('ooze') || mName.includes('jelly')) {
+        let element: 'flame' | 'ice' | 'sun' | 'blossom' | 'gold' = 'flame';
+        if (mName.includes('frost') || mName.includes('ice') || mName.includes('blue')) element = 'ice';
+        else if (mName.includes('sun') || mName.includes('volt') || mName.includes('yellow')) element = 'sun';
+        else if (mName.includes('blossom') || mName.includes('plant') || mName.includes('leaf') || mName.includes('green') || mName.includes('aurelia')) element = 'blossom';
+        else if (mName.includes('gold') || mName.includes('king') || mName.includes('queen')) element = 'gold';
+
+        this.renderSlimeGirl(ctx, cx, cy, element, f, animState);
+      } else if (mName.includes('skeleton') || mName.includes('undead') || mName.includes('bone') || mName.includes('mummy')) {
+        this.renderSkeletalMaid(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('knight') || mName.includes('commander') || mName.includes('paladin') || mName.includes('valkyrie') || (mName.includes('captain') && !mName.includes('pirate'))) {
+        this.renderDarkKnightress(ctx, cx, cy, f, animState);
+      } else if (mName.includes('marauder') || mName.includes('bandit') || mName.includes('raider') || mName.includes('pirate') || mName.includes('thief')) {
+        this.renderBanditPirateLass(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('panther') || mName.includes('wolf') || mName.includes('hound') || mName.includes('chimera') || mName.includes('beast') || mName.includes('fenra') || mName.includes('kaelia')) {
+        this.renderBeastMaiden(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('colossus') || mName.includes('golem') || mName.includes('automaton') || mName.includes('dreadnought') || mName.includes('behemoth') || mName.includes('clockwork')) {
+        this.renderClockworkOrGolemMaid(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('yeti') || mName.includes('frost giant') || mName.includes('borealia')) {
+        this.renderYetiMaiden(ctx, cx, cy, f, animState);
+      } else if (mName.includes('wyrm')) {
+        this.renderDragonWyrmGirl(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('siren') || mName.includes('harpy') || mName.includes('demon') || mName.includes('archdemon') || mName.includes('lilith')) {
+        this.renderSirenDemoness(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('kraken')) {
+        this.renderKrakenMaiden(ctx, cx, cy, f, animState);
+      } else if (mName.includes('sphinx')) {
+        this.renderSphinxQueen(ctx, cx, cy, f, animState);
+      } else if (mName.includes('ent') || mName.includes('treant') || mName.includes('dryad') || mName.includes('nymph') || mName.includes('flora')) {
+        this.renderDryadNymph(ctx, cx, cy, f, animState);
+      } else if (mName.includes('spider') || mName.includes('arachnid') || mName.includes('weaver') || mName.includes('scorpion') || mName.includes('arachne') || mName.includes('scorpia')) {
+        this.renderArachneWeaver(ctx, cx, cy, f, animState);
+      } else if (mName.includes('bat') || mName.includes('vampire') || mName.includes('gargoyle')) {
+        this.renderVampireCountess(ctx, cx, cy, f, animState);
+      } else if (mName.includes('ghost') || mName.includes('wraith') || mName.includes('phantom') || mName.includes('specter')) {
+        this.renderGhostMaiden(ctx, cx, cy, f, animState);
+      } else if (mName.includes('tengu') || mName.includes('kitsune') || mName.includes('chiyo') || mName.includes('ayame') || mName.includes('sakura') || mName.includes('shrine')) {
+        this.renderSakuraShrineMaiden(ctx, cx, cy, f, animState, mName);
+      } else if (mName.includes('dragon') || mName.includes('boss') || mName.includes('overlord') || mName.includes('ignis')) {
+        this.renderDragonPrincessIgnis(ctx, cx, cy, f, animState);
+      } else {
+        this.renderGoblinGirl(ctx, cx, cy, f, animState);
+      }
+
+      if (isFacingEast) {
+        ctx.restore();
+      }
+
+      if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
+        this.renderMonsterCombatVFX(ctx, cx, cy, archKey, dir, f, normAnim, this.isBack);
+      }
     }
 
     this.cache.set(cacheKey, canvas);
     return canvas;
+  }
+
+  // =========================================================================
+  // 8-DIRECTIONAL ARCHETYPE-SPECIFIC COMBAT ATTACK ANIMATIONS (18 ARCHETYPES)
+  // =========================================================================
+  private renderMonsterCombatVFX(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    archKey: string,
+    dir: IsoDirection,
+    f: number,
+    animState: 'attack' | 'strike' | 'magic',
+    isBack: boolean
+  ) {
+    const vec = ISO_DIR_VECTORS[dir] || ISO_DIR_VECTORS['SW'];
+    const atkAngle = Math.atan2(vec.y * 1.6, vec.x);
+    const ox = cx + vec.x * 22;
+    const oy = cy + vec.y * 22 - 6;
+
+    ctx.save();
+
+    switch (archKey) {
+      case 'dark_knightress': {
+        // Demonic Abyssal Greatsword 8-directional sweeping crescent blade & dark miasma
+        if (f >= 1 && f <= 5) {
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(cx + vec.x * 12, cy + vec.y * 12 - 8, 34, atkAngle - Math.PI * 0.6, atkAngle + Math.PI * 0.6);
+          ctx.stroke();
+
+          // Searing white core
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(cx + vec.x * 12, cy + vec.y * 12 - 8, 33, atkAngle - Math.PI * 0.5, atkAngle + Math.PI * 0.5);
+          ctx.stroke();
+
+          // Demonic void motes
+          ctx.fillStyle = '#dc2626';
+          for (let i = 0; i < 4; i++) {
+            const sparkDist = 20 + i * 8;
+            const sparkAngle = atkAngle + (i - 1.5) * 0.35;
+            ctx.fillRect(ox + Math.cos(sparkAngle) * sparkDist, oy + Math.sin(sparkAngle) * sparkDist, 3, 3);
+          }
+        }
+        break;
+      }
+
+      case 'dragon_princess_ignis': {
+        // Blazing Dragon Claws & Infernal Flame Cleave
+        if (f >= 1 && f <= 5) {
+          const offsets = [-0.25, 0, 0.25];
+          const colors = ['#ea580c', '#f59e0b', '#fef08a'];
+          offsets.forEach((off, idx) => {
+            ctx.strokeStyle = colors[idx];
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(ox, oy, 28 + idx * 5, atkAngle - 0.7 + off, atkAngle + 0.7 + off);
+            ctx.stroke();
+          });
+
+          ctx.fillStyle = '#fde047';
+          for (let i = 0; i < 5; i++) {
+            const dist = 24 + i * 6;
+            const a = atkAngle + (Math.sin(f + i) * 0.4);
+            ctx.fillRect(ox + Math.cos(a) * dist, oy + Math.sin(a) * dist, 3, 3);
+          }
+        }
+        break;
+      }
+
+      case 'slime_princess': {
+        // Acidic Gel Whip-Blade & Popping Hydro Bubble Barrage
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(ox, oy, 26, atkAngle - 0.8, atkAngle + 0.8);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#a7f3d0';
+          ctx.lineWidth = 1.5;
+          for (let i = 0; i < 4; i++) {
+            const bDist = 18 + i * 7;
+            const bAngle = atkAngle + (i - 1.5) * 0.3;
+            ctx.beginPath();
+            ctx.arc(ox + Math.cos(bAngle) * bDist, oy + Math.sin(bAngle) * bDist, 4 + (i % 2) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+        break;
+      }
+
+      case 'goblin_girl': {
+        // Dual Poison Daggers Flurry (X-Cross Slits)
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 3;
+          ctx.lineCap = 'round';
+          const perpAngle = atkAngle + Math.PI * 0.5;
+
+          ctx.beginPath();
+          ctx.moveTo(ox - Math.cos(perpAngle) * 16 - Math.cos(atkAngle) * 8, oy - Math.sin(perpAngle) * 16 - Math.sin(atkAngle) * 8);
+          ctx.lineTo(ox + Math.cos(perpAngle) * 16 + Math.cos(atkAngle) * 16, oy + Math.sin(perpAngle) * 16 + Math.sin(atkAngle) * 16);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#84cc16';
+          ctx.beginPath();
+          ctx.moveTo(ox + Math.cos(perpAngle) * 16 - Math.cos(atkAngle) * 8, oy + Math.sin(perpAngle) * 16 - Math.sin(atkAngle) * 8);
+          ctx.lineTo(ox - Math.cos(perpAngle) * 16 + Math.cos(atkAngle) * 16, oy - Math.sin(perpAngle) * 16 + Math.sin(atkAngle) * 16);
+          ctx.stroke();
+
+          ctx.fillStyle = '#d9f99d';
+          ctx.fillRect(ox + Math.cos(atkAngle) * 24, oy + Math.sin(atkAngle) * 24, 3, 3);
+          ctx.fillRect(ox + Math.cos(atkAngle) * 18 + 5, oy + Math.sin(atkAngle) * 18 - 5, 2, 2);
+        }
+        break;
+      }
+
+      case 'beast_maiden': {
+        // Feral Crimson Triple-Claw Rake
+        if (f >= 1 && f <= 5) {
+          const perpAngle = atkAngle + Math.PI * 0.5;
+          for (let i = -1; i <= 1; i++) {
+            const shiftX = Math.cos(perpAngle) * i * 7;
+            const shiftY = Math.sin(perpAngle) * i * 7;
+            ctx.strokeStyle = i === 0 ? '#ffffff' : '#f43f5e';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.arc(ox + shiftX, oy + shiftY, 24, atkAngle - 0.6, atkAngle + 0.6);
+            ctx.stroke();
+          }
+        }
+        break;
+      }
+
+      case 'sakura_kitsune': {
+        // Nine-Tails Fox-Fire Spirit Wisps & Sakura Fan Storm
+        if (f >= 1 && f <= 5) {
+          for (let i = 0; i < 3; i++) {
+            const orbAngle = atkAngle + ((i * Math.PI * 2) / 3) + f * 0.6;
+            const orbDist = 18 + (f * 4);
+            const px = ox + Math.cos(orbAngle) * orbDist;
+            const py = oy + Math.sin(orbAngle) * orbDist;
+            ctx.fillStyle = '#ec4899';
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#f472b6';
+          for (let p = 0; p < 4; p++) {
+            const pDist = 15 + p * 8;
+            ctx.fillRect(ox + Math.cos(atkAngle) * pDist + Math.sin(f + p) * 4, oy + Math.sin(atkAngle) * pDist, 3, 2);
+          }
+        }
+        break;
+      }
+
+      case 'skeletal_maid': {
+        // Cursed Bone Greatscythe Reaping Sweep
+        if (f >= 1 && f <= 5) {
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#a855f7';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 32, atkAngle - Math.PI * 0.7, atkAngle + Math.PI * 0.7);
+          ctx.stroke();
+
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 30, atkAngle - Math.PI * 0.6, atkAngle + Math.PI * 0.6);
+          ctx.stroke();
+
+          ctx.fillStyle = '#c084fc';
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 36, oy + Math.sin(atkAngle) * 36, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+
+      case 'yeti_maiden': {
+        // Glacial Frost Hammer & Sharp Icicle Spire Eruption
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.fillStyle = 'rgba(186, 230, 253, 0.4)';
+          ctx.lineWidth = 2.5;
+
+          const tipX = ox + Math.cos(atkAngle) * 36;
+          const tipY = oy + Math.sin(atkAngle) * 36;
+          const perp = atkAngle + Math.PI * 0.5;
+          const b1X = ox - Math.cos(atkAngle) * 6 + Math.cos(perp) * 12;
+          const b1Y = oy - Math.sin(atkAngle) * 6 + Math.sin(perp) * 12;
+          const b2X = ox - Math.cos(atkAngle) * 6 - Math.cos(perp) * 12;
+          const b2Y = oy - Math.sin(atkAngle) * 6 - Math.sin(perp) * 12;
+
+          ctx.beginPath();
+          ctx.moveTo(b1X, b1Y);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(b2X, b2Y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(tipX - 2, tipY - 2, 4, 4);
+        }
+        break;
+      }
+
+      case 'siren_demoness': {
+        // Supersonic Screech Rings & Shadow Bat Shockwave
+        if (f >= 1 && f <= 5) {
+          for (let r = 1; r <= 3; r++) {
+            const ringDist = r * 11;
+            const rx = ox + Math.cos(atkAngle) * ringDist;
+            const ry = oy + Math.sin(atkAngle) * ringDist;
+            ctx.strokeStyle = r === 1 ? '#8b5cf6' : r === 2 ? '#d946ef' : '#38bdf8';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.ellipse(rx, ry, 8 + r * 5, 4 + r * 3, atkAngle, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+        break;
+      }
+
+      case 'clockwork_maid': {
+        // Dual Spinning Brass Gear Blades & Steam Jet
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#eab308';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 20, oy + Math.sin(atkAngle) * 20, 14, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#f59e0b';
+          for (let g = 0; g < 6; g++) {
+            const ga = (g * Math.PI) / 3 + f * 0.8;
+            const gx = ox + Math.cos(atkAngle) * 20 + Math.cos(ga) * 16;
+            const gy = oy + Math.sin(atkAngle) * 20 + Math.sin(ga) * 16;
+            ctx.fillRect(gx - 1.5, gy - 1.5, 3, 3);
+          }
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.beginPath();
+          ctx.arc(cx - vec.x * 12, cy - vec.y * 12, 8 + f * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+
+      case 'bandit_pirate': {
+        // Cutlass Cleave & Flintlock Muzzle Flash
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#f97316';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(ox, oy, 26, atkAngle - 0.7, atkAngle + 0.7);
+          ctx.stroke();
+
+          const flashX = ox + Math.cos(atkAngle) * 26;
+          const flashY = oy + Math.sin(atkAngle) * 26;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(flashX - 2, flashY - 7, 4, 14);
+          ctx.fillRect(flashX - 7, flashY - 2, 14, 4);
+        }
+        break;
+      }
+
+      case 'dragon_wyrm': {
+        // Draconic Fireball Breath & Tail Cleave
+        if (f >= 1 && f <= 5) {
+          const tipX1 = ox + Math.cos(atkAngle - 0.35) * 36;
+          const tipY1 = oy + Math.sin(atkAngle - 0.35) * 36;
+          const tipX2 = ox + Math.cos(atkAngle + 0.35) * 36;
+          const tipY2 = oy + Math.sin(atkAngle + 0.35) * 36;
+
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(tipX1, tipY1);
+          ctx.lineTo(tipX2, tipY2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect((tipX1 + tipX2) / 2 - 3, (tipY1 + tipY2) / 2 - 3, 6, 6);
+        }
+        break;
+      }
+
+      case 'kraken_maiden': {
+        // Abyssal Tentacle Slam & Ocean Geyser
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ox - vec.x * 10, oy - vec.y * 10);
+          ctx.quadraticCurveTo(ox + Math.cos(atkAngle + 0.4) * 24, oy + Math.sin(atkAngle + 0.4) * 24, ox + Math.cos(atkAngle) * 36, oy + Math.sin(atkAngle) * 36);
+          ctx.stroke();
+
+          ctx.fillStyle = '#38bdf8';
+          for (let w = 0; w < 4; w++) {
+            ctx.beginPath();
+            ctx.arc(ox + Math.cos(atkAngle + (w - 1.5) * 0.4) * 32, oy + Math.sin(atkAngle + (w - 1.5) * 0.4) * 32, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        break;
+      }
+
+      case 'sphinx_queen': {
+        // Pharaoh Golden Solar Ray Beam
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#eab308';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(ox + Math.cos(atkAngle) * 44, oy + Math.sin(atkAngle) * 44);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(ox + Math.cos(atkAngle) * 44, oy + Math.sin(atkAngle) * 44);
+          ctx.stroke();
+
+          ctx.fillStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 44, oy + Math.sin(atkAngle) * 44, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+
+      case 'dryad_nymph': {
+        // Thorny Briar Vine Whip
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#16a34a';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ox - vec.x * 6, oy - vec.y * 6);
+          ctx.quadraticCurveTo(ox + Math.sin(f * 2) * 12, oy + Math.cos(f * 2) * 12, ox + Math.cos(atkAngle) * 36, oy + Math.sin(atkAngle) * 36);
+          ctx.stroke();
+
+          ctx.fillStyle = '#f43f5e';
+          for (let p = 0; p < 3; p++) {
+            ctx.fillRect(ox + Math.cos(atkAngle) * (14 + p * 9), oy + Math.sin(atkAngle) * (14 + p * 9) + (p % 2 === 0 ? 4 : -4), 3, 3);
+          }
+        }
+        break;
+      }
+
+      case 'arachne_weaver': {
+        // Venomous Chitin Spear Stabs & Glowing Web Net
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#9333ea';
+          ctx.lineWidth = 3;
+          for (let s = -1; s <= 1; s += 2) {
+            const perp = atkAngle + Math.PI * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(ox + Math.cos(perp) * s * 10, oy + Math.sin(perp) * s * 10);
+            ctx.lineTo(ox + Math.cos(atkAngle) * 36 + Math.cos(perp) * s * 4, oy + Math.sin(atkAngle) * 36 + Math.sin(perp) * s * 4);
+            ctx.stroke();
+          }
+
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 32, oy + Math.sin(atkAngle) * 32, 9, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        break;
+      }
+
+      case 'vampire_countess': {
+        // Blood Rapier Piercing Thrust & Bat Swarm
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(ox + Math.cos(atkAngle) * 42, oy + Math.sin(atkAngle) * 42);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(ox + Math.cos(atkAngle) * 42, oy + Math.sin(atkAngle) * 42);
+          ctx.stroke();
+
+          ctx.fillStyle = '#7f1d1d';
+          for (let b = 0; b < 3; b++) {
+            const bx = ox + Math.cos(atkAngle) * (18 + b * 10) + Math.sin(f + b) * 5;
+            const by = oy + Math.sin(atkAngle) * (18 + b * 10);
+            ctx.fillRect(bx - 3, by - 1, 6, 3);
+          }
+        }
+        break;
+      }
+
+      case 'ghost_maiden': {
+        // Spectral Ectoplasmic Soul Wave & Phantom Claws
+        if (f >= 1 && f <= 5) {
+          ctx.strokeStyle = '#06b6d4';
+          ctx.fillStyle = 'rgba(103, 232, 249, 0.35)';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 24, oy + Math.sin(atkAngle) * 24, 16, atkAngle - Math.PI * 0.5, atkAngle + Math.PI * 0.5);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(ox + Math.cos(atkAngle) * 32, oy + Math.sin(atkAngle) * 32, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+    }
+
+    ctx.restore();
   }
 
   // =========================================================================
