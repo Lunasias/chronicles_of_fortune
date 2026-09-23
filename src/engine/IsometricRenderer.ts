@@ -67,6 +67,9 @@ export class IsometricRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.ctx.imageSmoothingEnabled = false;
+    const defaultZ = this.getDefaultZoom();
+    this.camera.zoom = defaultZ;
+    this.camera.targetZoom = defaultZ;
     this.initParticles();
   }
 
@@ -1467,6 +1470,13 @@ export class IsometricRenderer {
     return c;
   }
 
+  public getDefaultZoom(): number {
+    const w = this.canvas.width || window.innerWidth;
+    if (w < 480) return 0.78;
+    if (w < 768) return 0.88;
+    return 1.0;
+  }
+
   public clampCameraBounds() {
     // Keep camera within playable continental boundaries
     const minX = -3200;
@@ -1477,16 +1487,14 @@ export class IsometricRenderer {
     this.camera.targetY = Math.max(minY, Math.min(maxY, this.camera.targetY));
     this.camera.x = Math.max(minX, Math.min(maxX, this.camera.x));
     this.camera.y = Math.max(minY, Math.min(maxY, this.camera.y));
-    this.camera.zoom = 1.0;
-    this.camera.targetZoom = 1.0;
+    this.camera.zoom = Math.max(0.55, Math.min(1.8, this.camera.zoom));
+    this.camera.targetZoom = Math.max(0.55, Math.min(1.8, this.camera.targetZoom));
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {
     const p = this.toScreen(gx, gy, gz);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
-    this.camera.zoom = 1.0;
-    this.camera.targetZoom = 1.0;
     this.clampCameraBounds();
   }
 
@@ -1495,15 +1503,14 @@ export class IsometricRenderer {
     const p = this.toScreen(gx, gy, gz);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
-    this.camera.zoom = 1.0;
-    this.camera.targetZoom = 1.0;
     this.clampCameraBounds();
   }
 
   // Reset to default comfortable fixed tactical board zoom
   resetTacticalZoom() {
-    this.camera.zoom = 1.0;
-    this.camera.targetZoom = 1.0;
+    const defaultZ = this.getDefaultZoom();
+    this.camera.zoom = defaultZ;
+    this.camera.targetZoom = defaultZ;
   }
 }
 

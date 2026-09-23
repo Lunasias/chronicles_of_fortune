@@ -50,6 +50,10 @@ class DokaponApp {
   private initialDownX = 0;
   private initialDownY = 0;
   private hasMovedWhileDragging = false;
+  private touchStartTime = 0;
+  private isPinching = false;
+  private initialPinchDist = 0;
+  private initialPinchZoom = 1.0;
   private bossCurrentHp = 950;
   private bossMaxHp = 950;
   private worldMapFilter: string = 'all';
@@ -94,6 +98,7 @@ class DokaponApp {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.renderer.ctx.imageSmoothingEnabled = false;
+      this.renderer.clampCameraBounds();
 
       const bCanvas = document.getElementById('battleCanvas') as HTMLCanvasElement;
       if (bCanvas && bCanvas.parentElement) {
@@ -106,15 +111,112 @@ class DokaponApp {
         wCanvas.width = wCanvas.parentElement.clientWidth || 800;
         wCanvas.height = wCanvas.parentElement.clientHeight || 500;
       }
+
+      this.checkOrientationHint();
     };
 
     window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resize, 200);
+    });
     resize();
   }
 
+  private checkOrientationHint() {
+    const hint = document.getElementById('orientationHintToast');
+    if (!hint) return;
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isMobile && isPortrait && !sessionStorage.getItem('dismissed_orientation_hint')) {
+      hint.classList.remove('hidden');
+    }
+  }
+
   // =========================================================================
-  // INTERACTIVE CLICK-TO-MOVE TILE SELECTION ON THE 2.5D BOARD
+  // INTERACTIVE CLICK / TAP-TO-MOVE TILE SELECTION ON THE 2.5D BOARD
   // =========================================================================
+  private handleCanvasSelectAt(clientX: number, clientY: number) {
+    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
+
+    const clickedNode = this.renderer.screenToNode(clientX, clientY, this.game.allNodes, this.game.highlightedNodes);
+    if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
+      let path = this.game.findPathToTarget(clickedNode.id);
+      if (!path || path.length <= 1) {
+        path = [this.game.activePlayer.nodeId, clickedNode.id];
+      }
+      if (path && path.length > 1) {
+        this.inspectUI.hideMoveDestinationPreview();
+
+        // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
+        const rival = this.game.players.find(
+          pl => pl.id !== this.game.activePlayer.id && pl.nodeId === clickedNode.id && pl.hp > 0
+        );
+
+        if (rival && !this.game.activePlayer.isAI) {
+          this.inspectUI.openDuelScouting(
+            this.game.activePlayer,
+            rival,
+            clickedNode.name,
+            () => {
+              // Confirmed move to battle rival!
+              audio.coin();
+              this.renderer.hoveredNodeId = null;
+              this.renderer.previewPathNodeIds = [];
+              this.game.executePath(
+                path,
+                () => this.onMoveStep(),
+                tile => this.handleTileArrival(tile)
+              );
+            },
+            () => {
+              // Cancelled, pick another move
+            }
+          );
+          return;
+        }
+
+        // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
+        const preview = getNodeEncounterPreview(clickedNode);
+        if (
+          preview.featuredMonster &&
+          (clickedNode.townData?.isOccupiedByMonster || clickedNode.type === 'boss') &&
+          !this.game.activePlayer.isAI
+        ) {
+          this.inspectUI.openMonsterScouting(
+            preview.featuredMonster,
+            clickedNode,
+            this.game.activePlayer,
+            () => {
+              audio.coin();
+              this.renderer.hoveredNodeId = null;
+              this.renderer.previewPathNodeIds = [];
+              this.game.executePath(
+                path,
+                () => this.onMoveStep(),
+                tile => this.handleTileArrival(tile)
+              );
+            },
+            () => {
+              // Cancelled, pick another route
+            }
+          );
+          return;
+        }
+
+        audio.coin();
+        this.renderer.hoveredNodeId = null;
+        this.renderer.previewPathNodeIds = [];
+
+        // Execute full path chosen by player!
+        this.game.executePath(
+          path,
+          () => this.onMoveStep(),
+          tile => this.handleTileArrival(tile)
+        );
+      }
+    }
+  }
+
   private bindInteractiveTileSelection() {
     // Mouse hover over 2.5D isometric tiles
     this.canvas.addEventListener('mousemove', e => {
@@ -171,86 +273,7 @@ class DokaponApp {
         this.hasMovedWhileDragging = false;
         return;
       }
-
-      if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
-
-      const clickedNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes, this.game.highlightedNodes);
-      if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
-        let path = this.game.findPathToTarget(clickedNode.id);
-        if (!path || path.length <= 1) {
-          path = [this.game.activePlayer.nodeId, clickedNode.id];
-        }
-        if (path && path.length > 1) {
-          this.inspectUI.hideMoveDestinationPreview();
-
-          // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
-          const rival = this.game.players.find(
-            pl => pl.id !== this.game.activePlayer.id && pl.nodeId === clickedNode.id && pl.hp > 0
-          );
-
-          if (rival && !this.game.activePlayer.isAI) {
-            this.inspectUI.openDuelScouting(
-              this.game.activePlayer,
-              rival,
-              clickedNode.name,
-              () => {
-                // Confirmed move to battle rival!
-                audio.coin();
-                this.renderer.hoveredNodeId = null;
-                this.renderer.previewPathNodeIds = [];
-                this.game.executePath(
-                  path,
-                  () => this.onMoveStep(),
-                  tile => this.handleTileArrival(tile)
-                );
-              },
-              () => {
-                // Cancelled, pick another move
-              }
-            );
-            return;
-          }
-
-          // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
-          const preview = getNodeEncounterPreview(clickedNode);
-          if (
-            preview.featuredMonster &&
-            (clickedNode.townData?.isOccupiedByMonster || clickedNode.type === 'boss') &&
-            !this.game.activePlayer.isAI
-          ) {
-            this.inspectUI.openMonsterScouting(
-              preview.featuredMonster,
-              clickedNode,
-              this.game.activePlayer,
-              () => {
-                audio.coin();
-                this.renderer.hoveredNodeId = null;
-                this.renderer.previewPathNodeIds = [];
-                this.game.executePath(
-                  path,
-                  () => this.onMoveStep(),
-                  tile => this.handleTileArrival(tile)
-                );
-              },
-              () => {
-                // Cancelled, pick another route
-              }
-            );
-            return;
-          }
-
-          audio.coin();
-          this.renderer.hoveredNodeId = null;
-          this.renderer.previewPathNodeIds = [];
-
-          // Execute full path chosen by player!
-          this.game.executePath(
-            path,
-            () => this.onMoveStep(),
-            tile => this.handleTileArrival(tile)
-          );
-        }
-      }
+      this.handleCanvasSelectAt(e.clientX, e.clientY);
     });
   }
 
@@ -427,6 +450,148 @@ class DokaponApp {
         this.hasMovedWhileDragging = false;
       }
     });
+
+    // Mouse Wheel Zoom
+    this.canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      this.renderer.camera.targetZoom = Math.max(0.55, Math.min(1.8, this.renderer.camera.targetZoom * zoomFactor));
+      this.renderer.camera.zoom = this.renderer.camera.targetZoom;
+      this.renderer.clampCameraBounds();
+    }, { passive: false });
+
+    // Touch events for Mobile & Tablet: 1-finger Pan, Tap-to-move, 2-finger Pinch Zoom
+    this.canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        this.isDragging = true;
+        this.isPinching = false;
+        this.hasMovedWhileDragging = false;
+        this.dragStartX = t.clientX;
+        this.dragStartY = t.clientY;
+        this.initialDownX = t.clientX;
+        this.initialDownY = t.clientY;
+        this.touchStartTime = Date.now();
+      } else if (e.touches.length === 2) {
+        this.isDragging = false;
+        this.isPinching = true;
+        this.hasMovedWhileDragging = true;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        this.initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        this.initialPinchZoom = this.renderer.camera.zoom;
+      }
+    }, { passive: true });
+
+    this.canvas.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && this.isPinching) {
+        e.preventDefault();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        if (this.initialPinchDist > 0) {
+          const ratio = dist / this.initialPinchDist;
+          this.renderer.camera.zoom = Math.max(0.55, Math.min(1.8, this.initialPinchZoom * ratio));
+          this.renderer.camera.targetZoom = this.renderer.camera.zoom;
+          this.renderer.clampCameraBounds();
+        }
+      } else if (e.touches.length === 1 && this.isDragging) {
+        e.preventDefault();
+        const t = e.touches[0];
+        const totalDist = Math.hypot(t.clientX - this.initialDownX, t.clientY - this.initialDownY);
+        if (totalDist > 10) {
+          this.hasMovedWhileDragging = true;
+        }
+        const dx = t.clientX - this.dragStartX;
+        const dy = t.clientY - this.dragStartY;
+        this.renderer.camera.x -= dx;
+        this.renderer.camera.y -= dy;
+        this.renderer.camera.targetX = this.renderer.camera.x;
+        this.renderer.camera.targetY = this.renderer.camera.y;
+        this.renderer.clampCameraBounds();
+        this.dragStartX = t.clientX;
+        this.dragStartY = t.clientY;
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', e => {
+      if (this.isPinching && e.touches.length < 2) {
+        this.isPinching = false;
+      }
+      if (this.isDragging) {
+        this.isDragging = false;
+        const elapsed = Date.now() - this.touchStartTime;
+        // Quick tap without significant dragging moves to node
+        if (!this.hasMovedWhileDragging && elapsed < 450) {
+          this.handleCanvasSelectAt(this.initialDownX, this.initialDownY);
+        }
+        this.hasMovedWhileDragging = false;
+      }
+    });
+
+    this.canvas.addEventListener('touchcancel', () => {
+      this.isDragging = false;
+      this.isPinching = false;
+      this.hasMovedWhileDragging = false;
+    });
+
+    // Floating Zoom Controls (+, -, 1x)
+    document.getElementById('btnZoomIn')?.addEventListener('click', () => {
+      audio.click();
+      this.renderer.camera.targetZoom = Math.min(1.8, this.renderer.camera.targetZoom * 1.18);
+      this.renderer.camera.zoom = this.renderer.camera.targetZoom;
+      this.renderer.clampCameraBounds();
+    });
+    document.getElementById('btnZoomOut')?.addEventListener('click', () => {
+      audio.click();
+      this.renderer.camera.targetZoom = Math.max(0.55, this.renderer.camera.targetZoom * 0.82);
+      this.renderer.camera.zoom = this.renderer.camera.targetZoom;
+      this.renderer.clampCameraBounds();
+    });
+    document.getElementById('btnZoomReset')?.addEventListener('click', () => {
+      audio.click();
+      this.renderer.resetTacticalZoom();
+      this.renderer.clampCameraBounds();
+    });
+
+    // Minimap collapse toggle on mobile
+    let isMinimapCollapsed = false;
+    document.getElementById('btnToggleMinimap')?.addEventListener('click', () => {
+      audio.click();
+      const wrap = document.getElementById('minimapCanvasWrapper');
+      const btn = document.getElementById('btnToggleMinimap');
+      if (!wrap || !btn) return;
+      isMinimapCollapsed = !isMinimapCollapsed;
+      if (isMinimapCollapsed) {
+        wrap.classList.add('hidden');
+        btn.innerText = '▲';
+      } else {
+        wrap.classList.remove('hidden');
+        btn.innerText = '▼';
+      }
+    });
+
+    // Mobile Orientation Hint Dismissal
+    document.getElementById('btnCloseOrientationHint')?.addEventListener('click', () => {
+      sessionStorage.setItem('dismissed_orientation_hint', 'true');
+      document.getElementById('orientationHintToast')?.classList.add('hidden');
+    });
+
+    // Auto-minimize side event feed & quest tracker on small screens (< 768px)
+    if (window.innerWidth < 768) {
+      const feedList = document.getElementById('gameEventFeedList');
+      const feedBtn = document.getElementById('btnMinimizeEventFeed');
+      if (feedList && feedBtn) {
+        feedList.classList.add('hidden');
+        feedBtn.innerText = '▲';
+      }
+      const questList = document.getElementById('questTrackerList');
+      const questBtn = document.getElementById('btnMinimizeQuestTracker');
+      if (questList && questBtn) {
+        questList.classList.add('hidden');
+        questBtn.innerText = '▲';
+      }
+    }
 
     // Inventory button
 
@@ -2354,11 +2519,11 @@ class DokaponApp {
       if (tooltip) tooltip.classList.add('hidden');
     });
 
-    // Click on World Map to Center Camera
-    canvas.addEventListener('click', e => {
+    // Click or Touch Tap on World Map to Center Camera
+    const handleMapSelect = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
 
       const clickedPlayer = this.findMapPlayerAtPoint(mx, my);
       if (clickedPlayer) {
@@ -2377,6 +2542,17 @@ class DokaponApp {
         document.getElementById('worldMapModal')?.classList.add('hidden');
         this.renderer.centerCameraOn(clickedNode.gx, clickedNode.gy, clickedNode.gz);
         this.game.addLog(`🗺️ ย้ายมุมมองกล้องไปยัง ${clickedNode.name}`);
+      }
+    };
+
+    canvas.addEventListener('click', e => {
+      handleMapSelect(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('touchend', e => {
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        const t = e.changedTouches[0];
+        handleMapSelect(t.clientX, t.clientY);
       }
     });
   }

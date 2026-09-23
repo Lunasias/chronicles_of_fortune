@@ -1090,11 +1090,15 @@ export class BattleUI {
       p.skinVariant
     );
 
-    // Sizing: Grand prominent anime combatants (240x240 for standard, 290x290 for bosses)
-    const heroW = 240;
-    const heroH = 240;
-    const enemyW = enemyCombatant.isBoss ? 290 : 240;
-    const enemyH = enemyCombatant.isBoss ? 290 : 240;
+    // Sizing: Responsive anime combatants (scaled proportionally with arena width for mobile & tablet)
+    const scaleFactor = Math.min(1.0, Math.max(0.55, arenaW / 650));
+    const heroW = Math.round(240 * scaleFactor);
+    const heroH = Math.round(240 * scaleFactor);
+    const enemyW = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
+    const enemyH = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
+    const heroYOffset = Math.round(222 * scaleFactor);
+    const enemyYOffset = Math.round((enemyCombatant.isBoss ? 268 : 222) * scaleFactor);
+    const ringYOffset = Math.round(14 * scaleFactor);
 
     let enemySprite: HTMLCanvasElement;
     if (enemyCombatant.isBoss) {
@@ -1123,7 +1127,7 @@ export class BattleUI {
         if (isPlayerAtk) {
           this.cutscene.ghostTrails.push({
             x: px,
-            y: py - 100,
+            y: py - Math.round(100 * scaleFactor),
             sprite: heroSprite,
             w: heroW,
             h: heroH,
@@ -1133,7 +1137,7 @@ export class BattleUI {
         } else {
           this.cutscene.ghostTrails.push({
             x: ex,
-            y: ey - (enemyCombatant.isBoss ? 120 : 100),
+            y: ey - Math.round((enemyCombatant.isBoss ? 120 : 100) * scaleFactor),
             sprite: enemySprite,
             w: enemyW,
             h: enemyH,
@@ -1169,9 +1173,8 @@ export class BattleUI {
     // In our 2.5D Isometric projection, the dais top surface is centered at (px, py).
     // Anchored so characters stand proudly with feet planted on the dais diamond!
     const drawHero = () => {
-      this.drawUnitTeamRing(ctx, px, py - 14, '#06b6d4', 0.9, true);
-      // Hero sprite enlarged to 240x240, anchored to dais diamond surface (faces right towards enemy)
-      ctx.drawImage(heroSprite, px - heroW / 2, py - 222, heroW, heroH);
+      this.drawUnitTeamRing(ctx, px, py - ringYOffset, '#06b6d4', 0.9 * scaleFactor, true);
+      ctx.drawImage(heroSprite, px - heroW / 2, py - heroYOffset, heroW, heroH);
     };
 
     const drawEnemy = () => {
@@ -1182,7 +1185,7 @@ export class BattleUI {
       }
 
       const ringColor = enemyCombatant.isBoss ? '#ef4444' : (enemyCombatant.playerRef ? '#f43f5e' : '#f59e0b');
-      this.drawUnitTeamRing(ctx, ex, ey - 14, ringColor, 0.95, true);
+      this.drawUnitTeamRing(ctx, ex, ey - ringYOffset, ringColor, 0.95 * scaleFactor, true);
 
       // The combatant on the right dais MUST always face towards the left (towards the opponent on the left dais)!
       ctx.save();
@@ -1191,7 +1194,7 @@ export class BattleUI {
       ctx.drawImage(
         enemySprite,
         -enemyW / 2,
-        ey - (enemyCombatant.isBoss ? 268 : 222),
+        ey - enemyYOffset,
         enemyW,
         enemyH
       );
