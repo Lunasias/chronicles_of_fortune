@@ -2,8 +2,56 @@ import { IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
+  private monsterImageStore = new Map<string, HTMLImageElement>();
   private currentDir: IsoDirection = 'SW';
   private isBack: boolean = false;
+
+  constructor() {
+    this.preloadMonsterImages();
+  }
+
+  private preloadMonsterImages() {
+    const archetypes = [
+      'slime_princess', 'goblin_girl', 'beast_maiden', 'dark_knightress',
+      'dragon_princess_ignis', 'sakura_kitsune', 'skeletal_maid', 'yeti_maiden',
+      'siren_demoness', 'clockwork_maid', 'bandit_pirate', 'dragon_wyrm',
+      'kraken_maiden', 'sphinx_queen', 'dryad_nymph', 'arachne_weaver',
+      'vampire_countess', 'ghost_maiden'
+    ];
+    for (const arch of archetypes) {
+      const img = new Image();
+      img.src = `/assets/monsters/${arch}.png`;
+      img.onload = () => {
+        this.cache.clear();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+        }
+      };
+      this.monsterImageStore.set(arch, img);
+    }
+  }
+
+  public getMonsterArchetypeKey(mName: string): string {
+    const n = mName.toLowerCase();
+    if (n.includes('slime') || n.includes('ooze') || n.includes('jelly')) return 'slime_princess';
+    if (n.includes('skeleton') || n.includes('undead') || n.includes('bone') || n.includes('mummy')) return 'skeletal_maid';
+    if (n.includes('knight') || n.includes('commander') || n.includes('paladin') || n.includes('valkyrie') || (n.includes('captain') && !n.includes('pirate'))) return 'dark_knightress';
+    if (n.includes('marauder') || n.includes('bandit') || n.includes('raider') || n.includes('pirate') || n.includes('thief')) return 'bandit_pirate';
+    if (n.includes('panther') || n.includes('wolf') || n.includes('hound') || n.includes('chimera') || n.includes('beast') || n.includes('fenra') || n.includes('kaelia')) return 'beast_maiden';
+    if (n.includes('colossus') || n.includes('golem') || n.includes('automaton') || n.includes('dreadnought') || n.includes('behemoth') || n.includes('clockwork')) return 'clockwork_maid';
+    if (n.includes('yeti') || n.includes('frost giant') || n.includes('borealia')) return 'yeti_maiden';
+    if (n.includes('wyrm')) return 'dragon_wyrm';
+    if (n.includes('siren') || n.includes('harpy') || n.includes('demon') || n.includes('archdemon') || n.includes('lilith')) return 'siren_demoness';
+    if (n.includes('kraken')) return 'kraken_maiden';
+    if (n.includes('sphinx') || n.includes('pharaoh')) return 'sphinx_queen';
+    if (n.includes('ent') || n.includes('treant') || n.includes('dryad') || n.includes('nymph') || n.includes('flora')) return 'dryad_nymph';
+    if (n.includes('spider') || n.includes('arachnid') || n.includes('weaver') || n.includes('scorpion') || n.includes('arachne') || n.includes('scorpia')) return 'arachne_weaver';
+    if (n.includes('bat') || n.includes('vampire') || n.includes('gargoyle')) return 'vampire_countess';
+    if (n.includes('ghost') || n.includes('wraith') || n.includes('phantom') || n.includes('specter')) return 'ghost_maiden';
+    if (n.includes('tengu') || n.includes('kitsune') || n.includes('chiyo') || n.includes('ayame') || n.includes('sakura') || n.includes('shrine')) return 'sakura_kitsune';
+    if (n.includes('dragon') || n.includes('boss') || n.includes('overlord') || n.includes('ignis')) return 'dragon_princess_ignis';
+    return 'goblin_girl';
+  }
 
   private makeCanvas(w = 140, h = 140): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
     const canvas = document.createElement('canvas');
@@ -71,8 +119,22 @@ export class CustomIsometricMonsterRenderer {
       ctx.translate(-70, 0);
     }
 
-    // Route to specialized Fantasy Monster Girl Archetypes
-    if (mName.includes('slime') || mName.includes('ooze') || mName.includes('jelly')) {
+    // Route to fresh high-res AI-generated Monster Model or specialized Archetype Fallback
+    const archKey = this.getMonsterArchetypeKey(mName);
+    const mobImg = this.monsterImageStore.get(archKey);
+
+    if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
+      // 1. Dynamic 2.5D ground shadow
+      this.drawIsoShadow(ctx, cx, cy + 42, 28, 12, 0.45);
+
+      // 2. High-res fresh AI model rendered crisp and prominent
+      ctx.drawImage(mobImg, cx - 55, cy - 62, 110, 110);
+
+      // 3. If turned backwards (N, NE, NW), render back of head & hair drape so face is concealed!
+      if (this.isBack) {
+        this.drawMonsterGirlBackHead(ctx, cx, cy - 14, '#ffedd5', '#1e1b4b');
+      }
+    } else if (mName.includes('slime') || mName.includes('ooze') || mName.includes('jelly')) {
       let element: 'flame' | 'ice' | 'sun' | 'blossom' | 'gold' = 'flame';
       if (mName.includes('frost') || mName.includes('ice') || mName.includes('blue')) element = 'ice';
       else if (mName.includes('sun') || mName.includes('volt') || mName.includes('yellow')) element = 'sun';

@@ -5,7 +5,7 @@ import { EquipmentItem, IsoDirection, CharacterAnimState, PrankState } from './P
 // =============================================================================
 
 const CLASS_ASSET_FOLDERS: Record<string, string> = {
-  warrior: 'A_female_magic_swordsman_with',
+  warrior: 'A_female_warrior_knight',
   spellblade: 'A_female_magic_swordsman_with',
   magician: 'A_fair-skinned_sorceress_with_long',
   thief: 'A_fair-skinned_female_assassin_wearing',
