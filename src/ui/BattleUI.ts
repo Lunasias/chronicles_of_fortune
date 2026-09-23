@@ -51,6 +51,7 @@ export class BattleUI {
       h: number;
       alpha: number;
       decay: number;
+      isFlipped?: boolean;
     }>,
     lastGhostTime: 0,
     bannerText: '',
@@ -1137,7 +1138,8 @@ export class BattleUI {
             w: enemyW,
             h: enemyH,
             alpha: 0.6,
-            decay: 0.045
+            decay: 0.045,
+            isFlipped: true
           });
         }
       }
@@ -1147,7 +1149,13 @@ export class BattleUI {
       const gt = this.cutscene.ghostTrails[i];
       ctx.save();
       ctx.globalAlpha = Math.max(0, gt.alpha);
-      ctx.drawImage(gt.sprite, gt.x - gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
+      if (gt.isFlipped) {
+        ctx.translate(gt.x, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(gt.sprite, -gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
+      } else {
+        ctx.drawImage(gt.sprite, gt.x - gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
+      }
       ctx.restore();
       gt.alpha -= gt.decay;
       if (gt.alpha <= 0) {
@@ -1162,7 +1170,7 @@ export class BattleUI {
     // Anchored so characters stand proudly with feet planted on the dais diamond!
     const drawHero = () => {
       this.drawUnitTeamRing(ctx, px, py - 14, '#06b6d4', 0.9, true);
-      // Hero sprite enlarged to 240x240, anchored to dais diamond surface
+      // Hero sprite enlarged to 240x240, anchored to dais diamond surface (faces right towards enemy)
       ctx.drawImage(heroSprite, px - heroW / 2, py - 222, heroW, heroH);
     };
 
@@ -1175,13 +1183,20 @@ export class BattleUI {
 
       const ringColor = enemyCombatant.isBoss ? '#ef4444' : (enemyCombatant.playerRef ? '#f43f5e' : '#f59e0b');
       this.drawUnitTeamRing(ctx, ex, ey - 14, ringColor, 0.95, true);
+
+      // The combatant on the right dais MUST always face towards the left (towards the opponent on the left dais)!
+      ctx.save();
+      ctx.translate(ex, 0);
+      ctx.scale(-1, 1);
       ctx.drawImage(
         enemySprite,
-        ex - enemyW / 2,
+        -enemyW / 2,
         ey - (enemyCombatant.isBoss ? 268 : 222),
         enemyW,
         enemyH
       );
+      ctx.restore();
+
       ctx.restore();
     };
 
