@@ -88,16 +88,16 @@ export class FantasyEventManager {
         },
         {
           text: 'สารภาพบาปและบริจาคทาน 50G',
-          subtext: 'บริจาค 50G ได้รับบัฟพรคุ้มภัย +4 DEF, +4 LUK ถาวร',
+          subtext: 'บริจาค 50G ได้รับบัฟพรคุ้มภัย +1 DEF, +1 LUK ถาวร',
           icon: '🪙',
           resolve: (player) => {
             const cost = Math.min(player.gold, 50);
             player.gold -= cost;
-            player.def += 4;
-            player.luk += 4;
+            player.def += 1;
+            player.luk += 1;
             return {
               outcomeTitle: 'บุญกุศลหนุนนำดวงชะตา!',
-              outcomeText: `ซิสเตอร์เบียทริซสวดบทสวดสรรเสริญ ทวยเทพประทานเกราะคุ้มกันจิตวิญญาณ (+4 DEF, +4 LUK ถาวร)!`,
+              outcomeText: `ซิสเตอร์เบียทริซสวดบทสวดสรรเสริญ ทวยเทพประทานเกราะคุ้มกันจิตวิญญาณ (+1 DEF, +1 LUK ถาวร)!`,
               icon: '🛡️',
               soundType: 'fanfare',
               goldChange: -cost
@@ -133,15 +133,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ตั้งสมาธิสวดมนต์ขับไล่ด้วยพลังศรัทธา',
-          subtext: 'ขับไล่สำเร็จ ได้รับ +30 Max HP ถาวร และ 80 EXP',
+          subtext: 'ขับไล่สำเร็จ ได้รับ +9 Max HP ถาวร และ 80 EXP',
           icon: '✝️',
           resolve: (player) => {
-            player.maxHp += 30;
+            player.maxHp += 9;
             player.hp += 30;
             player.gainXP(80);
             return {
               outcomeTitle: 'แสงศักดิ์สิทธิ์ขับไล่ความมืด!',
-              outcomeText: `จิตใจที่ไม่หวั่นไหวทำให้เกิดรัศมีศักดิ์สิทธิ์ขับไล่ซัคคิวบัสกรีดร้องหนีไป! ทวยเทพประสาทพรให้ (+30 Max HP ถาวร, +80 EXP)!`,
+              outcomeText: `จิตใจที่ไม่หวั่นไหวทำให้เกิดรัศมีศักดิ์สิทธิ์ขับไล่ซัคคิวบัสกรีดร้องหนีไป! ทวยเทพประสาทพรให้ (+9 Max HP ถาวร, +80 EXP)!`,
               icon: '✨',
               soundType: 'fanfare',
               hpChange: 30
@@ -150,15 +150,15 @@ export class FantasyEventManager {
         },
         {
           text: 'ยอมรับจุมพิตแลกเปลี่ยนพลังแห่งความมืด',
-          subtext: 'เสีย 20 HP แต่ได้รับพลังปีศาจ +6 ATK, +6 MAG ถาวร',
+          subtext: 'เสีย 20 HP แต่ได้รับพลังปีศาจ +2 ATK, +2 MAG ถาวร',
           icon: '💋',
           resolve: (player) => {
             player.hp = Math.max(10, player.hp - 20);
-            player.atk += 6;
-            player.mag += 6;
+            player.atk += 2;
+            player.mag += 2;
             return {
               outcomeTitle: 'จุมพิตต้องห้ามแห่งรัตติกาล!',
-              outcomeText: `ริมฝีปากนุ่มประกบลงมา! แม้จะถูกดูดพลังชีวิตไปบางส่วน (-20 HP) แต่คุณกลับได้พลังเพลิงปีศาจไหลเวียนในร่าง (+6 ATK, +6 MAG ถาวร)!`,
+              outcomeText: `ริมฝีปากนุ่มประกบลงมา! แม้จะถูกดูดพลังชีวิตไปบางส่วน (-20 HP) แต่คุณกลับได้พลังเพลิงปีศาจไหลเวียนในร่าง (+2 ATK, +2 MAG ถาวร)!`,
               icon: '😈',
               soundType: 'magic',
               hpChange: -20
@@ -175,7 +175,7 @@ export class FantasyEventManager {
               name: 'แหวนเสน่ห์ซัคคิวบัส (Succubus Charm Ring)',
               type: 'accessory',
               cost: 220,
-              desc: 'แหวนอัญมณีสีชมพูเปล่งประกาย (+5 LUK, +6 MAG)',
+              desc: 'แหวนอัญมณีสีชมพูเปล่งประกาย (+2 LUK, +2 MAG)',
               icon: '💍✨'
             });
             return {
@@ -200,22 +200,22 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ยื่นแอปเปิ้ลและขนมปังหอมกรุ่นให้เธอกิน',
-          subtext: 'เธออิ่มท้อง มอบเครื่องรางกระดูกนำโชค +5 LUK, +3 DEF',
+          subtext: 'เธออิ่มท้อง มอบเครื่องรางกระดูกนำโชค +2 LUK, +1 DEF',
           icon: '🍎',
           resolve: (player) => {
-            player.luk += 5;
-            player.def += 3;
+            player.luk += 2;
+            player.def += 1;
             player.inventory.push({
               id: 'acc_bone_charm',
               name: 'เครื่องรางกระดูกนำโชค (Lucky Bone Charm)',
               type: 'accessory',
               cost: 160,
-              desc: 'เครื่องรางโบราณป้องกันเภทภัย (+4 DEF, +5 LUK)',
+              desc: 'เครื่องรางโบราณป้องกันเภทภัย (+1 DEF, +2 LUK)',
               icon: '🦴'
             });
             return {
               outcomeTitle: 'ซอมบี้สาวน้อยอารมณ์ดี!',
-              outcomeText: `ซอมบีน่าเคี้ยวแอปเปิ้ลอย่างเอร็ดอร่อย "อร่อยกว่าสมองเยอะเลย!" เธอมอบเครื่องรางกระดูกโบราณให้เป็นการตอบแทน (+5 LUK, +3 DEF ถาวร)!`,
+              outcomeText: `ซอมบีน่าเคี้ยวแอปเปิ้ลอย่างเอร็ดอร่อย "อร่อยกว่าสมองเยอะเลย!" เธอมอบเครื่องรางกระดูกโบราณให้เป็นการตอบแทน (+2 LUK, +1 DEF ถาวร)!`,
               icon: '🦴',
               soundType: 'coin'
             };
@@ -223,14 +223,14 @@ export class FantasyEventManager {
         },
         {
           text: 'ร่ายมนตร์แสงชำระล้างร่างให้เธอขยับได้คล่อง',
-          subtext: 'กล้ามเนื้อคลายตัว เธอสอนสเต็ปเดินทะลุมิติ +4 SPD',
+          subtext: 'กล้ามเนื้อคลายตัว เธอสอนสเต็ปเดินทะลุมิติ +1 SPD',
           icon: '✨',
           resolve: (player) => {
-            player.spd += 4;
+            player.spd += 1;
             player.gainXP(60);
             return {
               outcomeTitle: 'ซอมบี้สปีดเก้ากะรัต!',
-              outcomeText: `เวทมนตร์แสงทำให้ข้อต่อของเธอไม่ติดขัด เธอโชว์สเต็ปวิ่งฉิวและสอนเทคนิคการหลบหลีกให้คุณ (+4 SPD ถาวร, +60 XP)!`,
+              outcomeText: `เวทมนตร์แสงทำให้ข้อต่อของเธอไม่ติดขัด เธอโชว์สเต็ปวิ่งฉิวและสอนเทคนิคการหลบหลีกให้คุณ (+1 SPD ถาวร, +60 XP)!`,
               icon: '👟',
               soundType: 'level'
             };
@@ -304,13 +304,13 @@ export class FantasyEventManager {
         },
         {
           text: 'มุดใต้โต๊ะแล้วกระโดดออกทางหน้าต่าง',
-          subtext: 'หลบหลีกฉับไว ได้รับความว่องไว +3 SPD ถาวร',
+          subtext: 'หลบหลีกฉับไว ได้รับความว่องไว +1 SPD ถาวร',
           icon: '💨',
           resolve: (player) => {
-            player.spd += 3;
+            player.spd += 1;
             return {
               outcomeTitle: 'วิชาตัวเบาพริ้วไหว!',
-              outcomeText: `คุณสไลด์ตัวลอดใต้โต๊ะแล้วดีดตัวออกทางหน้าต่างอย่างสวยงามโดยไม่มีใครจับได้ (+3 SPD ถาวร)!`,
+              outcomeText: `คุณสไลด์ตัวลอดใต้โต๊ะแล้วดีดตัวออกทางหน้าต่างอย่างสวยงามโดยไม่มีใครจับได้ (+1 SPD ถาวร)!`,
               icon: '👟',
               soundType: 'level'
             };
@@ -330,15 +330,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'นั่งฟังบทเพลงสรรเสริญผู้กล้าอย่างตั้งใจ',
-          subtext: 'จิตวิญญาณฮึกเหิม ได้รับ +4 ATK, +30 MP ถาวร',
+          subtext: 'จิตวิญญาณฮึกเหิม ได้รับ +1 ATK, +30 MP ถาวร',
           icon: '🎶',
           resolve: (player) => {
-            player.atk += 4;
+            player.atk += 1;
             player.maxMp += 30;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'เพลงพิณปลุกพลังฮึกเหิม!',
-              outcomeText: `ท่วงทำนองอันทรงพลังทำให้เลือดในกายสูบฉีด (+4 ATK ถาวร, +30 Max MP, ฟื้นฟู MP เต็มเปี่ยม)!`,
+              outcomeText: `ท่วงทำนองอันทรงพลังทำให้เลือดในกายสูบฉีด (+1 ATK ถาวร, +30 Max MP, ฟื้นฟู MP เต็มเปี่ยม)!`,
               icon: '🔥',
               soundType: 'level',
               mpChange: player.maxMp
@@ -363,7 +363,7 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอซื้อแผ่นโน้ตเพลงเวทมนตร์ลับ',
-          subtext: 'จ่าย 50G ได้รับ [ขลุ่ยมนตราสายลม] +5 SPD',
+          subtext: 'จ่าย 50G ได้รับ [ขลุ่ยมนตราสายลม] +2 SPD',
           icon: '🎼',
           resolve: (player) => {
             const cost = Math.min(player.gold, 50);
@@ -373,12 +373,12 @@ export class FantasyEventManager {
               name: 'ขลุ่ยมนตราสายลม (Wind Song Flute)',
               type: 'accessory',
               cost: 180,
-              desc: 'ขลุ่ยไม้เอลฟ์เร่งความเร็วในการเคลื่อนไหว (+5 SPD)',
+              desc: 'ขลุ่ยไม้เอลฟ์เร่งความเร็วในการเคลื่อนไหว (+2 SPD)',
               icon: '🪈'
             });
             return {
               outcomeTitle: 'ได้รับเครื่องดนตรีเวทมนตร์!',
-              outcomeText: `เมโลดี้มอบขลุ่ยไม้โบราณที่สลักเวทมนตร์สายลมให้คุณ (+5 SPD จากอุปกรณ์)!`,
+              outcomeText: `เมโลดี้มอบขลุ่ยไม้โบราณที่สลักเวทมนตร์สายลมให้คุณ (+2 SPD จากอุปกรณ์)!`,
               icon: '🪈',
               soundType: 'fanfare',
               goldChange: -cost
@@ -426,15 +426,15 @@ export class FantasyEventManager {
         },
         {
           text: 'ดวลแข่งดื่มเหล้าเพลิงแทนการทอยเต๋า',
-          subtext: 'คอแข็ง ชนะรับเงิน 100G และ +30 Max HP',
+          subtext: 'คอแข็ง ชนะรับเงิน 100G และ +9 Max HP',
           icon: '🥃',
           resolve: (player) => {
-            player.maxHp += 30;
+            player.maxHp += 9;
             player.hp = Math.min(player.maxHp, player.hp + 30);
             player.gold += 100;
             return {
               outcomeTitle: 'คอทองแดงไร้พ่าย!',
-              outcomeText: `คุณกระดกเหล้าเพลิงรวดเดียวหมดขวดโดยไม่สะทกสะท้าน! เธอเมาพับคอตกและยอมยกเงิน 100G ให้ (+30 Max HP ถาวร)!`,
+              outcomeText: `คุณกระดกเหล้าเพลิงรวดเดียวหมดขวดโดยไม่สะทกสะท้าน! เธอเมาพับคอตกและยอมยกเงิน 100G ให้ (+9 Max HP ถาวร)!`,
               icon: '🏆',
               soundType: 'level',
               goldChange: 100,
@@ -484,15 +484,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'นั่งสมาธิและประสานพลังเวทมนตร์ร่วมกับเธอ',
-          subtext: 'พลังจิตผสานกลมกลืน +6 MAG, +4 DEF ถาวร และฟื้น MP',
+          subtext: 'พลังจิตผสานกลมกลืน +2 MAG, +1 DEF ถาวร และฟื้น MP',
           icon: '🧘‍♀️',
           resolve: (player) => {
-            player.mag += 6;
-            player.def += 4;
+            player.mag += 2;
+            player.def += 1;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'การผสานพลังจิตวิญญาณพฤกษา!',
-              outcomeText: `กระแสมานาบริสุทธิ์จากน้ำตกไหลเวียนสู่แก่นพลังของคุณ (+6 MAG, +4 DEF ถาวร, ฟื้นฟู MP เต็มเปี่ยม)!`,
+              outcomeText: `กระแสมานาบริสุทธิ์จากน้ำตกไหลเวียนสู่แก่นพลังของคุณ (+2 MAG, +1 DEF ถาวร, ฟื้นฟู MP เต็มเปี่ยม)!`,
               icon: '🌿✨',
               soundType: 'level',
               mpChange: player.maxMp
@@ -501,10 +501,10 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอรับพรอาร์เชอร์แห่งเอลฟ์โบราณ',
-          subtext: 'สายตาเฉียบคม ได้รับ +5 SPD และ [คันธนูมรกต]',
+          subtext: 'สายตาเฉียบคม ได้รับ +2 SPD และ [คันธนูมรกต]',
           icon: '🏹',
           resolve: (player) => {
-            player.spd += 5;
+            player.spd += 2;
             player.inventory.push({
               id: 'wpn_emerald_bow',
               name: 'คันธนูสายน้ำตกมรกต (Cascade Bow)',
@@ -512,12 +512,12 @@ export class FantasyEventManager {
               cost: 240,
               atk: 14,
               spd: 6,
-              desc: 'คันธนูไม้ศักดิ์สิทธิ์ (+14 ATK, +6 SPD)',
+              desc: 'คันธนูไม้ศักดิ์สิทธิ์ (+2 ATK, +2 SPD)',
               icon: '🏹'
             });
             return {
               outcomeTitle: 'วิชาศรสายลมแห่งพงไพร!',
-              outcomeText: `ซิลฟิร่าแตะหน้าผากคุณเบาๆ มอบสัญชาตญาณนักล่าและมอบ [คันธนูสายน้ำตกมรกต] ให้ (+5 SPD ถาวร)!`,
+              outcomeText: `ซิลฟิร่าแตะหน้าผากคุณเบาๆ มอบสัญชาตญาณนักล่าและมอบ [คันธนูสายน้ำตกมรกต] ให้ (+2 SPD ถาวร)!`,
               icon: '🏹',
               soundType: 'fanfare'
             };
@@ -558,14 +558,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'กระโดดลงน้ำช่วยมีอาจับปลาแซลมอนยักษ์',
-          subtext: 'จับปลาสำเร็จ ได้รับปลาฟื้นฟู และ +4 SPD ถาวร',
+          subtext: 'จับปลาสำเร็จ ได้รับปลาฟื้นฟู และ +1 SPD ถาวร',
           icon: '🐟',
           resolve: (player) => {
-            player.spd += 4;
+            player.spd += 1;
             player.hp = Math.min(player.maxHp, player.hp + 50);
             return {
               outcomeTitle: 'จับปลาแซลมอนทองคำยักษ์สำเร็จ!',
-              outcomeText: `ทั้งคุณและมีอาเปียกปอนแต่จับปลาตัวโตได้! มีอาดีใจกอดแขนคุณแน่น (+4 SPD ถาวร, ฟื้นฟู 50 HP)!`,
+              outcomeText: `ทั้งคุณและมีอาเปียกปอนแต่จับปลาตัวโตได้! มีอาดีใจกอดแขนคุณแน่น (+1 SPD ถาวร, ฟื้นฟู 50 HP)!`,
               icon: '🐟',
               soundType: 'level',
               hpChange: 50
@@ -584,7 +584,7 @@ export class FantasyEventManager {
               cost: 210,
               atk: 12,
               spd: 8,
-              desc: 'กรงเล็บว่องไวไร้เสียง (+12 ATK, +8 SPD)',
+              desc: 'กรงเล็บว่องไวไร้เสียง (+2 ATK, +2 SPD)',
               icon: '🐾'
             });
             return {
@@ -626,21 +626,21 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ดำน้ำลงไปช่วยเก็บไข่มุกโบราณใต้ก้นสระ',
-          subtext: 'ได้รับ [ไข่มุกสมุทรคราม] ขายได้ 200G หรือสวมใส่ +6 LUK',
+          subtext: 'ได้รับ [ไข่มุกสมุทรคราม] ขายได้ 200G หรือสวมใส่ +2 LUK',
           icon: '🦪',
           resolve: (player) => {
-            player.luk += 6;
+            player.luk += 2;
             player.inventory.push({
               id: 'acc_ocean_pearl',
               name: 'ไข่มุกสมุทรคราม (Deep Sea Pearl)',
               type: 'accessory',
               cost: 200,
-              desc: 'ไข่มุกเรืองแสงใต้บาดาล (+6 LUK, +4 MAG)',
+              desc: 'ไข่มุกเรืองแสงใต้บาดาล (+2 LUK, +1 MAG)',
               icon: '🦪'
             });
             return {
               outcomeTitle: 'ไข่มุกประกายรุ้งใต้บาดาล!',
-              outcomeText: `ออนดีนยิ้มหวานและมอบไข่มุกสมุทรให้คุณนำไปสวมใส่หรือขายในร้านค้า (+6 LUK ถาวร)!`,
+              outcomeText: `ออนดีนยิ้มหวานและมอบไข่มุกสมุทรให้คุณนำไปสวมใส่หรือขายในร้านค้า (+2 LUK ถาวร)!`,
               icon: '✨',
               soundType: 'fanfare'
             };
@@ -648,15 +648,15 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอรับพรเกราะวารีคุ้มภัย',
-          subtext: 'ได้รับเกราะฟองสบู่เวทมนตร์ +5 DEF, +40 Max HP',
+          subtext: 'ได้รับเกราะฟองสบู่เวทมนตร์ +2 DEF, +12 Max HP',
           icon: '🛡️',
           resolve: (player) => {
-            player.def += 5;
-            player.maxHp += 40;
+            player.def += 2;
+            player.maxHp += 12;
             player.hp += 40;
             return {
               outcomeTitle: 'ม่านเกราะวารีพิทักษ์!',
-              outcomeText: `ละอองน้ำหมุนวนรอบกายกลายเป็นเกราะเวทมนตร์คุ้มกาย (+5 DEF, +40 Max HP ถาวร)!`,
+              outcomeText: `ละอองน้ำหมุนวนรอบกายกลายเป็นเกราะเวทมนตร์คุ้มกาย (+2 DEF, +12 Max HP ถาวร)!`,
               icon: '🌊',
               soundType: 'level',
               hpChange: 40
@@ -699,15 +699,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'เสี่ยงเซียมซีทำนายดวงชะตา',
-          subtext: 'หยิบเซียมซีมหาโชค ได้รับเงิน 150G และ +5 LUK ถาวร',
+          subtext: 'หยิบเซียมซีมหาโชค ได้รับเงิน 150G และ +2 LUK ถาวร',
           icon: '🥠',
           resolve: (player) => {
             const gold = 150;
             player.gold += gold;
-            player.luk += 5;
+            player.luk += 2;
             return {
               outcomeTitle: 'เซียมซีมหาโชคดีเยี่ยม!',
-              outcomeText: `ใบเซียมซีสีทองส่องประกาย! "เจ้ากำลังจะได้ลาภก้อนโต!" เทพเจ้าประทานเงินให้ ${gold}G พร้อมโชคชะตาหนุนนำ (+5 LUK ถาวร)!`,
+              outcomeText: `ใบเซียมซีสีทองส่องประกาย! "เจ้ากำลังจะได้ลาภก้อนโต!" เทพเจ้าประทานเงินให้ ${gold}G พร้อมโชคชะตาหนุนนำ (+2 LUK ถาวร)!`,
               icon: '✨',
               soundType: 'coin',
               goldChange: gold
@@ -716,14 +716,14 @@ export class FantasyEventManager {
         },
         {
           text: 'นั่งจิบชาและกินขนมโมจิร่วมกับเธอ',
-          subtext: 'จิตใจสงบสุข ฟื้นฟู HP 50 และได้รับ +3 DEF ถาวร',
+          subtext: 'จิตใจสงบสุข ฟื้นฟู HP 50 และได้รับ +1 DEF ถาวร',
           icon: '🍵',
           resolve: (player) => {
             player.hp = Math.min(player.maxHp, player.hp + 50);
-            player.def += 3;
+            player.def += 1;
             return {
               outcomeTitle: 'ชาร้อนและโมจิเลิศรส!',
-              outcomeText: `รสชาติชาเขียวหอมละมุนและขนมโมจินุ่มหนึบช่วยเสริมสร้างเกราะคุ้มกันจิตวิญญาณ (+50 HP, +3 DEF ถาวร)!`,
+              outcomeText: `รสชาติชาเขียวหอมละมุนและขนมโมจินุ่มหนึบช่วยเสริมสร้างเกราะคุ้มกันจิตวิญญาณ (+50 HP, +1 DEF ถาวร)!`,
               icon: '🍡',
               soundType: 'level',
               hpChange: 50
@@ -741,7 +741,7 @@ export class FantasyEventManager {
               name: 'เครื่องรางขนจิ้งจอก (Kitsune Tail Charm)',
               type: 'accessory',
               cost: 180,
-              desc: 'เครื่องรางนำโชคแห่งศาลเจ้า (+4 SPD, +5 LUK)',
+              desc: 'เครื่องรางนำโชคแห่งศาลเจ้า (+1 SPD, +2 LUK)',
               icon: '🎐'
             });
             return {
@@ -767,14 +767,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ชักดาบประลองฝีมือเพลงดาบอย่างยุติธรรม',
-          subtext: 'สู้ชนะอย่างสง่างาม ได้รับ +6 ATK ถาวร และ 85 EXP',
+          subtext: 'สู้ชนะอย่างสง่างาม ได้รับ +2 ATK ถาวร และ 85 EXP',
           icon: '⚔️',
           resolve: (player) => {
-            player.atk += 6;
+            player.atk += 2;
             player.gainXP(85);
             return {
               outcomeTitle: 'เพลงดาบสะท้านซากุระ!',
-              outcomeText: `ดาบปะทะกันเกิดประกายไฟระยิบระยับ! คาเอเดะโค้งคำนับชื่นชมในวิถีดาบของคุณ (+6 ATK ถาวร, +85 EXP)!`,
+              outcomeText: `ดาบปะทะกันเกิดประกายไฟระยิบระยับ! คาเอเดะโค้งคำนับชื่นชมในวิถีดาบของคุณ (+2 ATK ถาวร, +85 EXP)!`,
               icon: '⚔️',
               soundType: 'fanfare'
             };
@@ -799,14 +799,14 @@ export class FantasyEventManager {
         },
         {
           text: 'ช่วยเธอขัดเงาและลงน้ำมันดาบคาทาน่า',
-          subtext: 'เรียนรู้เทคนิคการลับคมดาบ ได้รับ +4 SPD, +3 ATK',
+          subtext: 'เรียนรู้เทคนิคการลับคมดาบ ได้รับ +1 SPD, +1 ATK',
           icon: '✨',
           resolve: (player) => {
-            player.spd += 4;
-            player.atk += 3;
+            player.spd += 1;
+            player.atk += 1;
             return {
               outcomeTitle: 'คมดาบกระจกเงาวับ!',
-              outcomeText: `ใบดาบส่องประกายดุจกระจกเงา เธอถ่ายทอดการจับจังหวะสเต็ปดาบเร็วให้คุณ (+4 SPD, +3 ATK ถาวร)!`,
+              outcomeText: `ใบดาบส่องประกายดุจกระจกเงา เธอถ่ายทอดการจับจังหวะสเต็ปดาบเร็วให้คุณ (+1 SPD, +1 ATK ถาวร)!`,
               icon: '🗡️',
               soundType: 'level'
             };
@@ -859,14 +859,14 @@ export class FantasyEventManager {
         },
         {
           text: 'เล่นเกมทายปัญหาลับสมองกับเธอ',
-          subtext: 'ตอบถูก ได้รับ +5 LUK, +3 MAG ถาวร',
+          subtext: 'ตอบถูก ได้รับ +2 LUK, +1 MAG ถาวร',
           icon: '❓',
           resolve: (player) => {
-            player.luk += 5;
-            player.mag += 3;
+            player.luk += 2;
+            player.mag += 1;
             return {
               outcomeTitle: 'ปัญญาเฉียบแหลมไขปริศนาสำเร็จ!',
-              outcomeText: `คุณตอบปริศนาของเธอได้ในทันที ปอนโกะยอมรับในสติปัญญาของคุณ (+5 LUK, +3 MAG ถาวร)!`,
+              outcomeText: `คุณตอบปริศนาของเธอได้ในทันที ปอนโกะยอมรับในสติปัญญาของคุณ (+2 LUK, +1 MAG ถาวร)!`,
               icon: '💡',
               soundType: 'level'
             };
@@ -890,22 +890,22 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ช่วยเธอประกอบเครื่องยนต์จักรกลไอน้ำ',
-          subtext: 'ได้รับอุปกรณ์ [นาฬิกาจักรกลเร่งเวลา] +4 SPD, +3 ATK',
+          subtext: 'ได้รับอุปกรณ์ [นาฬิกาจักรกลเร่งเวลา] +1 SPD, +1 ATK',
           icon: '🔧',
           resolve: (player) => {
-            player.spd += 4;
-            player.atk += 3;
+            player.spd += 1;
+            player.atk += 1;
             player.inventory.push({
               id: 'acc_steam_watch',
               name: 'นาฬิกาจักรกลเร่งเวลา (Steam Chronometer)',
               type: 'accessory',
               cost: 210,
-              desc: 'เครื่องจักรทองเหลืองเร่งจังหวะการเคลื่อนที่ (+5 SPD)',
+              desc: 'เครื่องจักรทองเหลืองเร่งจังหวะการเคลื่อนที่ (+2 SPD)',
               icon: '⏱️'
             });
             return {
               outcomeTitle: 'กลไกจักรกลทำงานสมบูรณ์แบบ!',
-              outcomeText: `ฟันเฟืองหมุนวนอย่างราบรื่น อลิซยิ้มกว้างและมอบ [นาฬิกาจักรกลเร่งเวลา] ให้คุณเป็นการตอบแทน (+4 SPD, +3 ATK ถาวร)!`,
+              outcomeText: `ฟันเฟืองหมุนวนอย่างราบรื่น อลิซยิ้มกว้างและมอบ [นาฬิกาจักรกลเร่งเวลา] ให้คุณเป็นการตอบแทน (+1 SPD, +1 ATK ถาวร)!`,
               icon: '⚙️',
               soundType: 'fanfare'
             };
@@ -958,14 +958,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ขึ้นเรือเหาะบินสำรวจเส้นทางจากมุมสูง',
-          subtext: 'มองเห็นแผนที่กระจ่างแจ้ง ได้รับ +5 SPD และ 80 EXP',
+          subtext: 'มองเห็นแผนที่กระจ่างแจ้ง ได้รับ +2 SPD และ 80 EXP',
           icon: '☁️',
           resolve: (player) => {
-            player.spd += 5;
+            player.spd += 2;
             player.gainXP(80);
             return {
               outcomeTitle: 'ทัศนียภาพเหนือม่านเมฆ!',
-              outcomeText: `สายลมปะทะใบหน้าขณะเรือเหาะพุ่งทะยาน คุณจดจำเส้นทางลัดบนกระดานได้แม่นยำ (+5 SPD ถาวร, +80 EXP)!`,
+              outcomeText: `สายลมปะทะใบหน้าขณะเรือเหาะพุ่งทะยาน คุณจดจำเส้นทางลัดบนกระดานได้แม่นยำ (+2 SPD ถาวร, +80 EXP)!`,
               icon: '🦅',
               soundType: 'level'
             };
@@ -1027,14 +1027,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'สั่งให้เธอช่วยขัดเกลาชุดเกราะและอาวุธ',
-          subtext: 'อุปกรณ์เงาวับ ได้รับ +4 DEF, +4 ATK ถาวร',
+          subtext: 'อุปกรณ์เงาวับ ได้รับ +1 DEF, +1 ATK ถาวร',
           icon: '✨',
           resolve: (player) => {
-            player.def += 4;
-            player.atk += 4;
+            player.def += 1;
+            player.atk += 1;
             return {
               outcomeTitle: 'การบำรุงรักษาอุปกรณ์ระดับมาสเตอร์!',
-              outcomeText: `หมายเลข 0 ใช้น้ำมันหล่อลื่นสูตรพิเศษขัดเงาอาวุธและเกราะของคุณจนแวววาว (+4 DEF, +4 ATK ถาวร)!`,
+              outcomeText: `หมายเลข 0 ใช้น้ำมันหล่อลื่นสูตรพิเศษขัดเงาอาวุธและเกราะของคุณจนแวววาว (+1 DEF, +1 ATK ถาวร)!`,
               icon: '🛡️',
               soundType: 'level'
             };
@@ -1137,14 +1137,14 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอให้เธอถ่ายทอดเคล็ดวิชาเพลิงมังกร',
-          subtext: 'เรียนรู้เวทมนตร์สายเพลิงมังกร และ +5 ATK ถาวร',
+          subtext: 'เรียนรู้เวทมนตร์สายเพลิงมังกร และ +2 ATK ถาวร',
           icon: '🔥',
           resolve: (player) => {
-            player.atk += 5;
+            player.atk += 2;
             player.fieldSpells.push('zap');
             return {
               outcomeTitle: 'เคล็ดวิชาเพลิงมังกรโบราณ!',
-              outcomeText: `อิกนิสเป่าลมหายใจแห่งมังกรใส่ดาบของคุณ ประกายเพลิงลุกโชนอย่างน่าเกรงขาม (+5 ATK ถาวร, ได้รับเวทมนตร์โจมตี)!`,
+              outcomeText: `อิกนิสเป่าลมหายใจแห่งมังกรใส่ดาบของคุณ ประกายเพลิงลุกโชนอย่างน่าเกรงขาม (+2 ATK ถาวร, ได้รับเวทมนตร์โจมตี)!`,
               icon: '⚔️🔥',
               soundType: 'magic'
             };
@@ -1164,13 +1164,13 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ส่งอาวุธให้เธอตีหลอมและชุบคมใหม่ในลาวา',
-          subtext: 'อาวุธคมกล้า ได้รับ +7 ATK ถาวร',
+          subtext: 'อาวุธคมกล้า ได้รับ +2 ATK ถาวร',
           icon: '⚔️',
           resolve: (player) => {
-            player.atk += 7;
+            player.atk += 2;
             return {
               outcomeTitle: 'ดาบเพลิงหลอมลาวาอุณหภูมิหมื่นองศา!',
-              outcomeText: `ค้อนฟาดลงบนคมดาบจนเกิดประกายไฟสีส้ม คมดาบแกร่งกล้าขึ้นอย่างมหาศาล (+7 ATK ถาวร)!`,
+              outcomeText: `ค้อนฟาดลงบนคมดาบจนเกิดประกายไฟสีส้ม คมดาบแกร่งกล้าขึ้นอย่างมหาศาล (+2 ATK ถาวร)!`,
               icon: '🔥',
               soundType: 'fanfare'
             };
@@ -1178,11 +1178,11 @@ export class FantasyEventManager {
         },
         {
           text: 'ช่วยเธอสูบลมเตาเผาลาวาเพื่อหล่อเกราะ',
-          subtext: 'ได้รับชุดเกราะ [เกราะเกล็ดเพลิง] +8 DEF, +20 Max HP',
+          subtext: 'ได้รับชุดเกราะ [เกราะเกล็ดเพลิง] +2 DEF, +6 Max HP',
           icon: '🦺',
           resolve: (player) => {
-            player.def += 8;
-            player.maxHp += 20;
+            player.def += 2;
+            player.maxHp += 6;
             player.hp += 20;
             player.inventory.push({
               id: 'eq_flame_scale',
@@ -1190,12 +1190,12 @@ export class FantasyEventManager {
               type: 'armor',
               cost: 260,
               def: 12,
-              desc: 'เกราะหลอมจากเกล็ดลาวา (+12 DEF, ทนไฟ)',
+              desc: 'เกราะหลอมจากเกล็ดลาวา (+2 DEF, ทนไฟ)',
               icon: '🦺🔥'
             });
             return {
               outcomeTitle: 'เกราะเหล็กไหลต้านทานเพลิง!',
-              outcomeText: `คุณออกแรงสูบลมจนเตาเผาร้อนจัด ฟลามม่ามอบ [เกราะเกล็ดเพลิงลาวา] ให้เป็นรางวัล (+8 DEF, +20 Max HP ถาวร)!`,
+              outcomeText: `คุณออกแรงสูบลมจนเตาเผาร้อนจัด ฟลามม่ามอบ [เกราะเกล็ดเพลิงลาวา] ให้เป็นรางวัล (+2 DEF, +6 Max HP ถาวร)!`,
               icon: '🛡️',
               soundType: 'level',
               hpChange: 20
@@ -1204,15 +1204,15 @@ export class FantasyEventManager {
         },
         {
           text: 'ซื้อแร่ภูเขาไฟหายากด้วยเงิน 80G',
-          subtext: 'แร่คริสตัลเพลิง เพิ่มพลังเวท +6 MAG ถาวร',
+          subtext: 'แร่คริสตัลเพลิง เพิ่มพลังเวท +2 MAG ถาวร',
           icon: '💎',
           resolve: (player) => {
             const cost = Math.min(player.gold, 80);
             player.gold -= cost;
-            player.mag += 6;
+            player.mag += 2;
             return {
               outcomeTitle: 'แร่คริสตัลเพลิงสุริยา!',
-              outcomeText: `แร่คริสตัลสีส้มส่องแสงระยิบระยับ ซึมซับเข้าสู่พลังเวทมนตร์ของคุณ (+6 MAG ถาวร)!`,
+              outcomeText: `แร่คริสตัลสีส้มส่องแสงระยิบระยับ ซึมซับเข้าสู่พลังเวทมนตร์ของคุณ (+2 MAG ถาวร)!`,
               icon: '💎',
               soundType: 'coin',
               goldChange: -cost
@@ -1236,12 +1236,12 @@ export class FantasyEventManager {
           subtext: 'ฟื้นฟู HP/MP จนเต็มเปี่ยม + เพิ่ม Max HP +50 ถาวร',
           icon: '🔥',
           resolve: (player) => {
-            player.maxHp += 50;
+            player.maxHp += 15;
             player.hp = player.maxHp;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'จุติใหม่ดั่งวิหคเพลิงอมตะ!',
-              outcomeText: `เปลวเพลิงชำระล้างความอ่อนล้า ร่างกายกำยำขึ้นอย่างอัศจรรย์ (+50 Max HP ถาวร, ฟื้นฟู HP/MP เต็มเปี่ยม)!`,
+              outcomeText: `เปลวเพลิงชำระล้างความอ่อนล้า ร่างกายกำยำขึ้นอย่างอัศจรรย์ (+15 Max HP ถาวร, ฟื้นฟู HP/MP เต็มเปี่ยม)!`,
               icon: '✨',
               soundType: 'level',
               hpChange: player.maxHp,
@@ -1305,14 +1305,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'คุกเข่าอย่างสง่างามและกุมมืออันเย็นเยียบของเธอ',
-          subtext: 'ความอบอุ่นละลายใจ ได้รับ +6 MAG, +4 DEF ถาวร',
+          subtext: 'ความอบอุ่นละลายใจ ได้รับ +2 MAG, +1 DEF ถาวร',
           icon: '🤝',
           resolve: (player) => {
-            player.mag += 6;
-            player.def += 4;
+            player.mag += 2;
+            player.def += 1;
             return {
               outcomeTitle: 'ไออุ่นละลายหัวใจราชินีน้ำแข็ง!',
-              outcomeText: `โบเรียเลียยิ้มอย่างอ่อนโยน ละอองหิมะรอบตัวกลายเป็นประกายแสงอบอุ่น (+6 MAG, +4 DEF ถาวร)!`,
+              outcomeText: `โบเรียเลียยิ้มอย่างอ่อนโยน ละอองหิมะรอบตัวกลายเป็นประกายแสงอบอุ่น (+2 MAG, +1 DEF ถาวร)!`,
               icon: '❄️💖',
               soundType: 'level'
             };
@@ -1320,7 +1320,7 @@ export class FantasyEventManager {
         },
         {
           text: 'ไขปริศนาผลึกน้ำแข็งโบราณต่อหน้าบัลลังก์',
-          subtext: 'ได้รับสมบัติ [คทาเหมันต์เยือกแข็ง] +15 MAG',
+          subtext: 'ได้รับสมบัติ [คทาเหมันต์เยือกแข็ง] +2 MAG',
           icon: '🪄',
           resolve: (player) => {
             player.inventory.push({
@@ -1330,7 +1330,7 @@ export class FantasyEventManager {
               cost: 280,
               atk: 8,
               mag: 15,
-              desc: 'คทาผลึกน้ำแข็งบรรพกาล (+8 ATK, +15 MAG)',
+              desc: 'คทาผลึกน้ำแข็งบรรพกาล (+2 ATK, +2 MAG)',
               icon: '🪄❄️'
             });
             return {
@@ -1374,13 +1374,13 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'วิ่งแข่งสไลด์หิมะข้ามหุบเขาไปด้วยกัน',
-          subtext: 'ฝึกทักษะการทรงตัว ได้รับ +6 SPD ถาวร',
+          subtext: 'ฝึกทักษะการทรงตัว ได้รับ +2 SPD ถาวร',
           icon: '⛷️',
           resolve: (player) => {
-            player.spd += 6;
+            player.spd += 2;
             return {
               outcomeTitle: 'สปีดสายฟ้าบนลานหิมะ!',
-              outcomeText: `คุณและยูกิไถลข้ามลานน้ำแข็งด้วยความเร็วสูง ทักษะความว่องไวเพิ่มขึ้นอย่างก้าวกระโดด (+6 SPD ถาวร)!`,
+              outcomeText: `คุณและยูกิไถลข้ามลานน้ำแข็งด้วยความเร็วสูง ทักษะความว่องไวเพิ่มขึ้นอย่างก้าวกระโดด (+2 SPD ถาวร)!`,
               icon: '👟',
               soundType: 'level'
             };
@@ -1388,22 +1388,22 @@ export class FantasyEventManager {
         },
         {
           text: 'แบ่งผ้าห่มหนาและก่อกองไฟให้ความอบอุ่น',
-          subtext: 'เธอซบไออุ่น มอบ [เสื้อคลุมขนสัตว์หิมะ] +8 DEF',
+          subtext: 'เธอซบไออุ่น มอบ [เสื้อคลุมขนสัตว์หิมะ] +2 DEF',
           icon: '🧥',
           resolve: (player) => {
-            player.def += 8;
+            player.def += 2;
             player.inventory.push({
               id: 'eq_snow_fur',
               name: 'เสื้อคลุมขนสัตว์หิมะ (Snow Leopard Fur)',
               type: 'armor',
               cost: 230,
               def: 11,
-              desc: 'เสื้อคลุมขนสัตว์หนานุ่มกันความหนาว (+11 DEF)',
+              desc: 'เสื้อคลุมขนสัตว์หนานุ่มกันความหนาว (+2 DEF)',
               icon: '🧥'
             });
             return {
               outcomeTitle: 'ความอบอุ่นข้างกองไฟ!',
-              outcomeText: `ยูกิกอดหางตัวเองนั่งผิงไฟอย่างสบายใจ เธอมอบเสื้อคลุมขนสัตว์ชั้นดีให้คุณ (+8 DEF ถาวร)!`,
+              outcomeText: `ยูกิกอดหางตัวเองนั่งผิงไฟอย่างสบายใจ เธอมอบเสื้อคลุมขนสัตว์ชั้นดีให้คุณ (+2 DEF ถาวร)!`,
               icon: '🧥',
               soundType: 'coin'
             };
@@ -1411,14 +1411,14 @@ export class FantasyEventManager {
         },
         {
           text: 'เล่นปาหิมะใส่กันอย่างสนุกสนาน',
-          subtext: 'คลายเครียด ได้รับ +5 LUK ถาวร และ 60 EXP',
+          subtext: 'คลายเครียด ได้รับ +2 LUK ถาวร และ 60 EXP',
           icon: '⛄',
           resolve: (player) => {
-            player.luk += 5;
+            player.luk += 2;
             player.gainXP(60);
             return {
               outcomeTitle: 'สงครามหิมะเปี่ยมรอยยิ้ม!',
-              outcomeText: `เสียงหัวเราะดังก้องหุบเขา ยูกิยอมแพ้และยกนิ้วโป้งให้ความแม่นยำของคุณ (+5 LUK ถาวร, +60 EXP)!`,
+              outcomeText: `เสียงหัวเราะดังก้องหุบเขา ยูกิยอมแพ้และยกนิ้วโป้งให้ความแม่นยำของคุณ (+2 LUK ถาวร, +60 EXP)!`,
               icon: '❄️',
               soundType: 'level'
             };
@@ -1438,14 +1438,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'จุดไฟเวทมนตร์ละลายผลึกน้ำแข็งปลดปล่อยเธอ',
-          subtext: 'ปลดปล่อยสำเร็จ เธออวยพร +5 ATK, +5 DEF ถาวร',
+          subtext: 'ปลดปล่อยสำเร็จ เธออวยพร +2 ATK, +2 DEF ถาวร',
           icon: '🔥',
           resolve: (player) => {
-            player.atk += 5;
-            player.def += 5;
+            player.atk += 2;
+            player.def += 2;
             return {
               outcomeTitle: 'วัลคิรีตื่นจากการหลับใหล!',
-              outcomeText: `ผลึกน้ำแข็งละลายสลายไป แอสตริดสยายปีกขาวบริสุทธิ์และอวยพรให้คุณ (+5 ATK, +5 DEF ถาวร)!`,
+              outcomeText: `ผลึกน้ำแข็งละลายสลายไป แอสตริดสยายปีกขาวบริสุทธิ์และอวยพรให้คุณ (+2 ATK, +2 DEF ถาวร)!`,
               icon: '✨',
               soundType: 'fanfare'
             };
@@ -1453,14 +1453,14 @@ export class FantasyEventManager {
         },
         {
           text: 'อ่านจารึกรูนโบราณบนฐานน้ำแข็ง',
-          subtext: 'ได้รับความรู้สวรรค์ +6 MAG และ 90 EXP',
+          subtext: 'ได้รับความรู้สวรรค์ +2 MAG และ 90 EXP',
           icon: '📜',
           resolve: (player) => {
-            player.mag += 6;
+            player.mag += 2;
             player.gainXP(90);
             return {
               outcomeTitle: 'อักขระรูนเทพโบราณ!',
-              outcomeText: `จารึกเปล่งแสงสีฟ้า ไหลเวียนเข้าสู่สมองของคุณ เพิ่มพูนความรู้ทางเวทมนตร์ (+6 MAG ถาวร, +90 EXP)!`,
+              outcomeText: `จารึกเปล่งแสงสีฟ้า ไหลเวียนเข้าสู่สมองของคุณ เพิ่มพูนความรู้ทางเวทมนตร์ (+2 MAG ถาวร, +90 EXP)!`,
               icon: '📖',
               soundType: 'magic'
             };
@@ -1519,12 +1519,12 @@ export class FantasyEventManager {
           subtext: 'ฟื้นฟู HP/MP เต็มเปี่ยม และเพิ่ม Max HP +40',
           icon: '🏺',
           resolve: (player) => {
-            player.maxHp += 40;
+            player.maxHp += 12;
             player.hp = player.maxHp;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'น้ำอมฤตสุริยันชะลอวัย!',
-              outcomeText: `น้ำอมฤตสีทองรสหวานล้ำ ช่วยเติมเต็มพลังชีวิตจนล้นปรี่ (+40 Max HP ถาวร, ฟื้นฟูเต็ม 100%)!`,
+              outcomeText: `น้ำอมฤตสีทองรสหวานล้ำ ช่วยเติมเต็มพลังชีวิตจนล้นปรี่ (+12 Max HP ถาวร, ฟื้นฟูเต็ม 100%)!`,
               icon: '✨',
               soundType: 'level',
               hpChange: player.maxHp,
@@ -1534,7 +1534,7 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอรับคทาสุริยะโบราณแห่งฟาโรห์',
-          subtext: 'ได้รับ [คทาสุริยะเนเฟอร์เทีย] +8 ATK, +10 MAG',
+          subtext: 'ได้รับ [คทาสุริยะเนเฟอร์เทีย] +2 ATK, +2 MAG',
           icon: '🪬',
           resolve: (player) => {
             player.inventory.push({
@@ -1544,7 +1544,7 @@ export class FantasyEventManager {
               cost: 300,
               atk: 8,
               mag: 10,
-              desc: 'คทาทองคำฝังอัญมณีสุริยัน (+8 ATK, +10 MAG)',
+              desc: 'คทาทองคำฝังอัญมณีสุริยัน (+2 ATK, +2 MAG)',
               icon: '🪬'
             });
             return {
@@ -1585,15 +1585,15 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอพรให้พละกำลังแข็งแกร่งดั่งยักษ์ปักหลั่น',
-          subtext: 'ได้รับ +5 ATK, +5 DEF, +5 SPD ถาวร',
+          subtext: 'ได้รับ +2 ATK, +2 DEF, +2 SPD ถาวร',
           icon: '💪',
           resolve: (player) => {
-            player.atk += 5;
-            player.def += 5;
-            player.spd += 5;
+            player.atk += 2;
+            player.def += 2;
+            player.spd += 2;
             return {
               outcomeTitle: 'พรแห่งพละกำลังมหาศาล!',
-              outcomeText: `กล้ามเนื้อทุกมัดในร่างกายเปี่ยมด้วยพลังเวทมนตร์ของจินนี่ (+5 ATK, +5 DEF, +5 SPD ถาวร)!`,
+              outcomeText: `กล้ามเนื้อทุกมัดในร่างกายเปี่ยมด้วยพลังเวทมนตร์ของจินนี่ (+2 ATK, +2 DEF, +2 SPD ถาวร)!`,
               icon: '🔥',
               soundType: 'level'
             };
@@ -1601,21 +1601,21 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอปลดปล่อยเธอให้เป็นอิสระจากตะเกียง',
-          subtext: 'เธอซาบซึ้งใจ มอบแหวนแห่งความปรารถนา +8 LUK',
+          subtext: 'เธอซาบซึ้งใจ มอบแหวนแห่งความปรารถนา +2 LUK',
           icon: '🕊️',
           resolve: (player) => {
-            player.luk += 8;
+            player.luk += 2;
             player.inventory.push({
               id: 'acc_genie_ring',
               name: 'แหวนแห่งความปรารถนา (Djinn Wish Ring)',
               type: 'accessory',
               cost: 260,
-              desc: 'แหวนอัญมณีเวทมนตร์แห่งความโชคดี (+8 LUK)',
+              desc: 'แหวนอัญมณีเวทมนตร์แห่งความโชคดี (+2 LUK)',
               icon: '💍'
             });
             return {
               outcomeTitle: 'อิสรภาพและการตอบแทนที่ล้ำค่า!',
-              outcomeText: `จัสมินน้ำตาคลอด้วยความตื้นตัน เธอมอบแหวนวิเศษประจำตัวให้ก่อนจะบินขึ้นสู่สรวงสวรรค์ (+8 LUK ถาวร)!`,
+              outcomeText: `จัสมินน้ำตาคลอด้วยความตื้นตัน เธอมอบแหวนวิเศษประจำตัวให้ก่อนจะบินขึ้นสู่สรวงสวรรค์ (+2 LUK ถาวร)!`,
               icon: '💖',
               soundType: 'fanfare'
             };
@@ -1641,10 +1641,10 @@ export class FantasyEventManager {
             const cost = Math.min(player.gold, 40);
             player.gold -= cost;
             player.hp = Math.min(player.maxHp, player.hp + 60);
-            player.atk += 2;
+            player.atk += 1;
             return {
               outcomeTitle: 'เครื่องเทศโอเอซิสหอมชื่นใจ!',
-              outcomeText: `เครื่องเทศบำรุงกำลังช่วยให้ร่างกายกระปรี้กระเปร่า (+60 HP, +2 ATK ถาวร)!`,
+              outcomeText: `เครื่องเทศบำรุงกำลังช่วยให้ร่างกายกระปรี้กระเปร่า (+60 HP, +1 ATK ถาวร)!`,
               icon: '🍲',
               soundType: 'coin',
               goldChange: -cost,
@@ -1710,15 +1710,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'คุกเข่ารับพลังเวทมืดแห่งความว่างเปล่า',
-          subtext: 'ได้รับ +8 ATK, +8 MAG ถาวร แต่เสีย 25 HP',
+          subtext: 'ได้รับ +2 ATK, +2 MAG ถาวร แต่เสีย 25 HP',
           icon: '🔮',
           resolve: (player) => {
             player.hp = Math.max(10, player.hp - 25);
-            player.atk += 8;
-            player.mag += 8;
+            player.atk += 2;
+            player.mag += 2;
             return {
               outcomeTitle: 'พลังทมิฬแห่งอเวจีหลั่งไหล!',
-              outcomeText: `ไออสูรสีม่วงซึมซาบเข้าสู่กระดูก แม้จะเจ็บปวด (-25 HP) แต่พลังทำลายล้างของคุณเพิ่มขึ้นมหาศาล (+8 ATK, +8 MAG ถาวร)!`,
+              outcomeText: `ไออสูรสีม่วงซึมซาบเข้าสู่กระดูก แม้จะเจ็บปวด (-25 HP) แต่พลังทำลายล้างของคุณเพิ่มขึ้นมหาศาล (+2 ATK, +2 MAG ถาวร)!`,
               icon: '⚡',
               soundType: 'magic',
               hpChange: -25
@@ -1727,7 +1727,7 @@ export class FantasyEventManager {
         },
         {
           text: 'ท้าทายจ้องตาเธอโดยไม่หลบสายตา',
-          subtext: 'ใจเด็ดเดี่ยว เธอประทับใจ มอบดาบ [Void Blade] +18 ATK',
+          subtext: 'ใจเด็ดเดี่ยว เธอประทับใจ มอบดาบ [Void Blade] +2 ATK',
           icon: '🗡️',
           resolve: (player) => {
             player.inventory.push({
@@ -1736,7 +1736,7 @@ export class FantasyEventManager {
               type: 'weapon',
               cost: 320,
               atk: 18,
-              desc: 'ดาบออบซิเดียนผ่ามิติ (+18 ATK)',
+              desc: 'ดาบออบซิเดียนผ่ามิติ (+2 ATK)',
               icon: '🗡️💜'
             });
             return {
@@ -1777,15 +1777,15 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ประคองมือเธอและแบ่งปันพลังแสงสว่างบริสุทธิ์',
-          subtext: 'ชะล้างความมืด ได้รับ +6 DEF, +40 Max HP ถาวร',
+          subtext: 'ชะล้างความมืด ได้รับ +2 DEF, +12 Max HP ถาวร',
           icon: '✨',
           resolve: (player) => {
-            player.def += 6;
-            player.maxHp += 40;
+            player.def += 2;
+            player.maxHp += 12;
             player.hp = Math.min(player.maxHp, player.hp + 40);
             return {
               outcomeTitle: 'การคืนสู่แสงสว่างแห่งสรวงสวรรค์!',
-              outcomeText: `ปีกสีดำของเธอเปล่งประกายสีเงินระยิบระยับ อซาเรียมอบพรพิทักษ์กายให้คุณ (+6 DEF, +40 Max HP ถาวร)!`,
+              outcomeText: `ปีกสีดำของเธอเปล่งประกายสีเงินระยิบระยับ อซาเรียมอบพรพิทักษ์กายให้คุณ (+2 DEF, +12 Max HP ถาวร)!`,
               icon: '🕊️',
               soundType: 'level',
               hpChange: 40
@@ -1794,7 +1794,7 @@ export class FantasyEventManager {
         },
         {
           text: 'รับขนนกทมิฬของเธอมาทำเป็นเครื่องราง',
-          subtext: 'ได้รับ [เครื่องรางปีกทมิฬ] +6 SPD, +5 MAG',
+          subtext: 'ได้รับ [เครื่องรางปีกทมิฬ] +2 SPD, +2 MAG',
           icon: '🪶',
           resolve: (player) => {
             player.inventory.push({
@@ -1802,7 +1802,7 @@ export class FantasyEventManager {
               name: 'เครื่องรางปีกทมิฬ (Fallen Feather)',
               type: 'accessory',
               cost: 240,
-              desc: 'ขนนกแห่งการล่องหน (+6 SPD, +5 MAG)',
+              desc: 'ขนนกแห่งการล่องหน (+2 SPD, +2 MAG)',
               icon: '🪶'
             });
             return {
@@ -1845,14 +1845,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ตีลังกากลับหลังปลดอาวุธเธอในพริบตา',
-          subtext: 'ชนะใจนักฆ่า ได้รับ +6 SPD, +4 ATK ถาวร',
+          subtext: 'ชนะใจนักฆ่า ได้รับ +2 SPD, +1 ATK ถาวร',
           icon: '🥋',
           resolve: (player) => {
-            player.spd += 6;
-            player.atk += 4;
+            player.spd += 2;
+            player.atk += 1;
             return {
               outcomeTitle: 'ปฏิกิริยาตอบสนองระดับเทพ!',
-              outcomeText: `คุณปัดมีดหลุดและกดตัวเธอลง เรเวนหัวเราะเบาๆ "ฝีมือยอดเยี่ยม... ข้ายอมรับเจ้า" (+6 SPD, +4 ATK ถาวร)!`,
+              outcomeText: `คุณปัดมีดหลุดและกดตัวเธอลง เรเวนหัวเราะเบาๆ "ฝีมือยอดเยี่ยม... ข้ายอมรับเจ้า" (+2 SPD, +1 ATK ถาวร)!`,
               icon: '⚡',
               soundType: 'fanfare'
             };
@@ -1880,18 +1880,18 @@ export class FantasyEventManager {
           subtext: 'ได้รับ [ยาพิษเงามรณะ] เพิ่มโอกาสคริติคอล',
           icon: '🧪',
           resolve: (player) => {
-            player.luk += 5;
+            player.luk += 2;
             player.inventory.push({
               id: 'pot_poison_vial',
               name: 'ยาพิษเงามรณะ (Shadow Poison)',
               type: 'potion',
               cost: 120,
-              desc: 'ขวดสารพิษสกัดลับ (+5 LUK)',
+              desc: 'ขวดสารพิษสกัดลับ (+2 LUK)',
               icon: '🧪'
             });
             return {
               outcomeTitle: 'ได้รับยาพิษสังหารหายาก!',
-              outcomeText: `เรเวนส่งขวดยาพิษสีม่วงเข้มให้คุณอย่างเงียบๆ ก่อนจะสลายหายไปในหมอกควัน (+5 LUK ถาวร)!`,
+              outcomeText: `เรเวนส่งขวดยาพิษสีม่วงเข้มให้คุณอย่างเงียบๆ ก่อนจะสลายหายไปในหมอกควัน (+2 LUK ถาวร)!`,
               icon: '🧪',
               soundType: 'coin'
             };
@@ -1934,11 +1934,11 @@ export class FantasyEventManager {
           subtext: 'เพิ่มสเตตัสทุกค่าอย่างละ +2 ถาวร',
           icon: '✨',
           resolve: (player) => {
-            player.atk += 2;
-            player.def += 2;
-            player.mag += 2;
-            player.spd += 2;
-            player.luk += 2;
+            player.atk += 1;
+            player.def += 1;
+            player.mag += 1;
+            player.spd += 1;
+            player.luk += 1;
             return {
               outcomeTitle: 'พรสวรรค์เสริมสร้างทุกสรรพางค์กาย!',
               outcomeText: `เทพีประทานพรให้ทุกค่าสเตตัส (ATK, DEF, MAG, SPD, LUK) เพิ่มขึ้น +2 อย่างถาวร!`,
@@ -1952,12 +1952,12 @@ export class FantasyEventManager {
           subtext: 'ฟื้นฟู HP & MP เต็ม และเพิ่ม Max HP +30',
           icon: '💖',
           resolve: (player) => {
-            player.maxHp += 30;
+            player.maxHp += 9;
             player.hp = player.maxHp;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'การชำระล้างจนบริสุทธิ์ผุดผ่อง!',
-              outcomeText: `พลังชีวิตและมานาฟื้นคืนเต็มเปี่ยม พร้อมขยายขีดจำกัดพลังชีวิต (+30 Max HP ถาวร)!`,
+              outcomeText: `พลังชีวิตและมานาฟื้นคืนเต็มเปี่ยม พร้อมขยายขีดจำกัดพลังชีวิต (+9 Max HP ถาวร)!`,
               icon: '🕊️',
               soundType: 'level',
               hpChange: player.maxHp,
@@ -2000,13 +2000,13 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอละอองผงพิกซี่เพิ่มความเร็วติดปีก',
-          subtext: 'ได้รับความเร็ว +5 SPD ถาวร',
+          subtext: 'ได้รับความเร็ว +2 SPD ถาวร',
           icon: '✨',
           resolve: (player) => {
-            player.spd += 5;
+            player.spd += 2;
             return {
               outcomeTitle: 'ผงภูติวิเศษติดปีกบิน!',
-              outcomeText: `ละอองผงสีทองโรยลงบนรองเท้า ร่างกายของคุณเบาหวิวดุจขนนก (+5 SPD ถาวร)!`,
+              outcomeText: `ละอองผงสีทองโรยลงบนรองเท้า ร่างกายของคุณเบาหวิวดุจขนนก (+2 SPD ถาวร)!`,
               icon: '👟',
               soundType: 'level'
             };
@@ -2058,22 +2058,22 @@ export class FantasyEventManager {
         },
         {
           text: 'ขอใบโคลเวอร์สี่แฉกนำโชคแห่งปาฏิหาริย์',
-          subtext: 'ได้รับ +6 LUK ถาวร และ [แหวนโชคลาภ]',
+          subtext: 'ได้รับ +2 LUK ถาวร และ [แหวนโชคลาภ]',
           icon: '🍀',
           resolve: (player) => {
-            player.luk += 6;
+            player.luk += 2;
             player.inventory.push({
               id: 'eq_ring',
               name: 'แหวนแห่งโชคลาภ (Fortune Band)',
               type: 'accessory',
               cost: 160,
               luk: 10,
-              desc: 'เทพีแห่งโชคประทานพร (+10 LUK)',
+              desc: 'เทพีแห่งโชคประทานพร (+2 LUK)',
               icon: '💍'
             });
             return {
               outcomeTitle: 'ใบโคลเวอร์สี่แฉกศักดิ์สิทธิ์!',
-              outcomeText: `โคลเวอร์ติดใบไม้สี่แฉกบนปกเสื้อของคุณ พร้อมมอบ [Fortune Band] ให้ (+6 LUK ถาวร)!`,
+              outcomeText: `โคลเวอร์ติดใบไม้สี่แฉกบนปกเสื้อของคุณ พร้อมมอบ [Fortune Band] ให้ (+2 LUK ถาวร)!`,
               icon: '🍀',
               soundType: 'fanfare'
             };
@@ -2191,7 +2191,7 @@ export class FantasyEventManager {
         },
         {
           text: 'จี้เอวและเกาลิ้นเธอจนหัวเราะร่า',
-          subtext: 'เธอคาย [มีดสั้นเขี้ยวมิมิก] ออกมา +10 ATK',
+          subtext: 'เธอคาย [มีดสั้นเขี้ยวมิมิก] ออกมา +2 ATK',
           icon: '🗡️',
           resolve: (player) => {
             player.inventory.push({
@@ -2201,7 +2201,7 @@ export class FantasyEventManager {
               cost: 220,
               atk: 10,
               spd: 5,
-              desc: 'มีดสั้นทำจากเขี้ยวมิมิก (+10 ATK, +5 SPD)',
+              desc: 'มีดสั้นทำจากเขี้ยวมิมิก (+2 ATK, +2 SPD)',
               icon: '🗡️🦷'
             });
             return {
@@ -2214,14 +2214,14 @@ export class FantasyEventManager {
         },
         {
           text: 'กระโดดถอยหลังหลบฟันแหลมคมอย่างฉับไว',
-          subtext: 'หลบพ้น แต่เฉียดโดนงับ เสีย 15 HP แต่ได้ +4 SPD',
+          subtext: 'หลบพ้น แต่เฉียดโดนงับ เสีย 15 HP แต่ได้ +1 SPD',
           icon: '🏃',
           resolve: (player) => {
             player.hp = Math.max(10, player.hp - 15);
-            player.spd += 4;
+            player.spd += 1;
             return {
               outcomeTitle: 'สัญชาตญาณหลบหลีกเสี้ยววินาที!',
-              outcomeText: `คุณดีดตัวหลบได้ทันควัน แม้ชายเสื้อจะขาด (-15 HP) แต่ความเร็วและสัญชาตญาณเฉียบคมขึ้น (+4 SPD ถาวร)!`,
+              outcomeText: `คุณดีดตัวหลบได้ทันควัน แม้ชายเสื้อจะขาด (-15 HP) แต่ความเร็วและสัญชาตญาณเฉียบคมขึ้น (+1 SPD ถาวร)!`,
               icon: '💨',
               soundType: 'hurt',
               hpChange: -15
@@ -2242,14 +2242,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'ร่ายเวทมนตร์ปัดเป่าหมอกพิษย้อนกลับไปใส่เธอ',
-          subtext: 'แก้เผ็ดสำเร็จ ได้รับ +5 MAG และเงิน 100G',
+          subtext: 'แก้เผ็ดสำเร็จ ได้รับ +2 MAG และเงิน 100G',
           icon: '💨',
           resolve: (player) => {
-            player.mag += 5;
+            player.mag += 2;
             player.gold += 100;
             return {
               outcomeTitle: 'สะท้อนหมอกพิษกลับอย่างเหนือชั้น!',
-              outcomeText: `กระแสลมเวทมนตร์พัดควันพิษตีกลับ มอร์กาน่าสำลักควันจนต้องจ่ายค่าทำขวัญให้คุณ 100G (+5 MAG ถาวร)!`,
+              outcomeText: `กระแสลมเวทมนตร์พัดควันพิษตีกลับ มอร์กาน่าสำลักควันจนต้องจ่ายค่าทำขวัญให้คุณ 100G (+2 MAG ถาวร)!`,
               icon: '✨',
               soundType: 'fanfare',
               goldChange: 100
@@ -2258,14 +2258,14 @@ export class FantasyEventManager {
         },
         {
           text: 'ยอมดื่มน้ำยาสีม่วงเพื่อพิสูจน์ธาตุทรหด',
-          subtext: 'เสีย 20 HP แต่ร่างกายสร้างภูมิคุ้มกัน +6 DEF ถาวร',
+          subtext: 'เสีย 20 HP แต่ร่างกายสร้างภูมิคุ้มกัน +2 DEF ถาวร',
           icon: '🧪',
           resolve: (player) => {
             player.hp = Math.max(10, player.hp - 20);
-            player.def += 6;
+            player.def += 2;
             return {
               outcomeTitle: 'ร่างกายสร้างภูมิคุ้มกันเหล็กไหล!',
-              outcomeText: `แม้รสชาติจะขมบาดคอ (-20 HP) แต่เส้นเลือดของคุณสร้างภูมิคุ้มกันต้านทานพิษ (+6 DEF ถาวร)!`,
+              outcomeText: `แม้รสชาติจะขมบาดคอ (-20 HP) แต่เส้นเลือดของคุณสร้างภูมิคุ้มกันต้านทานพิษ (+2 DEF ถาวร)!`,
               icon: '🛡️',
               soundType: 'level',
               hpChange: -20
@@ -2315,12 +2315,12 @@ export class FantasyEventManager {
           icon: '👀',
           resolve: (player) => {
             if (Math.random() > 0.4) {
-              player.luk += 4;
+              player.luk += 1;
               player.hp = player.maxHp;
               player.mp = player.maxMp;
               return {
                 outcomeTitle: 'จิตใจผ่องใส เบิกบาน!',
-                outcomeText: `ภาพความงดงามเบื้องหน้าทำให้จิตใจของคุณแจ่มใสอย่างประหลาด! ฟื้นฟู HP/MP จนเต็มเปี่ยม และได้รับโชคลาภ (+4 LUK ถาวร)!`,
+                outcomeText: `ภาพความงดงามเบื้องหน้าทำให้จิตใจของคุณแจ่มใสอย่างประหลาด! ฟื้นฟู HP/MP จนเต็มเปี่ยม และได้รับโชคลาภ (+1 LUK ถาวร)!`,
                 icon: '✨',
                 soundType: 'level',
                 hpChange: player.maxHp,
@@ -2363,14 +2363,14 @@ export class FantasyEventManager {
         },
         {
           text: 'หันหลังกลับอย่างสุภาพบุรุษ',
-          subtext: 'จิตใจบริสุทธิ์ ได้รับบัฟสมาธิ +3 DEF, +3 SPD ถาวร',
+          subtext: 'จิตใจบริสุทธิ์ ได้รับบัฟสมาธิ +1 DEF, +1 SPD ถาวร',
           icon: '🧘',
           resolve: (player) => {
-            player.def += 3;
-            player.spd += 3;
+            player.def += 1;
+            player.spd += 1;
             return {
               outcomeTitle: 'คุณธรรมแห่งอัศวิน!',
-              outcomeText: `คุณเดินหันหลังกลับอย่างเงียบเชียบโดยไม่ล่วงเกิน จิตใจที่บริสุทธิ์ทำให้สมาธิกล้าแกร่งขึ้น (+3 DEF, +3 SPD ถาวร)!`,
+              outcomeText: `คุณเดินหันหลังกลับอย่างเงียบเชียบโดยไม่ล่วงเกิน จิตใจที่บริสุทธิ์ทำให้สมาธิกล้าแกร่งขึ้น (+1 DEF, +1 SPD ถาวร)!`,
               icon: '🛡️',
               soundType: 'level'
             };
@@ -2390,14 +2390,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: 'แบ่งปันเสบียงเนื้อแห้งและน้ำดื่มให้เธอ',
-          subtext: 'เธออิ่มท้อง มอบเขี้ยวหมาป่านำโชค +5 ATK ถาวร',
+          subtext: 'เธออิ่มท้อง มอบเขี้ยวหมาป่านำโชค +2 ATK ถาวร',
           icon: '🥩',
           resolve: (player) => {
-            player.atk += 5;
+            player.atk += 2;
             player.gainXP(50);
             return {
               outcomeTitle: 'รอยยิ้มสดใสของสาวน้อยหมาป่า!',
-              outcomeText: `ฟีน่ากินเนื้อแห้งจนแก้มตุ่ย เธอมอบเขี้ยวหมาป่าสีเงินที่พกติดตัวให้คุณเป็นการตอบแทน (+5 ATK ถาวร, +50 XP)!`,
+              outcomeText: `ฟีน่ากินเนื้อแห้งจนแก้มตุ่ย เธอมอบเขี้ยวหมาป่าสีเงินที่พกติดตัวให้คุณเป็นการตอบแทน (+2 ATK ถาวร, +50 XP)!`,
               icon: '🐺',
               soundType: 'fanfare'
             };
@@ -2421,14 +2421,14 @@ export class FantasyEventManager {
         },
         {
           text: 'สอนเคล็ดลับการดมกลิ่นและหาทิศทางให้เธอ',
-          subtext: 'เรียนรู้ร่วมกัน ได้รับ +4 SPD, +3 LUK ถาวร',
+          subtext: 'เรียนรู้ร่วมกัน ได้รับ +1 SPD, +1 LUK ถาวร',
           icon: '🧭',
           resolve: (player) => {
-            player.spd += 4;
-            player.luk += 3;
+            player.spd += 1;
+            player.luk += 1;
             return {
               outcomeTitle: 'สัญชาตญาณแห่งพงไพร!',
-              outcomeText: `ฟีน่าเข้าใจทิศทางลมในที่สุด ทั้งคุณและเธอได้รับสัญชาตญาณนำทางที่เฉียบคม (+4 SPD, +3 LUK ถาวร)!`,
+              outcomeText: `ฟีน่าเข้าใจทิศทางลมในที่สุด ทั้งคุณและเธอได้รับสัญชาตญาณนำทางที่เฉียบคม (+1 SPD, +1 LUK ถาวร)!`,
               icon: '🌿',
               soundType: 'level'
             };
@@ -2452,7 +2452,7 @@ export class FantasyEventManager {
           icon: '💪',
           resolve: (player) => {
             if (player.getTotalStat('atk') >= 14 || Math.random() > 0.45) {
-              player.atk += 6;
+              player.atk += 2;
               player.inventory.push({
                 id: 'wpn_divine_sun',
                 name: 'ดาบสุริยะเทวะ (Divine Sunblade)',
@@ -2460,12 +2460,12 @@ export class FantasyEventManager {
                 cost: 260,
                 atk: 15,
                 mag: 5,
-                desc: 'ดาบศักดิ์สิทธิ์เปล่งแสงออโรร่า (+15 ATK, +5 MAG)',
+                desc: 'ดาบศักดิ์สิทธิ์เปล่งแสงออโรร่า (+2 ATK, +2 MAG)',
                 icon: '⚔️✨'
               });
               return {
                 outcomeTitle: 'ดาบศักดิ์สิทธิ์ยอมรับเจ้านาย!',
-                outcomeText: `สายฟ้าสีทองสว่างวาบไปทั่วฟ้า! ดาบหลุดออกจากศิลาอย่างง่ายดาย คุณได้รับ [ดาบสุริยะเทวะ] และพลังกายแกร่งกล้าขึ้น (+6 ATK ถาวร)!`,
+                outcomeText: `สายฟ้าสีทองสว่างวาบไปทั่วฟ้า! ดาบหลุดออกจากศิลาอย่างง่ายดาย คุณได้รับ [ดาบสุริยะเทวะ] และพลังกายแกร่งกล้าขึ้น (+2 ATK ถาวร)!`,
                 icon: '🌟',
                 soundType: 'fanfare'
               };
@@ -2483,14 +2483,14 @@ export class FantasyEventManager {
         },
         {
           text: 'ร่ายเวทมนตร์ปลดผนึกอักขระอย่างประณีต',
-          subtext: 'ปลดปล่อยจิตวิญญาณแห่งดาบ +4 MAG และฟื้น MP เต็ม',
+          subtext: 'ปลดปล่อยจิตวิญญาณแห่งดาบ +1 MAG และฟื้น MP เต็ม',
           icon: '🔮',
           resolve: (player) => {
-            player.mag += 4;
+            player.mag += 1;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'ศาสตร์มนตราแห่งการปลดผนึก!',
-              outcomeText: `คุณร่ายมนตร์แกะสลักคลายผนึกโบราณได้อย่างนุ่มนวล วิญญาณภูติดาบมอบพรเวทมนตร์ให้ (+4 MAG ถาวร, MP ฟื้นเต็มเปี่ยม)!`,
+              outcomeText: `คุณร่ายมนตร์แกะสลักคลายผนึกโบราณได้อย่างนุ่มนวล วิญญาณภูติดาบมอบพรเวทมนตร์ให้ (+1 MAG ถาวร, MP ฟื้นเต็มเปี่ยม)!`,
               icon: '✨',
               soundType: 'magic',
               mpChange: player.maxMp
@@ -2544,13 +2544,13 @@ export class FantasyEventManager {
         },
         {
           text: '💖 หยอดคำหวานชื่นชมกล้ามเนื้อและฝีมือการตีเหล็กของเธอ',
-          subtext: 'เธอเขินอายหน้าแดงก่ำ และแถมหินลับมีดเวทมนตร์ลับดาบให้ฟรี (+3 ATK ถาวร!)',
+          subtext: 'เธอเขินอายหน้าแดงก่ำ และแถมหินลับมีดเวทมนตร์ลับดาบให้ฟรี (+1 ATK ถาวร!)',
           icon: '💖',
           resolve: (player) => {
-            player.atk += 3;
+            player.atk += 1;
             return {
               outcomeTitle: 'ช่างสาวเขินอายหน้าแดง!',
-              outcomeText: 'คาร์ล่าหน้าแดงถึงใบหู "พะ...พูดบ้าอะไรน่ะ! แต่ก็ขอบใจนะ... นี่! ข้าแถมหินลับมีดเวทมนตร์ช่วยเพิ่มคมดาบให้ (+3 ATK ถาวร)!"',
+              outcomeText: 'คาร์ล่าหน้าแดงถึงใบหู "พะ...พูดบ้าอะไรน่ะ! แต่ก็ขอบใจนะ... นี่! ข้าแถมหินลับมีดเวทมนตร์ช่วยเพิ่มคมดาบให้ (+1 ATK ถาวร)!"',
               icon: '✨',
               soundType: 'level'
             };
@@ -2558,14 +2558,14 @@ export class FantasyEventManager {
         },
         {
           text: '🔥 อาสาช่วยเร่งเปลวไฟในเตาหลอมโบราณ',
-          subtext: 'ใช้พลังช่วยตีเหล็ก ได้รับเงินค่าจ้าง 120G และพลังกาย +2 DEF',
+          subtext: 'ใช้พลังช่วยตีเหล็ก ได้รับเงินค่าจ้าง 120G และพลังกาย +1 DEF',
           icon: '🔥',
           resolve: (player) => {
             player.gold += 120;
-            player.def += 2;
+            player.def += 1;
             return {
               outcomeTitle: 'งานฝีมือประสานใจ!',
-              outcomeText: 'คุณกับคาร์ล่าช่วยกันทุบตีเหล็กกล้าอย่างเข้าขา เธอประทับใจมากและมอบค่าจ้าง 120G พร้อมกล้ามเนื้อที่กระชับขึ้น (+2 DEF)!',
+              outcomeText: 'คุณกับคาร์ล่าช่วยกันทุบตีเหล็กกล้าอย่างเข้าขา เธอประทับใจมากและมอบค่าจ้าง 120G พร้อมกล้ามเนื้อที่กระชับขึ้น (+1 DEF)!',
               icon: '💪',
               soundType: 'fanfare',
               goldChange: 120
@@ -2602,14 +2602,14 @@ export class FantasyEventManager {
         },
         {
           text: '✨ ให้แม่มดสาวตรวจดูลายมือทำนายดวงชะตาชีวิต',
-          subtext: 'ได้รับพรแห่งดวงดาว ฟื้นฟู MP เต็มเปี่ยม และโชคลาภ +5 LUK ถาวร!',
+          subtext: 'ได้รับพรแห่งดวงดาว ฟื้นฟู MP เต็มเปี่ยม และโชคลาภ +2 LUK ถาวร!',
           icon: '✨',
           resolve: (player) => {
-            player.luk += 5;
+            player.luk += 2;
             player.mp = player.maxMp;
             return {
               outcomeTitle: 'คำทำนายแห่งโชคชะตาส่องประกาย!',
-              outcomeText: 'เมอร์ลินด้ากุมมือของคุณอย่างแผ่วเบา ร่ายมนตร์ประสานจิต "เส้นลายมือของท่านสุกสกาวดั่งดวงดาว... จะมีโชคลาภหลั่งไหลมา!" (+5 LUK, ฟื้นฟู MP เต็ม)',
+              outcomeText: 'เมอร์ลินด้ากุมมือของคุณอย่างแผ่วเบา ร่ายมนตร์ประสานจิต "เส้นลายมือของท่านสุกสกาวดั่งดวงดาว... จะมีโชคลาภหลั่งไหลมา!" (+2 LUK, ฟื้นฟู MP เต็ม)',
               icon: '🌟',
               soundType: 'level',
               mpChange: player.maxMp
@@ -2618,13 +2618,13 @@ export class FantasyEventManager {
         },
         {
           text: '🧪 อาสาเป็นผู้ทดลองชิมน้ำยาสูตรลับแปลกใหม่',
-          subtext: 'ดื่มน้ำยาสีรุ้งเรืองแสง ลุ้นรับพลังเวทมนตร์มหาศาล (+4 MAG ถาวร)',
+          subtext: 'ดื่มน้ำยาสีรุ้งเรืองแสง ลุ้นรับพลังเวทมนตร์มหาศาล (+1 MAG ถาวร)',
           icon: '🧪',
           resolve: (player) => {
-            player.mag += 4;
+            player.mag += 1;
             return {
               outcomeTitle: 'รสชาติหวานซ่านถึงแก่นวิญญาณ!',
-              outcomeText: 'น้ำยาในหม้อต้มมีรสชาติหวานเปรี้ยวซาบซ่า วงจรมานาในกายคุณแผ่ขยายพลังเวทพุ่งสูงขึ้นอย่างถาวร (+4 MAG)!',
+              outcomeText: 'น้ำยาในหม้อต้มมีรสชาติหวานเปรี้ยวซาบซ่า วงจรมานาในกายคุณแผ่ขยายพลังเวทพุ่งสูงขึ้นอย่างถาวร (+1 MAG)!',
               icon: '⚡',
               soundType: 'level'
             };
@@ -2832,15 +2832,15 @@ export class FantasyEventManager {
         },
         {
           text: '🧜‍♀️ ร้องเพลงคู่ประสานเสียงกับเงือกสาวเนริดา',
-          subtext: 'ฟื้นฟู HP & MP เต็ม 100% พร้อมได้รับพรเสน่ห์ดวงชะตา (+6 LUK ถาวร)',
+          subtext: 'ฟื้นฟู HP & MP เต็ม 100% พร้อมได้รับพรเสน่ห์ดวงชะตา (+2 LUK ถาวร)',
           icon: '🎵',
           resolve: (player) => {
             player.hp = player.maxHp;
             player.mp = player.maxMp;
-            player.luk += 6;
+            player.luk += 2;
             return {
               outcomeTitle: 'บทเพลงแห่งไซเรนสะกดวิญญาณ!',
-              outcomeText: 'เสียงเพลงของคุณและเนริดากังวานไปทั่วผืนน้ำ ละอองน้ำศักดิ์สิทธิ์รักษาบาดแผลจนหายสนิท และชะตาชีวิตของคุณเปล่งประกาย (+6 LUK)!',
+              outcomeText: 'เสียงเพลงของคุณและเนริดากังวานไปทั่วผืนน้ำ ละอองน้ำศักดิ์สิทธิ์รักษาบาดแผลจนหายสนิท และชะตาชีวิตของคุณเปล่งประกาย (+2 LUK)!',
               icon: '💖',
               soundType: 'level',
               hpChange: player.maxHp,
@@ -2881,14 +2881,14 @@ export class FantasyEventManager {
       choices: [
         {
           text: '🗝️ ถอดรหัสอักขระรูนโบราณบนบานประตูอย่างประณีต',
-          subtext: 'ใช้พลังเวทมนตร์ปลดล็อกกลไก ได้รับทอง 350G และปัญญาเวท +3 MAG',
+          subtext: 'ใช้พลังเวทมนตร์ปลดล็อกกลไก ได้รับทอง 350G และปัญญาเวท +1 MAG',
           icon: '🔮',
           resolve: (player) => {
             player.gold += 350;
-            player.mag += 3;
+            player.mag += 1;
             return {
               outcomeTitle: 'ถอดรหัสรูนสำเร็จ!',
-              outcomeText: 'รูนเวทมนตร์ส่องแสงจ้า ประตูนิรภัยค่อยๆ เลื่อนเปิดออก เผยสมบัติทองคำ 350G และภูมิปัญญาโบราณ (+3 MAG)!',
+              outcomeText: 'รูนเวทมนตร์ส่องแสงจ้า ประตูนิรภัยค่อยๆ เลื่อนเปิดออก เผยสมบัติทองคำ 350G และภูมิปัญญาโบราณ (+1 MAG)!',
               icon: '✨',
               soundType: 'level',
               goldChange: 350
@@ -2897,14 +2897,14 @@ export class FantasyEventManager {
         },
         {
           text: '🗡️ ใช้ความชำนาญโจรสะเดาะสลักกลอนชั้นสูง',
-          subtext: 'สะเดาะกลอนโดยไร้เสียงรบกวน ได้รับทองคำ 450G และโชคลาภ +8 LUK',
+          subtext: 'สะเดาะกลอนโดยไร้เสียงรบกวน ได้รับทองคำ 450G และโชคลาภ +2 LUK',
           icon: '🗝️',
           resolve: (player) => {
             player.gold += 450;
-            player.luk += 8;
+            player.luk += 2;
             return {
               outcomeTitle: 'สะเดาะกลอนสมบูรณ์แบบ!',
-              outcomeText: 'เสียงสลักปลดล็อกดัง "คลิก!" กล่องสมบัติภายในห้องเปิดออก มอบทองคำ 450G และความมั่นใจในโชคชะตา (+8 LUK)!',
+              outcomeText: 'เสียงสลักปลดล็อกดัง "คลิก!" กล่องสมบัติภายในห้องเปิดออก มอบทองคำ 450G และความมั่นใจในโชคชะตา (+2 LUK)!',
               icon: '👑',
               soundType: 'fanfare',
               goldChange: 450
@@ -2959,14 +2959,14 @@ export class FantasyEventManager {
         },
         {
           text: '💋 ยอมรับจุมพิตแห่งความมืดจากซัคคิวบัสสาวลิลิธ',
-          subtext: 'ได้รับพลังเสน่ห์มืด เพิ่มพลังรบมหาศาล (+4 ATK, +4 MAG ถาวร!)',
+          subtext: 'ได้รับพลังเสน่ห์มืด เพิ่มพลังรบมหาศาล (+1 ATK, +1 MAG ถาวร!)',
           icon: '💋',
           resolve: (player) => {
-            player.atk += 4;
-            player.mag += 4;
+            player.atk += 1;
+            player.mag += 1;
             return {
               outcomeTitle: 'จุมพิตต้องมนตร์มหาเสน่ห์!',
-              outcomeText: 'ลิลิธประกบริมฝีปากอันเย้ายวนมอบไอพลังมารอันอบอุ่น พลังโจมตีและเวทมนตร์ของคุณทะยานสูงขึ้น (+4 ATK, +4 MAG)!',
+              outcomeText: 'ลิลิธประกบริมฝีปากอันเย้ายวนมอบไอพลังมารอันอบอุ่น พลังโจมตีและเวทมนตร์ของคุณทะยานสูงขึ้น (+1 ATK, +1 MAG)!',
               icon: '💖',
               soundType: 'level'
             };

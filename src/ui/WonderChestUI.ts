@@ -94,15 +94,15 @@ export class WonderChestUI {
         const roll = Math.random();
         let statMsg = '';
         if (roll < 0.33) {
-          player.atk += 6;
-          statMsg = '+6 ATK (พลังโจมตีกายภาพ)';
+          player.atk += 2;
+          statMsg = '+2 ATK (พลังโจมตีกายภาพ)';
         } else if (roll < 0.66) {
-          player.mag += 6;
-          statMsg = '+6 MAG (พลังเวทมนตร์)';
+          player.mag += 2;
+          statMsg = '+2 MAG (พลังเวทมนตร์)';
         } else {
-          player.maxHp += 40;
-          player.hp += 40;
-          statMsg = '+40 MAX HP (พลังชีวิตสูงสุด)';
+          player.maxHp += 15;
+          player.hp += 15;
+          statMsg = '+15 MAX HP (พลังชีวิตสูงสุด)';
         }
         audio.levelUp();
         return `✨ พลังเอ่อล้น! ${player.displayName} ดื่มน้ำทิพย์อมฤต ได้รับ ${statMsg} ถาวร!`;
