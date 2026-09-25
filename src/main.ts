@@ -27,6 +27,10 @@ import { FantasyEventUI } from './ui/FantasyEventUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { SaveManager } from './game/SaveManager';
 
+import { LobbyUI } from './ui/LobbyUI';
+import { NetworkManager } from './network/NetworkManager';
+
+
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -42,6 +46,10 @@ class DokaponApp {
   private wonderChestUI: WonderChestUI;
   private inspectUI: InspectUI;
   private homeUI: HomeUI;
+  private net: NetworkManager = NetworkManager.getInstance();
+
+  private lobbyUI!: LobbyUI;
+
   private fantasyEventUI: FantasyEventUI;
 
   private isDragging = false;
@@ -73,6 +81,15 @@ class DokaponApp {
     this.isekaiEventUI = new IsekaiEventUI(this.game);
     this.wonderChestUI = new WonderChestUI(this.game);
     this.inspectUI = new InspectUI(this.game);
+    this.lobbyUI = new LobbyUI();
+    this.lobbyUI.onStart((players, isOnline) => {
+      if (isOnline && players.length > 0) {
+        this.setupOnlineGame(players);
+      }
+    });
+
+    this.setupNetworkActionListeners();
+
     this.homeUI = new HomeUI(this.game);
     this.fantasyEventUI = new FantasyEventUI(this.game);
 
@@ -92,6 +109,53 @@ class DokaponApp {
     this.renderRosterSetup(3);
     this.updateTitleSaveStatus();
   }
+
+
+  private setupOnlineGame(roomPlayers: any[]) {
+    document.getElementById('titleScreen')?.classList.add('hidden');
+    // Configure players based on lobby participants
+    this.game.players = roomPlayers.map((rp, index) => {
+      const p = new Player(
+        index + 1,
+        rp.player_name || `Player ${index + 1}`,
+        rp.class_key || 'warrior',
+        rp.player_id !== this.net.playerId, // Local player is human, remote players marked as AI/remote
+        0,
+        index
+      );
+      return p;
+    });
+
+    this.startGame();
+  }
+
+  private setupNetworkActionListeners() {
+    this.net.onActionReceived((action) => {
+      switch (action.type) {
+        case 'ROLL_DICE': {
+          this.game.remainingMoves = action.data.totalRoll;
+          this.game.updateReachableHighlights();
+          break;
+        }
+        case 'MOVE_PATH': {
+          const path = action.data.path;
+          if (path && path.length > 1) {
+            this.game.executePath(
+              path,
+              () => this.onMoveStep(),
+              tile => this.handleTileArrival(tile)
+            );
+          }
+          break;
+        }
+        case 'END_TURN': {
+          this.finishAdvanceTurn();
+          break;
+        }
+      }
+    });
+  }
+
 
   private initCanvasResize() {
     const resize = () => {
@@ -204,6 +268,10 @@ class DokaponApp {
         }
 
         audio.coin();
+        if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
+          this.net.broadcastAction('MOVE_PATH', { path });
+        }
+
         this.renderer.hoveredNodeId = null;
         this.renderer.previewPathNodeIds = [];
 
@@ -828,6 +896,10 @@ class DokaponApp {
 
   private triggerDiceRoll() {
     const totalRoll = this.game.rollMovementDice();
+
+    if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
+      this.net.broadcastAction('ROLL_DICE', { totalRoll });
+    }
 
     const diceModal = document.getElementById('diceRollModal')!;
     const diceCube = document.getElementById('diceCube')!;
@@ -1666,6 +1738,10 @@ class DokaponApp {
   }
 
   private finishAdvanceTurn() {
+    if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
+      this.net.broadcastAction('END_TURN', {});
+    }
+
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
@@ -1693,6 +1769,16 @@ class DokaponApp {
     const p = this.game.activePlayer;
     // 1. Smoothly center camera on active player without jarring zoom jumps
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+    // Online Turn Control: lock UI if it's not local player's turn
+    if (this.net.isOnlineMode) {
+      const isMyTurn = this.net.isMyTurn(this.game.activePlayerIdx);
+      const rollBtn = document.getElementById('btnRollDice') as HTMLButtonElement | null;
+      if (rollBtn) {
+        rollBtn.disabled = !isMyTurn;
+        rollBtn.style.opacity = isMyTurn ? '1' : '0.5';
+      }
+    }
+
     this.hud.update();
 
     // 2. Display Turn Start Banner
