@@ -570,12 +570,12 @@ export class CustomIsometricHeroRenderer {
     this.applySkinFilter(ctx, skinVariant, isDarkling, anim.isHurt);
 
     if (img) {
-      // Crisp 48x48 pixel art hero sprite drawn centered:
+      // Crisp 64x64 pixel art hero sprite drawn centered:
       // Character feet touch the ground plane at y = cy + 25
-      const drawW = 48;
-      const drawH = 48;
-      const drawX = -24;
-      const drawY = -23;
+      const drawW = 64;
+      const drawH = 64;
+      const drawX = -32;
+      const drawY = -31;
 
       ctx.drawImage(img, drawX, drawY, drawW, drawH);
     } else {

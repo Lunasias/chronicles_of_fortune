@@ -205,6 +205,11 @@ for (const dir of DIRECTIONS) {
 
 console.log('Loaded all base frames: 8 Idle, 32 Run, 32 Attack = 72 base frames.');
 
+// Identity function for base spellblade heroine (wings, angelic hair, glowing sword)
+function transformSpellblade(pixels, w, h, dir, animType, frameIdx) {
+  return clonePixels(pixels);
+}
+
 // =============================================================================
 // TRANSFORMATION FUNCTIONS FOR 5 HERO CLASSES
 // =============================================================================
@@ -771,6 +776,25 @@ const MONSTER_TRANSFORMS = {
   }
 };
 
+// Pad 48x48 to 64x64 HD sprite canvas
+function pad48to64(pixels, srcW, srcH) {
+  const TARGET = 64;
+  const out = Buffer.alloc(TARGET * TARGET * 4);
+  const offsetX = Math.floor((TARGET - srcW) / 2);
+  const offsetY = Math.floor((TARGET - srcH) / 2);
+  for (let y = 0; y < srcH; y++) {
+    for (let x = 0; x < srcW; x++) {
+      const srcIdx = (y * srcW + x) * 4;
+      const destIdx = ((y + offsetY) * TARGET + (x + offsetX)) * 4;
+      out[destIdx] = pixels[srcIdx];
+      out[destIdx + 1] = pixels[srcIdx + 1];
+      out[destIdx + 2] = pixels[srcIdx + 2];
+      out[destIdx + 3] = pixels[srcIdx + 3];
+    }
+  }
+  return out;
+}
+
 // =============================================================================
 // RUN FULL GENERATION FOR ALL 5 CLASSES
 // =============================================================================
@@ -786,7 +810,8 @@ function generateClassSprites(className, folderName, transformFn) {
   for (const dir of DIRECTIONS) {
     const raw = baseIdle[dir];
     const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'idle', 0);
-    const png = encodePNG(raw.width, raw.height, transformed);
+    const padded = pad48to64(transformed, raw.width, raw.height);
+    const png = encodePNG(64, 64, padded);
     fs.writeFileSync(path.join(baseTarget, 'Idle/rotations', `${dir}.png`), png);
   }
 
@@ -795,7 +820,8 @@ function generateClassSprites(className, folderName, transformFn) {
     for (let f = 0; f < 4; f++) {
       const raw = baseRun[dir][f];
       const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'run', f);
-      const png = encodePNG(raw.width, raw.height, transformed);
+      const padded = pad48to64(transformed, raw.width, raw.height);
+      const png = encodePNG(64, 64, padded);
       fs.writeFileSync(path.join(baseTarget, 'Run/rotations', `${dir}_${f}.png`), png);
     }
   }
@@ -805,7 +831,8 @@ function generateClassSprites(className, folderName, transformFn) {
     for (let f = 0; f < 4; f++) {
       const raw = baseAttack[dir][f];
       const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'attack', f);
-      const png = encodePNG(raw.width, raw.height, transformed);
+      const padded = pad48to64(transformed, raw.width, raw.height);
+      const png = encodePNG(64, 64, padded);
       fs.writeFileSync(path.join(baseTarget, 'Attack/rotations', `${dir}_${f}.png`), png);
     }
   }
@@ -827,7 +854,8 @@ function generateMonsterSprites(archKey, transformFn) {
   for (const dir of DIRECTIONS) {
     const raw = baseIdle[dir];
     const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'idle', 0);
-    const png = encodePNG(raw.width, raw.height, transformed);
+    const padded = pad48to64(transformed, raw.width, raw.height);
+    const png = encodePNG(64, 64, padded);
     fs.writeFileSync(path.join(baseTarget, 'Idle/rotations', `${dir}.png`), png);
   }
 
@@ -836,7 +864,8 @@ function generateMonsterSprites(archKey, transformFn) {
     for (let f = 0; f < 4; f++) {
       const raw = baseRun[dir][f];
       const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'run', f);
-      const png = encodePNG(raw.width, raw.height, transformed);
+      const padded = pad48to64(transformed, raw.width, raw.height);
+      const png = encodePNG(64, 64, padded);
       fs.writeFileSync(path.join(baseTarget, 'Run/rotations', `${dir}_${f}.png`), png);
     }
   }
@@ -846,7 +875,8 @@ function generateMonsterSprites(archKey, transformFn) {
     for (let f = 0; f < 4; f++) {
       const raw = baseAttack[dir][f];
       const transformed = transformFn(raw.pixels, raw.width, raw.height, dir, 'attack', f);
-      const png = encodePNG(raw.width, raw.height, transformed);
+      const padded = pad48to64(transformed, raw.width, raw.height);
+      const png = encodePNG(64, 64, padded);
       fs.writeFileSync(path.join(baseTarget, 'Attack/rotations', `${dir}_${f}.png`), png);
     }
   }
@@ -860,14 +890,14 @@ function generateMonsterSprites(archKey, transformFn) {
 // EXECUTION
 // -----------------------------------------------------------------------------
 
-console.log('=== GENERATING ALL 5 HEROINE CLASSES ===');
+console.log('=== GENERATING ALL 5 HEROINE CLASSES (64x64) ===');
 generateClassSprites('Warrior (นักรบ)', 'A_female_warrior_knight', transformWarrior);
+generateClassSprites('Spellblade (ดาบเวท)', 'A_female_magic_swordsman_with', transformSpellblade);
 generateClassSprites('Magician (จอมเวท)', 'A_fair-skinned_sorceress_with_long', transformMagician);
 generateClassSprites('Thief (จอมโจร)', 'A_fair-skinned_female_assassin_wearing', transformThief);
 generateClassSprites('Cleric (นักบวช)', 'A_young_priestess_with_blonde', transformCleric);
-// Spellblade was copied pristine from 'ดาบเวทสาว' into 'A_female_magic_swordsman_with'
 
-console.log('\n=== GENERATING ALL 18 MONSTER ARCHETYPES ===');
+console.log('\n=== GENERATING ALL 18 MONSTER ARCHETYPES (64x64) ===');
 fs.mkdirSync('public/assets/monsters', { recursive: true });
 const archetypes = Object.keys(MONSTER_TRANSFORMS);
 for (const arch of archetypes) {
