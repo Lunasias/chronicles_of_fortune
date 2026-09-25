@@ -205,6 +205,26 @@ for (const dir of DIRECTIONS) {
 
 console.log('Loaded all base frames: 8 Idle, 32 Run, 32 Attack = 72 base frames.');
 
+function isSpriteHair(r, g, b, a, x, y) {
+  if (a < 15) return false;
+  // Exclude skin tones (warm peach / flesh)
+  if (r > 190 && g > 130 && r > b + 25) return false;
+  // Exclude glowing blue magic sword (strict check so cool-toned hair isn't mistaken for sword)
+  if (b > r + 45 && b > g + 30 && a > 80) return false;
+  // Exclude wings (outer side regions)
+  if (y >= 8 && y <= 28 && (x < 17 || x > 31) && r > 185 && g > 185 && b > 195) return false;
+  // Lavender / platinum / silver hair highlights and shadows across entire head and body flow
+  const isPale = (r > 90 && g > 85 && b > 95);
+  const isDark = (r > 35 && g > 30 && b > 45 && b >= r - 15 && b >= g - 15);
+  const isSheen = (r > 140 && g > 135 && b > 135 && Math.abs(r - g) < 25 && Math.abs(g - b) < 25);
+  return isPale || isDark || isSheen;
+}
+
+function isSpriteWing(r, g, b, a, x, y) {
+  if (a < 15) return false;
+  return (y >= 8 && y <= 28 && (x < 17 || x > 31) && r > 185 && g > 185 && b > 195);
+}
+
 // Identity function for base spellblade heroine (wings, angelic hair, glowing sword)
 function transformSpellblade(pixels, w, h, dir, animType, frameIdx) {
   return clonePixels(pixels);
@@ -223,16 +243,15 @@ function transformWarrior(pixels, w, h, dir, animType, frameIdx) {
       let r = out[idx], g = out[idx + 1], b = out[idx + 2], a = out[idx + 3];
       if (a < 15) continue;
 
-      const isHair = (y <= 20 && x >= 15 && x <= 33 && r > 180 && g > 180 && b > 190);
-      const isWing = (y >= 8 && y <= 28 && (x < 18 || x > 30) && r > 190 && g > 190 && b > 200);
-      const isAzureBlade = (b > r + 30 && b > g + 15 && a > 80);
-      const isSilverPlate = (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r > 130 && r < 210 && y >= 18);
-
-      if (isWing) {
+      if (isSpriteWing(r, g, b, a, x, y)) {
         // WARRIOR HAS NO WINGS! Remove wing pixels!
         out[idx + 3] = 0;
         continue;
       }
+
+      const isHair = isSpriteHair(r, g, b, a, x, y);
+      const isAzureBlade = (b > r + 30 && b > g + 15 && a > 80);
+      const isSilverPlate = !isHair && (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r > 130 && r < 210 && y >= 18);
 
       if (isHair) {
         // Golden blonde hair (warm amber and rich gold)
@@ -279,16 +298,15 @@ function transformMagician(pixels, w, h, dir, animType, frameIdx) {
       let r = out[idx], g = out[idx + 1], b = out[idx + 2], a = out[idx + 3];
       if (a < 15) continue;
 
-      const isHair = (y <= 24 && x >= 15 && x <= 33 && r > 170 && g > 170 && b > 180);
-      const isWing = (y >= 8 && y <= 28 && (x < 18 || x > 30) && r > 190 && g > 190 && b > 200);
-      const isBlade = (b > r + 25 && b > g + 10);
-      const isArmor = (y >= 18 && y <= 32);
-
-      if (isWing) {
+      if (isSpriteWing(r, g, b, a, x, y)) {
         // Magicians don't have wings, remove
         out[idx + 3] = 0;
         continue;
       }
+
+      const isHair = isSpriteHair(r, g, b, a, x, y);
+      const isBlade = (b > r + 25 && b > g + 10);
+      const isArmor = !isHair && (y >= 18 && y <= 32);
 
       if (isHair) {
         // Vivid Violet / Amethyst purple hair
@@ -341,16 +359,15 @@ function transformThief(pixels, w, h, dir, animType, frameIdx) {
       let r = out[idx], g = out[idx + 1], b = out[idx + 2], a = out[idx + 3];
       if (a < 15) continue;
 
-      const isHair = (y <= 24 && x >= 15 && x <= 33 && r > 170 && g > 170 && b > 180);
-      const isWing = (y >= 8 && y <= 28 && (x < 18 || x > 30) && r > 190 && g > 190 && b > 200);
-      const isBlade = (b > r + 25 && b > g + 10);
-      const isArmor = (y >= 18 && y <= 35);
-
-      if (isWing) {
+      if (isSpriteWing(r, g, b, a, x, y)) {
         // Thief has no wings
         out[idx + 3] = 0;
         continue;
       }
+
+      const isHair = isSpriteHair(r, g, b, a, x, y);
+      const isBlade = (b > r + 25 && b > g + 10);
+      const isArmor = !isHair && (y >= 18 && y <= 35);
 
       if (isHair) {
         // Midnight Jet Black hair with subtle dark navy sheen
@@ -394,16 +411,15 @@ function transformCleric(pixels, w, h, dir, animType, frameIdx) {
       let r = out[idx], g = out[idx + 1], b = out[idx + 2], a = out[idx + 3];
       if (a < 15) continue;
 
-      const isHair = (y <= 24 && x >= 15 && x <= 33 && r > 170 && g > 170 && b > 180);
-      const isWing = (y >= 8 && y <= 28 && (x < 18 || x > 30) && r > 190 && g > 190 && b > 200);
-      const isBlade = (b > r + 25 && b > g + 10);
-      const isArmor = (y >= 18 && y <= 35);
-
-      if (isWing) {
+      if (isSpriteWing(r, g, b, a, x, y)) {
         // Cleric has no wings
         out[idx + 3] = 0;
         continue;
       }
+
+      const isHair = isSpriteHair(r, g, b, a, x, y);
+      const isBlade = (b > r + 25 && b > g + 10);
+      const isArmor = !isHair && (y >= 18 && y <= 35);
 
       if (isHair) {
         // Champagne Platinum Blonde hair
