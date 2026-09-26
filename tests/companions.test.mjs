@@ -288,7 +288,7 @@ test('every art descriptor uses vocabulary the generator understands', () => {
     ],
     weapon: [
       'none', 'dagger', 'sword', 'scimitar', 'staff', 'gun', 'fan', 'claw', 'scythe', 'bow',
-      'shield', 'tray', 'gohei', 'pickaxe'
+      'shield', 'tray', 'gohei', 'pickaxe', 'rapier'
     ],
     outfitStyle: ['tunic', 'armor', 'plate', 'robe', 'dress', 'kimono', 'corset', 'apron', 'cloak', 'shells', 'bandage', 'fur'],
     pattern: ['none', 'stripes', 'scales', 'cracks', 'stars', 'runes'],
@@ -313,8 +313,51 @@ test('every art descriptor uses vocabulary the generator understands', () => {
     if (companion.art.aura !== null && !/^#[0-9a-f]{6}$/i.test(companion.art.aura)) {
       problems.push(`${companion.key}.aura = "${companion.art.aura}"`);
     }
+    // Optional effect fields.
+    if (companion.art.bladeGradient !== undefined) {
+      const g = companion.art.bladeGradient;
+      if (!Array.isArray(g) || g.length !== 2 || g.some(c => !/^#[0-9a-f]{6}$/i.test(c))) {
+        problems.push(`${companion.key}.bladeGradient = ${JSON.stringify(g)}`);
+      }
+    }
+    if (companion.art.bubbleColor !== undefined && !/^#[0-9a-f]{6}$/i.test(companion.art.bubbleColor)) {
+      problems.push(`${companion.key}.bubbleColor = "${companion.art.bubbleColor}"`);
+    }
+    if (companion.art.bubbleBurst !== undefined) {
+      const n = companion.art.bubbleBurst;
+      if (!Number.isInteger(n) || n < 0 || n > 6) {
+        problems.push(`${companion.key}.bubbleBurst = ${n}`);
+      }
+    }
   }
   assert.deepEqual(problems, []);
+});
+
+test('only weapons that actually use a gel blade declare a gradient', () => {
+  const raw = JSON.parse(readFileSync(path.join('src', 'game', 'companions.json'), 'utf8'));
+  const wrong = [];
+  for (const companion of raw.companions) {
+    if (companion.art.bladeGradient && companion.art.weapon !== 'rapier') {
+      wrong.push(`${companion.key} has a bladeGradient but wields a ${companion.art.weapon}`);
+    }
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test('the Slime Princess matches her brief', () => {
+  // "ดาบเรเปียร์เจลกรดสีเขียวมรกต-ฟ้าคราม พร้อมฟองสบู่กรดแรงดันสูงแตกกระจาย 4 ลูก"
+  const raw = JSON.parse(readFileSync(path.join('src', 'game', 'companions.json'), 'utf8'));
+  const princess = raw.companions.find(c => c.key === 'slime_princess');
+  assert.ok(princess, 'the Slime Princess companion must exist');
+  assert.equal(princess.art.weapon, 'rapier', 'she is defined by her rapier');
+  assert.equal(princess.art.body, 'slime', 'she is a slime');
+  assert.deepEqual(
+    princess.art.bladeGradient,
+    ['#34d399', '#38bdf8'],
+    'the gel blade must grade emerald -> sapphire'
+  );
+  assert.equal(princess.art.bubbleBurst, 4, 'her brief specifies exactly four bursting bubbles');
+  assert.equal(raw.roster['Slime Princess Aurelia'], 'slime_princess', 'the town boss recurs as her');
 });
 
 test('each companion has a silhouette of its own', () => {

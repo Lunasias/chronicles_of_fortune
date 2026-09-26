@@ -24,7 +24,7 @@ only apply changes with `--write`. Always review `git diff src/game/BoardMap.ts`
 | --- | --- |
 | `generate_all_sprites.cjs` | Generates the 8-directional idle/run/attack sprite sheets for all 18 monster archetypes and the hero classes into `public/assets/`. Overwrites existing PNGs. |
 | `upgrade_all_sprites_to_64.cjs` | Re-encodes existing sprite PNGs to the 64×64 HD standard. Overwrites existing PNGs. |
-| `generate_companion_sprites.cjs` | Draws the 64×64 model for **every** companion listed in `src/game/companions.json` into `public/assets/companions/`. Also deletes models whose companion no longer exists. Run via `npm run gen:companions`. Pass `--contact-sheet` to additionally write `.companion-sheet.png`, a scaled grid of every sprite for review. |
+| `generate_companion_sprites.cjs` | Draws the 64×64 model for **every** companion listed in `src/game/companions.json` into `public/assets/companions/`. Also deletes models whose companion no longer exists. Run via `npm run gen:companions`. Options: `--contact-sheet` writes a scaled grid of every sprite; `--scale=N` sets its zoom (1–8); `--only=<key>` limits it to one companion and writes `.companion-showcase-<key>.png`, which is how a single large image is produced for review. |
 
 ### Companion model technique
 

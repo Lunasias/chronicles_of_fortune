@@ -124,6 +124,14 @@ function neutralRamp(hex, kind = 'paper') {
   return ramp(hex, kind);
 }
 
+/** Linear blend between two hex colours, used for the gel gradient on a rapier blade. */
+function lerpHex(from, to, t) {
+  const [r1, g1, b1] = hexToRgb(from);
+  const [r2, g2, b2] = hexToRgb(to);
+  const k = Math.max(0, Math.min(1, t));
+  return rgbToHex(r1 + (r2 - r1) * k, g1 + (g2 - g1) * k, b1 + (b2 - b1) * k);
+}
+
 /**
  * Shifts a colour in HSL, optionally rotating its hue toward a target. Used for the derived
  * tones the face and accents need (lash line, iris rim, eyelid, mouth, dark trim).
@@ -1009,8 +1017,138 @@ function drawHeadwear(p, art) {
   }
 }
 
+/**
+ * A rapier: a slender thrusting blade on a swept guard, held in the right hand.
+ *
+ * The blade is drawn as a gel that runs from `bladeGradient[0]` at the guard to
+ * `bladeGradient[1]` at the tip, which is what gives the acid rapier its emerald-to-sapphire
+ * read. A 1px specular line down the lit edge and a few acid droplets make it look wet.
+ */
+function drawRapier(p, art) {
+  const from = (art.bladeGradient && art.bladeGradient[0]) || art.accent;
+  const to = (art.bladeGradient && art.bladeGradient[1]) || art.accent;
+  const metal = '#e2e8f0';
+  const grip = '#4a2f1a';
+
+  const TIP_X = 57;
+  const TIP_Y = 17;
+  const GUARD_X = CX + 11;
+  const GUARD_Y = 45;
+  const steps = 32;
+
+  // Gel blade, tapering to a point.
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = GUARD_X + (TIP_X - GUARD_X) * t;
+    const y = GUARD_Y + (TIP_Y - GUARD_Y) * t;
+    const w = Math.max(0.5, 1.7 - t * 1.15);
+    ellipse(p, x, y, w, w * 0.85, lerpHex(from, to, t), 'gem');
+  }
+
+  // Specular edge on the lit (upper-left) side of the blade.
+  for (let i = 3; i <= steps - 2; i++) {
+    const t = i / steps;
+    const x = GUARD_X + (TIP_X - GUARD_X) * t - 1;
+    const y = GUARD_Y + (TIP_Y - GUARD_Y) * t;
+    setDetail(p, x, y, '#ffffff', 'gem');
+  }
+
+  // Acid droplets clinging to the blade.
+  for (const t of [0.22, 0.5, 0.76]) {
+    const x = GUARD_X + (TIP_X - GUARD_X) * t;
+    const y = GUARD_Y + (TIP_Y - GUARD_Y) * t;
+    setDetail(p, x + 2, y + 1, lerpHex(from, to, t + 0.15), 'gem');
+  }
+
+  // Swept guard: a shallow cup over the hand plus a crossbar.
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * (0.15 + (i / 8) * 0.7);
+    ellipse(p, GUARD_X - 4 + i, GUARD_Y + 1 + Math.sin(a) * 1.6, 1.3, 1.2, metal, 'metal');
+  }
+  fill(p, GUARD_X - 5, GUARD_Y + 2, 9, 1, metal, 'metal');
+
+  // Grip and pommel.
+  for (let i = 0; i < 6; i++) {
+    ellipse(p, GUARD_X - 3 + i * 0.5, GUARD_Y + 4 + i, 1.4, 1.3, i % 2 === 0 ? grip : '#6b4423', 'leather');
+  }
+  ellipse(p, GUARD_X, GUARD_Y + 11, 2.1, 2, metal, 'metal');
+}
+
+/**
+ * High-pressure acid bubbles bursting around the character.
+ *
+ * Drawn on the detail layer so the film stays crisp. Each bubble is a wobbled film ring, a
+ * shaded lower rim, a short acid pool inside, a specular arc on the lit side, and a few radial
+ * burst spikes. Positions are deliberately pulled inward: an earlier version placed them at the
+ * canvas edge, where the spikes were clipped and the sprite read as static rather than as
+ * bubbles popping.
+ */
+function drawBubbleBurst(p, art) {
+  const count = Math.max(0, Number(art.bubbleBurst) || 0);
+  if (!count) return;
+
+  const film = art.bubbleColor || art.accent;
+  const acid = art.accent;
+  const rim = adjust(film, -0.22, 0.14, 240, 18);
+
+  // Deterministic placement so the sprite is reproducible. The rapier runs diagonally through
+  // the upper right, so the bubbles fan down the free left side plus one clear of the blade -
+  // an earlier layout put a bubble straight on top of the blade and the two read as noise.
+  const spots = [
+    { cx: CX - 19, cy: 13, r: 5.0 },
+    { cx: CX - 20, cy: 31, r: 4.4 },
+    { cx: CX - 18, cy: 49, r: 4.8 },
+    { cx: CX + 23, cy: 44, r: 4.0 },
+    { cx: CX - 13, cy: 4, r: 3.2 },
+    { cx: CX + 20, cy: 6, r: 3.0 }
+  ];
+
+  for (let b = 0; b < Math.min(count, spots.length); b++) {
+    const { cx, cy, r } = spots[b];
+
+    // Film ring, wobbled like a pressurised membrane. The lower-right arc uses the shaded rim
+    // tone so the bubble reads as a sphere lit from the same top-left as everything else.
+    for (let a = 0; a < 360; a += 4) {
+      const rad = (a * Math.PI) / 180;
+      const wobble = 1 + Math.sin(a * 0.09 + b) * 0.12;
+      const x = Math.round(cx + Math.cos(rad) * r * wobble);
+      const y = Math.round(cy + Math.sin(rad) * r * wobble);
+      const shaded = a > 20 && a < 200;
+      setDetail(p, x, y, shaded ? rim : film, 'gem');
+    }
+
+    // A little acid pooled along the inside of the lower rim.
+    for (let a = 30; a <= 150; a += 6) {
+      const rad = (a * Math.PI) / 180;
+      setDetail(p, Math.round(cx + Math.cos(rad) * (r - 2)), Math.round(cy + Math.sin(rad) * (r - 2.2)), acid, 'gem');
+    }
+
+    // Specular arc on the upper-left of the film.
+    for (let a = 200; a <= 250; a += 5) {
+      const rad = (a * Math.PI) / 180;
+      setDetail(p, Math.round(cx + Math.cos(rad) * (r - 1.4)), Math.round(cy + Math.sin(rad) * (r - 1.4)), '#ffffff', 'gem');
+    }
+
+    // Burst spikes radiating outward, kept short so nothing reaches the canvas edge.
+    for (let k = 0; k < 5; k++) {
+      const a = -50 + k * 32 + b * 11;
+      const rad = (a * Math.PI) / 180;
+      for (let d = r + 1; d <= r + 2.6; d++) {
+        setDetail(p, Math.round(cx + Math.cos(rad) * d), Math.round(cy + Math.sin(rad) * d), film, 'gem');
+      }
+      // A single flung droplet at the tip of every other spike.
+      if (k % 2 === 0) {
+        setDetail(p, Math.round(cx + Math.cos(rad) * (r + 4)), Math.round(cy + Math.sin(rad) * (r + 4)), acid, 'gem');
+      }
+    }
+  }
+}
 function drawWeapon(p, art) {
   if (art.weapon === 'none') return;
+  if (art.weapon === 'rapier') {
+    drawRapier(p, art);
+    return;
+  }
   const metal = '#cbd5e1';
   const grip = '#6b4423';
   const glow = art.accent;
@@ -1167,6 +1305,7 @@ function renderCompanion(art) {
   drawWeapon(p, art);
   drawFace(p, art);
   drawHeadwear(p, art);
+  drawBubbleBurst(p, art);
 
   const rgba = shade(p);
   selectiveOutline(p, rgba);
@@ -1202,14 +1341,23 @@ function main() {
   console.log(`generated ${rendered.length} companion sprites at ${SIZE}x${SIZE} in ${OUT_DIR}`);
 
   if (wantsSheet) {
-    const scale = 2;
-    const cols = 7;
-    const rows = Math.ceil(rendered.length / cols);
+    // --scale=N enlarges the sheet (default 2). --only=<key> limits it to one companion, which
+    // is how a single large showcase image is produced for review.
+    const scaleArg = process.argv.find(a => a.startsWith('--scale='));
+    const scale = scaleArg ? Math.max(1, Math.min(8, Number(scaleArg.split('=')[1]) || 2)) : 2;
+    const onlyArg = process.argv.find(a => a.startsWith('--only='));
+    const only = onlyArg ? onlyArg.split('=')[1] : null;
+
+    const sheetItems = only ? rendered.filter(r => r.key === only) : rendered;
+    if (only && sheetItems.length === 0) throw new Error(`--only=${only} matched no companion`);
+
+    const cols = only ? 1 : 7;
+    const rows = Math.ceil(sheetItems.length / cols);
     const cw = SIZE * scale;
     const w = cw * cols;
     const h = cw * rows;
     const sheet = Buffer.alloc(w * h * 4);
-    rendered.forEach((r, i) => {
+    sheetItems.forEach((r, i) => {
       const ox = (i % cols) * cw;
       const oy = Math.floor(i / cols) * cw;
       for (let y = 0; y < SIZE; y++) {
@@ -1227,8 +1375,9 @@ function main() {
         }
       }
     });
-    fs.writeFileSync('.companion-sheet.png', encodePNG(w, h, sheet));
-    console.log(`contact sheet: .companion-sheet.png (${w}x${h})`);
+    const sheetName = only ? `.companion-showcase-${only}.png` : '.companion-sheet.png';
+    fs.writeFileSync(sheetName, encodePNG(w, h, sheet));
+    console.log(`sheet: ${sheetName} (${w}x${h}, scale ${scale}x, ${sheetItems.length} sprite(s))`);
   }
 }
 

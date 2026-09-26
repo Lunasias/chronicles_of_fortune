@@ -780,6 +780,43 @@
       }
     },
     {
+      "key": "slime_princess",
+      "name": "เจ้าหญิงสไลม์ ออเรเลีย (Slime Princess Aurelia)",
+      "title": "Slime Princess",
+      "avatar": "🟢💠",
+      "role": "striker",
+      "skillName": "Acid Gel Rapier — Corrosive Burst",
+      "skillDesc": "ดาบเรเปียร์เจลกรดไล่สีเขียวมรกต-ฟ้าคราม แทงทะลุเกราะ พร้อมปล่อยฟองสบู่กรดแรงดันสูงแตกกระจาย 4 ลูก",
+      "dialogue": "ระวังให้ดีนะ ของเหลวของข้าไม่ใช่แค่เจลใส ๆ มันละลายแม้แต่เหล็กไหล",
+      "color": "#34d399",
+      "art": {
+        "skin": "#a7f3d0",
+        "hair": "#2dd4bf",
+        "hairStyle": "long",
+        "outfit": "#059669",
+        "accent": "#38bdf8",
+        "eyes": "#0ea5e9",
+        "body": "slime",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "slime",
+        "headwear": "tiara",
+        "weapon": "rapier",
+        "outfitStyle": "dress",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#34d399",
+        "auraStyle": "water",
+        "bladeGradient": [
+          "#34d399",
+          "#38bdf8"
+        ],
+        "bubbleBurst": 4,
+        "bubbleColor": "#a7f3d0"
+      }
+    },
+    {
       "key": "beastgirl",
       "name": "สาวน้อยอสูร",
       "title": "Monster Girl Companion",
@@ -834,6 +871,7 @@
     "Abyssal Siren": "melody",
     "Chaos Slime": "chloe",
     "Bandit Chief Garak": "gara",
-    "Dragon Princess Ignis": "ignis"
+    "Dragon Princess Ignis": "ignis",
+    "Slime Princess Aurelia": "slime_princess"
   }
 }

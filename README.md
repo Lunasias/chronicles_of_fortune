@@ -39,7 +39,7 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
 A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
 
 ### 4. 💖 Companions
-**26 recruitable companions**, each with its own **64×64 pixel-art model**, drawn from the
+**27 recruitable companions**, each with its own **64×64 pixel-art model**, drawn from the
 monster girls you spare in battle, the guild's hired mercenaries, and story events. A
 companion can be summoned once per battle for a powerful assist, and the emergency assist
 can save a hero from a killing blow. Every companion's model is generated from a single
@@ -49,8 +49,11 @@ The models follow one light source (top-left) applied through a light map, five-
 hue-shifted ramps per material, and selective outlining, so the shading reads at a glance
 instead of looking flat. Each character's silhouette is built from its own name — the
 kitsune miko carries nine tails and a gohei wand, the gunner a top hat and a gatling gun,
-the mummy queen a nemes headdress and wrapped bandages. `npm test` verifies that every
-companion has a shaded, uniquely-lit, non-duplicate model.
+the mummy queen a nemes headdress and wrapped bandages. The art recipe also supports
+per-character effects: the Slime Princess wields an acid-gel rapier whose blade grades
+emerald to sapphire, surrounded by four bursting high-pressure acid bubbles
+(`bladeGradient` and `bubbleBurst` in her recipe). `npm test` verifies that every companion
+has a shaded, uniquely-lit, non-duplicate model.
 
 ### 5. ⚖️ Scaling Enemies
 Monster stats are authored as the balance point for a **level-1 hero** and then scaled at
