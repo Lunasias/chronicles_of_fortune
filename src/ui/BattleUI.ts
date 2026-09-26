@@ -4,6 +4,7 @@ import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelS
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX } from '../engine/CombatVFXEngine';
+import {pixelDisc, pixelEllipse, pixelRing, pixelVerticalRamp } from '../engine/PixelFx';
 import { BoardNode } from '../game/BoardMap';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
@@ -81,7 +82,7 @@ export class BattleUI {
     ctx.fillStyle = summon.companion.color || '#ec4899';
     ctx.globalAlpha = alpha * 0.25;
     ctx.beginPath();
-    ctx.ellipse(summon.x, summon.y + h * 0.30, w * 0.34, h * 0.13, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, summon.x, summon.y + h * 0.30, w * 0.34, h * 0.13, ctx.fillStyle);
     ctx.fill();
 
     ctx.globalAlpha = alpha;
@@ -1317,7 +1318,6 @@ export class BattleUI {
       ctx.save();
       if (combatVFX.monsterFlashAlpha > 0) {
         ctx.shadowColor = combatVFX.monsterFlashColor;
-        ctx.shadowBlur = 28;
       }
 
       const ringColor = enemyCombatant.isBoss ? '#ef4444' : (enemyCombatant.playerRef ? '#f43f5e' : '#f59e0b');
@@ -1391,9 +1391,7 @@ export class BattleUI {
     ctx.strokeStyle = this.cutscene.bannerColor;
     ctx.lineWidth = 2.0;
     ctx.shadowColor = this.cutscene.bannerColor;
-    ctx.shadowBlur = 14;
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
     // Speed-lines / slash accent ribbons
     ctx.fillStyle = this.cutscene.bannerColor;
@@ -1405,7 +1403,6 @@ export class BattleUI {
     ctx.textAlign = 'center';
     ctx.fillStyle = this.cutscene.bannerColor;
     ctx.shadowColor = '#000000';
-    ctx.shadowBlur = 4;
     ctx.fillText(this.cutscene.bannerText, w / 2, by + 24);
 
     // Subtitle text
@@ -1528,13 +1525,8 @@ export class BattleUI {
     node: BoardNode | null
   ) {
     // Royal Deep Midnight Navy to Gothic Slate
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#060a17');
-    bgGrad.addColorStop(0.4, '#0f172a');
-    bgGrad.addColorStop(0.8, '#1e293b');
-    bgGrad.addColorStop(1.0, '#030712');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060a17'], [0.4, '#0f172a'], [0.8, '#1e293b'], [1.0, '#030712']]);
 
     // Grand Gothic Arches in Upper Hall
     ctx.strokeStyle = '#1e293b';
@@ -1559,14 +1551,14 @@ export class BattleUI {
     winGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
     ctx.fillStyle = winGlow;
     ctx.beginPath();
-    ctx.arc(winCX, winCY, winR * 1.5, 0, Math.PI * 2);
+    pixelDisc(ctx, winCX, winCY, winR * 1.5, ctx.fillStyle);
     ctx.fill();
 
     // Rose Window Frame
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(winCX, winCY, winR, 0, Math.PI * 2);
+    pixelRing(ctx, winCX, winCY, winR, winR, ctx.strokeStyle, 1);
     ctx.stroke();
     // Rose Petal Traceries
     ctx.strokeStyle = '#334155';
@@ -1615,7 +1607,7 @@ export class BattleUI {
         ctx.stroke();
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
-        ctx.arc(px, by + 35, 6, 0, Math.PI * 2);
+        pixelDisc(ctx, px, by + 35, 6, ctx.fillStyle);
         ctx.fill();
       }
 
@@ -1635,13 +1627,8 @@ export class BattleUI {
     isDeep: boolean
   ) {
     // Mystical Emerald Twilight Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#021810');
-    bgGrad.addColorStop(0.4, '#062d1d');
-    bgGrad.addColorStop(0.75, '#0b3d27');
-    bgGrad.addColorStop(1.0, '#020d07');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#021810'], [0.4, '#062d1d'], [0.75, '#0b3d27'], [1.0, '#020d07']]);
 
     // Sunbeams / Moonbeams Filtering Through Canopy
     ctx.save();
@@ -1707,7 +1694,7 @@ export class BattleUI {
       mGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = mGlow;
       ctx.beginPath();
-      ctx.arc(mx, my, mR * 1.4, 0, Math.PI * 2);
+      pixelDisc(ctx, mx, my, mR * 1.4, ctx.fillStyle);
       ctx.fill();
 
       // Cap
@@ -1719,9 +1706,9 @@ export class BattleUI {
       // Cap Dots
       ctx.fillStyle = '#ecfdf5';
       ctx.beginPath();
-      ctx.arc(mx - mR * 0.4, my - mR * 0.2, 2.5, 0, Math.PI * 2);
-      ctx.arc(mx + mR * 0.35, my - mR * 0.25, 2.2, 0, Math.PI * 2);
-      ctx.arc(mx, my - mR * 0.35, 3, 0, Math.PI * 2);
+      pixelDisc(ctx, mx - mR * 0.4, my - mR * 0.2, 2.5, ctx.fillStyle);
+      pixelDisc(ctx, mx + mR * 0.35, my - mR * 0.25, 2.2, ctx.fillStyle);
+      pixelDisc(ctx, mx, my - mR * 0.35, 3, ctx.fillStyle);
       ctx.fill();
     }
 
@@ -1732,7 +1719,7 @@ export class BattleUI {
       const fPulse = 0.5 + Math.sin(time * 0.007 + s) * 0.5;
       ctx.fillStyle = s % 2 === 0 ? `rgba(110, 231, 183, ${0.8 * fPulse})` : `rgba(125, 211, 252, ${0.8 * fPulse})`;
       ctx.beginPath();
-      ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+      pixelDisc(ctx, fx, fy, 2, ctx.fillStyle);
       ctx.fill();
     }
   }
@@ -1740,13 +1727,8 @@ export class BattleUI {
   // 3. FAIRY BLOSSOM GLADE (ป่าภูตพฤกษาซากุระมนตรา)
   private drawFairyBlossomBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Dreamy Twilight Sakura Pink to Lavender Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#1e0b24');
-    bgGrad.addColorStop(0.35, '#3b123f');
-    bgGrad.addColorStop(0.7, '#240f28');
-    bgGrad.addColorStop(1.0, '#0b040d');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1e0b24'], [0.35, '#3b123f'], [0.7, '#240f28'], [1.0, '#0b040d']]);
 
     // Glowing Sacred Moon
     const moonX = w * 0.75;
@@ -1757,11 +1739,11 @@ export class BattleUI {
     moonGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = moonGrad;
     ctx.beginPath();
-    ctx.arc(moonX, moonY, 70, 0, Math.PI * 2);
+    pixelDisc(ctx, moonX, moonY, 70, ctx.fillStyle);
     ctx.fill();
     ctx.fillStyle = '#fef3c7';
     ctx.beginPath();
-    ctx.arc(moonX, moonY, 26, 0, Math.PI * 2);
+    pixelDisc(ctx, moonX, moonY, 26, ctx.fillStyle);
     ctx.fill();
 
     // Silhouetted Ancient Sakura Branches
@@ -1787,7 +1769,7 @@ export class BattleUI {
       bGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = bGrad;
       ctx.beginPath();
-      ctx.arc(bx, by, 48, 0, Math.PI * 2);
+      pixelDisc(ctx, bx, by, 48, ctx.fillStyle);
       ctx.fill();
     }
 
@@ -1801,7 +1783,7 @@ export class BattleUI {
       ctx.rotate(time * 0.004 + p);
       ctx.fillStyle = p % 2 === 0 ? '#fbcfe8' : '#f472b6';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2);
+      pixelEllipse(ctx, 0, 0, 5, 2.5, ctx.fillStyle);
       ctx.fill();
       ctx.restore();
     }
@@ -1810,13 +1792,8 @@ export class BattleUI {
   // 4. FROSTPEAK SNOW (ยอดเขาหิมะและแสงเหนือ)
   private drawFrostpeakSnowBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Glacial Night to Deep Frost Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#020c1b');
-    bgGrad.addColorStop(0.35, '#08213f');
-    bgGrad.addColorStop(0.7, '#0e345c');
-    bgGrad.addColorStop(1.0, '#030812');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#020c1b'], [0.35, '#08213f'], [0.7, '#0e345c'], [1.0, '#030812']]);
 
     // Waving Aurora Borealis Curtains
     ctx.save();
@@ -1879,7 +1856,7 @@ export class BattleUI {
       const sy = ((time * 0.04 * (s % 3 + 1) + s * 35) % (h * 0.85));
       ctx.fillStyle = 'rgba(240, 249, 255, 0.85)';
       ctx.beginPath();
-      ctx.arc(sx, sy, 1.5 + (s % 2), 0, Math.PI * 2);
+      pixelDisc(ctx, sx, sy, 1.5 + (s % 2), ctx.fillStyle);
       ctx.fill();
     }
   }
@@ -1887,13 +1864,8 @@ export class BattleUI {
   // 5. VOLCANIC CALDERA & MAGMA CORE (ภูเขาไฟและธารลาวา)
   private drawVolcanicCalderaBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Dark Basalt to Scorching Orange Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#100503');
-    bgGrad.addColorStop(0.35, '#260a04');
-    bgGrad.addColorStop(0.7, '#451004');
-    bgGrad.addColorStop(1.0, '#080201');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#100503'], [0.35, '#260a04'], [0.7, '#451004'], [1.0, '#080201']]);
 
     // Cascading Molten Lava Falls in Background
     const lavaPulse = 0.85 + Math.sin(time * 0.007) * 0.15;
@@ -1912,7 +1884,7 @@ export class BattleUI {
       lGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = lGlow;
       ctx.beginPath();
-      ctx.arc(lx, h * 0.4, 80 * lavaPulse, 0, Math.PI * 2);
+      pixelDisc(ctx, lx, h * 0.4, 80 * lavaPulse, ctx.fillStyle);
       ctx.fill();
     }
 
@@ -1941,13 +1913,8 @@ export class BattleUI {
   // 6. DESERT DUNES & ANCIENT RUINS (ทะเลทรายและซากอารยธรรม)
   private drawDesertDunesBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Starry Desert Night to Warm Sand Horizon
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#060b1e');
-    bgGrad.addColorStop(0.4, '#171a33');
-    bgGrad.addColorStop(0.7, '#382b1c');
-    bgGrad.addColorStop(1.0, '#0f0c08');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060b1e'], [0.4, '#171a33'], [0.7, '#382b1c'], [1.0, '#0f0c08']]);
 
     // Stars in Desert Sky
     for (let s = 0; s < 30; s++) {
@@ -1987,13 +1954,8 @@ export class BattleUI {
   // 7. CRYSTAL CAVERN (ถ้ำคริสตัลอัญมณีประกาย)
   private drawCrystalCavernBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Deep Subterranean Amethyst & Teal Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#090312');
-    bgGrad.addColorStop(0.35, '#170929');
-    bgGrad.addColorStop(0.7, '#24103d');
-    bgGrad.addColorStop(1.0, '#05010a');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#090312'], [0.35, '#170929'], [0.7, '#24103d'], [1.0, '#05010a']]);
 
     // Cavern Ceiling Stalactites
     ctx.fillStyle = '#0c0517';
@@ -2023,7 +1985,7 @@ export class BattleUI {
       cGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = cGlow;
       ctx.beginPath();
-      ctx.arc(cx, cy - cHeight * 0.5, 60 * cPulse, 0, Math.PI * 2);
+      pixelDisc(ctx, cx, cy - cHeight * 0.5, 60 * cPulse, ctx.fillStyle);
       ctx.fill();
 
       // Faceted Crystal Body
@@ -2059,13 +2021,8 @@ export class BattleUI {
   // 8. CORAL COAST & OCEAN PIER (ชายฝั่งทะเลและเกาะปะการัง)
   private drawCoralOceanBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Tropical Azure Sky to Sea Horizon
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#082f49');
-    bgGrad.addColorStop(0.35, '#0e7490');
-    bgGrad.addColorStop(0.65, '#06b6d4');
-    bgGrad.addColorStop(1.0, '#021824');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#082f49'], [0.35, '#0e7490'], [0.65, '#06b6d4'], [1.0, '#021824']]);
 
     // Distant Tropical Island Silhouette
     ctx.fillStyle = '#083344';
@@ -2100,13 +2057,8 @@ export class BattleUI {
   // 9. ABYSSAL VOID GATE (มิติมืดและประตูสู่อเวจี)
   private drawAbyssalVoidBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Cosmic Void Black to Darkling Magenta
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#030005');
-    bgGrad.addColorStop(0.4, '#170321');
-    bgGrad.addColorStop(0.75, '#2e0840');
-    bgGrad.addColorStop(1.0, '#040008');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#030005'], [0.4, '#170321'], [0.75, '#2e0840'], [1.0, '#040008']]);
 
     // Swirling Abyssal Vortex in Center
     const vCX = w * 0.5;
@@ -2122,7 +2074,7 @@ export class BattleUI {
       vGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = vGrad;
       ctx.beginPath();
-      ctx.ellipse(30, 0, 60, 25, 0.4, 0, Math.PI * 2);
+      pixelEllipse(ctx, 30, 0, 60, 25, ctx.fillStyle);
       ctx.fill();
     }
     ctx.restore();
@@ -2143,13 +2095,8 @@ export class BattleUI {
   // 10. CELESTIAL SANCTUM (เกาะลอยฟ้าวิหารสวรรค์)
   private drawCelestialSanctumBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Divine Golden Dawn to Sky Azure Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#1e1b4b');
-    bgGrad.addColorStop(0.35, '#4338ca');
-    bgGrad.addColorStop(0.7, '#6366f1');
-    bgGrad.addColorStop(1.0, '#0f172a');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1e1b4b'], [0.35, '#4338ca'], [0.7, '#6366f1'], [1.0, '#0f172a']]);
 
     // Radiant Sunbeams / God-Rays
     ctx.save();
@@ -2179,13 +2126,8 @@ export class BattleUI {
   // 11. BOSS: DRAGON OVERLORD PRINCESS THRONE ROOM
   private drawBossDragonThroneBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
     // Crimson Magma to Imperial Gold Throne
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#1c0505');
-    bgGrad.addColorStop(0.35, '#3b0d0c');
-    bgGrad.addColorStop(0.7, '#571310');
-    bgGrad.addColorStop(1.0, '#0d0202');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1c0505'], [0.35, '#3b0d0c'], [0.7, '#571310'], [1.0, '#0d0202']]);
 
     // Grand Dragon Crest in Center
     const crestCX = w * 0.5;
@@ -2197,7 +2139,7 @@ export class BattleUI {
     crestGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = crestGlow;
     ctx.beginPath();
-    ctx.arc(crestCX, crestCY, 95 * crestPulse, 0, Math.PI * 2);
+    pixelDisc(ctx, crestCX, crestCY, 95 * crestPulse, ctx.fillStyle);
     ctx.fill();
 
     // Imperial Throne Silhouette
@@ -2242,13 +2184,13 @@ export class BattleUI {
     flameGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = flameGrad;
     ctx.beginPath();
-    ctx.arc(px, ty - 8, 40 * flamePulse, 0, Math.PI * 2);
+    pixelDisc(ctx, px, ty - 8, 40 * flamePulse, ctx.fillStyle);
     ctx.fill();
 
     // Core flame
     ctx.fillStyle = '#fef08a';
     ctx.beginPath();
-    ctx.arc(px, ty - 8, 3.5, 0, Math.PI * 2);
+    pixelDisc(ctx, px, ty - 8, 3.5, ctx.fillStyle);
     ctx.fill();
 
     // Floating ember sparks
@@ -2280,7 +2222,7 @@ export class BattleUI {
     // 1. Massive Colosseum Shadow Base
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + drop + 16, hw + 24, (hh + drop) * 0.46, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy + drop + 16, hw + 24, (hh + drop) * 0.46, ctx.fillStyle);
     ctx.fill();
 
     // 2. Foundation Cliff Wall - Left Shaded Face
@@ -2399,14 +2341,14 @@ export class BattleUI {
     ctx.strokeStyle = `rgba(251, 191, 36, ${0.35 * sealPulse})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, sealR, sealR * 0.48, 0, 0, Math.PI * 2);
+    pixelRing(ctx, cx, cy, sealR, sealR * 0.48, ctx.strokeStyle, 1);
     ctx.stroke();
 
     // Inner glowing ring
     ctx.strokeStyle = `rgba(245, 158, 11, ${0.5 * sealPulse})`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, sealR * 0.65, sealR * 0.65 * 0.48, 0, 0, Math.PI * 2);
+    pixelRing(ctx, cx, cy, sealR * 0.65, sealR * 0.65 * 0.48, ctx.strokeStyle, 1);
     ctx.stroke();
 
     // Central Dueling Cross / Star of Fortuna
@@ -2441,7 +2383,7 @@ export class BattleUI {
     // Pillar Shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.beginPath();
-    ctx.ellipse(bx, by + 10, 18, 9, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, bx, by + 10, 18, 9, ctx.fillStyle);
     ctx.fill();
 
     // Isometric Stepped Stone Plinth (Base)
@@ -2521,7 +2463,7 @@ export class BattleUI {
     glowGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
     ctx.fillStyle = glowGrad;
     ctx.beginPath();
-    ctx.arc(bx, bowlY - 8, 48, 0, Math.PI * 2);
+    pixelDisc(ctx, bx, bowlY - 8, 48, ctx.fillStyle);
     ctx.fill();
 
     // Outer Crimson Fire Tongue
@@ -2584,7 +2526,7 @@ export class BattleUI {
     // 1. Drop Shadow under Dais
     ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + dropHeight + 8, hw + 14, (hh + dropHeight) * 0.45, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy + dropHeight + 8, hw + 14, (hh + dropHeight) * 0.45, ctx.fillStyle);
     ctx.fill();
 
     // 2. Left Cliff Drop Face (Shadowed)
@@ -2660,7 +2602,6 @@ export class BattleUI {
     ctx.strokeStyle = runeColor;
     ctx.lineWidth = 2;
     ctx.shadowColor = runeColor;
-    ctx.shadowBlur = 10 * runePulse;
     ctx.globalAlpha = 0.85 * runePulse;
 
     const innerHw = hw - 10;
@@ -2700,17 +2641,16 @@ export class BattleUI {
     ctx.strokeStyle = color;
     ctx.lineWidth = pulse ? 2.8 : 2.0;
     ctx.shadowColor = color;
-    ctx.shadowBlur = pulse ? 16 : 8;
     ctx.globalAlpha = alpha;
 
     ctx.beginPath();
-    ctx.ellipse(cx, cy, r, r * 0.44, 0, 0, Math.PI * 2);
+    pixelRing(ctx, cx, cy, r, r * 0.44, ctx.strokeStyle, 1);
     ctx.stroke();
 
     // Ground contact shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy, r * 0.85, r * 0.38, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy, r * 0.85, r * 0.38, ctx.fillStyle);
     ctx.fill();
 
     ctx.restore();

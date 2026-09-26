@@ -4,6 +4,7 @@ import { townManager } from '../game/TownManager';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
+import { pixelVerticalRamp } from '../engine/PixelFx';
 
 export class TownUI {
   private game: GameState;
@@ -176,12 +177,8 @@ export class TownUI {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Sky & Atmospheric Backdrop Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#060a14');
-    bgGrad.addColorStop(0.5, '#0f172a');
-    bgGrad.addColorStop(1, '#020617');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060a14'], [0.5, '#0f172a'], [1, '#020617']]);
 
     // 2. 2.5D Isometric Flagstone Ground Paving
     const tw = 48;

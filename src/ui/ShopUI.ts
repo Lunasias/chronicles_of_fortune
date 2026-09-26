@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { EquipmentItem, pixelSprites } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
+import {pixelDisc, pixelVerticalRamp } from '../engine/PixelFx';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Multi-Spinners (Tiers 1-5)
@@ -230,12 +231,8 @@ export class ShopUI {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Cozy Shop Chamber Gradient
-    const bg = ctx.createLinearGradient(0, 0, 0, h);
-    bg.addColorStop(0, '#090d16');
-    bg.addColorStop(0.5, '#1e293b');
-    bg.addColorStop(1, '#0b1120');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, w, h);
+    // Authored stops kept; the space between them is banded rather than interpolated.
+    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#090d16'], [0.5, '#1e293b'], [1, '#0b1120']]);
 
     // 2. 2.5D Isometric Flagstone Floor
     const tw = 48;
@@ -295,12 +292,10 @@ export class ShopUI {
       // Arcane glowing orbs on counter
       ctx.fillStyle = '#38bdf8';
       ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(counterX + 22, counterY - 2, 6, 0, Math.PI * 2);
-      ctx.arc(counterX + counterW - 22, counterY - 2, 6, 0, Math.PI * 2);
+      pixelDisc(ctx, counterX + 22, counterY - 2, 6, ctx.fillStyle);
+      pixelDisc(ctx, counterX + counterW - 22, counterY - 2, 6, ctx.fillStyle);
       ctx.fill();
-      ctx.shadowBlur = 0;
     } else {
       // Potions & gold pouch on counter
       ctx.fillStyle = '#ef4444';
@@ -309,7 +304,7 @@ export class ShopUI {
       ctx.fillRect(counterX + 30, counterY - 8, 8, 10);
       ctx.fillStyle = '#f59e0b';
       ctx.beginPath();
-      ctx.arc(counterX + counterW - 20, counterY - 4, 7, 0, Math.PI * 2);
+      pixelDisc(ctx, counterX + counterW - 20, counterY - 4, 7, ctx.fillStyle);
       ctx.fill();
     }
   }

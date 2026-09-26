@@ -1,0 +1,50 @@
+Pixelise the board overlays, the combat VFX and the UI canvas scenes
+
+The last code still drawing soft shapes: the board's node seals, tile highlights, sonar pulses,
+path beams and glow sprites, the whole combat VFX engine, and the battle, shop and town canvas
+scenes. Between them: radial and linear gradients, ctx.arc and ctx.ellipse circles, and fourteen
+shadowBlur passes in the combat effects alone. A Gaussian blur cannot exist in pixel art - it is
+the one operation that produces colours no palette contains, so those were the first to go.
+
+New `src/engine/PixelFx.ts`: pixelDisc, pixelEllipse, pixelRing, pixelGlow, pixelVignette,
+pixelStroke, pixelSpark, pixelBlock, pixelVerticalRamp, pixelRadialGlow. Every shape is emitted as
+integer fillRect scanlines, so nothing antialiases, and every glow is a set of stepped rings rather
+than a falloff, so the colour count stays bounded. The colour parameter is
+`string | CanvasGradient | CanvasPattern` because that is what a canvas accepts - the gradient call
+sites have their gradient removed rather than papered over by the type.
+
+Converted:
+
+  * 31 circles and ellipses across the board renderer, the VFX engine and the battle/shop/HUD
+    canvases, via `scripts/pixelise_fx.cjs`. The rewrite replaces the geometry call and leaves the
+    surrounding beginPath/fill/stroke pipeline in place as a no-op on an empty path, which is what
+    makes a mechanical rewrite of a 2,700-line file safe. The script scans forward for a following
+    stroke() as well as a fill(), because every node seal is both filled and outlined and stopping
+    at the first fill() would have silently deleted the highlight ring from all of them.
+  * 22 shadowBlur assignments, deleted.
+  * 13 backdrop ramps via `scripts/pixelise_backdrops.cjs`: eleven battle arenas plus the shop
+    interior and the town view. The authored colour stops are kept - they are each biome's
+    identity - and only the space between them is banded.
+  * The screen vignette, which was a screen-sized radial gradient and the most expensive soft draw
+    in the frame, is now hard bands drawn inward from the edge. Banded edges read as a CRT bezel.
+  * The rising light pillar, the swept slash arcs, the fireball core, the holy light pillar, the
+    town and player light pools, and the guide beam over a reachable tile.
+  * The guide beam and the light pillar fade by getting dimmer in discrete bands rather than by
+    interpolating, and the slash arc steps along its own radius so the blade edge is a staircase.
+
+Also fixed: two half-arc domes (a forest mushroom cap and a gothic headstone) that used
+`ctx.arc(..., Math.PI, ...)` are now integer-row domes.
+
+Not converted, and why:
+
+  * `PixelSpriteGenerator.ts`, `CustomIsometricHeroRenderer.ts` and
+    `CustomIsometricMonsterRenderer.ts` still contain soft drawing. These are the character and
+    monster models, which are out of scope.
+  * The battle arenas' radial glows still pass a `CanvasGradient` to `pixelDisc`, so their rim is
+    hard-edged but the interior is still a smooth ramp. `pixelRadialGlow` is the finished helper
+    for them; converting the call sites needs a per-site decision about whether each glow lies on
+    the floor (a squashed 2:1 ellipse) or floats, so it is left as the next step rather than done
+    blindly.
+
+Verification: 129 tests green, typecheck green, 11/11 Tailwind spot checks, 12/12 pixel UI
+components present, 8/8 glass utilities absent.

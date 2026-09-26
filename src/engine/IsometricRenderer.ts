@@ -4,6 +4,7 @@ import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
+import { pixelDisc, pixelEllipse, pixelGlow, pixelRing, pixelVignette } from './PixelFx';
 
 export interface Camera2D {
   x: number;
@@ -324,12 +325,10 @@ export class IsometricRenderer {
     }
 
     // 10. Dark Fantasy Gothic Atmospheric Vignette Overlay
-    const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.75);
-    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    vignette.addColorStop(0.65, 'rgba(6, 10, 20, 0.20)');
-    vignette.addColorStop(1.0, 'rgba(2, 4, 10, 0.75)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
+    // Hard bands drawn inward from the screen edge rather than a radial gradient. A screen-sized
+    // gradient is both the most expensive soft draw in the frame and the most out of place here;
+    // banded edges read as a CRT bezel, which is what this overlay always wanted to be.
+    pixelVignette(ctx, w, h, '#02040a', 7, 0.75);
   }
 
 
@@ -489,12 +488,12 @@ export class IsometricRenderer {
             ctx.save();
             ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
             ctx.beginPath();
-            ctx.ellipse(px, py + 16, 42, 16, 0, 0, Math.PI * 2);
+            pixelEllipse(ctx, px, py + 16, 42, 16, ctx.fillStyle);
             ctx.fill();
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.beginPath();
-            ctx.ellipse(px, py + 14, 34, 12, 0, 0, Math.PI * 2);
+            pixelEllipse(ctx, px, py + 14, 34, 12, ctx.fillStyle);
             ctx.fill();
             ctx.restore();
 
@@ -887,13 +886,14 @@ export class IsometricRenderer {
     ctx.save();
     // 1. Soft Ground Occlusion Shadow
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 2, 25, 16, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy + 2, 25, 16, 'rgba(2, 6, 18, 0.48)');
     ctx.fillStyle = 'rgba(2, 6, 18, 0.48)';
     ctx.fill();
 
     // 2. Weathered Iron / Bronze Outer Rim
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 23, 14, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy, 23, 14, '#090d16');
+    pixelRing(ctx, cx, cy, 23, 14, isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569', Math.max(1, Math.round(2.0)));
     ctx.fillStyle = '#090d16';
     ctx.fill();
     ctx.strokeStyle = isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569';
@@ -902,7 +902,8 @@ export class IsometricRenderer {
 
     // 3. Inner Gemstone Core
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 18, 11, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy, 18, 11, isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor);
+    pixelRing(ctx, cx, cy, 18, 11, isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#94a3b8', Math.max(1, Math.round(1.2)));
     ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor;
     ctx.fill();
     ctx.strokeStyle = isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#94a3b8';
@@ -930,21 +931,21 @@ export class IsometricRenderer {
       // Soft filled inner ambient light
       ctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.22)' : 'rgba(0, 240, 255, 0.16)';
       ctx.beginPath();
-      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
+      pixelEllipse(ctx, cx, cy, groundRx, groundRy, ctx.fillStyle);
       ctx.fill();
 
       // Outer glow aura stroke
       ctx.strokeStyle = fillGlow;
       ctx.lineWidth = isHovered ? 5.5 : 4.0;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
+      pixelRing(ctx, cx, cy, groundRx, groundRy, ctx.strokeStyle, 1);
       ctx.stroke();
 
       // Sharp primary boundary ring
       ctx.strokeStyle = ringColor;
       ctx.lineWidth = isHovered ? 2.5 : 1.8;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, groundRx, groundRy, 0, 0, Math.PI * 2);
+      pixelRing(ctx, cx, cy, groundRx, groundRy, ctx.strokeStyle, 1);
       ctx.stroke();
 
       // 4.2 Expanding Active Sonar / Runic Pulse Wave on Ground
@@ -955,7 +956,7 @@ export class IsometricRenderer {
       ctx.strokeStyle = isHovered ? `rgba(251, 191, 36, ${pulseAlpha})` : `rgba(0, 240, 255, ${pulseAlpha})`;
       ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, pulseRx, pulseRy, 0, 0, Math.PI * 2);
+      pixelRing(ctx, cx, cy, pulseRx, pulseRy, ctx.strokeStyle, 1);
       ctx.stroke();
 
       // 4.3 Sleek High-Tech / Fantasy Corner Targeting Brackets [ ]
@@ -1057,21 +1058,25 @@ export class IsometricRenderer {
 
       ctx.save();
 
-      // 1. Soft Vertical Translucent Light Column (Non-intrusive guide ray)
+      // 1. Stepped Translucent Light Column (Non-intrusive guide ray)
+      // Bands of decreasing alpha instead of a vertical gradient: the beam has to fade, and a
+      // gradient across a beam is the same soft ramp this whole pass exists to remove.
       const beamW = isHovered ? 26 : 18;
-      const grad = ctx.createLinearGradient(px, py, px, pointerY);
-      grad.addColorStop(0, isHovered ? 'rgba(251, 191, 36, 0.22)' : 'rgba(0, 240, 255, 0.16)');
-      grad.addColorStop(0.7, isHovered ? 'rgba(251, 191, 36, 0.08)' : 'rgba(0, 240, 255, 0.05)');
-      grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
-
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(px - beamW * 0.5, py + 8);
-      ctx.lineTo(px + beamW * 0.5, py + 8);
-      ctx.lineTo(px + beamW * 0.25, pointerY + 12);
-      ctx.lineTo(px - beamW * 0.25, pointerY + 12);
-      ctx.closePath();
-      ctx.fill();
+      const beamTop = pointerY + 12;
+      const beamBottom = py + 8;
+      const beamBands = 7;
+      for (let b = 0; b < beamBands; b++) {
+        const t = b / beamBands;
+        const y0 = beamBottom + (beamTop - beamBottom) * t;
+        const y1 = beamBottom + (beamTop - beamBottom) * ((b + 1) / beamBands);
+        const halfW = beamW * 0.5 * (1 - t * 0.5);
+        ctx.globalAlpha = (isHovered ? 0.22 : 0.16) * (1 - t) * (1 - t);
+        ctx.fillStyle = isHovered ? '#fbbf24' : '#00f0ff';
+        for (let y = Math.round(Math.min(y0, y1)); y < Math.round(Math.max(y0, y1)); y++) {
+          ctx.fillRect(Math.round(px - halfW), y, Math.max(1, Math.round(halfW * 2)), 1);
+        }
+      }
+      ctx.globalAlpha = 1;
 
       // 2. High-Visibility 3D Downward Pointer Arrow
       const arrowScale = isHovered ? 1.25 : 1.0;
@@ -1186,9 +1191,11 @@ export class IsometricRenderer {
       ctx.fillStyle = '#1e1b4b';
       ctx.fillRect(px - 3, py - 18, 6, 20);
       ctx.fillStyle = '#c084fc';
-      ctx.beginPath();
-      ctx.arc(px, py - 20, 8, 0, Math.PI, true);
-      ctx.fill();
+      // A half-arc dome, drawn as integer rows so the cap has a staircase rim.
+      for (let dy = 8; dy >= 0; dy--) {
+        const w = Math.floor(Math.sqrt(Math.max(0, 64 - dy * dy)));
+        ctx.fillRect(px - w, py - 20 - (8 - dy), w * 2 + 1, 1);
+      }
       // Pixel mushroom cap spots
       ctx.fillStyle = '#f0abfc';
       ctx.fillRect(px - 4, py - 24, 2, 2);
@@ -1207,7 +1214,7 @@ export class IsometricRenderer {
       ctx.fillRect(px - 4, py - 20, 8, 22);
       ctx.fillStyle = '#0284c7';
       ctx.beginPath();
-      ctx.arc(px, py - 24, 5, 0, Math.PI * 2);
+      pixelDisc(ctx, px, py - 24, 5, ctx.fillStyle);
       ctx.fill();
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(px - 2, py - 26, 3, 3);
@@ -1236,9 +1243,11 @@ export class IsometricRenderer {
       // Ashen Kingdom: Ruined gothic headstone
       ctx.fillStyle = '#334155';
       ctx.fillRect(px - 6, py - 18, 12, 20);
-      ctx.beginPath();
-      ctx.arc(px, py - 18, 6, Math.PI, 0);
-      ctx.fill();
+      // A rounded headstone top, as integer rows rather than a ctx.arc.
+      for (let dy = 6; dy >= 0; dy--) {
+        const w = Math.floor(Math.sqrt(Math.max(0, 36 - dy * dy)));
+        ctx.fillRect(px - w, py - 18 - (6 - dy), w * 2 + 1, 1);
+      }
       ctx.fillStyle = '#64748b';
       ctx.fillRect(px - 1, py - 16, 2, 10);
       ctx.fillRect(px - 4, py - 13, 8, 2);
@@ -1257,11 +1266,11 @@ export class IsometricRenderer {
     // 1. Soft Ground Shadow with Ambient Occlusion
     ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
     ctx.beginPath();
-    ctx.ellipse(px, py + 9, 24, 12, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, px, py + 9, 24, 12, ctx.fillStyle);
     ctx.fill();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.50)';
     ctx.beginPath();
-    ctx.ellipse(px, py + 8, 18, 9, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, px, py + 8, 18, 9, ctx.fillStyle);
     ctx.fill();
 
     // 2. Active Player Halo
@@ -1270,7 +1279,7 @@ export class IsometricRenderer {
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.ellipse(px, py + 8, 24 + pulse, 12 + pulse * 0.5, 0, 0, Math.PI * 2);
+      pixelRing(ctx, px, py + 8, 24 + pulse, 12 + pulse * 0.5, ctx.strokeStyle, 1);
       ctx.stroke();
     }
 
@@ -1308,7 +1317,7 @@ export class IsometricRenderer {
       const d = this.dustPuffs[i];
       ctx.fillStyle = `rgba(203, 213, 225, ${d.alpha})`;
       ctx.beginPath();
-      ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+      pixelDisc(ctx, d.x, d.y, d.size, ctx.fillStyle);
       ctx.fill();
 
       d.size += 0.3;
@@ -1395,7 +1404,7 @@ export class IsometricRenderer {
         if (p.x < -1600) p.x = 1600;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+        pixelDisc(ctx, p.x, p.y, p.size * 0.7, ctx.fillStyle);
         ctx.fill();
       });
     } else if (weather === 'heatwave') {
@@ -1421,7 +1430,7 @@ export class IsometricRenderer {
 
         ctx.fillStyle = idx % 2 === 0 ? 'rgba(168, 85, 247, 0.6)' : 'rgba(244, 63, 94, 0.5)';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+        pixelDisc(ctx, p.x, p.y, p.size * 0.8, ctx.fillStyle);
         ctx.fill();
       });
     } else {
@@ -1442,21 +1451,22 @@ export class IsometricRenderer {
   private townGlowCanvas: HTMLCanvasElement | null = null;
   private playerGlowCanvas: HTMLCanvasElement | null = null;
 
+  /**
+   * The town and player light pools, as stepped ring glows.
+   *
+   * These were cached `createRadialGradient` discs. A gradient disc is a soft ramp painted across
+   * the ground, which is the same mistake the floor tiles had; a set of discrete rings with
+   * stepped alpha reads as light and keeps the colour count bounded.
+   */
   private getTownGlowCanvas(): HTMLCanvasElement {
     if (this.townGlowCanvas) return this.townGlowCanvas;
     const c = document.createElement('canvas');
     c.width = 190;
     c.height = 190;
     const ctx = c.getContext('2d')!;
-    const grad = ctx.createRadialGradient(95, 95, 6, 95, 95, 95);
-    grad.addColorStop(0, 'rgba(251, 191, 36, 0.40)');
-    grad.addColorStop(0.4, 'rgba(245, 158, 11, 0.18)');
-    grad.addColorStop(0.8, 'rgba(217, 119, 6, 0.06)');
-    grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(95, 95, 95, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    pixelGlow(ctx, 95, 95, 95, '#fbbf24', 0.42, 6);
+    pixelDisc(ctx, 95, 95, 26, '#f59e0b', 0.16);
     this.townGlowCanvas = c;
     return c;
   }
@@ -1467,15 +1477,9 @@ export class IsometricRenderer {
     c.width = 140;
     c.height = 140;
     const ctx = c.getContext('2d')!;
-    const grad = ctx.createRadialGradient(70, 70, 4, 70, 70, 70);
-    grad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
-    grad.addColorStop(0.35, 'rgba(251, 191, 36, 0.16)');
-    grad.addColorStop(0.75, 'rgba(245, 158, 11, 0.05)');
-    grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(70, 70, 70, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    pixelGlow(ctx, 70, 70, 70, '#fef08a', 0.34, 5);
+    pixelDisc(ctx, 70, 70, 18, '#fbbf24', 0.14);
     this.playerGlowCanvas = c;
     return c;
   }

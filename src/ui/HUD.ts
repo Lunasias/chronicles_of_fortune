@@ -3,6 +3,7 @@ import { Player } from '../game/Player';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { escapeHtml } from '../util/Html';
+import { pixelDisc } from '../engine/PixelFx';
 
 export class HUD {
   private game: GameState;
@@ -326,7 +327,7 @@ export class HUD {
     this.game.players.forEach(pl => {
       ctx.fillStyle = pl.isDarkling ? '#f43f5e' : pl.color;
       ctx.beginPath();
-      ctx.arc(pl.gridX * scaleX, pl.gridY * scaleY, 4, 0, Math.PI * 2);
+      pixelDisc(ctx, pl.gridX * scaleX, pl.gridY * scaleY, 4, ctx.fillStyle);
       ctx.fill();
     });
   }

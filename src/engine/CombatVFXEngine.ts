@@ -1,3 +1,5 @@
+import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelGlow, pixelVignette } from './PixelFx';
+
 export interface Particle {
   x: number;
   y: number;
@@ -859,17 +861,10 @@ export class CombatVFXEngine {
     // 0. Cinematic Vignette Dimming during Skill Cutscene
     if (this.cutsceneDimAlpha > 0) {
       ctx.save();
-      const vignette = ctx.createRadialGradient(
-        arenaWidth * 0.5,
-        arenaHeight * 0.5,
-        arenaWidth * 0.2,
-        arenaWidth * 0.5,
-        arenaHeight * 0.5,
-        arenaWidth * 0.7
-      );
-      vignette.addColorStop(0, `rgba(0, 0, 0, ${this.cutsceneDimAlpha * 0.3})`);
-      vignette.addColorStop(1, `rgba(15, 2, 8, ${this.cutsceneDimAlpha * 0.85})`);
-      ctx.fillStyle = vignette;
+      // Banded dimming rather than a radial gradient: the arena is drawn at pixel scale, so a
+      // screen-sized gradient would be the only soft ramp in the battle.
+      pixelVignette(ctx, arenaWidth, arenaHeight, '#0f0208', 6, Math.min(0.85, this.cutsceneDimAlpha * 0.85));
+      ctx.fillStyle = `rgba(0, 0, 0, ${this.cutsceneDimAlpha * 0.3})`;
       ctx.fillRect(0, 0, arenaWidth, arenaHeight);
 
       // Gothic Skill Title Banner
@@ -878,9 +873,7 @@ export class CombatVFXEngine {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fde047';
         ctx.shadowColor = '#e11d48';
-        ctx.shadowBlur = 18;
         ctx.fillText(`⚡ ${this.activeCutscene.skillName.toUpperCase()} ⚡`, arenaWidth * 0.5, 60);
-        ctx.shadowBlur = 0;
 
         this.renderSkillCinematic(ctx, arenaWidth, arenaHeight, this.activeCutscene);
       }
@@ -893,7 +886,6 @@ export class CombatVFXEngine {
       ctx.strokeStyle = `rgba(239, 68, 68, ${c.alpha})`;
       ctx.lineWidth = 3.5;
       ctx.shadowColor = '#b91c1c';
-      ctx.shadowBlur = 10;
       ctx.beginPath();
       c.points.forEach((pt, idx) => {
         if (idx === 0) ctx.moveTo(pt.x, pt.y);
@@ -914,17 +906,16 @@ export class CombatVFXEngine {
       ctx.globalAlpha = r.alpha;
       ctx.lineWidth = 3;
       ctx.shadowColor = r.color;
-      ctx.shadowBlur = 16;
 
       // Outer Runic Ring
       ctx.beginPath();
-      ctx.arc(0, 0, r.radius, 0, Math.PI * 2);
+      pixelRing(ctx, 0, 0, r.radius, r.radius, ctx.strokeStyle, 1);
       ctx.stroke();
 
       // Inner Pentagram / Hex lines
       if (r.isNested) {
         ctx.beginPath();
-        ctx.arc(0, 0, r.radius * 0.65, 0, Math.PI * 2);
+        pixelRing(ctx, 0, 0, r.radius * 0.65, r.radius * 0.65, ctx.strokeStyle, 1);
         ctx.stroke();
 
         ctx.save();
@@ -953,14 +944,13 @@ export class CombatVFXEngine {
       ctx.globalAlpha = p.alpha;
       ctx.lineWidth = 4;
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 24;
 
       ctx.beginPath();
-      ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+      pixelRing(ctx, 0, 0, p.radius, p.radius, ctx.strokeStyle, 1);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(0, 0, p.radius * 0.7, 0, Math.PI * 2);
+      pixelRing(ctx, 0, 0, p.radius * 0.7, p.radius * 0.7, ctx.strokeStyle, 1);
       ctx.stroke();
 
       // Rotating glyphs
@@ -976,36 +966,53 @@ export class CombatVFXEngine {
       ctx.restore();
       ctx.restore();
 
-      // Rising Light Pillar
-      ctx.save();
-      ctx.globalAlpha = p.alpha * 0.75;
-      const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y - p.pillarHeight);
-      grad.addColorStop(0, p.color);
-      grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)');
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = grad;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 20;
-
-      ctx.beginPath();
-      ctx.rect(p.x - p.radius * 0.6, p.y - p.pillarHeight, p.radius * 1.2, p.pillarHeight);
-      ctx.fill();
+      // Rising Light Pillar: stepped bands from the base colour up to white, instead of a
+      // three-stop gradient. A beam that fades by getting sparser reads as light; one that fades
+      // by interpolating reads as a CSS effect.
+      const bands = 8;
+      const pillarX = p.x - p.radius * 0.6;
+      const pillarW = Math.max(1, Math.round(p.radius * 1.2));
+      for (let b = 0; b < bands; b++) {
+        const t = b / bands;
+        const y = p.y - p.pillarHeight * ((b + 1) / bands);
+        const h = Math.max(1, Math.ceil(p.pillarHeight / bands));
+        ctx.globalAlpha = p.alpha * 0.75 * (1 - t * 0.65);
+        ctx.fillStyle = t < 0.4 ? p.color : '#ffffff';
+        ctx.fillRect(Math.round(pillarX), Math.round(y), pillarW, h);
+      }
+      ctx.globalAlpha = 1;
       ctx.restore();
     });
 
     // 3. Draw Diagonal Slash Arcs
     this.slashArcs.forEach(arc => {
       ctx.save();
-      ctx.strokeStyle = arc.color;
+      // A swept arc is stepped into integer segments along its own radius, so the blade edge is a
+      // pixel staircase rather than a resampled curve, and the whole arc uses one colour instead
+      // of a `shadowBlur` halo.
+      const sweep = arc.endAngle - arc.startAngle;
+      const segments = Math.max(4, Math.round((Math.abs(sweep) * arc.radius) / 3));
+      const thickness = Math.max(1, Math.round(arc.width));
       ctx.globalAlpha = arc.alpha;
-      ctx.lineWidth = arc.width;
-      ctx.lineCap = 'round';
-      ctx.shadowColor = arc.color;
-      ctx.shadowBlur = 18;
-
-      ctx.beginPath();
-      ctx.arc(arc.x, arc.y, arc.radius, arc.startAngle, arc.endAngle);
-      ctx.stroke();
+      ctx.fillStyle = arc.color;
+      for (let i = 0; i <= segments; i++) {
+        const a = arc.startAngle + (sweep * i) / segments;
+        const x = arc.x + Math.cos(a) * arc.radius;
+        const y = arc.y + Math.sin(a) * arc.radius;
+        ctx.fillRect(Math.round(x - thickness / 2), Math.round(y - thickness / 2), thickness, thickness);
+      }
+      // A brighter core along the middle of the sweep, which is what a blade edge looks like.
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i <= segments; i += 2) {
+        const a = arc.startAngle + (sweep * i) / segments;
+        ctx.fillRect(
+          Math.round(arc.x + Math.cos(a) * arc.radius),
+          Math.round(arc.y + Math.sin(a) * arc.radius),
+          1,
+          1
+        );
+      }
+      ctx.globalAlpha = 1;
       ctx.restore();
     });
 
@@ -1025,7 +1032,6 @@ export class CombatVFXEngine {
       ctx.strokeStyle = b.color;
       ctx.lineWidth = b.width * 2.2;
       ctx.shadowColor = b.color;
-      ctx.shadowBlur = 30;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -1056,24 +1062,24 @@ export class CombatVFXEngine {
       const ringSpacing = 35;
       for (let rx = 20; rx < dist - 15; rx += ringSpacing) {
         ctx.beginPath();
-        ctx.ellipse(rx, 0, 8, b.width * 0.75, 0, 0, Math.PI * 2);
+        pixelRing(ctx, rx, 0, 8, b.width * 0.75, ctx.strokeStyle, 1);
         ctx.stroke();
       }
 
       // Muzzle flare
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(0, 0, b.width * 0.8, 0, Math.PI * 2);
+      pixelDisc(ctx, 0, 0, b.width * 0.8, ctx.fillStyle);
       ctx.fill();
 
       // Target impact flare
       ctx.fillStyle = b.color;
       ctx.beginPath();
-      ctx.arc(dist, 0, b.width * 1.5, 0, Math.PI * 2);
+      pixelDisc(ctx, dist, 0, b.width * 1.5, ctx.fillStyle);
       ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(dist, 0, b.width * 0.7, 0, Math.PI * 2);
+      pixelDisc(ctx, dist, 0, b.width * 0.7, ctx.fillStyle);
       ctx.fill();
 
       ctx.restore();
@@ -1085,9 +1091,8 @@ export class CombatVFXEngine {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.alpha;
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      pixelDisc(ctx, p.x, p.y, p.size, ctx.fillStyle);
       ctx.fill();
       ctx.restore();
     });
@@ -1105,7 +1110,6 @@ export class CombatVFXEngine {
       // Colored core with glow
       ctx.fillStyle = ft.color;
       ctx.shadowColor = ft.shadowColor;
-      ctx.shadowBlur = 10;
       ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
     });
@@ -1156,28 +1160,21 @@ export class CombatVFXEngine {
         ctx.fillRect(0, 0, arenaWidth, arenaHeight);
       }
 
-      // Expanding Fireball Core
-      const grad = ctx.createRadialGradient(
-        cut.targetX, cut.targetY - 25, 5,
-        cut.targetX, cut.targetY - 25, Math.max(10, currentR)
-      );
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      grad.addColorStop(0.2, 'rgba(254, 240, 138, 0.9)');
-      grad.addColorStop(0.5, 'rgba(239, 68, 68, 0.85)');
-      grad.addColorStop(0.8, 'rgba(127, 29, 29, 0.7)');
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      // Expanding Fireball Core: concentric stepped discs rather than a five-stop radial
+      // gradient. White hot at the centre, through gold and red to nothing, in four hard rings.
+      const coreY = cut.targetY - 25;
+      const coreRings: Array<[number, string, number]> = [
+        [1.0, '#7f1d1d', 0.7],
+        [0.78, '#ef4444', 0.85],
+        [0.5, '#fef08a', 0.9],
+        [0.22, '#ffffff', 0.95]
+      ];
+      for (const [k, colour, alpha] of coreRings) {
+        pixelDisc(ctx, cut.targetX, coreY, Math.max(4, currentR * k), colour, alpha);
+      }
 
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cut.targetX, cut.targetY - 25, currentR, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Shockwave ellipse
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.ellipse(cut.targetX, cut.targetY, currentR * 1.3, currentR * 0.55, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      // Shockwave ring: two stepped rings, the outer one dashed so it reads as a wave front.
+      pixelRing(ctx, cut.targetX, cut.targetY, currentR * 1.3, currentR * 0.55, '#fef08a', 3, true, cut.elapsed * 0.4);
 
       ctx.restore();
     } else if (cls === 'cleric') {
@@ -1187,17 +1184,19 @@ export class CombatVFXEngine {
 
       ctx.save();
       // Holy Light Pillar
-      const pillarGrad = ctx.createLinearGradient(cut.targetX - 45, 0, cut.targetX + 45, 0);
-      pillarGrad.addColorStop(0, 'rgba(253, 224, 71, 0)');
-      pillarGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.75)');
-      pillarGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
-      ctx.fillStyle = pillarGrad;
-      ctx.fillRect(cut.targetX - 50, 0, 100, arenaHeight);
+      // Holy Light Pillar: a bright core band with two dimmer shoulders, instead of a horizontal
+      // gradient. Hard vertical edges are what make it read as a shaft of light.
+      ctx.fillStyle = '#fef08a';
+      ctx.globalAlpha = 0.75;
+      ctx.fillRect(cut.targetX - 30, 0, 60, arenaHeight);
+      ctx.globalAlpha = 0.32;
+      ctx.fillRect(cut.targetX - 44, 0, 14, arenaHeight);
+      ctx.fillRect(cut.targetX + 30, 0, 14, arenaHeight);
+      ctx.globalAlpha = 1;
 
       // Giant Radiant Golden Cross
       ctx.fillStyle = '#fef08a';
       ctx.shadowColor = '#eab308';
-      ctx.shadowBlur = 24;
 
       // Vertical beam
       ctx.fillRect(cut.targetX - 12, crossY, 24, 150);
@@ -1208,7 +1207,7 @@ export class CombatVFXEngine {
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(cut.targetX, crossY + 49, 36, 0, Math.PI * 2);
+      pixelRing(ctx, cut.targetX, crossY + 49, 36, 36, ctx.strokeStyle, 1);
       ctx.stroke();
 
       ctx.restore();
@@ -1225,7 +1224,6 @@ export class CombatVFXEngine {
       // Phantom Giant Broadsword Blade
       ctx.fillStyle = cut.isDarkling ? '#be123c' : '#38bdf8';
       ctx.shadowColor = cut.isDarkling ? '#e11d48' : '#60a5fa';
-      ctx.shadowBlur = 22;
 
       // Blade (Colossal Titan Size!)
       ctx.beginPath();
@@ -1255,10 +1253,9 @@ export class CombatVFXEngine {
 
         ctx.fillStyle = 'rgba(16, 185, 129, 0.75)';
         ctx.shadowColor = '#10b981';
-        ctx.shadowBlur = 14;
 
         ctx.beginPath();
-        ctx.arc(cloneX, cloneY - 20, 10, 0, Math.PI * 2);
+        pixelDisc(ctx, cloneX, cloneY - 20, 10, ctx.fillStyle);
         ctx.fill();
 
         ctx.fillRect(cloneX - 7, cloneY - 10, 14, 20);
@@ -1280,7 +1277,6 @@ export class CombatVFXEngine {
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 14 + Math.sin(cut.elapsed * 0.5) * 6;
       ctx.shadowColor = '#ec4899';
-      ctx.shadowBlur = 24;
 
       ctx.beginPath();
       ctx.moveTo(0, waveY);
