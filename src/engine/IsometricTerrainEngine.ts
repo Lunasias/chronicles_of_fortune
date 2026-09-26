@@ -2,6 +2,7 @@ import { BoardNode, BiomeType, RealmId } from '../game/BoardMap';
 import { TimeOfDay } from '../game/EcosystemSystem';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H } from './IsometricTerrainPainter';
+import { PROP_BASE_X, PROP_BASE_Y } from './IsometricPropPainter';
 
 export interface TerrainTile {
   gx: number;
@@ -416,8 +417,10 @@ export class IsometricTerrainEngine {
     maxX: number,
     minY: number,
     maxY: number,
-    time: number
+    time: number,
+    timeOfDay: TimeOfDay
   ) {
+    const night = timeOfDay === 'NIGHT';
     const props = this.environmentProps;
     const len = props.length;
 
@@ -426,349 +429,38 @@ export class IsometricTerrainEngine {
       if (prop.x < minX - 32 || prop.x > maxX + 32 || prop.y < minY - 32 || prop.y > maxY + 32) {
         continue;
       }
-      this.drawEnvironmentProp(ctx, prop, time);
+      this.drawEnvironmentProp(ctx, prop, time, night);
     }
   }
 
   // =========================================================================
-  // RENDER ENVIRONMENTAL CLUTTER PROPS (Rocks, Grass Tufts, Flowers, Shrubs)
+  // RENDER ENVIRONMENTAL CLUTTER PROPS (Rocks, Grass Tufts, Flowers, Shrubs, Crystals)
   // =========================================================================
+  /**
+   * Blits one piece of floor clutter from the pixel-art cache.
+   *
+   * The sway is rounded to whole pixels: the sprite is drawn 1:1 with smoothing disabled, so a
+   * fractional offset would make the prop shimmer between two pixel grids instead of swaying.
+   */
   public drawEnvironmentProp(
     ctx: CanvasRenderingContext2D,
     prop: EnvironmentProp,
-    time: number
-  ) {
-    // Gentle wind sway animation for living vegetation props
-    const windSway = (prop.type === 'grass' || prop.type === 'flower' || prop.type === 'shrub')
-      ? Math.sin(time * 0.003 + prop.x * 0.05 + prop.y * 0.03) * 2.0
-      : 0;
-
-    const px = prop.x + windSway;
-    const py = prop.y;
-
-    switch (prop.type) {
-      case 'rock':
-        this.drawRockProp(ctx, px, py, prop.biome, prop.variant, prop.scale);
-        break;
-
-      case 'grass':
-        this.drawGrassTuftProp(ctx, px, py, prop.biome, prop.variant, prop.scale);
-        break;
-
-      case 'flower':
-        this.drawFlowerPatchProp(ctx, px, py, prop.biome, prop.variant, prop.scale);
-        break;
-
-      case 'shrub':
-        this.drawShrubProp(ctx, px, py, prop.biome, prop.variant, prop.scale);
-        break;
-
-      case 'crystal':
-        this.drawCrystalProp(ctx, px, py, prop.biome, time, prop.scale);
-        break;
-    }
-  }
-
-  // 1. ROCKS & BOULDERS (เธซเธดเธ)
-  private drawRockProp(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    py: number,
-    biome: BiomeType,
-    variant: number,
-    scale: number
-  ) {
-    const rw = (14 + variant * 3) * scale;
-    const rh = (10 + variant * 2) * scale;
-
-    // Ground shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(px, py + 2, rw * 0.9, rh * 0.45, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Rock palette per biome
-    let bodyColor = '#475569';
-    let lightColor = '#94a3b8';
-    let shadowColor = '#1e293b';
-
-    if (biome === 'desert') {
-      bodyColor = '#b45309';
-      lightColor = '#f59e0b';
-      shadowColor = '#78350f';
-    } else if (biome === 'volcano') {
-      bodyColor = '#18181b';
-      lightColor = '#3f3f46';
-      shadowColor = '#09090b';
-    } else if (biome === 'snow') {
-      bodyColor = '#475569';
-      lightColor = '#cbd5e1';
-      shadowColor = '#1e293b';
-    } else if (biome === 'abyss') {
-      bodyColor = '#3b0764';
-      lightColor = '#7e22ce';
-      shadowColor = '#16052b';
-    }
-
-    // Shaded Rock Body (Left shadow)
-    ctx.fillStyle = shadowColor;
-    ctx.beginPath();
-    ctx.moveTo(px - rw * 0.5, py);
-    ctx.lineTo(px - rw * 0.3, py - rh);
-    ctx.lineTo(px, py - rh * 1.1);
-    ctx.lineTo(px, py + rh * 0.2);
-    ctx.lineTo(px - rw * 0.5, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Light Rock Body (Right facet)
-    ctx.fillStyle = bodyColor;
-    ctx.beginPath();
-    ctx.moveTo(px, py - rh * 1.1);
-    ctx.lineTo(px + rw * 0.4, py - rh * 0.8);
-    ctx.lineTo(px + rw * 0.5, py);
-    ctx.lineTo(px, py + rh * 0.2);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top Crest Highlight
-    ctx.fillStyle = lightColor;
-    ctx.beginPath();
-    ctx.moveTo(px - rw * 0.2, py - rh * 0.9);
-    ctx.lineTo(px, py - rh * 1.1);
-    ctx.lineTo(px + rw * 0.25, py - rh * 0.85);
-    ctx.lineTo(px, py - rh * 0.7);
-    ctx.closePath();
-    ctx.fill();
-
-    // Moss / Snow cap on rock top
-    if (biome === 'grass' || biome === 'forest') {
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(px - rw * 0.2, py - rh * 1.1, rw * 0.4, 2);
-    } else if (biome === 'snow') {
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(px - rw * 0.25, py - rh * 1.1, rw * 0.5, 2.5);
-    }
-  }
-
-  // 2. GRASS TUFTS (เธเธญเธซเธเนเธฒ 3D เธเธดเธเน€เธเธฅ)
-  private drawGrassTuftProp(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    py: number,
-    biome: BiomeType,
-    variant: number,
-    scale: number
-  ) {
-    let bladeColor = '#22c55e';
-    let tipColor = '#86efac';
-
-    if (biome === 'snow') {
-      bladeColor = '#64748b';
-      tipColor = '#f8fafc'; // Snow-dusted grass
-    } else if (biome === 'desert') {
-      bladeColor = '#ca8a04';
-      tipColor = '#fef08a'; // Dry savannah grass
-    } else if (biome === 'volcano') {
-      bladeColor = '#78350f';
-      tipColor = '#ea580c'; // Scorched grass
-    } else if (biome === 'abyss') {
-      bladeColor = '#581c87';
-      tipColor = '#c084fc'; // Void tendril
-    }
-
-    const bh = (10 + variant * 2) * scale;
-
-    ctx.fillStyle = bladeColor;
-    // Blade 1 (Left slant)
-    ctx.beginPath();
-    ctx.moveTo(px - 6, py);
-    ctx.lineTo(px - 10, py - bh);
-    ctx.lineTo(px - 4, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Blade 2 (Center tall)
-    ctx.beginPath();
-    ctx.moveTo(px - 3, py);
-    ctx.lineTo(px, py - bh * 1.25);
-    ctx.lineTo(px + 3, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Blade 3 (Right slant)
-    ctx.beginPath();
-    ctx.moveTo(px + 1, py);
-    ctx.lineTo(px + 8, py - bh * 0.9);
-    ctx.lineTo(px + 5, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Bright tip highlights
-    ctx.fillStyle = tipColor;
-    ctx.fillRect(px - 10, py - bh, 2, 2);
-    ctx.fillRect(px - 1, py - bh * 1.25, 2, 3);
-    ctx.fillRect(px + 7, py - bh * 0.9, 2, 2);
-  }
-
-  // 3. WILDFLOWER PATCHES (เนเธเธฅเธเธ”เธญเธเนเธกเนเธเนเธฒ)
-  private drawFlowerPatchProp(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    py: number,
-    biome: BiomeType,
-    variant: number,
-    scale: number
-  ) {
-    // Green leaves base
-    ctx.fillStyle = '#15803d';
-    ctx.beginPath();
-    ctx.ellipse(px, py, 8 * scale, 4 * scale, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Flower colors
-    const colors = [
-      '#ef4444', // Red poppy
-      '#facc15', // Yellow buttercup
-      '#38bdf8', // Bluebell
-      '#f472b6'  // Pink rose
-    ];
-    const flowerColor = colors[variant % colors.length];
-
-    // Flower 1
-    ctx.fillStyle = flowerColor;
-    ctx.beginPath();
-    ctx.arc(px - 4 * scale, py - 5 * scale, 3 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(px - 4 * scale, py - 5 * scale, 1.5, 1.5);
-
-    // Flower 2
-    ctx.fillStyle = flowerColor;
-    ctx.beginPath();
-    ctx.arc(px + 4 * scale, py - 3 * scale, 2.5 * scale, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Flower 3
-    ctx.fillStyle = '#fef08a';
-    ctx.beginPath();
-    ctx.arc(px, py - 7 * scale, 2.5 * scale, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 4. SHRUBS & BUSHES (เธเธธเนเธกเนเธกเน)
-  private drawShrubProp(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    py: number,
-    biome: BiomeType,
-    variant: number,
-    scale: number
-  ) {
-    const sw = (16 + variant * 3) * scale;
-    const sh = (12 + variant * 2) * scale;
-
-    // Ground shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.beginPath();
-    ctx.ellipse(px, py + 2, sw * 0.8, sh * 0.35, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    let shrubBase = '#166534';
-    let shrubMid = '#22c55e';
-    let shrubTop = '#4ade80';
-
-    if (biome === 'snow') {
-      shrubBase = '#1e293b';
-      shrubMid = '#475569';
-      shrubTop = '#f8fafc'; // Snow-capped bush
-    } else if (biome === 'desert') {
-      shrubBase = '#78350f';
-      shrubMid = '#b45309';
-      shrubTop = '#d97706';
-    } else if (biome === 'volcano') {
-      shrubBase = '#18181b';
-      shrubMid = '#450a0a';
-      shrubTop = '#ea580c';
-    } else if (biome === 'abyss') {
-      shrubBase = '#2e1065';
-      shrubMid = '#581c87';
-      shrubTop = '#c084fc';
-    }
-
-    // Cluster 1 (Left)
-    ctx.fillStyle = shrubBase;
-    ctx.beginPath();
-    ctx.arc(px - sw * 0.25, py - sh * 0.4, sw * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cluster 2 (Right)
-    ctx.beginPath();
-    ctx.arc(px + sw * 0.25, py - sh * 0.4, sw * 0.32, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cluster 3 (Center High)
-    ctx.fillStyle = shrubMid;
-    ctx.beginPath();
-    ctx.arc(px, py - sh * 0.6, sw * 0.38, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Top Leaf Highlight
-    ctx.fillStyle = shrubTop;
-    ctx.fillRect(px - 3, py - sh * 0.8, 6, 3);
-    ctx.fillRect(px + sw * 0.15, py - sh * 0.55, 4, 2);
-  }
-
-  // 5. MAGICAL CRYSTALS (เธเธฃเธดเธชเธ•เธฑเธฅเธเนเธณเนเธเนเธเธซเธฃเธทเธญเธญเน€เธงเธเธต)
-  private drawCrystalProp(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    py: number,
-    biome: BiomeType,
     time: number,
-    scale: number
+    night: boolean
   ) {
-    const ch = 18 * scale;
-    const cw = 7 * scale;
+    const living = prop.type === 'grass' || prop.type === 'flower' || prop.type === 'shrub';
+    const sway = living ? Math.round(Math.sin(time * 0.003 + prop.x * 0.05 + prop.y * 0.03) * 2) : 0;
 
-    const isAbyss = biome === 'abyss';
-    const mainColor = isAbyss ? '#a855f7' : '#38bdf8';
-    const lightColor = isAbyss ? '#e879f9' : '#e0f2fe';
-    const darkColor = isAbyss ? '#3b0764' : '#0369a1';
-
-    // Crystal Shaded Left
-    ctx.fillStyle = darkColor;
-    ctx.beginPath();
-    ctx.moveTo(px, py - ch);
-    ctx.lineTo(px - cw, py - ch * 0.4);
-    ctx.lineTo(px, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Crystal Bright Right
-    ctx.fillStyle = mainColor;
-    ctx.beginPath();
-    ctx.moveTo(px, py - ch);
-    ctx.lineTo(px + cw, py - ch * 0.4);
-    ctx.lineTo(px, py);
-    ctx.closePath();
-    ctx.fill();
-
-    // Facet Highlight
-    ctx.fillStyle = lightColor;
-    ctx.beginPath();
-    ctx.moveTo(px, py - ch);
-    ctx.lineTo(px + cw * 0.3, py - ch * 0.5);
-    ctx.lineTo(px, py - ch * 0.1);
-    ctx.closePath();
-    ctx.fill();
-
-    // Glow Aura
-    const glowAlpha = 0.25 + Math.sin(time * 0.004) * 0.12;
-    ctx.fillStyle = isAbyss ? `rgba(168, 85, 247, ${glowAlpha})` : `rgba(56, 189, 248, ${glowAlpha})`;
-    ctx.beginPath();
-    ctx.arc(px, py - ch * 0.5, cw * 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    const sprite = isometricTerrainRenderer.getPropSprite(prop.type, {
+      biome: prop.biome,
+      variant: prop.variant,
+      size: prop.scale,
+      night,
+      // The crystal shimmer cycles through four baked frames rather than fading the sprite, so
+      // it stays hard-edged like the rest of the art.
+      pulse: prop.type === 'crystal' ? Math.floor(time * 0.004 + prop.x * 0.01) : 0
+    });
+    ctx.drawImage(sprite, prop.x + sway - PROP_BASE_X, prop.y - PROP_BASE_Y);
   }
 }
 

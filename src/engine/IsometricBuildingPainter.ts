@@ -89,6 +89,42 @@ export function shift(hex: string, dl: number, ds = 0, hueTarget: number | null 
   return rgbToHex(...hslToRgb(hh, Math.max(0, Math.min(1, s + ds)), nl));
 }
 
+/**
+ * A ramp of tones at explicit HSL lightness levels, keeping the base hue (with optional extra
+ * saturation, which keeps the darkest steps from washing out to grey).
+ *
+ * `shift()` moves lightness by a relative amount and floors it at 6%, so for a near-black base -
+ * volcanic obsidian is #09090b - the two darkest steps both clamp to the floor and collapse onto
+ * one colour. That silently deletes a tone from the art, which is exactly how a boulder ended up
+ * with three colours and no crack detail. Where a ramp has to have a fixed number of visible
+ * steps no matter how dark the base is, spacing them by absolute lightness is the fix.
+ */
+export function toneRamp(base: string, levels: number[], satBoost = 0, satCap = 1): string[] {
+  const [h, s] = rgbToHsl(...hexToRgb(base));
+  // Near-black colours report a misleadingly high HSL saturation - obsidian #090214 reads as 82%
+  // saturated - so a ramp built from one would come out vivid purple at every lightness. Rock
+  // passes a low cap so it stays rock.
+  const sat = Math.max(0, Math.min(satCap, s + satBoost));
+  return levels.map(l => rgbToHex(...hslToRgb(h, sat, Math.max(0.02, Math.min(0.98, l)))));
+}
+
+/**
+ * The four lightness levels of a rock ramp, anchored on the authored colour.
+ *
+ * The floor keeps a near-black rock paintable in four steps, and the ceiling keeps a
+ * near-white one from clipping; between them the authored lightness is preserved, so snow keeps
+ * pale slate cliffs and obsidian keeps black ones.
+ */
+export function rockLevels(baseLightness: number): number[] {
+  const base = Math.max(baseLightness, 0.22);
+  return [base + 0.24, base + 0.02, Math.max(0.1, base - 0.14), Math.max(0.03, base - 0.2)];
+}
+
+/** HSL lightness of a hex colour, for ramps that are anchored on the authored tone. */
+export function lightnessOf(hex: string): number {
+  return rgbToHsl(...hexToRgb(hex))[2];
+}
+
 // ---------------------------------------------------------------------------
 // iso surface
 // ---------------------------------------------------------------------------

@@ -29,7 +29,7 @@
 //   * Glowing biomes (magma, runes, crystals, blossoms, starlight) glow harder at night, which is
 //     how the board tells the player the time of day without reading the clock.
 
-import { IsoSurface, shift } from './IsometricBuildingPainter';
+import { IsoSurface, lightnessOf, rockLevels, shift, toneRamp } from './IsometricBuildingPainter';
 import type { BiomeType } from '../game/BoardMap';
 
 // ---------------------------------------------------------------------------
@@ -320,7 +320,7 @@ interface TerrainTones {
 }
 
 /** Relative luminance of a hex colour, used to order authored colour pairs. */
-function luma(hex: string): number {
+export function luma(hex: string): number {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
   const r = parseInt(full.slice(0, 2), 16);
@@ -345,15 +345,18 @@ function luma(hex: string): number {
  */
 function tonesFor(p: BiomePalette): TerrainTones {
   const rock = luma(p.cliffLeft) <= luma(p.cliffRight) ? p.cliffLeft : p.cliffRight;
+  // Absolute-lightness ramp: a relative one collapses the two darkest steps for a near-black
+  // rock, and volcanic obsidian is #09090b.
+  const [cliffLight, cliffMid, cliffDark, cliffFoot] = toneRamp(rock, rockLevels(lightnessOf(rock)), 0.04, 0.4);
   return {
     hi: shift(p.top, 0.24, -0.02, 60, 8),
     top: p.top,
     lo: shift(p.top, -0.28, 0.05, 240, 12),
     fleck: shift(p.top, 0.12, -0.01, 40, 6),
-    cliffLight: shift(rock, 0.5, -0.05, 40, 8),
-    cliffMid: shift(rock, 0.28, -0.03, 45, 8),
-    cliffDark: shift(rock, -0.2, 0.06, 240, 12),
-    cliffFoot: shift(rock, -0.52, 0.08, 240, 16),
+    cliffLight,
+    cliffMid,
+    cliffDark,
+    cliffFoot,
     accent: p.accent,
     accentLo: shift(p.accent, -0.34, 0.06, 240, 12),
     border: p.border,

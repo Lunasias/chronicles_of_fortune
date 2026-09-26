@@ -18,6 +18,8 @@ dist-ssr/
 .building-sheet.png
 .foliage-sheet.png
 .terrain-sheet.png
+.prop-sheet.png
+.prop-variants-sheet.png
 
 # Logs
 npm-debug.log*

@@ -1,0 +1,57 @@
+Rebuild the board's floor clutter as pixel-art props
+
+The boulders, grass tufts, wildflower patches, shrubs and magic crystals scattered over the
+board were drawn with ctx.arc, ctx.ellipse and moveTo/lineTo paths - a dozen path calls per prop
+per frame, all of them antialiasing, and none of it cached. A rock sitting in a pixel-art meadow
+had soft edges.
+
+IsometricPropPainter produces a fixed 34x34 RGBA buffer per prop, so the clutter is hard-edged
+like everything else and IsometricTerrainRenderer blits a cached canvas instead of re-issuing
+paths. Five types x 15 biomes x 4 variants x 3 sizes x 2 times of day, all deterministic.
+
+Four decisions worth recording:
+
+* Prop colours are derived from the biome's own floor palette rather than a second hand-written
+  table, so a boulder cannot drift out of the biome it is sitting on and a new biome gets
+  matching clutter for free.
+
+* Size is a discrete bucket, not a scale factor. The generator picks a continuous 0.85-1.2
+  scale; smoothly scaling a pixel-art sprite either blurs it or gives uneven pixel sizes, so the
+  scale is quantised onto three baked sizes.
+
+* Props now have night variants. They did not before, which left bright green grass blades
+  glowing on a darkened night floor next to night-dimmed tiles.
+
+* The crystal shimmer cycles through four baked frames instead of fading the sprite, so the
+  shimmer stays hard-edged too.
+
+Three art bugs surfaced while testing, all of them the same shape as the earlier cottage chimney
+and cliff-face bugs - an ad-hoc colour pair trusted instead of a derived ramp:
+
+* The boulder's west facet was darker than its east facet, copied from the vector code. Every
+  rock was lit from the right while the tiles under it were lit from the left.
+
+* shift() floors lightness at 6%, so for volcanic obsidian (#09090b) the two darkest steps of a
+  rock ramp both clamped to the floor and collapsed onto one colour, leaving a boulder with three
+  tones and no crack. toneRamp()/rockLevels() space a ramp by absolute lightness instead, with a
+  saturation cap because near-black colours report a misleadingly high HSL saturation and were
+  coming out vivid purple. The floor cliffs use the same ramp.
+
+* A one-pixel grass blade has no surface to shade, so shading blade-by-blade left a tuft with no
+  readable light direction at all. Vegetation is now shaded positionally across the whole clump,
+  and the flower rosette and crystal cluster needed the same treatment - the tallest crystal and
+  the biggest blossom were both landing east of centre.
+
+Also fixed: the crystal fell back to one shared blue when a biome had no glow, which made grass,
+desert, castle, cavern and the crystal cavern grow identical crystals; the flower's four variants
+differed only in hue, so variants 0 and 2 were byte-identical; and the flower's three blossoms
+were arranged symmetrically.
+
+Verification: 116 tests, all green. tests/props.test.mjs adds 11 cases covering all 1800
+combinations for size, shading, left lighting, cast shadow, seating on the anchor, type
+distinguishability by 4x4 coverage grid, per-variant distinctness, per-biome and day/night
+variation, the crystal pulse, and the unknown-biome fallback.
+
+Props are the one art set with no committed PNGs: nothing ever loads them from disk, so a
+byte-for-byte test would protect nothing, and 600-odd prop files would be a lot of binary noise.
+npm run gen:props writes review sheets instead.

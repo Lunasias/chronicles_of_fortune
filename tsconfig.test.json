@@ -12,6 +12,7 @@
     "src/engine/IsometricBuildingPainter.ts",
     "src/engine/IsometricFoliagePainter.ts",
     "src/engine/IsometricTerrainPainter.ts",
+    "src/engine/IsometricPropPainter.ts",
     "src/game/BalanceSystem.ts",
     "src/game/BoardMap.ts",
     "src/game/CompanionDatabase.ts",

@@ -4,6 +4,7 @@ import {
   paintTerrainTile,
   type TerrainPaintOptions
 } from './IsometricTerrainPainter';
+import { PROP_SIZE, paintProp, propSizeBucket, type PropPaintOptions, type PropType } from './IsometricPropPainter';
 
 /**
  * Serves the 104x82 pixel-art sprite for every board floor tile.
@@ -42,6 +43,40 @@ export class IsometricTerrainRenderer {
   /** Clears cached sprites, e.g. after a palette change during development. */
   public clearCache(): void {
     this.cache.clear();
+    this.propCache.clear();
+  }
+
+  private propCache = new Map<string, HTMLCanvasElement>();
+
+  /**
+   * The pixel-art sprite for one piece of floor clutter.
+   *
+   * The generator picks a continuous 0.85-1.2 scale, which is quantised to a baked size bucket
+   * here: smoothly scaling a pixel-art sprite either blurs it or produces uneven pixel sizes.
+   * `pulse` cycles the crystal shimmer through four cached frames rather than fading the sprite,
+   * so the shimmer stays hard-edged too.
+   */
+  public getPropSprite(type: PropType, options: PropPaintOptions): HTMLCanvasElement {
+    const size = propSizeBucket(options.size ?? 1);
+    const pulse = Math.abs(Math.floor(options.pulse ?? 0)) % 4;
+    const key = `${type}_${options.biome}_${options.variant ?? 0}_${size}_${options.night ? 'n' : 'd'}_${pulse}`;
+    const cached = this.propCache.get(key);
+    if (cached) return cached;
+
+    const surface = paintProp(type, { ...options, size, pulse });
+    const canvas = document.createElement('canvas');
+    canvas.width = PROP_SIZE;
+    canvas.height = PROP_SIZE;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.imageSmoothingEnabled = false;
+      const imageData = ctx.createImageData(PROP_SIZE, PROP_SIZE);
+      imageData.data.set(surface.data);
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    this.propCache.set(key, canvas);
+    return canvas;
   }
 }
 

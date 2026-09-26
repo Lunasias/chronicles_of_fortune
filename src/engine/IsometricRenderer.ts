@@ -283,7 +283,7 @@ export class IsometricRenderer {
     isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
 
     // 2.6 Natural Environmental Clutter (Direct pass, zero sorting overhead)
-    isometricTerrainEngine.renderClutter(ctx, minX, maxX, minY, maxY, time);
+    isometricTerrainEngine.renderClutter(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
 
     // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
     this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
