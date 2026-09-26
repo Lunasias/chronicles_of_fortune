@@ -440,8 +440,11 @@ function drawCliffs(s: IsoSurface, t: TerrainTones, seed: number): void {
   for (let x = CX; x <= CX + HW; x++) s.px(x, edgeSE(x) + 1, t.accentLo, 0.7);
 
   // Vertical weathering cracks, kept short and sparse so the face does not turn into corduroy.
-  for (let x = CX - HW + 4; x <= CX + HW - 4; x += 7) {
-    if (noise2(x, 3, seed) > 0.55) continue;
+  // The stride is jittered rather than a fixed 7 pixels: an exactly even rhythm of vertical marks
+  // is a regular pattern, and a regular pattern is the thing that shimmers when the board is drawn
+  // at a scale that does not divide evenly. Rock is irregular, so the marks should be too.
+  for (let x = CX - HW + 4; x <= CX + HW - 4; x += 5 + Math.floor(noise2(x, 21, seed) * 7)) {
+    if (noise2(x, 3, seed) > 0.5) continue;
     const face = x <= CX ? [W, S] : [S, E];
     const t0 = (x - face[0][0]) / (face[1][0] - face[0][0] || 1);
     const top = Math.round(face[0][1] + (face[1][1] - face[0][1]) * t0);
@@ -457,21 +460,13 @@ function drawCliffs(s: IsoSurface, t: TerrainTones, seed: number): void {
 }
 
 /**
- * A 4x4 Bayer matrix, used only as a constant-density texture mask.
- *
- * The floor previously ran a full ordered-dither *ramp* across every tile - up to 58% density of
- * the lit tone at the west edge falling to the shaded tone at the east. Tiled 312 times that is a
- * sawtooth repeating every 96 pixels, which is what made a biome look like a stamped pattern
- * rather than like ground. The matrix is now used at one fixed density instead, which is a
- * texture rather than a gradient.
+ * Density of the ground's grain. Sparse on purpose: at board zoom the floor is the largest surface
+ * on screen, so a dense texture there is a dense texture everywhere.
  */
-const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-
-/** Density of the ground's lighter speckle. Low enough to read as texture, not as pattern. */
-const GROUND_SPECKLE = 0.16;
+const GROUND_GRAIN = 0.05;
 
 /**
- * The top face: a flat body with one even speckle, and nothing else.
+ * The top face: a flat body with a sparse, irregular grain, and nothing else.
  *
  * A floor has to read as ONE surface across a whole biome, so the tile carries no per-tile
  * lighting at all. It used to have a dither ramp plus a bevel on all four edges, and the result
@@ -483,18 +478,27 @@ const GROUND_SPECKLE = 0.16;
  * ambient occlusion under every structure, tree and prop. That is where a top-down view of
  * terrain gets its form from.
  *
- * The speckle is a fixed-density 4x4 Bayer mask, so it is even across the tile and - because 96
- * and 48 are both multiples of the 4-pixel period - it lines up exactly across tile boundaries.
- * A run of tiles therefore shows one continuous speckled surface with no seam.
+ * The grain is placed by an integer hash, NOT by an ordered-dither matrix, and that distinction is
+ * the whole point. A 4x4 Bayer mask is a regular grid of dots; the board is then drawn at a
+ * fractional scale, and a regular micro-pattern sampled at a fractional scale produces MOIRE -
+ * large slow-moving interference bands across the whole screen, which is genuinely uncomfortable
+ * to look at. It was the floor's fault, and it read as "the pixels are making me dizzy". An
+ * irregular hash has no spatial frequency to interfere with, so it reads as grain at any scale.
  */
 function drawTopFace(s: IsoSurface, t: TerrainTones): void {
   const { CX, CY, HW, HH } = { CX: TERRAIN_CX, CY: TERRAIN_CY, HW: TERRAIN_HW, HH: TERRAIN_HH };
   s.diamond(CX, CY, HW, HH, t.top);
+  // The scanline fill can skip a vertex where two edges converge onto a single pixel, and a hole at
+  // the south vertex is a hole straight through the board.
+  s.px(CX, CY - HH, t.top);
+  s.px(CX, CY + HH, t.top);
+  s.px(CX - HW, CY, t.top);
+  s.px(CX + HW, CY, t.top);
 
   for (let y = CY - HH; y <= CY + HH; y++) {
     for (let x = CX - HW; x <= CX + HW; x++) {
       if (!onTile(x, y)) continue;
-      if (BAYER4[(y & 3) * 4 + (x & 3)] / 16 >= GROUND_SPECKLE) continue;
+      if (noise2(x, y, 0) >= GROUND_GRAIN) continue;
       s.px(x, y, t.fleck);
     }
   }

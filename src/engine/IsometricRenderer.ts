@@ -5,6 +5,7 @@ import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
 import { pixelDisc, pixelEllipse, pixelGlow, pixelRing } from './PixelFx';
+import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
 
 export interface Camera2D {
   x: number;
@@ -255,10 +256,28 @@ export class IsometricRenderer {
 
     this.previewPathNodeIds = previewPath;
 
-    // Fast, responsive 60 FPS camera interpolation
+    // Fast, responsive 60 FPS camera interpolation.
+    //
+    // The zoom is snapped to a scale at which every world pixel maps to a WHOLE number of device
+    // pixels, and the camera is snapped so world blits land on whole device pixels. Without both
+    // of these the board is resampled unevenly: some source pixels become two device pixels and
+    // their neighbours become one, the grid stops being regular, and a hard-edged pixel-art scene
+    // shimmers and crawls while the camera moves. With a regular micro-pattern on the floor it is
+    // worse still - uneven sampling of a regular grid produces moire, which is the large
+    // slow-moving interference that reads as "the pixels are making me dizzy".
+    this.camera.targetZoom = this.snapZoom(this.camera.targetZoom);
     this.camera.x += (this.camera.targetX - this.camera.x) * 0.16;
     this.camera.y += (this.camera.targetY - this.camera.y) * 0.16;
     this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.16;
+
+    // Draw with the snapped zoom, not the interpolated one, so the scale on screen is always an
+    // even one. The interpolation still drives the transition; it just resolves to even scales.
+    // The camera is snapped for the same reason: a world blit at a fractional screen position is
+    // resampled onto an irregular grid even when the scale itself is even.
+    const zoom = this.snapZoom(this.camera.zoom);
+    this.camera.zoom = zoom;
+    const camX = snapWorld(this.camera.x, zoom);
+    const camY = snapWorld(this.camera.y, zoom);
 
     ctx.clearRect(0, 0, w, h);
 
@@ -266,9 +285,9 @@ export class IsometricRenderer {
     worldBackground.renderSky(ctx, this.camera, w, h, time, ecosystemSystem.timeOfDay);
 
     ctx.save();
-    ctx.translate(w / 2, h / 2);
-    ctx.scale(this.camera.zoom, this.camera.zoom);
-    ctx.translate(-this.camera.x, -this.camera.y);
+    ctx.translate(Math.round(w / 2), Math.round(h / 2));
+    ctx.scale(zoom, zoom);
+    ctx.translate(-camX, -camY);
 
     // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
     worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
@@ -1482,11 +1501,19 @@ export class IsometricRenderer {
     return c;
   }
 
+  /**
+   * The nearest zoom at which every world pixel lands on a whole number of screen pixels.
+   *
+   * The unit is the canvas's own pixel, which is a CSS pixel because the canvases are sized in CSS
+   * pixels and scaled by the browser - see `initCanvasResize` for why they are not sized in device
+   * pixels. The rule itself lives in `PixelScale` so it can be tested without a canvas.
+   */
+  public snapZoom(zoom: number): number {
+    return snapZoom(zoom);
+  }
+
   public getDefaultZoom(): number {
-    const w = this.canvas.width || window.innerWidth;
-    if (w < 480) return 0.78;
-    if (w < 768) return 0.88;
-    return 1.0;
+    return defaultZoomFor(typeof window === 'undefined' ? 1280 : window.innerWidth);
   }
 
   public clampCameraBounds() {
@@ -1499,8 +1526,10 @@ export class IsometricRenderer {
     this.camera.targetY = Math.max(minY, Math.min(maxY, this.camera.targetY));
     this.camera.x = Math.max(minX, Math.min(maxX, this.camera.x));
     this.camera.y = Math.max(minY, Math.min(maxY, this.camera.y));
-    this.camera.zoom = Math.max(0.55, Math.min(1.8, this.camera.zoom));
-    this.camera.targetZoom = Math.max(0.55, Math.min(1.8, this.camera.targetZoom));
+    // Snapped rather than merely clamped, so a wheel or pinch zoom cannot land between the even
+    // scales and bring the irregular pixel grid back.
+    this.camera.zoom = this.snapZoom(Math.max(0.25, Math.min(3, this.camera.zoom)));
+    this.camera.targetZoom = this.snapZoom(Math.max(0.25, Math.min(3, this.camera.targetZoom)));
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {

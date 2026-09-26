@@ -351,12 +351,12 @@
       border-radius: 0;
       box-shadow: inset 2px 2px 0 0 #04070f;
     }
+    /* A stat bar fill: one flat colour with a lit top edge and a shaded bottom edge.
+       It used to carry a `repeating-linear-gradient` of 2px-on / 4px-off white stripes to make the
+       bar look segmented. That is a dense regular pattern in a small, high-contrast, always-visible
+       element, and regular patterns at a fractional display scale are what produce the shimmer this
+       pass was meant to remove. The two inset edges already give the bar its form. */
     .pixel-bar-fill {
-      background-image: repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.3) 0 2px,
-        rgba(255, 255, 255, 0) 2px 6px
-      );
       box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 0 rgba(0, 0, 0, 0.45);
       border-radius: 0;
       transition: none;

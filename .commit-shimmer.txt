@@ -1,0 +1,62 @@
+Stop the board shimmering: irregular ground grain and an even camera scale
+
+"Very dizzying, like the pixels." Two causes, both real, and they compounded.
+
+1. MOIRE from a regular micro-pattern on the floor.
+
+   The floor carried a 4x4 ordered-dither mask at 16% density. That is a regular grid of dots, and
+   the board is drawn at a non-integer scale, so the two interfere: a regular micro-pattern sampled
+   at a fractional scale produces moire - large, slow-moving interference bands across the whole
+   screen. The floor is the largest surface in the game, so this was the largest source of it.
+
+   The grain is now placed by an integer hash at 5% density instead. An irregular texture has no
+   spatial frequency to interfere with, so it reads as grain at any scale.
+
+   The test suite now asserts this: `tests/terrain.test.mjs` measures the grain density per residue
+   class mod 4 and fails if any class carries more than 3x the mean. A 4x4 ordered dither scores
+   zero on thirteen of the sixteen, so the old mask fails that assertion outright. It also bounds
+   the density (2-10%) and the contrast (under 0.16), so it cannot be "fixed" by making the texture
+   invisible instead.
+
+2. AN ARBITRARY FRACTIONAL ZOOM.
+
+   The wheel multiplied the zoom by 1.08, so it landed on values like 0.78, 0.92, 1.17 and 1.44.
+   At those scales world pixels do not land on whole screen pixels: some source pixels cover two
+   screen pixels and their neighbours cover one, and the grid the art was drawn on stops existing.
+   While the camera moved, that irregular grid crawled.
+
+   `src/engine/PixelScale.ts` now holds the policy, pure and testable without a canvas:
+
+     * `snapZoom` - magnification uses a whole number of screen pixels per world pixel, minification
+       uses the reciprocal. Nothing in between: at 1.5x two world pixels land on three screen
+       pixels, alternating between one and two each, which is exactly the irregular grid.
+     * `snapWorld` - camera coordinates snapped so world blits land on whole pixels.
+     * `defaultZoomFor` - the startup zoom is an even scale at every viewport width.
+
+   `render` draws with the snapped zoom while the interpolation still drives the transition, so the
+   camera still eases but every frame it draws is on an even scale. Degenerate input (0, negative,
+   NaN, Infinity) falls back to 1 rather than passing a broken transform to the canvas.
+
+   `tests/pixel-scale.test.mjs` adds five cases: the scale is always whole, an in-between scale such
+   as 1.5 is never reachable, twenty wheel notches in each direction stay on the ladder, the ladder
+   ascends and allows both zooming out and in, and degenerate input cannot produce a broken
+   transform.
+
+Two smaller high-frequency patterns went with them: the stat bar's `repeating-linear-gradient` of
+2px stripes became a flat fill with two inset edges (a dense regular pattern in a small, bright,
+always-visible element), and the cliff weathering cracks no longer march on an exact 7px stride.
+
+Also fixed by testing: the diamond's south vertex could be left unpainted by the scanline fill,
+which is a one-pixel hole straight through the board.
+
+One thing tried and reverted, worth recording. Sizing the canvases in device pixels so one canvas
+pixel is one device pixel is correct on a display scale of 100% or 200% and wrong on 125% or 250%:
+the backing store would be a whole multiple of the CSS box while the display is not, so the browser
+rescales fractionally anyway and the canvas stops lining up with the viewport. At CSS sizing the
+upscale is a fixed pattern rather than a moving one, and a fixed pattern over irregular art is not
+something the eye reads as shimmer. On a display set to a fractional scale, setting it to 100% is
+the one remaining improvement available outside the game.
+
+Verification: 138 tests green, typecheck green, 10/10 Tailwind spot checks, 12/12 pixel UI
+components present, 8/8 glass utilities absent, 5/5 screen-filter tokens absent. The 60 committed
+floor tiles are regenerated.

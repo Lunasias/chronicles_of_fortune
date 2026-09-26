@@ -309,48 +309,44 @@ test('a cliffed tile is lit from the left, where the light actually is', () => {
   }
 });
 
-test('the ground speckle is even and cannot show a seam', () => {
-  // The top face uses a fixed-density 4x4 Bayer mask. Two properties together are what make a
-  // field of tiles read as one continuous surface:
+test('the ground grain is sparse, neutral, and NOT a regular grid', () => {
+  // The top face carries one sparse grain over a flat body, and the grain is placed by an integer
+  // hash rather than by an ordered-dither matrix. The difference matters more than it looks:
   //
-  //   * the mask's period divides the tile dimensions, so it lines up exactly across a tile
-  //     boundary instead of restarting there. That is the seam guarantee, and it is arithmetic.
-  //   * the density is the same in every quadrant, so there is no gradient to band.
+  //   A 4x4 Bayer mask is a REGULAR grid of dots. The board is then drawn at a non-integer scale,
+  //   and a regular micro-pattern sampled at a non-integer scale produces MOIRE - large,
+  //   slow-moving interference bands across the whole screen. That is uncomfortable to look at and
+  //   it is what "the pixels are making me dizzy" turned out to be. This test failed against the
+  //   Bayer version, which is the point of it existing.
   //
-  // Measured on the bare ground, with the biome detail switched off. An earlier version measured
-  // the tile with its detail on and had to accept a 0.06 density spread because the scatter - a
-  // grass tuft sitting on four speckle pixels - is indistinguishable from a speckle that moved.
-  // That threshold was loose enough to pass almost anything.
-  assert.equal((TERRAIN_HW * 2) % 4, 0, 'the tile width must be a multiple of the speckle period');
-  assert.equal((TERRAIN_HH * 2) % 4, 0, 'the tile height must be a multiple of the speckle period');
-
+  // Measured on the bare ground, with the biome detail switched off: a grass tuft sitting on four
+  // grain pixels is indistinguishable from a grain that moved, so the detail has to be out of the
+  // way for this to measure the texture rather than the scatter.
   const lum = k => {
     const [r, g, b] = k.split(',').map(Number);
     return (r * 0.299 + g * 0.587 + b * 0.114) / 255;
   };
+  const inset = (x, y) =>
+    Math.abs(x - TERRAIN_CX) / TERRAIN_HW + Math.abs(y - TERRAIN_CY) / TERRAIN_HH <= 0.93;
 
   for (const biome of TERRAIN_BIOMES) {
     const s = paintTerrainTile(biome, { cliffs: false, detail: false });
 
-    // The mask is a function of (x mod 4, y mod 4) alone. Scanned on an inset rhombus, because the
-    // outermost pixels of every row are the grid contour, which is not part of the speckle.
-    const inset = (x, y) =>
-      Math.abs(x - TERRAIN_CX) / TERRAIN_HW + Math.abs(y - TERRAIN_CY) / TERRAIN_HH <= 0.93;
-    for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
-      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW - 4; x++) {
-        if (!inset(x, y) || !inset(x + 4, y)) continue;
-        assert.equal(keyOf(s, x, y), keyOf(s, x + 4, y), `${biome} speckle is not periodic at ${x},${y}`);
-      }
-    }
-
     const counts = new Map();
     let area = 0;
+    // Density per residue class mod 4: a 4x4 ordered dither puts grain in 3 of the 16 classes and
+    // none in the other 13, so this is what tells a dither apart from real grain.
+    const residue = new Array(16).fill(0);
+    const residueTotal = new Array(16).fill(0);
     for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
       for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x++) {
         if (!inset(x, y)) continue;
         area++;
         const k = keyOf(s, x, y);
         counts.set(k, (counts.get(k) ?? 0) + 1);
+        const r = (((y % 4) + 4) % 4) * 4 + (((x % 4) + 4) % 4);
+        residueTotal[r]++;
+        if (keyOf(s, x, y) === keyOf(s, TERRAIN_CX, TERRAIN_CY - TERRAIN_HH + 2)) residue[r]++;
       }
     }
     let body = null;
@@ -370,14 +366,28 @@ test('the ground speckle is even and cannot show a seam', () => {
 
     // Exactly two tones on the bare ground, and the body has to dominate it.
     assert.equal(counts.size, 2, `${biome}'s bare ground uses ${counts.size} tones, expected 2`);
-    assert.ok(best / area > 0.6, `${biome}'s ground body covers only ${(best / area).toFixed(2)} of the bare ground`);
+    assert.ok(best / area > 0.6, `${biome}'s ground body covers only ${(best / area).toFixed(2)}`);
 
-    // Low contrast, so the speckle reads as texture rather than as a pattern.
+    // Sparse. A dense texture on the largest surface on screen is a dense texture everywhere.
+    const density = 1 - best / area;
+    assert.ok(density > 0.02 && density < 0.1, `${biome}'s grain density is ${density.toFixed(3)}`);
+
+    // Low contrast, so it reads as grain rather than as a pattern.
     assert.ok(
       Math.abs(lum(body) - lum(fleck)) < 0.16,
-      `${biome}'s speckle contrast is ${Math.abs(lum(body) - lum(fleck)).toFixed(3)}`
+      `${biome}'s grain contrast is ${Math.abs(lum(body) - lum(fleck)).toFixed(3)}`
     );
 
+    // Not a regular grid: no residue class mod 4 may carry far more or far less grain than the
+    // mean. An ordered dither scores 0 on thirteen of the sixteen.
+    const rates = residue.map((c, i) => c / Math.max(1, residueTotal[i]));
+    const mean = rates.reduce((a, b) => a + b, 0) / 16;
+    assert.ok(mean > 0, `${biome} has no grain at all`);
+    const ratio = Math.max(...rates) / Math.min(...rates);
+    assert.ok(ratio < 3, `${biome}'s grain is a regular 4x4 grid (residue density ratio ${ratio.toFixed(2)})`);
+
+    // Even across the tile, so there is no gradient to band: a gradient is separately caught by the
+    // flat-ground neutrality test above, which bounds the left-right luminance difference.
     const shares = [0, 0, 0, 0];
     const totals = [0, 0, 0, 0];
     for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
@@ -389,11 +399,10 @@ test('the ground speckle is even and cannot show a seam', () => {
       }
     }
     const values = shares.map((v, i) => v / Math.max(1, totals[i]));
-    const spread = Math.max(...values) - Math.min(...values);
-    // The mask is exactly periodic, so the residual spread is the rhombus clipping the 4x4
-    // pattern at its edges rather than a gradient. A gradient is caught decisively by the
-    // flat-ground neutrality test above, which bounds the left-right luminance difference.
-    assert.ok(spread < 0.05, `${biome} body-tone density varies by ${spread.toFixed(3)} across the tile`);
+    assert.ok(
+      Math.max(...values) - Math.min(...values) < 0.05,
+      `${biome} body-tone density varies by ${(Math.max(...values) - Math.min(...values)).toFixed(3)}`
+    );
   }
 });
 

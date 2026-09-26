@@ -103,23 +103,39 @@ class DokaponApp {
 
 
   private initCanvasResize() {
+    /**
+     * Every canvas is sized in CSS pixels and scaled by the browser.
+     *
+     * An earlier attempt sized them in device pixels instead, to force one canvas pixel onto one
+     * device pixel. That is right on a display scale of 100% or 200% and wrong on 125% or 250%: the
+     * canvas backing store would be a whole multiple of the CSS box while the display is not, so
+     * the browser rescales by a fractional ratio anyway, and the canvas no longer lines up with the
+     * viewport. At CSS sizing the upscale is a fixed pattern rather than a moving one, and a fixed
+     * pattern on irregular art is not something the eye reads as shimmer.
+     *
+     * What actually removed the discomfort was two other changes: the floor's regular 4x4 dither
+     * became irregular grain (a regular micro-pattern sampled at a fractional scale is moire), and
+     * the camera zoom is now snapped so every world pixel lands on a whole number of pixels.
+     * On a display set to a fractional scale, setting it to 100% removes the browser's fractional
+     * upscale entirely and is the one remaining improvement available outside the game.
+     */
+    const sizeToParent = (el: HTMLCanvasElement | null, fallbackW: number, fallbackH: number) => {
+      if (!el) return;
+      const parent = el.parentElement;
+      el.width = Math.max(1, parent?.clientWidth || fallbackW);
+      el.height = Math.max(1, parent?.clientHeight || fallbackH);
+      const ctx = el.getContext('2d');
+      if (ctx) ctx.imageSmoothingEnabled = false;
+    };
+
     const resize = () => {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.renderer.ctx.imageSmoothingEnabled = false;
       this.renderer.clampCameraBounds();
 
-      const bCanvas = document.getElementById('battleCanvas') as HTMLCanvasElement;
-      if (bCanvas && bCanvas.parentElement) {
-        bCanvas.width = bCanvas.parentElement.clientWidth || 800;
-        bCanvas.height = bCanvas.parentElement.clientHeight || 450;
-      }
-
-      const wCanvas = document.getElementById('worldMapCanvas') as HTMLCanvasElement;
-      if (wCanvas && wCanvas.parentElement) {
-        wCanvas.width = wCanvas.parentElement.clientWidth || 800;
-        wCanvas.height = wCanvas.parentElement.clientHeight || 500;
-      }
+      sizeToParent(document.getElementById('battleCanvas') as HTMLCanvasElement, 800, 450);
+      sizeToParent(document.getElementById('worldMapCanvas') as HTMLCanvasElement, 800, 500);
 
       this.checkOrientationHint();
     };
