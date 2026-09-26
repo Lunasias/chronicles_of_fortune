@@ -3,14 +3,25 @@ const fs = require('fs');
 const path = require('path');
 const { decodePNG } = require('./png.cjs');
 
-const dir = path.join('public', 'assets', 'companions');
+const DEFAULT_DIR = path.join('public', 'assets', 'companions');
 const DATA = path.join('src', 'game', 'companions.json');
 
-// Default to every companion so a bare run is a full regression check.
+// --dir=<path> previews any folder of PNGs, which is how the isometric structure models are
+// reviewed as well as the companions.
+const dirArg = process.argv.find(a => a.startsWith('--dir='));
+const dir = dirArg ? dirArg.split('=')[1] : DEFAULT_DIR;
+
+// Default to every sprite in the folder so a bare run is a full regression check.
 const requested = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const keys = requested.length
   ? requested
-  : JSON.parse(fs.readFileSync(DATA, 'utf8')).companions.map(c => c.key);
+  : dirArg
+    ? fs
+        .readdirSync(dir)
+        .filter(f => f.endsWith('.png'))
+        .map(f => f.replace(/\.png$/, ''))
+        .sort()
+    : JSON.parse(fs.readFileSync(DATA, 'utf8')).companions.map(c => c.key);
 
 const RAMP = ' .:-=+*#%@';
 

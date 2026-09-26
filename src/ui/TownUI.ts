@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { BoardNode } from '../game/BoardMap';
 import { townManager } from '../game/TownManager';
 import { audio } from '../engine/AudioSynthesizer';
+import { syncFeedPanelClass } from '../util/PanelFocus';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 
 export class TownUI {
@@ -74,6 +75,7 @@ export class TownUI {
     }
 
     modal.classList.remove('hidden');
+    syncFeedPanelClass();
 
     // AI automatic action
     if (p.isAI) {
@@ -141,6 +143,7 @@ export class TownUI {
   private handleRob() {
     if (!this.currentTown) return;
     document.getElementById('townModal')?.classList.add('hidden');
+    syncFeedPanelClass();
     if (this.onInitiateRobCallback) {
       this.onInitiateRobCallback(this.currentTown);
     }
@@ -149,6 +152,7 @@ export class TownUI {
   private handleLeave() {
     audio.click();
     document.getElementById('townModal')?.classList.add('hidden');
+    syncFeedPanelClass();
     this.currentTown = null;
     if (this.onTownLeaveCallback) {
       this.onTownLeaveCallback();
@@ -202,9 +206,9 @@ export class TownUI {
       }
     }
 
-    // 3. Central Town Citadel Fortress
+    // 3. Central Town Citadel Fortress (64x64 model, base seated on the plaza)
     const citadel = pixelSprites.getBuildingSprite('town', ownerColor);
-    ctx.drawImage(citadel, w * 0.44 - 40, h * 0.48 - 40, 80, 80);
+    ctx.drawImage(citadel, w * 0.44 - 32, h * 0.48 - 32, 64, 64);
 
     // 4. City Watch Guard (Hero sprite)
     const guard = pixelSprites.getHeroSprite('warrior', 'SE', 'idle', 0);

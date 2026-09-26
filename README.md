@@ -34,6 +34,19 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
 - **Party Formation & Combat Queue**:
   - 4-member party line-up facing NE (Hero, Ranger/Archer, Priestess, Mage).
   - Brown Dust 2 style side turn queues with HP numbers and "BATTLE START >>" pill button.
+- **64×64 Isometric Map Models**:
+  - **13 structures** — capital citadel, blacksmith, arcane spire, cathedral, general goods, tavern,
+    guild hall, fishing pier, isekai shrine, dark gate, treasure vault, wonder chest and cottages.
+  - **5 tree species × 4 silhouettes** — ancient dark oak, snow-laden frost pine, bioluminescent
+    gloomspore, ember-lit ash thorn and weeping blood willow.
+  - Every model is painted from a plain RGBA buffer by
+    `src/engine/IsometricBuildingPainter.ts` and `src/engine/IsometricFoliagePainter.ts`, so the
+    same art is drawn at runtime *and* exportable as a PNG. Nothing is a scaled-down vector
+    shape: each model is a true 64×64 pixel-art sprite blitted 1:1.
+  - All of them obey one light source (top-left): top face brightest, left face mid, right face
+    darkest, plus a `valley` tone 10–15% darker than the darkest face for concave corners, and a
+    colour-shifted sel-out outline that is never pure black. `npm test` measures the light
+    direction on every single model.
 
 ### 3. 🗺️ The World
 A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
@@ -95,12 +108,30 @@ npm run preview
 | `npm run dev` | Vite dev server with HMR |
 | `npm run typecheck` | Strict TypeScript check, no emit |
 | `npm run build` | Type check + production bundle (incl. compiled Tailwind CSS) |
-| `npm test` | Unit tests for board-data integrity, HTML escaping, save/load, enemy scaling and companion models |
+| `npm test` | Unit tests for board-data integrity, HTML escaping, save/load, enemy scaling, facing, and the 64×64 companion / structure / tree models |
 | `npm run check:css` | Verifies every utility class used by the app is in the compiled stylesheet |
 | `npm run gen:companions` | Regenerates the 64×64 companion models from `src/game/companions.json` |
+| `npm run gen:buildings` | Regenerates the 13 structure models into `public/assets/buildings/` and the review sheet `.building-sheet.png` |
+| `npm run gen:foliage` | Regenerates the 20 tree models into `public/assets/foliage/` and the review sheet `.foliage-sheet.png` |
+| `npm run gen:art` | Both of the above |
 | `npm run verify` | Everything CI runs: typecheck → build → test → CSS coverage |
 
 **Always run `npm run verify` before pushing.** CI runs the same command.
+
+### Reviewing art without an image viewer
+
+`scripts/lib/preview_companion.cjs` renders any folder of sprites as ASCII, which is how the
+models are checked in a terminal:
+
+```bash
+node scripts/lib/preview_companion.cjs --dir=public/assets/buildings --full
+node scripts/lib/preview_companion.cjs --dir=public/assets/foliage --full
+```
+
+The `--dir` mode is generic — it reads whatever PNGs it finds, so it works for structures and
+trees as well as companions. `.building-sheet.png` and `.foliage-sheet.png` (written by
+`gen:buildings` / `gen:foliage`) are the enlarged contact sheets for review; both are gitignored
+because they are derived from the committed per-model PNGs.
 
 ### Project layout
 ```
@@ -148,6 +179,24 @@ tests/      node:test suites (compiled from src by npm run pretest)
   not the numbers a hero fights. `src/game/BalanceSystem.ts` scales them to the actual
   attacker; always build a `Combatant` through `scaleMonster()` so the fight matches what the
   scouting tooltip promised.
+- `src/engine/IsometricBuildingPainter.ts` and `src/engine/IsometricFoliagePainter.ts` are pure
+  buffer painters: they must not import anything that touches the DOM, because
+  `scripts/generate_building_sprites.cjs` / `generate_foliage_sprites.cjs` compile and run them
+  off-line. The matching `Isometric*Renderer.ts` classes are the only DOM-facing part, and they
+  only convert a painted buffer into a cached canvas.
+- Those two painters are the single source of truth for map art. `tests/buildings.test.mjs` and
+  `tests/foliage.test.mjs` re-paint every model and compare it byte-for-byte against the
+  committed PNG, so editing a painter without re-running `npm run gen:art` fails the suite
+  rather than silently leaving stale images on disk.
+- Sprite anchors are exact. A structure's footprint diamond is centred at sprite `(32, 48)` and a
+  tree's root collar at `(32, 54)`, so they are blitted at `(px - 32, py - 48)` and
+  `(px + 20, py - 48)`. Changing `BUILDING_BASE_Y` or `FOLIAGE_BASE_Y` moves every model on the
+  board, and `npm test` asserts the base still lands inside the seating band.
+- The event feed (`#gameEventFeedWindow`) must stay readable behind a modal. `ShopUI` and
+  `TownUI` call `syncFeedPanelClass()` from `src/util/PanelFocus.ts` whenever they open or close,
+  which toggles `body.panel-open`; the CSS in `index.html` then raises the feed above the modal
+  and pushes the modal to the right on wide screens. Add any new full-screen panel to
+  `FEED_PANELS` there instead of hard-coding z-index classes in the markup.
 
 ---
 

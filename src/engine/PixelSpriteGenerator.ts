@@ -1,7 +1,7 @@
 import { customIsometricHeroRenderer } from './CustomIsometricHeroRenderer';
 import { customIsometricMonsterRenderer } from './CustomIsometricMonsterRenderer';
-import { terrariaIsometricBuildingRenderer } from './TerrariaIsometricBuildingRenderer';
-import { terrariaIsometricFoliageRenderer } from './TerrariaIsometricFoliageRenderer';
+import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
+import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
 
 export interface EquipmentItem {
   id: string;
@@ -1304,17 +1304,17 @@ export class PixelSpriteGenerator {
   }
 
   // =========================================================================
-  // 4. TERRARIA-STYLE 2.5D ISOMETRIC ARCHITECTURE
+  // 4. ISOMETRIC 64x64 ARCHITECTURE
   // =========================================================================
   getBuildingSprite(type: string, ownerColor: string | null = null): HTMLCanvasElement {
-    return terrariaIsometricBuildingRenderer.getBuildingSprite(type, ownerColor);
+    return isometricBuildingRenderer.getBuildingSprite(type, ownerColor);
   }
 
   // =========================================================================
-  // 5. TERRARIA-STYLE 2.5D ISOMETRIC FOLIAGE & TREES (ZERO-LAG STATIC CACHED)
+  // 5. ISOMETRIC 64x64 FOLIAGE & TREES (ZERO-LAG STATIC CACHED)
   // =========================================================================
-  getTreeSprite(type: string = 'oak', variant: number = 0): HTMLCanvasElement {
-    return terrariaIsometricFoliageRenderer.getTreeSprite(type, variant);
+  getTreeSprite(type: string = 'dark_oak', variant: number = 0): HTMLCanvasElement {
+    return isometricFoliageRenderer.getTreeSprite(type, variant);
   }
 
   // =========================================================================

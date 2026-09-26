@@ -492,8 +492,9 @@ export class IsometricRenderer {
             ctx.restore();
 
             const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
-            // Solidly seated directly on the circular node dais (Y offset py - 52)
-            ctx.drawImage(bld, px - 48, py - 52, 96, 96);
+            // 64x64 model whose base diamond is centred at (32, 48) inside the sprite, so the
+            // blit is anchored to seat that base exactly on the node's tile centre.
+            ctx.drawImage(bld, px - 32, py - 48, 64, 64);
 
             // Overhead High-Contrast Badge / Signboard for Every Building
             interface BadgeConfig {
@@ -740,7 +741,9 @@ export class IsometricRenderer {
                 ? (node.id % 4 === 0 ? 'gloom_spore' : 'dark_oak')
                 : 'dark_oak';
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
-            ctx.drawImage(tree, px + 20, py - 68, 64, 84);
+            // 1:1 blit of the 64x64 model. The anchor keeps the trunk base on the tile centre
+            // at (px + 52, py + 6), the same spot the old 68x88 sprite was resampled into.
+            ctx.drawImage(tree, px + 20, py - 48, 64, 64);
           }
         });
       }

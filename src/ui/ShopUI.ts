@@ -1,6 +1,7 @@
 import { GameState } from '../game/GameState';
 import { EquipmentItem, pixelSprites } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
+import { syncFeedPanelClass } from '../util/PanelFocus';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Multi-Spinners (Tiers 1-5)
@@ -100,6 +101,8 @@ export class ShopUI {
 
     this.renderList('buy');
     modal.classList.remove('hidden');
+    // Keep the live event feed readable next to the shop panel.
+    syncFeedPanelClass();
 
     // AI bot behavior
     if (this.game.activePlayer.isAI) {
@@ -209,6 +212,7 @@ export class ShopUI {
   private handleLeave() {
     audio.click();
     document.getElementById('shopModal')?.classList.add('hidden');
+    syncFeedPanelClass();
     if (this.onLeaveCallback) {
       this.onLeaveCallback();
     }

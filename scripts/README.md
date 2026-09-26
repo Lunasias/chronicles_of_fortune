@@ -25,6 +25,11 @@ only apply changes with `--write`. Always review `git diff src/game/BoardMap.ts`
 | `generate_all_sprites.cjs` | Generates the 8-directional idle/run/attack sprite sheets for all 18 monster archetypes and the hero classes into `public/assets/`. Overwrites existing PNGs. |
 | `upgrade_all_sprites_to_64.cjs` | Re-encodes existing sprite PNGs to the 64×64 HD standard. Overwrites existing PNGs. |
 | `generate_companion_sprites.cjs` | Draws the 64×64 model for **every** companion listed in `src/game/companions.json` into `public/assets/companions/`. Also deletes models whose companion no longer exists. Run via `npm run gen:companions`. Options: `--contact-sheet` writes a scaled grid of every sprite; `--scale=N` sets its zoom (1–8); `--only=<key>` limits it to one companion and writes `.companion-showcase-<key>.png`, which is how a single large image is produced for review. |
+| `generate_building_sprites.cjs` | Exports the 13 isometric 64×64 structure models into `public/assets/buildings/`. Run via `npm run gen:buildings`. Options: `--sheet` writes `.building-sheet.png`; `--scale=N` sets its zoom (1–8). |
+| `generate_foliage_sprites.cjs` | Exports the 5 tree species × 4 silhouettes into `public/assets/foliage/`. Run via `npm run gen:foliage`. Options: `--sheet` writes `.foliage-sheet.png`; `--scale=N` sets its zoom. |
+
+Both model exporters are **not** historical: they are re-run whenever the painters change, and
+their output is committed. `npm run gen:art` runs both.
 
 ### Companion model technique
 
@@ -52,10 +57,41 @@ number of distinct colours), lit from the top-left (upper-left half measurably b
 the lower-right), and unique. `scripts/lib/preview_companion.cjs` renders sprites as ASCII so
 they can be reviewed without an image viewer - `--full` gives a 1:1 view with a pixel ruler.
 
-These write into `public/assets/**`. They are historical: the committed assets are already
-generated, so re-running them will produce a large diff of binary files. The companion
-generator is the exception - it is meant to be re-run whenever a companion is added or its
-art recipe changes.
+### Structure and foliage model technique
+
+`IsometricBuildingPainter.ts` and `IsometricFoliagePainter.ts` share one set of primitives
+(`IsoSurface`, `faceTones`, `isoBox`, `isoPlinth`, `isoGableRoof`, `puff`, `trunk`, `stroke`),
+so the board's buildings and trees are lit and shaded by the same code rather than by two
+similar-looking copies. Both are pure buffer painters with no DOM dependency, which is what lets
+the exporters run them in Node.
+
+- **One light source, top-left.** In 2:1 dimetric projection that means top face brightest,
+  left face mid, right face darkest. Each material gets a `faceTones()` ramp built from
+  *multiplicative* HSL lightness with a hue shift toward blue in shadow, so a pale plaster wall
+  and a dark slate roof both separate without one washing out.
+- **Valley corners.** A concave inner corner takes a fourth tone 10–15% darker than the darkest
+  face. Reusing the lit tone in an inner corner is the single most common giveaway of amateur
+  isometric art, so `IsoColors.valley` exists for exactly this and is used everywhere.
+- **`floor` and `terrace` tones.** A wide horizontal slab at the bottom of a model reflects
+  skylight, so painting it with the darkest tone makes the whole sprite read as lit from below.
+  These two tones keep courtyards and plinths from inverting the model's light direction.
+- **Selective outlining.** `IsoSurface.outline()` closes the silhouette with a tinted dark line
+  derived from each rim pixel's own hue - never pure black - with a lighter inner line on the
+  lit top-left edges.
+- **Silhouette first.** Every structure and species has to be identifiable as a flat shape: a
+  battlemented citadel, a gabled cottage with its chimney, a conical snow-laden pine, a flat
+  mushroom cap, a bare forked thorn, a hanging willow fringe.
+- **Deterministic noise, not `Math.random`.** Foliage rims are broken up by an integer hash so
+  the runtime sprite and the exported PNG agree byte-for-byte.
+
+`tests/buildings.test.mjs` and `tests/foliage.test.mjs` re-paint every model and compare it
+against the committed PNG, then check that each one is shaded, lit from the left, distinct from
+the others, and seated on its tile. The light test is a left-half vs right-half luminance
+comparison rather than a quadrant comparison, because a building stacks different materials
+vertically and a vertical split would measure the palette instead of the light.
+
+These write into `public/assets/**`, and the output is committed - re-running them after an art
+change is expected to produce a binary diff.
 
 ## Read-only inspection scripts
 
@@ -76,7 +112,8 @@ Safe to run at any time; they only print.
 | `check-css-coverage.cjs` | Verifies every utility class used by the app exists in the compiled Tailwind stylesheet. Run via `npm run check:css` after a build. |
 | `prepare-test-build.cjs` | Run automatically by `npm run pretest`. The sources use bundler-style extensionless relative imports, which Node's ESM resolver rejects, so this appends explicit `.js` extensions to the compiled output in `.test-build/` and adds the `with { type: 'json' }` attribute that JSON imports need. Without it, only leaf modules could be unit tested. |
 | `lib/png.cjs` | Shared PNG encode/decode helpers used by the sprite generators. Extracted from `generate_all_sprites.cjs`. |
-| `lib/preview_companion.cjs` | Renders companion sprites as ASCII in the terminal plus a footprint/footprint summary. Defaults to every companion, so a bare run is a quick regression check; `node scripts/lib/preview_companion.cjs ignis` draws one. Useful because the sprites are small enough to review as text. |
+| `lib/contact_sheet.cjs` | Shared contact-sheet builder and per-model PNG exporter used by both `generate_building_sprites.cjs` and `generate_foliage_sprites.cjs`, so the two review sheets cannot drift apart in layout or backdrop. |
+| `lib/preview_companion.cjs` | Renders companion sprites as ASCII in the terminal plus a footprint summary. Defaults to every companion, so a bare run is a quick regression check; `node scripts/lib/preview_companion.cjs ignis` draws one. `--dir=<path>` works on any folder of same-sized PNGs, which is how the structure and tree models are reviewed. |
 
 ## Verifying the board instead
 
@@ -88,3 +125,8 @@ the repair scripts.
 disk, that no model is a duplicate of another, and that the art vocabulary is one the
 generator understands - so `generate_companion_sprites.cjs` only needs running when adding
 or restyling a companion.
+
+`tests/buildings.test.mjs` and `tests/foliage.test.mjs` do the same for the map art, and are
+stricter: they re-paint every model and diff it against the committed PNG byte-for-byte. If one
+of them fails with `... is stale - re-run npm run gen:buildings`, the painter and the exported
+image have gone out of sync; regenerating is the fix, not editing the test.

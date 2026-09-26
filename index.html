@@ -27,6 +27,48 @@
       image-rendering: crisp-edges;
     }
 
+    /* Keep the live event feed readable while the shop or town panel is open.
+       Both are `inset-0` overlays, so without this the feed is dimmed behind the backdrop.
+       On wide viewports the panel is pushed right and the feed is lifted above the overlay so
+       the two sit side by side. */
+    @media (min-width: 1180px) {
+      body.panel-open #gameEventFeedWindow {
+        z-index: 60;
+      }
+      body.panel-open #shopModal,
+      body.panel-open #townModal {
+        justify-content: flex-end;
+        padding-right: 1.5rem;
+      }
+    }
+
+    /* A narrow viewport cannot fit the panel and the feed side by side, so while a panel is open
+       the feed docks to the top edge as a short scrollable bar instead of hiding behind the
+       backdrop. The panel is then laid out under it, and its own height is capped so the two
+       still fit on a short screen rather than the panel's top being clipped out of reach. */
+    @media (max-width: 1179px) {
+      body.panel-open #gameEventFeedWindow {
+        z-index: 60;
+        top: 0.5rem;
+        left: 0.5rem;
+        right: 0.5rem;
+        width: auto;
+        max-width: none;
+        max-height: 7rem;
+        transform: none;
+      }
+      body.panel-open #shopModal,
+      body.panel-open #townModal {
+        align-items: flex-start;
+        padding-top: 8rem;
+      }
+      body.panel-open #shopModal > div,
+      body.panel-open #townModal > div {
+        max-height: calc(100vh - 9.5rem);
+        max-height: calc(100dvh - 9.5rem);
+      }
+    }
+
     body {
       margin: 0;
       padding: 0;

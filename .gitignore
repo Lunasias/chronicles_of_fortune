@@ -14,6 +14,10 @@ dist-ssr/
 .companion-sheet.png
 .companion-showcase-*.png
 
+# Review sheets emitted by `npm run gen:art`
+.building-sheet.png
+.foliage-sheet.png
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
