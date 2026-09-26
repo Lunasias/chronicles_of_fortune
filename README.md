@@ -104,6 +104,13 @@ tests/      node:test suites (compiled from src by npm run pretest)
 - `src/game/BoardMap.ts` is both the level data **and** the pristine baseline for a new
   game. Runtime board state (town ownership, town levels, built homes) lives on a deep
   clone created by `GameState.resetBoard()`; never mutate the module constant directly.
+- A hero's `nodeId` is authoritative for where it is, not `gridX/gridY/gridZ`. The grid
+  coordinates are interpolated during a walk, and `executeSingleStep` commits `nodeId` to the
+  destination at the start of the step, so the two disagree mid-animation. `SaveManager`
+  re-derives the coordinates from the node in both directions for exactly this reason.
+- Two nodes can share a tile and differ only in elevation (a cliff or bridge). Stepping
+  between them has no on-screen bearing, so `calculateIsoDirection` takes the current facing
+  as a fallback instead of inventing a direction.
 - Board and sprite data are generated/edited by the scripts in `scripts/`. Two of them
   rewrite tracked source - they are dry-run by default and require `--write`.
 - Hero names and prank nicknames are user input. Escape them with `escapeHtml()` from

@@ -11,7 +11,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "pretest": "tsc -p tsconfig.test.json",
+    "pretest": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "check:css": "node scripts/check-css-coverage.cjs",
     "verify": "npm run typecheck && npm run build && npm test && npm run check:css"

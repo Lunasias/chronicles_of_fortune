@@ -8,5 +8,10 @@
     "sourceMap": false,
     "allowImportingTsExtensions": false
   },
-  "include": ["src/game/BoardMap.ts", "src/util/Html.ts"]
+  "include": [
+    "src/game/BoardMap.ts",
+    "src/game/GameState.ts",
+    "src/game/SaveManager.ts",
+    "src/util/Html.ts"
+  ]
 }

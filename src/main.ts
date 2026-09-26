@@ -261,7 +261,7 @@ class DokaponApp {
           const nextNode = this.game.allNodes.find(n => n.id === path[1]);
           if (nextNode) {
             const p = this.game.activePlayer;
-            p.facing = this.game.calculateIsoDirection(nextNode.gx - p.gridX, nextNode.gy - p.gridY);
+            p.facing = this.game.calculateIsoDirection(nextNode.gx - p.gridX, nextNode.gy - p.gridY, p.facing);
           }
         }
       } else {

@@ -413,10 +413,12 @@ export class GameState {
     const p = this.activePlayer;
     const targetNode = this.allNodes.find(n => n.id === nextNodeId) || this.allNodes[0];
 
-    // Determine 2.5D Isometric direction (8 directions: SE, SW, NE, NW, S, N, E, W)
+    // Determine 2.5D Isometric direction (8 directions: SE, SW, NE, NW, S, N, E, W).
+    // p.facing is passed as the fallback so a purely vertical step (same gx/gy, different gz)
+    // keeps the current facing instead of snapping to an arbitrary one.
     const dgx = targetNode.gx - p.gridX;
     const dgy = targetNode.gy - p.gridY;
-    p.facing = this.calculateIsoDirection(dgx, dgy);
+    p.facing = this.calculateIsoDirection(dgx, dgy, p.facing);
 
     p.prevNodeId = p.nodeId;
     p.nodeId = nextNodeId;
@@ -491,14 +493,18 @@ export class GameState {
     });
   }
 
-  public calculateIsoDirection(dgx: number, dgy: number): IsoDirection {
+  public calculateIsoDirection(dgx: number, dgy: number, fallback: IsoDirection = 'SE'): IsoDirection {
     // Convert 2.5D Isometric grid step to screen vector
     // Screen X = (dgx - dgy) * 48, Screen Y = (dgx + dgy) * 24
     const screenDx = (dgx - dgy) * 48;
     const screenDy = (dgx + dgy) * 24;
 
+    // Two nodes can legitimately share a tile and differ only in elevation (a cliff, bridge or
+    // multi-level island). Stepping between them has no on-screen bearing at all, and this
+    // used to return a hard-coded 'SE', which froze the hero's facing. The caller's current
+    // facing is kept instead so the hero simply climbs without turning.
     if (Math.abs(screenDx) < 0.001 && Math.abs(screenDy) < 0.001) {
-      return 'SE';
+      return fallback;
     }
 
     const angleDeg = Math.atan2(screenDy, screenDx) * (180 / Math.PI);
