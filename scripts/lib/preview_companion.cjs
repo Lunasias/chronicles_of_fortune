@@ -38,29 +38,40 @@ function preview(key) {
     return;
   }
 
+  // Add --full for a 1:1 view: one character per pixel, which is the only way to judge shapes
+  // and shading placement at this size.
+  const full = process.argv.includes('--full');
+  const step = full ? 1 : 2;
+
   console.log(`\n=== ${key}  ${width}x${height}  opaque=${opaqueCount}  box=(${minX},${minY})-(${maxX},${maxY}) ===`);
-  // 2x2 -> 1 char, alpha coverage mapped through a brightness ramp.
-  for (let by = 0; by < height; by += 2) {
+  if (full) {
+    // A ruler so pixel columns can be counted.
+    console.log('    ' + Array.from({ length: width }, (_, i) => (i % 10 === 0 ? String(Math.floor(i / 10) % 10) : ' ')).join(''));
+  }
+  for (let by = 0; by < height; by += step) {
     let line = '';
-    for (let bx = 0; bx < width; bx += 2) {
+    for (let bx = 0; bx < width; bx += step) {
       let alphaSum = 0;
       let lumSum = 0;
-      for (let dy = 0; dy < 2; dy++) {
-        for (let dx = 0; dx < 2; dx++) {
+      let samples = 0;
+      for (let dy = 0; dy < step; dy++) {
+        for (let dx = 0; dx < step; dx++) {
           const i = ((by + dy) * width + (bx + dx)) * 4;
           const a = pixels[i + 3] / 255;
           alphaSum += a;
           const lum = (pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114) / 255;
           lumSum += lum * a;
+          samples++;
         }
       }
-      const coverage = alphaSum / 4;
-      if (coverage < 0.15) { line += ' '; continue; }
+      const coverage = alphaSum / samples;
+      if (coverage < 0.15) { line += full ? '.' : ' '; continue; }
       const lum = lumSum / Math.max(0.001, alphaSum);
-      const idx = Math.max(1, Math.min(RAMP.length - 1, Math.round(lum * (RAMP.length - 1) * coverage + 1)));
+      // In full mode the ramp is finer so shading steps are visible.
+      const idx = Math.max(1, Math.min(RAMP.length - 1, Math.round(lum * (RAMP.length - 1) * (full ? 0.55 + coverage * 0.45 : coverage) + 1)));
       line += RAMP[idx];
     }
-    console.log(line.replace(/\s+$/, ''));
+    console.log((full ? String(by).padStart(3) + ' ' : '') + line.replace(/\s+$/, ''));
   }
 }
 

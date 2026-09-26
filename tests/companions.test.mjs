@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import path from 'node:path';
 
 import {
@@ -31,6 +32,78 @@ function readPngSize(file) {
   }
   assert.equal(buf.toString('ascii', 12, 16), 'IHDR', `${file} has no IHDR`);
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/**
+ * Decodes an 8-bit RGBA PNG written by this project's generator (all rows use filter 0, and
+ * compressed data is stored in a single IDAT that zlib can inflate).
+ */
+function readPixels(file) {
+  const buf = readFileSync(file);
+  const { width, height } = readPngSize(file);
+  let pos = 8;
+  const idat = [];
+  while (pos < buf.length) {
+    const len = buf.readUInt32BE(pos);
+    const type = buf.toString('ascii', pos + 4, pos + 8);
+    if (type === 'IDAT') idat.push(buf.subarray(pos + 8, pos + 8 + len));
+    else if (type === 'IEND') break;
+    pos += 12 + len;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const pixels = Buffer.alloc(width * height * 4);
+  const stride = width * 4;
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    assert.equal(filter, 0, `${file} uses an unsupported PNG filter`);
+    raw.copy(pixels, y * stride, y * (stride + 1) + 1, y * (stride + 1) + 1 + stride);
+  }
+  return { width, height, pixels };
+}
+
+/**
+ * Alpha above which a pixel counts as solid character rather than the translucent aura ring.
+ * The aura is deliberately semi-transparent, and including it would let a symmetric glow dilute
+ * any measurement of the sprite's own shading.
+ */
+const SOLID_ALPHA = 200;
+
+const luminance = (r, g, b) => (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+
+/** Mean luminance of the solid pixels in one half of a sprite's bounding box. */
+function regionLuminance({ width, height, pixels }, box, wanted) {
+  const midX = (box.minX + box.maxX) / 2;
+  const midY = (box.minY + box.maxY) / 2;
+  let sum = 0;
+  let count = 0;
+  for (let y = box.minY; y <= box.maxY; y++) {
+    for (let x = box.minX; x <= box.maxX; x++) {
+      const i = (y * width + x) * 4;
+      if (pixels[i + 3] <= SOLID_ALPHA) continue;
+      const upperLeft = x <= midX && y <= midY;
+      if (wanted === 'upperLeft' ? !upperLeft : upperLeft) continue;
+      sum += luminance(pixels[i], pixels[i + 1], pixels[i + 2]);
+      count++;
+    }
+  }
+  return count ? sum / count : 0;
+}
+
+function boundingBox({ width, height, pixels }) {
+  let minX = width;
+  let maxX = -1;
+  let minY = height;
+  let maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (pixels[(y * width + x) * 4 + 3] <= SOLID_ALPHA) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return { minX, maxX, minY, maxY };
 }
 
 const profiles = listCompanionProfiles();
@@ -94,6 +167,41 @@ test('every model actually contains pixels', () => {
     assert.ok(
       bytes.length > 250,
       `${profile.key}.png is only ${bytes.length} bytes, which suggests an empty sprite`
+    );
+  }
+});
+
+test('every model is shaded, not a flat silhouette', () => {
+  // A properly shaded 64x64 sprite carries a five-stage ramp per material, so it has far more
+  // distinct colours than a flat fill would. This is the guard against the generator regressing
+  // into a single-tone blob.
+  for (const profile of profiles) {
+    const { width, height, pixels } = readPixels(path.join(MODEL_DIR, `${profile.key}.png`));
+    const colours = new Set();
+    for (let i = 0; i < width * height; i++) {
+      if (pixels[i * 4 + 3] <= SOLID_ALPHA) continue;
+      colours.add(`${pixels[i * 4]},${pixels[i * 4 + 1]},${pixels[i * 4 + 2]}`);
+    }
+    assert.ok(
+      colours.size >= 60,
+      `${profile.key} uses only ${colours.size} colours, which means it is not shaded`
+    );
+  }
+});
+
+test('every model is lit from the top-left', () => {
+  // The single most important pixel-art rule: one light source, and shadows opposite it. If the
+  // upper-left half of a sprite is not brighter than the lower-right half, the light map has
+  // broken (or the sprite has been pillow shaded into a uniform dark rim).
+  for (const profile of profiles) {
+    const image = readPixels(path.join(MODEL_DIR, `${profile.key}.png`));
+    const box = boundingBox(image);
+    const upperLeft = regionLuminance(image, box, 'upperLeft');
+    const lowerRight = regionLuminance(image, box, 'lowerRight');
+    assert.ok(
+      upperLeft > lowerRight + 0.02,
+      `${profile.key}: upper-left is ${upperLeft.toFixed(3)} and lower-right is ` +
+        `${lowerRight.toFixed(3)} - the light direction is not readable`
     );
   }
 });
@@ -168,14 +276,23 @@ test('every art descriptor uses vocabulary the generator understands', () => {
   const raw = JSON.parse(readFileSync(path.join('src', 'game', 'companions.json'), 'utf8'));
 
   const allowed = {
-    hairStyle: ['long', 'twin', 'short', 'bun', 'ponytail'],
+    hairStyle: ['long', 'twin', 'short', 'bun', 'ponytail', 'wavy'],
     body: ['human', 'slime', 'ghost', 'mech', 'mermaid'],
     ears: ['none', 'goblin', 'dog', 'wolf', 'cat', 'fox', 'elf', 'yeti'],
-    horns: ['none', 'dragon', 'imp', 'demon'],
-    wings: ['none', 'dragon', 'bat', 'feather'],
-    tail: ['none', 'dog', 'fox9', 'cat', 'scorpion', 'mermaid', 'dragon', 'slime'],
-    headwear: ['none', 'maid', 'hat', 'crown', 'turban', 'bandana', 'bandage', 'mask', 'flower', 'halo'],
-    weapon: ['none', 'dagger', 'sword', 'staff', 'gun', 'fan', 'claw']
+    horns: ['none', 'dragon', 'imp', 'demon', 'curled'],
+    wings: ['none', 'dragon', 'bat', 'feather', 'insect'],
+    tail: ['none', 'dog', 'fox9', 'cat', 'scorpion', 'mermaid', 'dragon', 'slime', 'flame'],
+    headwear: [
+      'none', 'maid', 'hat', 'tophat', 'goggles', 'crown', 'tiara', 'turban', 'bandana',
+      'hood', 'bandage', 'nemes', 'mask', 'foxmask', 'flower', 'halo'
+    ],
+    weapon: [
+      'none', 'dagger', 'sword', 'scimitar', 'staff', 'gun', 'fan', 'claw', 'scythe', 'bow',
+      'shield', 'tray', 'gohei', 'pickaxe'
+    ],
+    outfitStyle: ['tunic', 'armor', 'plate', 'robe', 'dress', 'kimono', 'corset', 'apron', 'cloak', 'shells', 'bandage', 'fur'],
+    pattern: ['none', 'stripes', 'scales', 'cracks', 'stars', 'runes'],
+    auraStyle: ['glow', 'flame', 'frost', 'void', 'water', 'petals', 'sparks']
   };
 
   const problems = [];
@@ -190,6 +307,26 @@ test('every art descriptor uses vocabulary the generator understands', () => {
         problems.push(`${companion.key}.${color} = "${companion.art[color]}"`);
       }
     }
+    if (companion.art.cape !== null && !/^#[0-9a-f]{6}$/i.test(companion.art.cape)) {
+      problems.push(`${companion.key}.cape = "${companion.art.cape}"`);
+    }
+    if (companion.art.aura !== null && !/^#[0-9a-f]{6}$/i.test(companion.art.aura)) {
+      problems.push(`${companion.key}.aura = "${companion.art.aura}"`);
+    }
   }
   assert.deepEqual(problems, []);
+});
+
+test('each companion has a silhouette of its own', () => {
+  // Names promise specific characters, so two companions must never share the same accessory
+  // combination. This catches a copy-pasted art recipe.
+  const signatures = new Map();
+  const clashes = [];
+  for (const profile of profiles) {
+    const a = profile.art;
+    const signature = [a.body, a.ears, a.horns, a.wings, a.tail, a.headwear, a.weapon, a.outfitStyle, a.pattern].join('|');
+    if (signatures.has(signature)) clashes.push(`${profile.key} == ${signatures.get(signature)}`);
+    else signatures.set(signature, profile.key);
+  }
+  assert.deepEqual(clashes, []);
 });

@@ -45,6 +45,13 @@ companion can be summoned once per battle for a powerful assist, and the emergen
 can save a hero from a killing blow. Every companion's model is generated from a single
 data file, so adding one is a JSON entry plus `npm run gen:companions`.
 
+The models follow one light source (top-left) applied through a light map, five-stage
+hue-shifted ramps per material, and selective outlining, so the shading reads at a glance
+instead of looking flat. Each character's silhouette is built from its own name — the
+kitsune miko carries nine tails and a gohei wand, the gunner a top hat and a gatling gun,
+the mummy queen a nemes headdress and wrapped bandages. `npm test` verifies that every
+companion has a shaded, uniquely-lit, non-duplicate model.
+
 ### 5. ⚖️ Scaling Enemies
 Monster stats are authored as the balance point for a **level-1 hero** and then scaled at
 battle time to whoever is actually attacking. A tier-1 encounter stays a short skirmish and

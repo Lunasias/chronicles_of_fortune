@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "spriteSize": 64,
   "assetDir": "assets/companions",
   "fallbackKey": "beastgirl",
@@ -14,7 +14,26 @@
       "skillDesc": "+6 ATK, ช่วยขโมยทอง 20G ในการรบ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#22c55e",
-      "art": { "skin": "#8fd18a", "hair": "#2f7d32", "hairStyle": "twin", "outfit": "#365314", "accent": "#facc15", "eyes": "#fde047", "body": "human", "ears": "goblin", "horns": "none", "wings": "none", "tail": "none", "headwear": "none", "weapon": "dagger", "aura": "#22c55e" }
+      "art": {
+        "skin": "#8fd18a",
+        "hair": "#2f7d32",
+        "hairStyle": "twin",
+        "outfit": "#5c6b24",
+        "accent": "#c2812f",
+        "eyes": "#fde047",
+        "body": "human",
+        "ears": "goblin",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "none",
+        "weapon": "dagger",
+        "outfitStyle": "tunic",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#22c55e",
+        "auraStyle": "glow"
+      }
     },
     {
       "key": "lulu",
@@ -26,7 +45,26 @@
       "skillDesc": "+6 DEF, ขุดแร่หายากเพิ่มโชค LUK +5",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#f59e0b",
-      "art": { "skin": "#f0c49a", "hair": "#b45309", "hairStyle": "short", "outfit": "#7c2d12", "accent": "#fcd34d", "eyes": "#f59e0b", "body": "human", "ears": "dog", "horns": "none", "wings": "none", "tail": "dog", "headwear": "none", "weapon": "claw", "aura": "#f59e0b" }
+      "art": {
+        "skin": "#f0c49a",
+        "hair": "#b45309",
+        "hairStyle": "short",
+        "outfit": "#7c4a23",
+        "accent": "#fcd34d",
+        "eyes": "#f59e0b",
+        "body": "human",
+        "ears": "dog",
+        "horns": "none",
+        "wings": "none",
+        "tail": "dog",
+        "headwear": "none",
+        "weapon": "pickaxe",
+        "outfitStyle": "fur",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#f59e0b",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "pudding",
@@ -38,7 +76,26 @@
       "skillDesc": "+30 Max HP, ฟื้นฟูเลือดอัตโนมัติ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#38bdf8",
-      "art": { "skin": "#bfe9ff", "hair": "#7dd3fc", "hairStyle": "long", "outfit": "#0284c7", "accent": "#e0f2fe", "eyes": "#0ea5e9", "body": "slime", "ears": "none", "horns": "none", "wings": "none", "tail": "slime", "headwear": "none", "weapon": "none", "aura": "#38bdf8" }
+      "art": {
+        "skin": "#bfe9ff",
+        "hair": "#7dd3fc",
+        "hairStyle": "long",
+        "outfit": "#38bdf8",
+        "accent": "#e0f2fe",
+        "eyes": "#0ea5e9",
+        "body": "slime",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "slime",
+        "headwear": "flower",
+        "weapon": "none",
+        "outfitStyle": "dress",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#38bdf8",
+        "auraStyle": "water"
+      }
     },
     {
       "key": "silva",
@@ -50,7 +107,26 @@
       "skillDesc": "+8 SPD, กระโจนกัดคู่ศัตรู",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#84cc16",
-      "art": { "skin": "#f3cfa8", "hair": "#65a30d", "hairStyle": "ponytail", "outfit": "#3f6212", "accent": "#d9f99d", "eyes": "#a3e635", "body": "human", "ears": "wolf", "horns": "none", "wings": "none", "tail": "dog", "headwear": "none", "weapon": "claw", "aura": "#84cc16" }
+      "art": {
+        "skin": "#f3cfa8",
+        "hair": "#65a30d",
+        "hairStyle": "ponytail",
+        "outfit": "#3f6212",
+        "accent": "#d9f99d",
+        "eyes": "#a3e635",
+        "body": "human",
+        "ears": "wolf",
+        "horns": "none",
+        "wings": "none",
+        "tail": "dog",
+        "headwear": "none",
+        "weapon": "claw",
+        "outfitStyle": "tunic",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#84cc16",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "shadow_panther",
@@ -62,7 +138,26 @@
       "skillDesc": "+8 ATK, +6 SPD, การโจมตีติดคริติคอลบ่อยขึ้น",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#6366f1",
-      "art": { "skin": "#c9a17a", "hair": "#1e1b4b", "hairStyle": "long", "outfit": "#312e81", "accent": "#818cf8", "eyes": "#facc15", "body": "human", "ears": "cat", "horns": "none", "wings": "none", "tail": "cat", "headwear": "none", "weapon": "dagger", "aura": "#6366f1" }
+      "art": {
+        "skin": "#c9a17a",
+        "hair": "#312e81",
+        "hairStyle": "long",
+        "outfit": "#4338ca",
+        "accent": "#818cf8",
+        "eyes": "#facc15",
+        "body": "human",
+        "ears": "cat",
+        "horns": "none",
+        "wings": "none",
+        "tail": "cat",
+        "headwear": "hood",
+        "weapon": "dagger",
+        "outfitStyle": "cloak",
+        "pattern": "none",
+        "cape": "#6d28d9",
+        "aura": "#6366f1",
+        "auraStyle": "void"
+      }
     },
     {
       "key": "frost_elsa",
@@ -74,7 +169,26 @@
       "skillDesc": "+8 DEF, +6 MAG, เกราะน้ำแข็งดูดซับดาเมจ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#a5f3fc",
-      "art": { "skin": "#e8f6ff", "hair": "#bae6fd", "hairStyle": "long", "outfit": "#475569", "accent": "#a5f3fc", "eyes": "#22d3ee", "body": "ghost", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "halo", "weapon": "sword", "aura": "#a5f3fc" }
+      "art": {
+        "skin": "#e8f6ff",
+        "hair": "#bae6fd",
+        "hairStyle": "long",
+        "outfit": "#7c8ba1",
+        "accent": "#a5f3fc",
+        "eyes": "#22d3ee",
+        "body": "ghost",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "halo",
+        "weapon": "sword",
+        "outfitStyle": "plate",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#a5f3fc",
+        "auraStyle": "frost"
+      }
     },
     {
       "key": "yukiko",
@@ -86,7 +200,26 @@
       "skillDesc": "+10 DEF, มอบความอบอุ่นต้านทานหนาว",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#e0f2fe",
-      "art": { "skin": "#f8fafc", "hair": "#e2e8f0", "hairStyle": "bun", "outfit": "#94a3b8", "accent": "#bae6fd", "eyes": "#38bdf8", "body": "human", "ears": "yeti", "horns": "none", "wings": "none", "tail": "none", "headwear": "none", "weapon": "none", "aura": "#e0f2fe" }
+      "art": {
+        "skin": "#f8fafc",
+        "hair": "#e2e8f0",
+        "hairStyle": "bun",
+        "outfit": "#cbd5e1",
+        "accent": "#bae6fd",
+        "eyes": "#38bdf8",
+        "body": "human",
+        "ears": "yeti",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "none",
+        "weapon": "none",
+        "outfitStyle": "fur",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#e0f2fe",
+        "auraStyle": "frost"
+      }
     },
     {
       "key": "glacia",
@@ -98,7 +231,26 @@
       "skillDesc": "+9 MAG, พ่นไอเย็นแช่แข็งศัตรู",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#06b6d4",
-      "art": { "skin": "#dbeafe", "hair": "#67e8f9", "hairStyle": "long", "outfit": "#0e7490", "accent": "#cffafe", "eyes": "#0891b2", "body": "human", "ears": "none", "horns": "dragon", "wings": "dragon", "tail": "dragon", "headwear": "none", "weapon": "none", "aura": "#06b6d4" }
+      "art": {
+        "skin": "#dbeafe",
+        "hair": "#67e8f9",
+        "hairStyle": "long",
+        "outfit": "#0e7490",
+        "accent": "#cffafe",
+        "eyes": "#0891b2",
+        "body": "human",
+        "ears": "none",
+        "horns": "dragon",
+        "wings": "dragon",
+        "tail": "dragon",
+        "headwear": "tiara",
+        "weapon": "none",
+        "outfitStyle": "dress",
+        "pattern": "scales",
+        "cape": null,
+        "aura": "#06b6d4",
+        "auraStyle": "frost"
+      }
     },
     {
       "key": "safira",
@@ -110,7 +262,26 @@
       "skillDesc": "+8 ATK, +6 LUK, โบนัสทองคำหลังชนะศึก",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#f97316",
-      "art": { "skin": "#e0ac74", "hair": "#7c2d12", "hairStyle": "ponytail", "outfit": "#ea580c", "accent": "#fed7aa", "eyes": "#f97316", "body": "human", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "turban", "weapon": "sword", "aura": "#f97316" }
+      "art": {
+        "skin": "#e0ac74",
+        "hair": "#7c2d12",
+        "hairStyle": "ponytail",
+        "outfit": "#ea580c",
+        "accent": "#fed7aa",
+        "eyes": "#f97316",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "turban",
+        "weapon": "scimitar",
+        "outfitStyle": "dress",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#f97316",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "nefertiti",
@@ -122,7 +293,26 @@
       "skillDesc": "+10 MAG, ปลดปล่อยคำสาปโบราณ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#eab308",
-      "art": { "skin": "#d6c39a", "hair": "#1c1917", "hairStyle": "long", "outfit": "#a16207", "accent": "#fde047", "eyes": "#facc15", "body": "ghost", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "crown", "weapon": "staff", "aura": "#eab308" }
+      "art": {
+        "skin": "#d6c39a",
+        "hair": "#3f3f46",
+        "hairStyle": "long",
+        "outfit": "#d6c39a",
+        "accent": "#eab308",
+        "eyes": "#facc15",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "nemes",
+        "weapon": "staff",
+        "outfitStyle": "bandage",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#eab308",
+        "auraStyle": "glow"
+      }
     },
     {
       "key": "fizzy",
@@ -134,7 +324,26 @@
       "skillDesc": "+8 MAG, เผาผลาญศัตรูต่อเนื่อง",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#ef4444",
-      "art": { "skin": "#f0a58c", "hair": "#b91c1c", "hairStyle": "twin", "outfit": "#7f1d1d", "accent": "#fb923c", "eyes": "#fbbf24", "body": "human", "ears": "none", "horns": "imp", "wings": "bat", "tail": "none", "headwear": "none", "weapon": "none", "aura": "#ef4444" }
+      "art": {
+        "skin": "#f0a58c",
+        "hair": "#b91c1c",
+        "hairStyle": "twin",
+        "outfit": "#991b1b",
+        "accent": "#fb923c",
+        "eyes": "#fbbf24",
+        "body": "human",
+        "ears": "none",
+        "horns": "imp",
+        "wings": "bat",
+        "tail": "flame",
+        "headwear": "none",
+        "weapon": "none",
+        "outfitStyle": "tunic",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#ef4444",
+        "auraStyle": "flame"
+      }
     },
     {
       "key": "selina",
@@ -146,7 +355,26 @@
       "skillDesc": "+7 ATK, +7 DEF, พิษลาวาเข้มข้น",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#dc2626",
-      "art": { "skin": "#c2764f", "hair": "#7f1d1d", "hairStyle": "bun", "outfit": "#991b1b", "accent": "#fb7185", "eyes": "#f59e0b", "body": "human", "ears": "none", "horns": "none", "wings": "none", "tail": "scorpion", "headwear": "none", "weapon": "claw", "aura": "#dc2626" }
+      "art": {
+        "skin": "#c2764f",
+        "hair": "#7f1d1d",
+        "hairStyle": "bun",
+        "outfit": "#b91c1c",
+        "accent": "#fb7185",
+        "eyes": "#f59e0b",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "scorpion",
+        "headwear": "none",
+        "weapon": "claw",
+        "outfitStyle": "armor",
+        "pattern": "cracks",
+        "cape": null,
+        "aura": "#dc2626",
+        "auraStyle": "flame"
+      }
     },
     {
       "key": "andrea",
@@ -158,7 +386,26 @@
       "skillDesc": "+12 DEF, สร้างบาเรียหินดำดูดซับความเสียหาย",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#475569",
-      "art": { "skin": "#94a3b8", "hair": "#1e293b", "hairStyle": "bun", "outfit": "#0f172a", "accent": "#64748b", "eyes": "#38bdf8", "body": "mech", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "maid", "weapon": "none", "aura": "#475569" }
+      "art": {
+        "skin": "#94a3b8",
+        "hair": "#475569",
+        "hairStyle": "bun",
+        "outfit": "#334155",
+        "accent": "#94a3b8",
+        "eyes": "#38bdf8",
+        "body": "mech",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "maid",
+        "weapon": "shield",
+        "outfitStyle": "apron",
+        "pattern": "runes",
+        "cape": null,
+        "aura": "#475569",
+        "auraStyle": "glow"
+      }
     },
     {
       "key": "alice",
@@ -170,7 +417,26 @@
       "skillDesc": "+10 DEF, +6 MAG, คลื่นกระแทกไอน้ำ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#f59e0b",
-      "art": { "skin": "#f1d6b8", "hair": "#fbbf24", "hairStyle": "twin", "outfit": "#b45309", "accent": "#fef3c7", "eyes": "#f97316", "body": "mech", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "crown", "weapon": "none", "aura": "#f59e0b" }
+      "art": {
+        "skin": "#f1d6b8",
+        "hair": "#fbbf24",
+        "hairStyle": "twin",
+        "outfit": "#c2610c",
+        "accent": "#fef3c7",
+        "eyes": "#f97316",
+        "body": "mech",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "crown",
+        "weapon": "none",
+        "outfitStyle": "plate",
+        "pattern": "runes",
+        "cape": null,
+        "aura": "#f59e0b",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "victoria",
@@ -182,7 +448,26 @@
       "skillDesc": "+10 ATK, +8 SPD, ระดมยิงปืนกลสนับสนุน",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#0ea5e9",
-      "art": { "skin": "#e8c39e", "hair": "#0c4a6e", "hairStyle": "short", "outfit": "#155e75", "accent": "#7dd3fc", "eyes": "#0ea5e9", "body": "human", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "hat", "weapon": "gun", "aura": "#0ea5e9" }
+      "art": {
+        "skin": "#e8c39e",
+        "hair": "#1e4a63",
+        "hairStyle": "short",
+        "outfit": "#1e6b85",
+        "accent": "#7dd3fc",
+        "eyes": "#0ea5e9",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "tophat",
+        "weapon": "gun",
+        "outfitStyle": "corset",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#0ea5e9",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "nicole",
@@ -194,7 +479,26 @@
       "skillDesc": "+8 DEF, +8 SPD, เสิร์ฟชาฟื้นฟู HP/MP ทุกเทิร์น",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#ec4899",
-      "art": { "skin": "#f6d5c0", "hair": "#f9a8d4", "hairStyle": "twin", "outfit": "#831843", "accent": "#fbcfe8", "eyes": "#ec4899", "body": "mech", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "maid", "weapon": "none", "aura": "#ec4899" }
+      "art": {
+        "skin": "#f6d5c0",
+        "hair": "#f9a8d4",
+        "hairStyle": "twin",
+        "outfit": "#9d174d",
+        "accent": "#f9a8d4",
+        "eyes": "#ec4899",
+        "body": "mech",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "maid",
+        "weapon": "tray",
+        "outfitStyle": "apron",
+        "pattern": "runes",
+        "cape": null,
+        "aura": "#ec4899",
+        "auraStyle": "glow"
+      }
     },
     {
       "key": "chiyo",
@@ -206,7 +510,26 @@
       "skillDesc": "+10 MAG, +8 LUK, ปัดเป่าคำสาปและบัฟโชคลาภ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#f43f5e",
-      "art": { "skin": "#f7d3b4", "hair": "#fda4af", "hairStyle": "ponytail", "outfit": "#be123c", "accent": "#fff1f2", "eyes": "#f43f5e", "body": "human", "ears": "fox", "horns": "none", "wings": "none", "tail": "fox9", "headwear": "flower", "weapon": "staff", "aura": "#f43f5e" }
+      "art": {
+        "skin": "#f7d3b4",
+        "hair": "#fda4af",
+        "hairStyle": "ponytail",
+        "outfit": "#f8fafc",
+        "accent": "#be123c",
+        "eyes": "#f43f5e",
+        "body": "human",
+        "ears": "fox",
+        "horns": "none",
+        "wings": "none",
+        "tail": "fox9",
+        "headwear": "flower",
+        "weapon": "gohei",
+        "outfitStyle": "kimono",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#f43f5e",
+        "auraStyle": "petals"
+      }
     },
     {
       "key": "ayame",
@@ -218,7 +541,26 @@
       "skillDesc": "+10 SPD, +6 ATK, พัดสายลมคมกริบ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#f472b6",
-      "art": { "skin": "#f8d8c4", "hair": "#1f2937", "hairStyle": "short", "outfit": "#be185d", "accent": "#fbcfe8", "eyes": "#f472b6", "body": "human", "ears": "none", "horns": "none", "wings": "feather", "tail": "none", "headwear": "mask", "weapon": "fan", "aura": "#f472b6" }
+      "art": {
+        "skin": "#f8d8c4",
+        "hair": "#4b5563",
+        "hairStyle": "short",
+        "outfit": "#be185d",
+        "accent": "#e58aa8",
+        "eyes": "#f472b6",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "feather",
+        "tail": "none",
+        "headwear": "foxmask",
+        "weapon": "fan",
+        "outfitStyle": "kimono",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#f472b6",
+        "auraStyle": "petals"
+      }
     },
     {
       "key": "alura",
@@ -230,7 +572,26 @@
       "skillDesc": "+8 MAG, +35 HP, เถาวัลย์พันธนาการศัตรู",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#10b981",
-      "art": { "skin": "#e6d3a8", "hair": "#047857", "hairStyle": "long", "outfit": "#065f46", "accent": "#a7f3d0", "eyes": "#34d399", "body": "human", "ears": "elf", "horns": "none", "wings": "none", "tail": "none", "headwear": "flower", "weapon": "staff", "aura": "#10b981" }
+      "art": {
+        "skin": "#e6d3a8",
+        "hair": "#047857",
+        "hairStyle": "long",
+        "outfit": "#065f46",
+        "accent": "#a7f3d0",
+        "eyes": "#34d399",
+        "body": "human",
+        "ears": "elf",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "flower",
+        "weapon": "staff",
+        "outfitStyle": "robe",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#10b981",
+        "auraStyle": "petals"
+      }
     },
     {
       "key": "melody",
@@ -242,7 +603,26 @@
       "skillDesc": "+11 MAG, ร้องเพลงสะกดจิตลดพลังศัตรู",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#a855f7",
-      "art": { "skin": "#cfd8ee", "hair": "#7e22ce", "hairStyle": "long", "outfit": "#4c1d95", "accent": "#e9d5ff", "eyes": "#a855f7", "body": "mermaid", "ears": "none", "horns": "none", "wings": "none", "tail": "mermaid", "headwear": "none", "weapon": "none", "aura": "#a855f7" }
+      "art": {
+        "skin": "#cfd8ee",
+        "hair": "#9333ea",
+        "hairStyle": "wavy",
+        "outfit": "#6d28d9",
+        "accent": "#e9d5ff",
+        "eyes": "#a855f7",
+        "body": "mermaid",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "mermaid",
+        "headwear": "tiara",
+        "weapon": "none",
+        "outfitStyle": "shells",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#a855f7",
+        "auraStyle": "water"
+      }
     },
     {
       "key": "chloe",
@@ -254,7 +634,26 @@
       "skillDesc": "+35 Max HP, หลบหลีกการโจมตีทางกายภาพ",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#8b5cf6",
-      "art": { "skin": "#c4b5fd", "hair": "#5b21b6", "hairStyle": "long", "outfit": "#2e1065", "accent": "#ddd6fe", "eyes": "#8b5cf6", "body": "slime", "ears": "none", "horns": "demon", "wings": "none", "tail": "slime", "headwear": "none", "weapon": "none", "aura": "#8b5cf6" }
+      "art": {
+        "skin": "#c4b5fd",
+        "hair": "#7c3aed",
+        "hairStyle": "long",
+        "outfit": "#4c1d95",
+        "accent": "#ddd6fe",
+        "eyes": "#8b5cf6",
+        "body": "slime",
+        "ears": "none",
+        "horns": "demon",
+        "wings": "none",
+        "tail": "slime",
+        "headwear": "none",
+        "weapon": "none",
+        "outfitStyle": "dress",
+        "pattern": "stars",
+        "cape": null,
+        "aura": "#8b5cf6",
+        "auraStyle": "void"
+      }
     },
     {
       "key": "gara",
@@ -266,7 +665,26 @@
       "skillDesc": "+8 ATK, +8 SPD, เพิ่มทองที่ได้รับ 30%",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#eab308",
-      "art": { "skin": "#e3b183", "hair": "#78350f", "hairStyle": "ponytail", "outfit": "#422006", "accent": "#facc15", "eyes": "#fbbf24", "body": "human", "ears": "none", "horns": "none", "wings": "none", "tail": "none", "headwear": "bandana", "weapon": "dagger", "aura": "#eab308" }
+      "art": {
+        "skin": "#e3b183",
+        "hair": "#92400e",
+        "hairStyle": "ponytail",
+        "outfit": "#78350f",
+        "accent": "#facc15",
+        "eyes": "#fbbf24",
+        "body": "human",
+        "ears": "none",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "bandana",
+        "weapon": "dagger",
+        "outfitStyle": "tunic",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#eab308",
+        "auraStyle": "glow"
+      }
     },
     {
       "key": "ignis",
@@ -278,7 +696,26 @@
       "skillDesc": "+15 ATK, +15 MAG, พ่นเปลวเพลิงมังกรบรรพกาลล้างผลาญ",
       "dialogue": "หึ! เจ้าต้องดูแลข้าดีๆ นะ ไม่งั้นข้าจะเผาเจ้าซะ!",
       "color": "#ef4444",
-      "art": { "skin": "#f7cdb0", "hair": "#dc2626", "hairStyle": "long", "outfit": "#7f1d1d", "accent": "#fbbf24", "eyes": "#f59e0b", "body": "human", "ears": "none", "horns": "dragon", "wings": "dragon", "tail": "dragon", "headwear": "none", "weapon": "none", "aura": "#ef4444" }
+      "art": {
+        "skin": "#f7cdb0",
+        "hair": "#dc2626",
+        "hairStyle": "long",
+        "outfit": "#991b1b",
+        "accent": "#fbbf24",
+        "eyes": "#f59e0b",
+        "body": "human",
+        "ears": "none",
+        "horns": "dragon",
+        "wings": "dragon",
+        "tail": "dragon",
+        "headwear": "crown",
+        "weapon": "none",
+        "outfitStyle": "dress",
+        "pattern": "scales",
+        "cape": null,
+        "aura": "#ef4444",
+        "auraStyle": "flame"
+      }
     },
     {
       "key": "mia",
@@ -290,7 +727,26 @@
       "skillDesc": "พุ่งกระโจนข่วนศัตรูต่อเนื่องด้วยกรงเล็บลมกรด!",
       "dialogue": "สัญญาสามเทิร์นนี้ เหมียวจะปกป้องเจ้านายด้วยชีวิตเลยเมี๊ยว!",
       "color": "#10b981",
-      "art": { "skin": "#f2cba6", "hair": "#065f46", "hairStyle": "twin", "outfit": "#064e3b", "accent": "#6ee7b7", "eyes": "#34d399", "body": "human", "ears": "cat", "horns": "none", "wings": "none", "tail": "cat", "headwear": "none", "weapon": "dagger", "aura": "#10b981" }
+      "art": {
+        "skin": "#f2cba6",
+        "hair": "#065f46",
+        "hairStyle": "twin",
+        "outfit": "#064e3b",
+        "accent": "#6ee7b7",
+        "eyes": "#34d399",
+        "body": "human",
+        "ears": "cat",
+        "horns": "none",
+        "wings": "none",
+        "tail": "cat",
+        "headwear": "none",
+        "weapon": "dagger",
+        "outfitStyle": "corset",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#10b981",
+        "auraStyle": "sparks"
+      }
     },
     {
       "key": "sylphira",
@@ -302,7 +758,26 @@
       "skillDesc": "อัญเชิญสายน้ำตกมรกตชำระล้างศัตรูและฟื้นฟูเลือด!",
       "dialogue": "สายลมและผืนป่าจะคอยปกปักรักษาท่านตลอดการเดินทางนี้",
       "color": "#38bdf8",
-      "art": { "skin": "#f4dcc2", "hair": "#a5f3fc", "hairStyle": "long", "outfit": "#0369a1", "accent": "#cffafe", "eyes": "#0891b2", "body": "human", "ears": "elf", "horns": "none", "wings": "none", "tail": "none", "headwear": "crown", "weapon": "staff", "aura": "#38bdf8" }
+      "art": {
+        "skin": "#f4dcc2",
+        "hair": "#a5f3fc",
+        "hairStyle": "wavy",
+        "outfit": "#0369a1",
+        "accent": "#cffafe",
+        "eyes": "#0891b2",
+        "body": "human",
+        "ears": "elf",
+        "horns": "none",
+        "wings": "none",
+        "tail": "none",
+        "headwear": "tiara",
+        "weapon": "staff",
+        "outfitStyle": "robe",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#38bdf8",
+        "auraStyle": "water"
+      }
     },
     {
       "key": "beastgirl",
@@ -314,7 +789,26 @@
       "skillDesc": "+6 All Stats, คุ้มกันภัยทุกการเดินทาง",
       "dialogue": "ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!",
       "color": "#ec4899",
-      "art": { "skin": "#f3cbaa", "hair": "#db2777", "hairStyle": "ponytail", "outfit": "#831843", "accent": "#fbcfe8", "eyes": "#f472b6", "body": "human", "ears": "cat", "horns": "none", "wings": "none", "tail": "cat", "headwear": "none", "weapon": "claw", "aura": "#ec4899" }
+      "art": {
+        "skin": "#f3cbaa",
+        "hair": "#db2777",
+        "hairStyle": "ponytail",
+        "outfit": "#831843",
+        "accent": "#fbcfe8",
+        "eyes": "#f472b6",
+        "body": "human",
+        "ears": "cat",
+        "horns": "none",
+        "wings": "none",
+        "tail": "cat",
+        "headwear": "none",
+        "weapon": "claw",
+        "outfitStyle": "dress",
+        "pattern": "none",
+        "cape": null,
+        "aura": "#ec4899",
+        "auraStyle": "glow"
+      }
     }
   ],
   "roster": {

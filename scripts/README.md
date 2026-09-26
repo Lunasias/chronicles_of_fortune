@@ -26,6 +26,32 @@ only apply changes with `--write`. Always review `git diff src/game/BoardMap.ts`
 | `upgrade_all_sprites_to_64.cjs` | Re-encodes existing sprite PNGs to the 64×64 HD standard. Overwrites existing PNGs. |
 | `generate_companion_sprites.cjs` | Draws the 64×64 model for **every** companion listed in `src/game/companions.json` into `public/assets/companions/`. Also deletes models whose companion no longer exists. Run via `npm run gen:companions`. Pass `--contact-sheet` to additionally write `.companion-sheet.png`, a scaled grid of every sprite for review. |
 
+### Companion model technique
+
+The companion generator is a small pixel-art renderer rather than a shape stamper:
+
+- **One light source, top-left.** A light map derived from each sprite's own silhouette
+  decides a stage per pixel: upper/left rims catch the light, lower/right rims fall into deep
+  shadow, and the interior follows a curved vertical gradient so the face (high in a tall
+  bounding box) is not darkened. This avoids pillow shading, where a uniform dark rim leaves
+  the light direction unreadable.
+- **Five-stage ramps per material**, built by hue shifting: shadows rotate toward blue and
+  gain saturation, highlights move toward warm and desaturate. Lightness moves
+  multiplicatively so a pastel hair colour and a near-black outfit both separate properly;
+  metal and gems get hard, specular contrast while cloth and fur stay matte.
+- **Selective outlining.** A dark tinted line only where the sprite meets the background on
+  the shaded side, a lighter tinted line on the lit side - never pure black, which detaches a
+  sprite from the diorama behind it.
+- **Detail layer.** Eyes, jewellery sparkles and hair shine are drawn after shading so they
+  stay crisp instead of being dimmed by the light map.
+- **Silhouette first.** Ears, horns, wings, tails, hats and weapons are part of the outline,
+  because a 64×64 character has to be identifiable as a solid black shape.
+
+`tests/companions.test.mjs` enforces the outcome: every model must be shaded (a minimum
+number of distinct colours), lit from the top-left (upper-left half measurably brighter than
+the lower-right), and unique. `scripts/lib/preview_companion.cjs` renders sprites as ASCII so
+they can be reviewed without an image viewer - `--full` gives a 1:1 view with a pixel ruler.
+
 These write into `public/assets/**`. They are historical: the committed assets are already
 generated, so re-running them will produce a large diff of binary files. The companion
 generator is the exception - it is meant to be re-run whenever a companion is added or its
