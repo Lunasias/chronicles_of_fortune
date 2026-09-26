@@ -322,8 +322,8 @@ export class BattleUI {
     document.getElementById('battlePlayerName')!.innerText = pCombatant.name;
     document.getElementById('battlePlayerRoleBadge')!.innerText = isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
     document.getElementById('battlePlayerRoleBadge')!.className = isPAtk
-      ? 'text-[10px] bg-blue-900 px-1.5 py-0.5 rounded text-cyan-300 font-bold'
-      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-bold';
+      ? 'text-[10px] bg-blue-900 px-1.5 py-0.5 pixel-chip text-cyan-300 font-bold'
+      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 pixel-chip text-slate-300 font-bold';
 
     const curPHP = Math.max(0, Math.ceil(pCombatant.hp));
     const maxPHP = Math.max(1, Math.ceil(pCombatant.maxHp));
@@ -340,8 +340,8 @@ export class BattleUI {
     document.getElementById('battleEnemyName')!.innerText = eCombatant.name;
     document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
     document.getElementById('battleEnemyRoleBadge')!.className = !isPAtk
-      ? 'text-[10px] bg-red-900 px-1.5 py-0.5 rounded text-rose-300 font-bold'
-      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-bold';
+      ? 'text-[10px] bg-red-900 px-1.5 py-0.5 pixel-chip text-rose-300 font-bold'
+      : 'text-[10px] bg-slate-800 px-1.5 py-0.5 pixel-chip text-slate-300 font-bold';
 
     const curEHP = Math.max(0, Math.ceil(eCombatant.hp));
     const maxEHP = Math.max(1, Math.ceil(eCombatant.maxHp));

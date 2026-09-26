@@ -57,9 +57,7 @@ export class WeeklyReportUI {
       const isLast = idx === sorted.length - 1;
 
       const row = document.createElement('div');
-      row.className = `p-2 rounded border flex items-center justify-between ${
-        isFirst ? 'bg-amber-950/40 border-amber-500 text-amber-300' : 'bg-slate-950 border-slate-800 text-slate-300'
-      }`;
+      row.className = `p-2 border flex items-center justify-between ${ isFirst ? 'bg-amber-950/40 border-amber-500 text-amber-300' : 'bg-slate-950 border-slate-800 text-slate-300' }`;
 
       row.innerHTML = `
         <div class="flex items-center gap-2">

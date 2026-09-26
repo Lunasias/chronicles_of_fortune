@@ -45,13 +45,13 @@ export class FantasyEventUI {
 
     // Render 3 choices
     choicesContainer.innerHTML = event.choices.map((choice, idx) => `
-      <button class="fe-choice-btn pixel-btn p-3 bg-slate-900/90 border border-slate-700 hover:border-amber-400 flex items-center gap-3 text-left transition-all group" data-choice-idx="${idx}">
-        <span class="text-2xl group-hover:scale-110 transition-transform">${choice.icon}</span>
+      <button class="fe-choice-btn pixel-btn p-3 bg-slate-900/90 border border-slate-700 hover:border-amber-400 flex items-center gap-3 text-left group" data-choice-idx="${idx}">
+        <span class="text-2xl">${choice.icon}</span>
         <div class="flex-1">
           <div class="text-xs font-bold text-amber-300 group-hover:text-amber-200">${choice.text}</div>
           <div class="text-[10px] text-slate-400 group-hover:text-slate-300">${choice.subtext}</div>
         </div>
-        <span class="text-xs text-amber-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">➔</span>
+        <span class="text-xs text-amber-500 font-bold opacity-0 group-hover:opacity-100">➔</span>
       </button>
     `).join('');
 

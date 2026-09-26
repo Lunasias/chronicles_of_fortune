@@ -699,7 +699,7 @@ class DokaponApp {
       const initialClass = classKeys[i % classKeys.length];
 
       card.innerHTML = `
-        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+        <div class="flex items-center justify-between pixel-head pb-1.5">
           <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
             <span>⚔️</span>
             <span>PLAYER ${i + 1}</span>
@@ -711,17 +711,17 @@ class DokaponApp {
         </div>
         <div class="flex gap-3 items-center">
           <!-- Live Preview Avatar -->
-          <div class="w-14 h-14 bg-slate-950 border-2 border-amber-600/60 rounded flex items-center justify-center relative overflow-hidden shadow-inner flex-shrink-0">
+          <div class="w-14 h-14 bg-slate-950 border-2 border-amber-600/60 flex items-center justify-center relative overflow-hidden flex-shrink-0">
             <canvas class="roster-preview-canvas w-12 h-12 image-pixelated"></canvas>
           </div>
           <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
             <div class="flex flex-col gap-1 min-w-0">
               <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">ชื่อ (Name)</span>
-              <input type="text" maxlength="12" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-white w-full min-w-0 outline-none focus:border-amber-400" value="${defaultNames[i] || `Hero ${i + 1}`}">
+              <input type="text" maxlength="12" class="player-name-input bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 text-white w-full min-w-0 outline-none focus:border-amber-400" value="${defaultNames[i] || `Hero ${i + 1}`}">
             </div>
             <div class="flex flex-col gap-1 min-w-0">
               <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">อาชีพ (Class)</span>
-              <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded text-amber-400 w-full min-w-0 outline-none cursor-pointer">
+              <select class="player-class-select bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 text-amber-400 w-full min-w-0 outline-none cursor-pointer">
                 ${classKeys
                   .map(
                     ck =>
@@ -733,7 +733,7 @@ class DokaponApp {
           </div>
         </div>
         <!-- Appearance / Skin Customization Selector -->
-        <div class="flex items-center justify-between bg-slate-950/80 px-2.5 py-1.5 rounded border border-slate-800">
+        <div class="flex items-center justify-between bg-slate-950/80 px-2.5 py-1.5 border border-slate-800">
           <span class="text-[9px] text-slate-400 font-bold flex items-center gap-1">
             <span>🎨</span>
             <span>รูปลักษณ์:</span>
@@ -1582,13 +1582,15 @@ class DokaponApp {
 
     banner.classList.remove('hidden');
     requestAnimationFrame(() => {
-      banner.classList.remove('opacity-0', 'scale-95');
-      banner.classList.add('opacity-100', 'scale-100');
+      // A pure fade. The old banner also scaled from 0.95, which resamples every glyph in it;
+      // opacity is the one entrance animation that leaves a pixel UI crisp.
+      banner.classList.remove('opacity-0');
+      banner.classList.add('opacity-100');
     });
 
     this.turnBannerTimeout = setTimeout(() => {
-      banner.classList.remove('opacity-100', 'scale-100');
-      banner.classList.add('opacity-0', 'scale-95');
+      banner.classList.remove('opacity-100');
+      banner.classList.add('opacity-0');
       setTimeout(() => banner.classList.add('hidden'), 350);
     }, 1500);
 
@@ -1745,9 +1747,7 @@ class DokaponApp {
 
       const canCast = p.mp >= spell.mpCost;
       const card = document.createElement('div');
-      card.className = `pixel-box p-2.5 flex flex-col justify-between ${
-        canCast ? 'bg-slate-900 border-purple-500/60 hover:bg-slate-800 cursor-pointer' : 'bg-slate-950/80 border-slate-800 opacity-50'
-      }`;
+      card.className = `pixel-box p-2.5 flex flex-col justify-between ${ canCast ? 'bg-slate-900 border-purple-500/60 hover:bg-slate-800 cursor-pointer' : 'bg-slate-950/80 border-slate-800 opacity-50' }`;
 
       card.innerHTML = `
         <div class="flex items-start justify-between mb-1">
@@ -1821,7 +1821,7 @@ class DokaponApp {
     document.getElementById('equippedSlotsList')!.innerHTML = slots.map(s => {
       const eq = p.equipment[s.key];
       return `
-        <div class="p-1.5 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
+        <div class="p-1.5 bg-slate-950 border border-slate-800 flex justify-between items-center text-xs">
           <div class="flex items-center gap-1.5">
             <span>${s.label}:</span>
             <span class="font-bold ${eq ? 'text-amber-300' : 'text-slate-500'}">${eq ? eq.name : 'ไม่มี'}</span>
@@ -2462,7 +2462,7 @@ class DokaponApp {
     list.innerHTML = '';
     this.game.logs.forEach(item => {
       const row = document.createElement('div');
-      row.className = 'py-0.5 border-b border-slate-800/60';
+      row.className = 'py-0.5 pixel-row';
 
       // textContent instead of innerHTML: log lines embed hero names and prank
       // nicknames, which come from free-text input.

@@ -57,7 +57,7 @@ export class HUD {
     // Make time of day badge interactive for instant testing and cycling
     const timeBadge = document.getElementById('hudTimeOfDayBadge');
     if (timeBadge) {
-      timeBadge.classList.add('cursor-pointer', 'hover:opacity-80', 'transition-opacity');
+      timeBadge.classList.add('cursor-pointer', 'hover:opacity-80');
       timeBadge.title = 'คลิกเพื่อสลับช่วงเวลา (ทดสอบ)';
       timeBadge.addEventListener('click', () => {
         ecosystemSystem.advanceTime();
@@ -148,9 +148,7 @@ export class HUD {
       this.game.players.forEach(pl => {
         const isCurrent = pl.id === p.id;
         const btn = document.createElement('button');
-        btn.className = `pixel-btn px-2 py-1 text-[10px] font-bold flex items-center gap-1 transition-transform hover:scale-105 ${
-          isCurrent ? 'pixel-btn-gold text-slate-950 ring-1 ring-amber-300' : 'text-slate-200 hover:text-white'
-        }`;
+        btn.className = `pixel-btn px-2 py-1 text-[10px] font-bold flex items-center gap-1 ${ isCurrent ? 'pixel-btn-gold text-slate-950 ring-1 ring-amber-300' : 'text-slate-200 hover:text-white' }`;
         btn.title = `คลิกเพื่อส่องสเตตัสของ ${pl.displayName} (${isCurrent ? 'คุณ' : 'คู่ต่อสู้'})`;
         btn.innerHTML = `
           <span>${pl.avatar}</span>
@@ -239,7 +237,7 @@ export class HUD {
               <div class="text-[8px] text-slate-300">ความคืบหน้า: ${p.activeGuildQuest.currentProgress}/${p.activeGuildQuest.targetCount}</div>
             </div>
           </div>
-          <span class="text-[8px] bg-indigo-800 text-indigo-200 px-1 py-0.5 rounded font-bold shrink-0">กิลด์</span>
+          <span class="text-[8px] bg-indigo-800 text-indigo-200 px-1 py-0.5 font-bold shrink-0">กิลด์</span>
         </div>
       `;
     }

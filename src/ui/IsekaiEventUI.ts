@@ -30,7 +30,7 @@ export class IsekaiEventUI {
       mealList.innerHTML = isekaiEventManager.meals
         .map(
           m => `
-        <div class="pixel-box p-2.5 bg-slate-900/90 border-slate-700 flex items-center justify-between gap-3 hover:border-amber-400 transition-colors">
+        <div class="pixel-box p-2.5 bg-slate-900/90 border-slate-700 flex items-center justify-between gap-3 hover:border-amber-400">
           <div class="flex items-center gap-3">
             <span class="text-2xl">${m.icon}</span>
             <div>
@@ -146,7 +146,7 @@ export class IsekaiEventUI {
           <div class="pixel-box p-3 bg-amber-950/40 border-amber-500 flex flex-col gap-2">
             <div class="flex items-center justify-between">
               <span class="font-bold text-amber-300 text-xs">⭐ เควสต์ที่กำลังทำ: [${q.title}]</span>
-              <span class="text-[10px] bg-amber-600 text-white font-bold px-1.5 py-0.5 rounded">แรงค์ ${q.rank}</span>
+              <span class="text-[10px] bg-amber-600 text-white font-bold px-1.5 py-0.5">แรงค์ ${q.rank}</span>
             </div>
             <div class="text-[11px] text-slate-200">${q.desc}</div>
             <div class="flex items-center justify-between text-[10px] text-slate-300 mt-1">
@@ -160,11 +160,11 @@ export class IsekaiEventUI {
         questList.innerHTML = available
           .map(
             q => `
-          <div class="pixel-box p-2.5 bg-slate-900/90 border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-amber-400 transition-colors">
+          <div class="pixel-box p-2.5 bg-slate-900/90 border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-amber-400">
             <div>
               <div class="flex items-center gap-2">
                 <span class="font-bold text-amber-300 text-xs">${q.title}</span>
-                <span class="text-[9px] bg-slate-800 text-amber-400 font-bold px-1.5 py-0.5 rounded">แรงค์ ${q.rank}</span>
+                <span class="text-[9px] bg-slate-800 text-amber-400 font-bold px-1.5 py-0.5">แรงค์ ${q.rank}</span>
               </div>
               <div class="text-[10px] text-slate-300 mt-0.5">${q.desc}</div>
               <div class="text-[9px] text-emerald-400 font-bold mt-0.5">+${q.rewardGold}G • +${q.rewardXp} XP</div>

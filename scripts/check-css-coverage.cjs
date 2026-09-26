@@ -108,6 +108,8 @@ if (missing.length) {
 }
 
 // ---------------------------------------------------------------- hard spot checks
+// The theme-dependent utilities. Each of these was silently doing nothing until tailwind.config.js
+// was given the missing step, so they are the ones worth failing the build over.
 const mustHave = [
   'max-w-\\[95vw\\]',
   'sm\\:text-\\[10px\\]',
@@ -119,7 +121,6 @@ const mustHave = [
   'z-25',
   'z-35',
   'z-45',
-  'backdrop-blur-xs',
   'xs\\:inline'
 ];
 const spotFails = mustHave.filter(sel => !css.includes(sel));
@@ -128,5 +129,44 @@ if (spotFails.length) {
   console.error('SPOT FAIL: ' + spotFails.join(', '));
   process.exit(1);
 }
+
+// ---------------------------------------------------------------- pixel UI system
+// The project's own component classes live in the inline <style> in index.html, which is not part
+// of the extracted stylesheet, so this checks the built HTML instead. Without it a Vite change
+// that moved or dropped the inline block would leave every panel unstyled and nothing would fail.
+const builtHtml = fs.existsSync('dist/index.html') ? fs.readFileSync('dist/index.html', 'utf8') : '';
+const pixelClasses = [
+  '.pixel-box',
+  '.pixel-box-gold',
+  '.pixel-btn',
+  '.pixel-btn-red',
+  '.pixel-bar',
+  '.pixel-bar-fill',
+  '.pixel-head',
+  '.pixel-well',
+  '.pixel-chip',
+  '.pixel-close',
+  '.pixel-tab',
+  '.command-card'
+];
+const pixelFails = pixelClasses.filter(sel => !builtHtml.includes(sel));
+console.log(`pixel UI components in dist/index.html: ${pixelClasses.length - pixelFails.length}/${pixelClasses.length}`);
+if (pixelFails.length) {
+  console.error('PIXEL UI FAIL: ' + pixelFails.join(', '));
+  process.exit(1);
+}
+
+// The old chrome must not be able to creep back in unnoticed: a single rounded, blurred panel is
+// enough to make the whole UI read as a modern glass card again.
+const glassUtilities = [
+  'rounded-lg', 'rounded-xl', 'rounded-2xl', 'rounded-full',
+  'backdrop-blur', 'shadow-2xl', 'shadow-xl', 'bg-gradient-to-'
+];
+const glassFails = glassUtilities.filter(sel => builtHtml.includes(`class="`) && builtHtml.includes(sel));
+if (glassFails.length) {
+  console.error('GLASS UI REGRESSION in dist/index.html: ' + glassFails.join(', '));
+  process.exit(1);
+}
+console.log(`no glass chrome in dist/index.html: ${glassUtilities.length}/${glassUtilities.length} clean`);
 
 console.log('\nOK: compiled stylesheet covers every utility class used by the app.');

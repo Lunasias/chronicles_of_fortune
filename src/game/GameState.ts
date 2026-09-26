@@ -66,7 +66,7 @@ export class GameState {
         }
 
         const row = document.createElement('div');
-        row.className = 'py-1 px-1.5 rounded border transition-all duration-200 flex items-start gap-1.5 bg-slate-950/60 shadow-sm';
+        row.className = 'py-1 px-1.5 border flex items-start gap-1.5 bg-slate-950/60';
 
         // Log lines embed hero names and prank nicknames, both of which come from
         // free-text input, so the interpolated text is escaped before it reaches innerHTML.

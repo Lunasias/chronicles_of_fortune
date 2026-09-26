@@ -21,7 +21,7 @@ export class InspectUI {
     if (!insEl) {
       insEl = document.createElement('div');
       insEl.id = 'characterInspectModal';
-      insEl.className = 'hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto select-none';
+      insEl.className = 'hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 pointer-events-auto select-none';
       document.body.appendChild(insEl);
     }
     this.inspectModal = insEl;
@@ -31,7 +31,7 @@ export class InspectUI {
     if (!duelEl) {
       duelEl = document.createElement('div');
       duelEl.id = 'preCombatDuelScoutModal';
-      duelEl.className = 'hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto select-none';
+      duelEl.className = 'hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 pointer-events-auto select-none';
       document.body.appendChild(duelEl);
     }
     this.duelScoutModal = duelEl;
@@ -41,7 +41,7 @@ export class InspectUI {
     if (!monEl) {
       monEl = document.createElement('div');
       monEl.id = 'preCombatMonsterScoutModal';
-      monEl.className = 'hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto select-none';
+      monEl.className = 'hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 pointer-events-auto select-none';
       document.body.appendChild(monEl);
     }
     this.monsterScoutModal = monEl;
@@ -51,7 +51,7 @@ export class InspectUI {
     if (!tipEl) {
       tipEl = document.createElement('div');
       tipEl.id = 'moveTargetPreviewTooltip';
-      tipEl.className = 'hidden fixed z-40 pointer-events-none transition-opacity duration-150 select-none';
+      tipEl.className = 'hidden fixed z-40 pointer-events-none select-none';
       document.body.appendChild(tipEl);
     }
     this.destinationTooltip = tipEl;
@@ -99,21 +99,21 @@ export class InspectUI {
     const bonusLuk = totalLuk - player.luk;
 
     this.inspectModal.innerHTML = `
-      <div class="pixel-box-gold max-w-xl w-full p-5 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+      <div class="pixel-box-gold max-w-xl w-full p-5 relative flex flex-col max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex items-center justify-between border-b-2 border-amber-600/40 pb-3 mb-3">
           <div class="flex items-center gap-3">
-            <div class="w-14 h-14 bg-slate-950 border-2 border-amber-500 rounded-lg flex items-center justify-center overflow-hidden shadow-inner relative">
+            <div class="w-14 h-14 bg-slate-950 border-2 border-amber-500 flex items-center justify-center overflow-hidden relative">
               <canvas id="inspectAvatarCanvas" width="48" height="48" class="image-pixelated"></canvas>
-              ${player.isDarkling ? '<span class="absolute top-0 right-0 text-[8px] bg-purple-700 text-white font-bold px-1 rounded-bl">จอมมาร</span>' : ''}
+              ${player.isDarkling ? '<span class="absolute top-0 right-0 text-[8px] bg-purple-700 text-white font-bold px-1">จอมมาร</span>' : ''}
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-bold text-amber-300 tracking-wider">${escapeHtml(player.displayName)}</h2>
-                <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded border border-slate-700">
+                <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-2 py-0.5 border border-slate-700">
                   ${player.isDarkling ? 'จอมมารแห่งความมืด' : player.className}
                 </span>
-                <span class="text-[10px] bg-emerald-950 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-700">
+                <span class="text-[10px] bg-emerald-950 text-emerald-300 font-bold px-2 py-0.5 border border-emerald-700">
                   LV. ${player.level}
                 </span>
               </div>
@@ -128,14 +128,14 @@ export class InspectUI {
         </div>
 
         <!-- Health & Mana Bars -->
-        <div class="grid grid-cols-2 gap-3 mb-3 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+        <div class="grid grid-cols-2 gap-3 mb-3 bg-slate-950/80 p-2.5 border border-slate-800">
           <div>
             <div class="flex justify-between text-[10px] font-bold text-rose-300 mb-1">
               <span>พลังชีวิต (HP)</span>
               <span>${player.hp} / ${player.maxHp}</span>
             </div>
-            <div class="w-full bg-slate-900 h-3 rounded border border-slate-700 overflow-hidden">
-              <div class="bg-gradient-to-r from-red-600 to-rose-400 h-full" style="width: ${Math.max(0, (player.hp / player.maxHp) * 100)}%;"></div>
+            <div class="pixel-bar w-full h-3 overflow-hidden">
+              <div class="pixel-bar-fill bg-red-600 h-full" style="width: ${Math.max(0, (player.hp / player.maxHp) * 100)}%;"></div>
             </div>
           </div>
           <div>
@@ -143,40 +143,40 @@ export class InspectUI {
               <span>พลังเวทมนตร์ (MP)</span>
               <span>${player.mp} / ${player.maxMp}</span>
             </div>
-            <div class="w-full bg-slate-900 h-3 rounded border border-slate-700 overflow-hidden">
-              <div class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full" style="width: ${Math.max(0, (player.mp / player.maxMp) * 100)}%;"></div>
+            <div class="pixel-bar w-full h-3 overflow-hidden">
+              <div class="pixel-bar-fill bg-blue-600 h-full" style="width: ${Math.max(0, (player.mp / player.maxMp) * 100)}%;"></div>
             </div>
           </div>
         </div>
 
         <!-- Combat Attributes 6-Grid (Total Stats + Bonus) -->
         <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3 text-center">
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">⚔️ ATK</span>
             <span class="text-sm font-bold text-amber-300">${totalAtk}</span>
             <span class="text-[8px] text-slate-400">${bonusAtk > 0 ? `(${player.atk}+${bonusAtk})` : 'โจมตีกายภาพ'}</span>
           </div>
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🛡️ DEF</span>
             <span class="text-sm font-bold text-blue-300">${totalDef}</span>
             <span class="text-[8px] text-slate-400">${bonusDef > 0 ? `(${player.def}+${bonusDef})` : 'พลังป้องกัน'}</span>
           </div>
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🔮 MAG</span>
             <span class="text-sm font-bold text-purple-300">${totalMag}</span>
             <span class="text-[8px] text-slate-400">${bonusMag > 0 ? `(${player.mag}+${bonusMag})` : 'พลังเวทมนตร์'}</span>
           </div>
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">⚡ SPD</span>
             <span class="text-sm font-bold text-yellow-300">${totalSpd}</span>
             <span class="text-[8px] text-slate-400">${bonusSpd > 0 ? `(${player.spd}+${bonusSpd})` : 'ความเร็วออกท่า'}</span>
           </div>
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">🍀 LUK</span>
             <span class="text-sm font-bold text-emerald-300">${totalLuk}</span>
             <span class="text-[8px] text-slate-400">${bonusLuk > 0 ? `(${player.luk}+${bonusLuk})` : 'โชค & คริติคอล'}</span>
           </div>
-          <div class="bg-slate-950/90 border border-slate-800 p-2 rounded flex flex-col items-center">
+          <div class="bg-slate-950/90 border border-slate-800 p-2 flex flex-col items-center">
             <span class="text-[9px] text-slate-400 uppercase font-bold">💎 ทรัพย์สิน</span>
             <span class="text-sm font-bold text-amber-400">${netWorth}G</span>
             <span class="text-[8px] text-slate-500">เงิน + เมือง + อาวุธ</span>
@@ -186,8 +186,8 @@ export class InspectUI {
         <!-- Equipment & Assets -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 text-xs">
           <!-- Equipment -->
-          <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-lg flex flex-col gap-1.5">
-            <span class="text-[10px] text-amber-300 font-bold border-b border-slate-800 pb-1 flex items-center gap-1">
+          <div class="bg-slate-950/80 border border-slate-800 p-3 flex flex-col gap-1.5">
+            <span class="text-[10px] text-amber-300 font-bold pixel-head pb-1 flex items-center gap-1">
               <span>🎒</span> อุปกรณ์สวมใส่ในตัว
             </span>
             <div class="text-[11px] text-slate-200">
@@ -202,8 +202,8 @@ export class InspectUI {
           </div>
 
           <!-- Controlled Territories -->
-          <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-lg flex flex-col gap-1.5">
-            <span class="text-[10px] text-emerald-300 font-bold border-b border-slate-800 pb-1 flex items-center justify-between">
+          <div class="bg-slate-950/80 border border-slate-800 p-3 flex flex-col gap-1.5">
+            <span class="text-[10px] text-emerald-300 font-bold pixel-head pb-1 flex items-center justify-between">
               <span class="flex items-center gap-1"><span>🚩</span> เมืองในอาณัติ (${player.townsControlled})</span>
               <span class="text-amber-400 font-bold">เงินสด: ${player.gold}G</span>
             </span>
@@ -214,7 +214,7 @@ export class InspectUI {
         </div>
 
         <!-- Magic & Guild Status -->
-        <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-lg flex flex-wrap justify-between items-center text-[10px] text-slate-300">
+        <div class="bg-slate-950/80 border border-slate-800 p-2.5 flex flex-wrap justify-between items-center text-[10px] text-slate-300">
           <div>
             <strong class="text-purple-300">เวทมนตร์บนแผนที่:</strong>
             ${player.fieldSpells.length > 0 ? player.fieldSpells.join(', ') : 'ไม่มีมนตรา'}
@@ -313,7 +313,7 @@ export class InspectUI {
     }
 
     this.duelScoutModal.innerHTML = `
-      <div class="pixel-box-gold max-w-2xl w-full p-4 md:p-5 shadow-2xl relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
+      <div class="pixel-box-gold max-w-2xl w-full p-4 md:p-5 relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
         <!-- Header -->
         <div class="border-b border-rose-800/60 pb-2.5 mb-3">
           <div class="flex items-center justify-between">
@@ -336,7 +336,7 @@ export class InspectUI {
                 <span>🛡️</span>
                 <span>${escapeHtml(attacker.displayName)} (ฝ่ายคุณ)</span>
               </span>
-              <span class="text-[10px] bg-blue-950 text-cyan-200 px-2 py-0.5 rounded font-bold">
+              <span class="text-[10px] bg-blue-950 text-cyan-200 px-2 py-0.5 font-bold">
                 LV. ${attacker.level}
               </span>
             </div>
@@ -347,13 +347,13 @@ export class InspectUI {
                 <span>HP: ${attacker.hp}/${attacker.maxHp}</span>
                 <span>MP: ${attacker.mp}/${attacker.maxMp}</span>
               </div>
-              <div class="w-full bg-slate-950 h-2.5 rounded overflow-hidden">
-                <div class="bg-gradient-to-r from-red-600 to-rose-400 h-full" style="width: ${Math.max(0, (attacker.hp / attacker.maxHp) * 100)}%;"></div>
+              <div class="pixel-bar w-full h-2.5 overflow-hidden">
+                <div class="pixel-bar-fill bg-red-600 h-full" style="width: ${Math.max(0, (attacker.hp / attacker.maxHp) * 100)}%;"></div>
               </div>
             </div>
 
             <!-- Combat Attributes -->
-            <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 rounded text-[10px]">
+            <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 text-[10px]">
               <div><strong class="text-amber-400 block">${aAtk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
               <div><strong class="text-blue-400 block">${aDef}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
               <div><strong class="text-purple-400 block">${aMag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
@@ -376,7 +376,7 @@ export class InspectUI {
                 <span>⚔️</span>
                 <span>${escapeHtml(defender.displayName)} (คู่ต่อสู้)</span>
               </span>
-              <span class="text-[10px] bg-rose-950 text-rose-200 px-2 py-0.5 rounded font-bold">
+              <span class="text-[10px] bg-rose-950 text-rose-200 px-2 py-0.5 font-bold">
                 LV. ${defender.level}
               </span>
             </div>
@@ -387,13 +387,13 @@ export class InspectUI {
                 <span>HP: ${defender.hp}/${defender.maxHp}</span>
                 <span>MP: ${defender.mp}/${defender.maxMp}</span>
               </div>
-              <div class="w-full bg-slate-950 h-2.5 rounded overflow-hidden">
-                <div class="bg-gradient-to-r from-red-600 to-rose-400 h-full" style="width: ${Math.max(0, (defender.hp / defender.maxHp) * 100)}%;"></div>
+              <div class="pixel-bar w-full h-2.5 overflow-hidden">
+                <div class="pixel-bar-fill bg-red-600 h-full" style="width: ${Math.max(0, (defender.hp / defender.maxHp) * 100)}%;"></div>
               </div>
             </div>
 
             <!-- Combat Attributes -->
-            <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 rounded text-[10px]">
+            <div class="grid grid-cols-5 gap-1 text-center bg-slate-950/80 p-1.5 text-[10px]">
               <div><strong class="text-amber-400 block">${dAtk}</strong><span class="text-[8px] text-slate-400">ATK</span></div>
               <div><strong class="text-blue-400 block">${dDef}</strong><span class="text-[8px] text-slate-400">DEF</span></div>
               <div><strong class="text-purple-400 block">${dMag}</strong><span class="text-[8px] text-slate-400">MAG</span></div>
@@ -411,27 +411,27 @@ export class InspectUI {
         </div>
 
         <!-- Damage Estimations Bar -->
-        <div class="bg-slate-950/90 border border-slate-800 p-3 rounded-lg mb-3">
+        <div class="bg-slate-950/90 border border-slate-800 p-3 mb-3">
           <div class="text-[10px] font-bold text-amber-300 uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <span>📊</span> ประมาณการผลการต่อสู้ (Combat Projection)
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-slate-300">
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+            <div class="bg-slate-900 p-2 border border-slate-800">
               <span class="text-slate-400 block">ดาเมจฟันธรรมดา (Attack):</span>
               <strong class="text-amber-300 text-xs">~${estAtkPPhys} HP</strong>
             </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+            <div class="bg-slate-900 p-2 border border-slate-800">
               <span class="text-slate-400 block">ดาเมจฟันทะลวง (Strike):</span>
               <strong class="text-rose-400 text-xs">~${estAtkPStrike} HP</strong>
             </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+            <div class="bg-slate-900 p-2 border border-slate-800">
               <span class="text-slate-400 block">ดาเมจเวทมนตร์ (Magic):</span>
               <strong class="text-purple-300 text-xs">~${estAtkPMagic} HP</strong>
             </div>
           </div>
 
           <!-- Tactical Advice Callout -->
-          <div class="mt-2.5 p-2 bg-amber-950/40 border border-amber-500/40 rounded text-[11px] leading-relaxed" style="color: ${adviceColor};">
+          <div class="mt-2.5 p-2 bg-amber-950/40 border border-amber-500/40 text-[11px] leading-relaxed" style="color: ${adviceColor};">
             ${adviceText}
           </div>
         </div>
@@ -441,7 +441,7 @@ export class InspectUI {
           <button id="btnCancelDuel" class="pixel-btn px-5 py-2.5 text-xs text-slate-300 hover:text-white font-bold">
             ❌ ยกเลิก / เลือกทางอื่น
           </button>
-          <button id="btnConfirmDuel" class="pixel-btn pixel-btn-red px-6 py-2.5 text-xs font-bold text-white flex items-center gap-2 shadow-lg">
+          <button id="btnConfirmDuel" class="pixel-btn pixel-btn-red px-6 py-2.5 text-xs font-bold text-white flex items-center gap-2">
             <span>⚔️</span>
             <span>ยืนยันเดินไปท้าดวล!</span>
           </button>
@@ -474,13 +474,13 @@ export class InspectUI {
       const spdAdvantage = activePlayer.spd >= m.spd;
 
       statComparisonHtml = `
-        <div class="bg-slate-950/95 border border-amber-500/40 rounded p-2 mt-1.5 space-y-1">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-1">
+        <div class="bg-slate-950/95 border border-amber-500/40 p-2 mt-1.5 space-y-1">
+          <div class="flex items-center justify-between pixel-head pb-1">
             <span class="font-bold text-amber-300 text-[11px] flex items-center gap-1">
               <span>${m.icon}</span>
               <span>${m.name}</span>
             </span>
-            <span class="text-[9px] bg-rose-950/80 text-rose-300 px-1 rounded font-bold border border-rose-800/60">
+            <span class="text-[9px] bg-rose-950/80 text-rose-300 px-1 font-bold border border-rose-800/60">
               LV.${m.level}
             </span>
           </div>
@@ -490,7 +490,7 @@ export class InspectUI {
             <span class="${spdAdvantage ? 'text-emerald-300' : 'text-yellow-300'}">SPD: ${m.spd}</span>
           </div>
 
-          <div class="grid grid-cols-4 gap-1 text-center text-[9px] bg-slate-900/80 p-1 rounded">
+          <div class="grid grid-cols-4 gap-1 text-center text-[9px] bg-slate-900/80 p-1">
             <div><span class="text-slate-400 block text-[8px]">ATK</span><strong class="${atkAdvantage ? 'text-amber-400' : 'text-rose-400'}">${m.atk}</strong></div>
             <div><span class="text-slate-400 block text-[8px]">DEF</span><strong class="text-blue-400">${m.def}</strong></div>
             <div><span class="text-slate-400 block text-[8px]">MAG</span><strong class="text-purple-400">${m.mag}</strong></div>
@@ -503,7 +503,7 @@ export class InspectUI {
             ${m.weakness ? `<div><strong class="text-cyan-300">🎯 จุดอ่อน:</strong> ${m.weakness}</div>` : ''}
           </div>
 
-          <div class="text-[8px] rounded px-1 py-0.5 font-bold ${spdAdvantage ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'}">
+          <div class="text-[8px] px-1 py-0.5 font-bold ${spdAdvantage ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'}">
             ${spdAdvantage ? '⚡ ความเร็วของคุณเหนือกว่า! (+15% อัตราหลบหลีก)' : '⚠️ อสูรตัวนี้เร็วกว่าคุณ! พึงระวังการโจมตี'}
           </div>
         </div>
@@ -511,24 +511,24 @@ export class InspectUI {
     }
 
     this.destinationTooltip.innerHTML = `
-      <div class="pixel-box-gold w-64 p-2.5 shadow-2xl bg-slate-950/95 border-2 border-amber-500/80 backdrop-blur-md text-left">
+      <div class="pixel-box-gold w-64 p-2.5 bg-slate-950/95 border-2 border-amber-500/80 text-left">
         <div class="flex items-center justify-between border-b border-amber-600/40 pb-1 mb-1">
           <div>
             <h4 class="text-xs font-bold text-amber-200 leading-tight">${preview.typeLabel}</h4>
             <span class="text-[8px] text-slate-400">${node.subRegionName || 'ราชอาณาจักร'}</span>
           </div>
-          <span class="text-[8px] font-bold px-1.5 py-0.5 rounded border" style="color: ${preview.threatColor}; border-color: ${preview.threatColor}; background: rgba(0,0,0,0.5);">
+          <span class="text-[8px] font-bold px-1.5 py-0.5 border" style="color: ${preview.threatColor}; border-color: ${preview.threatColor}; background: rgba(0,0,0,0.5);">
             ${preview.threatLevel}
           </span>
         </div>
 
         ${steps ? `
-        <div class="flex items-center justify-between text-[9px] bg-cyan-950/80 border border-cyan-800/60 px-1.5 py-0.5 rounded mb-1 text-cyan-300 font-bold">
+        <div class="flex items-center justify-between text-[9px] bg-cyan-950/80 border border-cyan-800/60 px-1.5 py-0.5 mb-1 text-cyan-300 font-bold">
           <span>🚶 ระยะทางเดิน:</span>
           <span>${steps} ช่อง ${maxRoll ? `(ทอยได้ ${maxRoll})` : ''}</span>
         </div>` : ''}
 
-        <div class="flex items-center justify-between text-[9px] bg-slate-900/90 px-1.5 py-0.5 rounded mb-1 border border-slate-800">
+        <div class="flex items-center justify-between text-[9px] bg-slate-900/90 px-1.5 py-0.5 mb-1 border border-slate-800">
           <span class="text-slate-300">โอกาสปะทะอสูร:</span>
           <strong class="font-bold" style="color: ${preview.threatColor};">${preview.encounterChancePercent}%</strong>
         </div>
@@ -584,7 +584,7 @@ export class InspectUI {
     const estMonsterPhys = Math.max(6, monster.atk - Math.floor(player.def * 0.6));
 
     this.monsterScoutModal.innerHTML = `
-      <div class="pixel-box-gold max-w-lg w-full p-4 shadow-2xl relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
+      <div class="pixel-box-gold max-w-lg w-full p-4 relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
         <div class="border-b border-rose-800/60 pb-2 mb-2 flex items-center justify-between">
           <div>
             <h2 class="text-sm font-bold text-rose-300 flex items-center gap-1.5">
@@ -597,11 +597,11 @@ export class InspectUI {
 
         <div class="grid grid-cols-2 gap-2 mb-2">
           <div class="pixel-box p-2.5 bg-slate-900/95 border-blue-500/70 text-[10px]">
-            <div class="flex justify-between font-bold text-cyan-300 border-b border-slate-800 pb-1 mb-1">
+            <div class="flex justify-between font-bold text-cyan-300 pixel-head pb-1 mb-1">
               <span>🛡️ ${escapeHtml(player.displayName)}</span><span>LV.${player.level}</span>
             </div>
             <div>HP: ${player.hp}/${player.maxHp} | MP: ${player.mp}/${player.maxMp}</div>
-            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 rounded mt-1">
+            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 mt-1">
               <div><strong class="text-amber-400 block">${player.atk}</strong><span>ATK</span></div>
               <div><strong class="text-blue-400 block">${player.def}</strong><span>DEF</span></div>
               <div><strong class="text-purple-400 block">${player.mag}</strong><span>MAG</span></div>
@@ -610,11 +610,11 @@ export class InspectUI {
           </div>
 
           <div class="pixel-box p-2.5 bg-slate-900/95 border-rose-500/70 text-[10px]">
-            <div class="flex justify-between font-bold text-rose-300 border-b border-slate-800 pb-1 mb-1">
+            <div class="flex justify-between font-bold text-rose-300 pixel-head pb-1 mb-1">
               <span>${monster.icon} ${monster.name}</span><span>LV.${monster.level}</span>
             </div>
             <div>HP: ${monster.hp}/${monster.maxHp} | MP: ${monster.mp}/${monster.maxMp}</div>
-            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 rounded mt-1">
+            <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 mt-1">
               <div><strong class="text-amber-400 block">${monster.atk}</strong><span>ATK</span></div>
               <div><strong class="text-blue-400 block">${monster.def}</strong><span>DEF</span></div>
               <div><strong class="text-purple-400 block">${monster.mag}</strong><span>MAG</span></div>
@@ -623,7 +623,7 @@ export class InspectUI {
           </div>
         </div>
 
-        <div class="bg-slate-950 p-2 rounded border border-slate-800 text-[10px] space-y-1 mb-3">
+        <div class="bg-slate-950 p-2 border border-slate-800 text-[10px] space-y-1 mb-3">
           <div class="font-bold text-amber-300">📊 คาดการณ์ดาเมจ: กายภาพ ~${estAtkPPhys} | ชาร์จฟัน ~${estAtkPStrike} | เวทมนตร์ ~${estAtkPMagic}</div>
           <div class="text-slate-300">ท่าพิเศษ: <strong class="text-rose-300">${monster.skillName}</strong> (${monster.skillDesc})</div>
           <div class="text-amber-300">🎯 จุดอ่อน: ${monster.weakness || 'ชาร์จฟันทะลวง'} | ดาเมจสวนกลับ: ~${estMonsterPhys} HP</div>
@@ -631,7 +631,7 @@ export class InspectUI {
 
         <div class="flex justify-between gap-3 pt-2 border-t border-slate-800">
           <button id="btnCancelMonsterScout" class="pixel-btn px-4 py-2 text-xs text-slate-300 hover:text-white font-bold">❌ ยกเลิก</button>
-          <button id="btnConfirmMonsterScout" class="pixel-btn pixel-btn-red px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-lg"><span>⚔️ ยืนยันเข้าปะทะ!</span></button>
+          <button id="btnConfirmMonsterScout" class="pixel-btn pixel-btn-red px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5"><span>⚔️ ยืนยันเข้าปะทะ!</span></button>
         </div>
       </div>
     `;

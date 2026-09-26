@@ -199,7 +199,7 @@ export class WonderChestUI {
     if (!el) {
       el = document.createElement('div');
       el.id = 'wonderChestModal';
-      el.className = 'hidden absolute inset-0 z-40 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto select-none';
+      el.className = 'hidden absolute inset-0 z-40 bg-black/80 flex items-center justify-center p-4 pointer-events-auto select-none';
       document.body.appendChild(el);
     }
     this.modal = el;
@@ -218,7 +218,7 @@ export class WonderChestUI {
 
   private renderModal(player: Player) {
     this.modal.innerHTML = `
-      <div class="pixel-box-gold max-w-lg w-full p-6 text-center shadow-2xl relative flex flex-col items-center">
+      <div class="pixel-box-gold max-w-lg w-full p-6 text-center relative flex flex-col items-center">
         <!-- Header Banner -->
         <div class="flex items-center gap-2 mb-1">
           <span class="text-3xl animate-bounce">🎁</span>
@@ -230,11 +230,11 @@ export class WonderChestUI {
         </p>
 
         <!-- Wonder Chest Diorama / Roulette Viewport -->
-        <div id="wonderChestViewport" class="w-full bg-slate-950 border-2 border-amber-600/70 rounded-xl p-5 mb-4 relative overflow-hidden flex flex-col items-center justify-center min-h-[160px] shadow-inner">
+        <div id="wonderChestViewport" class="w-full bg-slate-950 border-2 border-amber-600/70 p-5 mb-4 relative overflow-hidden flex flex-col items-center justify-center min-h-[160px]">
           <!-- Ambient Glow Background -->
-          <div class="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-purple-600/10 to-transparent pointer-events-none"></div>
+          <div class="absolute inset-0 pointer-events-none"></div>
 
-          <div id="wonderIconLarge" class="text-6xl mb-2 transition-transform duration-150 scale-100">
+          <div id="wonderIconLarge" class="text-6xl mb-2">
             🎁
           </div>
           <div id="wonderCardTitle" class="text-base font-bold text-amber-300 tracking-wide mb-1">
@@ -246,7 +246,7 @@ export class WonderChestUI {
         </div>
 
         <!-- Action Button -->
-        <button id="btnSpinWonderChest" class="pixel-btn pixel-btn-gold px-8 py-3 text-sm font-bold text-slate-950 flex items-center gap-2 tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all">
+        <button id="btnSpinWonderChest" class="pixel-btn pixel-btn-gold px-8 py-3 text-sm font-bold text-slate-950 flex items-center gap-2 tracking-widest">
           <span>🎲</span>
           <span id="btnSpinText">เปิดกล่องสุ่มมหัศจรรย์!</span>
         </button>

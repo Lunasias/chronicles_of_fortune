@@ -47,6 +47,33 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
     darkest, plus a `valley` tone 10–15% darker than the darkest face for concave corners, and a
     colour-shifted sel-out outline that is never pure black. `npm test` measures the light
     direction on every single model.
+- **Pixel-art World Floor**:
+  - **15 biomes × flat/cliff × day/night = 60 floor tiles**, painted by
+    `src/engine/IsometricTerrainPainter.ts` and exported to `public/assets/terrain/`.
+  - A horizontal face has no wall normal, so its light direction comes from bevelled edges plus a
+    4×4 Bayer ordered dither that thins the lit tone from the west and thickens the shaded tone
+    toward the east. A gradient would band across 312 repeated tiles; a flat fill would read as a
+    colour swatch.
+  - **Floor clutter** — boulders, grass tufts, wildflower patches, shrubs and magic crystals, in
+    5 types × 15 biomes × 4 shapes × 3 sizes × day/night — is painted by
+    `src/engine/IsometricPropPainter.ts` and blitted from a canvas cache instead of being redrawn
+    with a dozen path calls per prop per frame.
+- **Pixel-art Sky, Weather and the Cloud Sea**:
+  - The sky is **18 discrete colour bands**, not a gradient, joined by a 4×4 ordered dither. It is
+    a 64px tile that wraps seamlessly and stretches to any viewport, so a full-height sky costs one
+    small canvas per time of day.
+  - Suns and the crescent moon are painted discs inside five ordered-dither halo rings, and the
+    clouds are baked sprites at three fixed sizes — nothing in the background is ever rescaled.
+  - **The cloud sea under the map**: three world-space rows drawn below the continent's lowest
+    tile, so the board reads as a floating island in the sky rather than as a map printed on a wall.
+- **Pixel-art UI**:
+  - Every panel, button, bar, tab and scrollbar is built from integer-stepped shading — a 2px ink
+    outline, a 2px accent ring, a 2px inset bevel and a hard 4px drop shadow with no blur radius —
+    with no `border-radius`, no `backdrop-filter` and no eased transitions anywhere.
+  - Stat bars are sunken wells with 6px-segmented fills, so a half-full bar reads as a count rather
+    than as a smooth length. Buttons press by exactly 3px and their shadow shrinks by the same 3px.
+  - `npm run check:css` fails the build if any glass utility (`rounded-lg`, `backdrop-blur`,
+    `shadow-2xl`, `bg-gradient-to-…`) reappears in the built markup.
 
 ### 3. 🗺️ The World
 A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
@@ -113,25 +140,29 @@ npm run preview
 | `npm run gen:companions` | Regenerates the 64×64 companion models from `src/game/companions.json` |
 | `npm run gen:buildings` | Regenerates the 13 structure models into `public/assets/buildings/` and the review sheet `.building-sheet.png` |
 | `npm run gen:foliage` | Regenerates the 20 tree models into `public/assets/foliage/` and the review sheet `.foliage-sheet.png` |
-| `npm run gen:art` | Both of the above |
+| `npm run gen:terrain` | Regenerates the 60 floor tiles into `public/assets/terrain/` and the review sheet `.terrain-sheet.png` |
+| `npm run gen:props` | Writes the floor-clutter review sheets (`.prop-sheet.png`, `.prop-variants-sheet.png`); props are runtime-only, so no per-model PNGs |
+| `npm run gen:sky` | Regenerates the 4 skies, 4 suns and the moon into `public/assets/sky/`, plus the cloud and celestial review sheets |
+| `npm run gen:art` | All of the above art generators |
 | `npm run verify` | Everything CI runs: typecheck → build → test → CSS coverage |
 
 **Always run `npm run verify` before pushing.** CI runs the same command.
 
 ### Reviewing art without an image viewer
 
-`scripts/lib/preview_companion.cjs` renders any folder of sprites as ASCII, which is how the
-models are checked in a terminal:
+`scripts/lib/preview_companion.cjs` renders any folder of same-sized sprites as ASCII, which is
+how the models are checked in a terminal:
 
 ```bash
 node scripts/lib/preview_companion.cjs --dir=public/assets/buildings --full
-node scripts/lib/preview_companion.cjs --dir=public/assets/foliage --full
+node scripts/lib/preview_companion.cjs --dir=public/assets/terrain --full
 ```
 
-The `--dir` mode is generic — it reads whatever PNGs it finds, so it works for structures and
-trees as well as companions. `.building-sheet.png` and `.foliage-sheet.png` (written by
-`gen:buildings` / `gen:foliage`) are the enlarged contact sheets for review; both are gitignored
-because they are derived from the committed per-model PNGs.
+The `--dir` mode is generic — it reads whatever PNGs it finds, so it works for structures, trees
+and floor tiles as well as companions. The `.building-sheet.png`, `.foliage-sheet.png`,
+`.terrain-sheet.png`, `.prop-sheet.png`, `.sky-sheet.png` and `.cloud-sheet.png` files written by
+the generators are the enlarged contact sheets for review; all of them are gitignored because they
+are derived from the committed per-model PNGs.
 
 ### Project layout
 ```
@@ -195,8 +226,23 @@ tests/      node:test suites (compiled from src by npm run pretest)
 - The event feed (`#gameEventFeedWindow`) must stay readable behind a modal. `ShopUI` and
   `TownUI` call `syncFeedPanelClass()` from `src/util/PanelFocus.ts` whenever they open or close,
   which toggles `body.panel-open`; the CSS in `index.html` then raises the feed above the modal
-  and pushes the modal to the right on wide screens. Add any new full-screen panel to
+  on wide screens and docks it to the top edge on narrow ones. Add any new full-screen panel to
   `FEED_PANELS` there instead of hard-coding z-index classes in the markup.
+- The whole UI is built from component classes in the inline `<style>` in `index.html`
+  (`pixel-box`, `pixel-btn`, `pixel-bar`, `pixel-head`, `pixel-well`, `pixel-chip`, `pixel-close`,
+  `pixel-tab`, `pixel-row`, `command-card`). They are defined there rather than in a Tailwind
+  layer so `npm run check:css` can see them. Do not reintroduce `border-radius`,
+  `backdrop-filter`, blurred `box-shadow` or eased `transition` in the chrome — `check:css` fails
+  the build if a glass utility reaches the built markup, because one rounded blurred panel is
+  enough to make the entire UI read as a modern glass card again.
+- Colour variants are written as two-class selectors (`.pixel-btn.pixel-btn-gold`) on purpose.
+  A bare class ties with a Tailwind utility on the same element and lets source order decide the
+  winner.
+- **Never round-trip a source file through a PowerShell `Get-Content | Set-Content` pipeline.**
+  `index.html` and several UI sources contain Thai text, and that pipeline re-encodes the whole
+  file and replaces every non-ASCII character — silently, with a build that still succeeds but a
+  UI full of mojibake. Use the file tools, or a Node script, as
+  `scripts/apply_pixel_ui_style.cjs` and `scripts/strip_glass_ui.cjs` do.
 
 ---
 
