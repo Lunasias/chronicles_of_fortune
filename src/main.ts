@@ -1,3 +1,4 @@
+import './styles/tailwind.css';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
 import { HUD } from './ui/HUD';
@@ -26,11 +27,7 @@ import { HomeUI } from './ui/HomeUI';
 import { FantasyEventUI } from './ui/FantasyEventUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { SaveManager } from './game/SaveManager';
-
-import { LobbyUI } from './ui/LobbyUI';
-import { NetworkManager } from './network/NetworkManager';
-
-
+import { escapeHtml } from './util/Html';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -46,10 +43,6 @@ class DokaponApp {
   private wonderChestUI: WonderChestUI;
   private inspectUI: InspectUI;
   private homeUI: HomeUI;
-  private net: NetworkManager = NetworkManager.getInstance();
-
-  private lobbyUI!: LobbyUI;
-
   private fantasyEventUI: FantasyEventUI;
 
   private isDragging = false;
@@ -66,6 +59,9 @@ class DokaponApp {
   private bossMaxHp = 950;
   private worldMapFilter: string = 'all';
   private mapTransform = { minGx: 0, minGy: 0, scale: 1, offsetX: 0, offsetY: 0 };
+  /** Per-card skin refresh callbacks for the currently rendered roster. */
+  private rosterSkinUpdaters: Array<() => void> = [];
+  private rosterAssetsListenerBound = false;
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -81,14 +77,6 @@ class DokaponApp {
     this.isekaiEventUI = new IsekaiEventUI(this.game);
     this.wonderChestUI = new WonderChestUI(this.game);
     this.inspectUI = new InspectUI(this.game);
-    this.lobbyUI = new LobbyUI();
-    this.lobbyUI.onStart((players, isOnline) => {
-      if (isOnline && players.length > 0) {
-        this.setupOnlineGame(players);
-      }
-    });
-
-    this.setupNetworkActionListeners();
 
     this.homeUI = new HomeUI(this.game);
     this.fantasyEventUI = new FantasyEventUI(this.game);
@@ -108,52 +96,6 @@ class DokaponApp {
     this.bindInteractiveTileSelection();
     this.renderRosterSetup(3);
     this.updateTitleSaveStatus();
-  }
-
-
-  private setupOnlineGame(roomPlayers: any[]) {
-    document.getElementById('titleScreen')?.classList.add('hidden');
-    // Configure players based on lobby participants
-    this.game.players = roomPlayers.map((rp, index) => {
-      const p = new Player(
-        index + 1,
-        rp.player_name || `Player ${index + 1}`,
-        rp.class_key || 'warrior',
-        rp.player_id !== this.net.playerId, // Local player is human, remote players marked as AI/remote
-        0,
-        index
-      );
-      return p;
-    });
-
-    this.startGame();
-  }
-
-  private setupNetworkActionListeners() {
-    this.net.onActionReceived((action) => {
-      switch (action.type) {
-        case 'ROLL_DICE': {
-          this.game.remainingMoves = action.data.totalRoll;
-          this.game.updateReachableHighlights();
-          break;
-        }
-        case 'MOVE_PATH': {
-          const path = action.data.path;
-          if (path && path.length > 1) {
-            this.game.executePath(
-              path,
-              () => this.onMoveStep(),
-              tile => this.handleTileArrival(tile)
-            );
-          }
-          break;
-        }
-        case 'END_TURN': {
-          this.finishAdvanceTurn();
-          break;
-        }
-      }
-    });
   }
 
 
@@ -268,10 +210,6 @@ class DokaponApp {
         }
 
         audio.coin();
-        if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
-          this.net.broadcastAction('MOVE_PATH', { path });
-        }
-
         this.renderer.hoveredNodeId = null;
         this.renderer.previewPathNodeIds = [];
 
@@ -745,6 +683,7 @@ class DokaponApp {
 
     const container = document.getElementById('playerSetupRoster')!;
     container.innerHTML = '';
+    this.rosterSkinUpdaters = [];
     const defaultNames = ['Valeria', 'Lyra', 'Jaxine', 'Aria'];
     const classKeys = Object.keys(HERO_CLASSES);
 
@@ -858,10 +797,18 @@ class DokaponApp {
       });
 
       updateSkinDisplay();
+      this.rosterSkinUpdaters.push(updateSkinDisplay);
+    }
 
+    // Sprites arrive asynchronously, so previews need one refresh once the sheet set has
+    // settled. This listener is registered once for the whole app lifetime: adding it
+    // inside the card loop leaked one listener per card on every roster re-render, and
+    // each leaked listener redrew a preview that no longer existed.
+    if (!this.rosterAssetsListenerBound) {
+      this.rosterAssetsListenerBound = true;
       window.addEventListener('hero-assets-loaded', () => {
-        updateSkinDisplay();
-      }, { once: false });
+        this.rosterSkinUpdaters.forEach(refresh => refresh());
+      });
     }
   }
 
@@ -896,10 +843,6 @@ class DokaponApp {
 
   private triggerDiceRoll() {
     const totalRoll = this.game.rollMovementDice();
-
-    if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
-      this.net.broadcastAction('ROLL_DICE', { totalRoll });
-    }
 
     const diceModal = document.getElementById('diceRollModal')!;
     const diceCube = document.getElementById('diceCube')!;
@@ -1738,10 +1681,6 @@ class DokaponApp {
   }
 
   private finishAdvanceTurn() {
-    if (this.net.isOnlineMode && this.net.isMyTurn(this.game.activePlayerIdx)) {
-      this.net.broadcastAction('END_TURN', {});
-    }
-
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
@@ -1769,15 +1708,6 @@ class DokaponApp {
     const p = this.game.activePlayer;
     // 1. Smoothly center camera on active player without jarring zoom jumps
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
-    // Online Turn Control: lock UI if it's not local player's turn
-    if (this.net.isOnlineMode) {
-      const isMyTurn = this.net.isMyTurn(this.game.activePlayerIdx);
-      const rollBtn = document.getElementById('btnRollDice') as HTMLButtonElement | null;
-      if (rollBtn) {
-        rollBtn.disabled = !isMyTurn;
-        rollBtn.style.opacity = isMyTurn ? '1' : '0.5';
-      }
-    }
 
     this.hud.update();
 
@@ -1884,7 +1814,7 @@ class DokaponApp {
       this.updateTitleSaveStatus();
     } else {
       audio.hurt();
-      alert('ไม่สามารถโหลดข้อมูลบันทึกได้');
+      alert(res.error ? `โหลดบันทึกไม่สำเร็จ: ${res.error}` : 'ไม่สามารถโหลดข้อมูลบันทึกได้');
     }
   }
 
@@ -2518,7 +2448,7 @@ class DokaponApp {
         tooltip.innerHTML = `
           <div class="font-bold text-amber-300 flex items-center gap-1">
             <span>${hoveredPlayer.isDarkling ? '😈' : '🛡️'}</span>
-            <span>${hoveredPlayer.displayName} (${hoveredPlayer.className})</span>
+            <span>${escapeHtml(hoveredPlayer.displayName)} (${escapeHtml(hoveredPlayer.className)})</span>
           </div>
           <div class="text-[10px] text-slate-300">
             HP: <span class="text-rose-300 font-bold">${hoveredPlayer.hp}/${hoveredPlayer.maxHp}</span> | 
@@ -2586,7 +2516,7 @@ class DokaponApp {
         }
 
         tooltip.innerHTML = `
-          <div class="font-bold text-amber-200">${hoveredNode.name}</div>
+          <div class="font-bold text-amber-200">${escapeHtml(hoveredNode.name)}</div>
           <div class="text-[10px] ${badgeColor} mt-0.5">${typeLabel}</div>
           <div class="text-[9px] text-slate-400 mt-1">ไบโอม: ${hoveredNode.biome} • อาณาจักร: ${hoveredNode.realmId}</div>
           <div class="text-[8px] text-cyan-400 mt-1 italic">🖱️ คลิกเพื่อหมุนกล้องไปดูจุดนี้บนแผนที่</div>
@@ -2683,11 +2613,28 @@ class DokaponApp {
     this.game.logs.forEach(item => {
       const row = document.createElement('div');
       row.className = 'py-0.5 border-b border-slate-800/60';
-      if (item.type === 'gold') row.innerHTML = `<span class="text-amber-400">🪙 ${item.text}</span>`;
-      else if (item.type === 'battle') row.innerHTML = `<span class="text-red-400">⚔️ ${item.text}</span>`;
-      else if (item.type === 'darkling') row.innerHTML = `<span class="text-purple-400">😈 ${item.text}</span>`;
-      else if (item.type === 'level') row.innerHTML = `<span class="text-emerald-400">⭐ ${item.text}</span>`;
-      else row.innerHTML = `<span class="text-slate-300">• ${item.text}</span>`;
+
+      // textContent instead of innerHTML: log lines embed hero names and prank
+      // nicknames, which come from free-text input.
+      const span = document.createElement('span');
+      if (item.type === 'gold') {
+        span.className = 'text-amber-400';
+        span.textContent = `🪙 ${item.text}`;
+      } else if (item.type === 'battle') {
+        span.className = 'text-red-400';
+        span.textContent = `⚔️ ${item.text}`;
+      } else if (item.type === 'darkling') {
+        span.className = 'text-purple-400';
+        span.textContent = `😈 ${item.text}`;
+      } else if (item.type === 'level') {
+        span.className = 'text-emerald-400';
+        span.textContent = `⭐ ${item.text}`;
+      } else {
+        span.className = 'text-slate-300';
+        span.textContent = `• ${item.text}`;
+      }
+
+      row.appendChild(span);
       list.appendChild(row);
     });
   }

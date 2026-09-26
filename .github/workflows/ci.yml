@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    name: Type check, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `verify` runs, in order:
+      #   1. tsc --noEmit                     - strict type check
+      #   2. vite build                       - production bundle + compiled Tailwind
+      #   3. node --test tests/               - board data and escaping invariants
+      #   4. check-css-coverage               - every utility class made it into the CSS
+      - name: Verify
+        run: npm run verify

@@ -82,6 +82,21 @@ export interface SaveGameData {
 const STORAGE_KEY = 'chronicles_of_fortune_savegame';
 const META_KEY = 'chronicles_of_fortune_savemeta';
 
+/**
+ * Current on-disk save format. Bump this whenever the shape of SaveGameData changes and
+ * add the corresponding migration in `load` - before this existed the field was written
+ * but never read, so an incompatible save silently produced NaN stats instead of failing.
+ */
+const SAVE_VERSION = 1;
+
+/** Reads a finite number out of untrusted JSON, falling back when it is missing or NaN. */
+function numOr(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/** Equipment slots that always exist on a Player. */
+const DEFAULT_EQUIPMENT = { weapon: null, shield: null, armor: null, accessory: null };
+
 export class SaveManager {
   public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }): boolean {
     try {
@@ -125,7 +140,7 @@ export class SaveManager {
       });
 
       const saveData: SaveGameData = {
-        version: 1, savedAt: Date.now(), dateStr,
+        version: SAVE_VERSION, savedAt: Date.now(), dateStr,
         dayCounter: game.dayCounter, weekCounter: game.weekCounter,
         winGoal: game.winGoal, activePlayerIdx: game.activePlayerIdx,
         phase: (game.phase as string) === 'BATTLE' || (game.phase as string) === 'PVP_CHOICE' ? 'BOARD_TURN' : game.phase,
@@ -154,70 +169,105 @@ export class SaveManager {
     }
   }
 
-  public static load(game: GameState): { success: boolean; bossState?: { currentHp: number; maxHp: number } } {
+  public static load(game: GameState): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { success: false };
-      const data = JSON.parse(raw) as SaveGameData;
-      if (!data || !data.players || data.players.length === 0) return { success: false };
+      if (!raw) return { success: false, error: 'ไม่พบข้อมูลบันทึกในเครื่องนี้' };
+
+      let data: SaveGameData;
+      try {
+        data = JSON.parse(raw) as SaveGameData;
+      } catch {
+        return { success: false, error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' };
+      }
+      if (!data || typeof data !== 'object') {
+        return { success: false, error: 'ไฟล์บันทึกเสียหาย (โครงสร้างไม่ถูกต้อง)' };
+      }
+
+      const version = numOr(data.version, 0);
+      if (version < 1) {
+        return { success: false, error: 'ไฟล์บันทึกไม่มีเลขเวอร์ชันหรือเก่าเกินกว่าจะโหลดได้' };
+      }
+      if (version > SAVE_VERSION) {
+        return {
+          success: false,
+          error: `ไฟล์บันทึกเป็นเวอร์ชัน ${version} ซึ่งใหม่กว่าที่เกมนี้รองรับ (สูงสุด v${SAVE_VERSION})`
+        };
+      }
+      if (!Array.isArray(data.players) || data.players.length === 0) {
+        return { success: false, error: 'ไฟล์บันทึกไม่มีข้อมูลผู้เล่น' };
+      }
+
+      const nodesById = new Map(game.allNodes.map(n => [n.id, n]));
 
       game.players = data.players.map(sp => {
-        const p = new Player(sp.id, sp.name, sp.classKey, sp.isAI, sp.nodeId, sp.skinVariant || 0);
-        p.level = sp.level; p.xp = sp.xp; p.xpNeeded = sp.xpNeeded;
-        p.maxHp = sp.maxHp; p.hp = sp.hp; p.maxMp = sp.maxMp; p.mp = sp.mp;
-        p.atk = sp.atk; p.def = sp.def; p.mag = sp.mag; p.spd = sp.spd; p.luk = sp.luk;
-        p.gold = sp.gold; p.townsControlled = sp.townsControlled; p.townDeeds = sp.townDeeds || [];
-        p.nodeId = sp.nodeId; p.prevNodeId = sp.prevNodeId;
-        p.gridX = sp.gridX; p.gridY = sp.gridY; p.gridZ = sp.gridZ;
+        const p = new Player(numOr(sp.id, 1), sp.name, sp.classKey, sp.isAI, numOr(sp.nodeId, 0), numOr(sp.skinVariant, 0));
+        p.level = Math.max(1, numOr(sp.level, 1));
+        p.xp = Math.max(0, numOr(sp.xp, 0));
+        p.xpNeeded = Math.max(1, numOr(sp.xpNeeded, 100));
+        p.maxHp = Math.max(1, numOr(sp.maxHp, 100));
+        p.hp = Math.min(p.maxHp, Math.max(0, numOr(sp.hp, p.maxHp)));
+        p.maxMp = Math.max(0, numOr(sp.maxMp, 0));
+        p.mp = Math.min(p.maxMp, Math.max(0, numOr(sp.mp, p.maxMp)));
+        p.atk = Math.max(0, numOr(sp.atk, 10));
+        p.def = Math.max(0, numOr(sp.def, 10));
+        p.mag = Math.max(0, numOr(sp.mag, 10));
+        p.spd = Math.max(0, numOr(sp.spd, 10));
+        p.luk = Math.max(0, numOr(sp.luk, 10));
+        p.gold = Math.max(0, numOr(sp.gold, 300));
+        p.townDeeds = Array.isArray(sp.townDeeds) ? sp.townDeeds.filter(d => nodesById.has(d)) : [];
+        p.townsControlled = p.townDeeds.length;
+        p.prevNodeId = numOr(sp.prevNodeId, -1) >= 0 ? numOr(sp.prevNodeId, -1) : null;
+        p.gridX = numOr(sp.gridX, 0);
+        p.gridY = numOr(sp.gridY, 0);
+        p.gridZ = numOr(sp.gridZ, 0);
         p.facing = (sp.facing as any) || 'SE';
-        p.activeSpinnerMultiplier = sp.activeSpinnerMultiplier || 1;
-        p.equipment = sp.equipment || { weapon: null, armor: null, accessory: null };
-        p.inventory = sp.inventory || [];
-        p.fieldSpells = sp.fieldSpells || [];
-        p.rustTurns = sp.rustTurns || 0;
+        p.activeSpinnerMultiplier = Math.max(1, numOr(sp.activeSpinnerMultiplier, 1));
+        // Merge over the full slot list so saves written before a slot existed still get it.
+        p.equipment = { ...DEFAULT_EQUIPMENT, ...(sp.equipment || {}) };
+        p.inventory = Array.isArray(sp.inventory) ? sp.inventory : [];
+        p.fieldSpells = Array.isArray(sp.fieldSpells) ? sp.fieldSpells : [];
+        p.rustTurns = Math.max(0, numOr(sp.rustTurns, 0));
         p.foodBuff = sp.foodBuff || null;
         p.activeGuildQuest = sp.activeGuildQuest || null;
         p.guildRank = (sp.guildRank as any) || 'F';
-        p.completedQuestsCount = sp.completedQuestsCount || 0;
+        p.completedQuestsCount = Math.max(0, numOr(sp.completedQuestsCount, 0));
         p.isDarkling = !!sp.isDarkling;
-        p.darklingTurnsLeft = sp.darklingTurnsLeft || 0;
+        p.darklingTurnsLeft = Math.max(0, numOr(sp.darklingTurnsLeft, 0));
         p.backupNormalStats = sp.backupNormalStats || null;
         p.prank = sp.prank || { hasGraffiti: false, turnsRemaining: 0 };
         p.color = sp.color || p.color;
         p.className = sp.className || p.className;
         p.avatar = sp.avatar || p.avatar;
         p.skillName = sp.skillName || p.skillName;
-        p.homeNodeId = sp.homeNodeId ?? null;
+        p.homeNodeId = nodesById.has(numOr(sp.homeNodeId, -1)) ? numOr(sp.homeNodeId, -1) : null;
         p.companion = sp.companion ?? null;
         return p;
       });
 
-      if (data.townStates && Array.isArray(data.townStates)) {
-        const townMap = new Map<number, TownData>();
-        data.townStates.forEach(ts => townMap.set(ts.nodeId, ts.townData));
-        game.allNodes.forEach(node => {
-          if (townMap.has(node.id)) {
-            node.townData = townMap.get(node.id);
+      if (Array.isArray(data.townStates)) {
+        data.townStates.forEach(ts => {
+          const node = nodesById.get(numOr(ts?.nodeId, -1));
+          if (node?.townData && ts?.townData) {
+            node.townData = ts.townData;
           }
         });
       }
 
-      if (data.homeStates && Array.isArray(data.homeStates)) {
-        const homeMap = new Map<number, { homeData: any; type: string }>();
-        data.homeStates.forEach(hs => homeMap.set(hs.nodeId, hs));
-        game.allNodes.forEach(node => {
-          if (homeMap.has(node.id)) {
-            const hs = homeMap.get(node.id)!;
+      if (Array.isArray(data.homeStates)) {
+        data.homeStates.forEach(hs => {
+          const node = nodesById.get(numOr(hs?.nodeId, -1));
+          if (node && hs?.homeData) {
             node.homeData = hs.homeData;
-            node.type = hs.type as any;
+            if (hs.type) node.type = hs.type as any;
           }
         });
       }
 
-      game.dayCounter = data.dayCounter || 1;
-      game.weekCounter = data.weekCounter || 1;
+      game.dayCounter = Math.max(1, numOr(data.dayCounter, 1));
+      game.weekCounter = Math.max(1, numOr(data.weekCounter, 1));
       game.winGoal = data.winGoal || 'networth';
-      game.activePlayerIdx = Math.min(data.activePlayerIdx || 0, game.players.length - 1);
+      game.activePlayerIdx = Math.min(Math.max(0, numOr(data.activePlayerIdx, 0)), game.players.length - 1);
       game.phase = 'BOARD_TURN';
       game.remainingMoves = 0;
       game.highlightedNodes = [];
@@ -226,17 +276,17 @@ export class SaveManager {
       game.activeBattleEnemyCombatant = null;
       game.pendingTileNode = null;
       game.pendingPvPVictim = null;
-      if (data.logs && Array.isArray(data.logs)) {
-        game.logs = data.logs;
-      }
+      game.logs = Array.isArray(data.logs) ? data.logs : [];
       game.addLog(`📂 โหลดบันทึกสำเร็จ! (วันที่ ${game.dayCounter}, สัปดาห์ที่ ${game.weekCounter})`, 'info');
       return {
         success: true,
-        bossState: data.bossCurrentHp ? { currentHp: data.bossCurrentHp, maxHp: data.bossMaxHp || 380 } : undefined
+        bossState: numOr(data.bossCurrentHp, 0) > 0
+          ? { currentHp: numOr(data.bossCurrentHp, 0), maxHp: numOr(data.bossMaxHp, 380) }
+          : undefined
       };
     } catch (err) {
       console.error('Failed to load game:', err);
-      return { success: false };
+      return { success: false, error: 'เกิดข้อผิดพลาดขณะโหลดข้อมูลบันทึก' };
     }
   }
 
@@ -252,7 +302,19 @@ export class SaveManager {
     try {
       const raw = localStorage.getItem(META_KEY);
       if (!raw) return null;
-      return JSON.parse(raw) as SaveMetadata;
+      const meta = JSON.parse(raw) as SaveMetadata;
+      if (!meta || typeof meta !== 'object') return null;
+      return {
+        savedAt: numOr(meta.savedAt, 0),
+        dateStr: meta.dateStr || '',
+        day: numOr(meta.day, 1),
+        week: numOr(meta.week, 1),
+        activeHeroName: meta.activeHeroName || 'Unknown Hero',
+        activeHeroClass: meta.activeHeroClass || 'Warrior',
+        activeHeroLevel: numOr(meta.activeHeroLevel, 1),
+        activeHeroGold: numOr(meta.activeHeroGold, 0),
+        totalPlayers: numOr(meta.totalPlayers, 0)
+      };
     } catch {
       return null;
     }

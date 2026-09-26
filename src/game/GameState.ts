@@ -7,6 +7,7 @@ import { darklingSystem } from './DarklingSystem';
 import { aiSystem } from './AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { royalDecreeSystem } from './RoyalDecreeSystem';
+import { escapeHtml } from '../util/Html';
 
 export type GamePhase =
   | 'TITLE'
@@ -67,21 +68,25 @@ export class GameState {
         const row = document.createElement('div');
         row.className = 'py-1 px-1.5 rounded border transition-all duration-200 flex items-start gap-1.5 bg-slate-950/60 shadow-sm';
 
+        // Log lines embed hero names and prank nicknames, both of which come from
+        // free-text input, so the interpolated text is escaped before it reaches innerHTML.
+        const safeText = escapeHtml(text);
+
         if (type === 'gold') {
           row.className += ' border-amber-500/30 text-amber-300';
-          row.innerHTML = `<span class="shrink-0 text-xs">🪙</span><span class="break-words leading-tight">${text}</span>`;
+          row.innerHTML = `<span class="shrink-0 text-xs">🪙</span><span class="break-words leading-tight">${safeText}</span>`;
         } else if (type === 'battle') {
           row.className += ' border-rose-500/30 text-rose-300';
-          row.innerHTML = `<span class="shrink-0 text-xs">⚔️</span><span class="break-words leading-tight">${text}</span>`;
+          row.innerHTML = `<span class="shrink-0 text-xs">⚔️</span><span class="break-words leading-tight">${safeText}</span>`;
         } else if (type === 'darkling') {
           row.className += ' border-purple-500/40 text-purple-300';
-          row.innerHTML = `<span class="shrink-0 text-xs">😈</span><span class="break-words leading-tight">${text}</span>`;
+          row.innerHTML = `<span class="shrink-0 text-xs">😈</span><span class="break-words leading-tight">${safeText}</span>`;
         } else if (type === 'level') {
           row.className += ' border-emerald-500/30 text-emerald-300';
-          row.innerHTML = `<span class="shrink-0 text-xs">⭐</span><span class="break-words leading-tight">${text}</span>`;
+          row.innerHTML = `<span class="shrink-0 text-xs">⭐</span><span class="break-words leading-tight">${safeText}</span>`;
         } else {
           row.className += ' border-slate-700/40 text-slate-200';
-          row.innerHTML = `<span class="shrink-0 text-xs">💬</span><span class="break-words leading-tight">${text}</span>`;
+          row.innerHTML = `<span class="shrink-0 text-xs">💬</span><span class="break-words leading-tight">${safeText}</span>`;
         }
 
         list.insertBefore(row, list.firstChild);
@@ -92,7 +97,30 @@ export class GameState {
     }
   }
 
+  /**
+   * Rebuilds the board from the pristine map data.
+   *
+   * `DOKAPON_NODES` is a module-level constant and `[...DOKAPON_NODES]` only copies the
+   * array, not the node objects. Town ownership, town levels, conquered monsters and
+   * player-built homes are all mutated in place during play, so without a deep clone a
+   * second game in the same page session would inherit the previous game's entire board
+   * state (towns still owned by old player ids, monsters already defeated, inflated town
+   * levels, and houses named after the previous hero).
+   */
+  resetBoard() {
+    this.allNodes = structuredClone(DOKAPON_NODES);
+
+    // Defensive fallback for data that predates the monsterMaxHp field.
+    this.allNodes.forEach(n => {
+      if (n.townData && n.townData.isOccupiedByMonster && !n.townData.monsterMaxHp) {
+        n.townData.monsterMaxHp = n.townData.monsterHp;
+      }
+    });
+  }
+
   initGame(partyConfig: Array<{ name: string; classKey: string; isAI: boolean; skinVariant?: number }>, winGoal = 'networth') {
+    this.resetBoard();
+
     this.players = partyConfig.map((cfg, idx) => new Player(idx + 1, cfg.name, cfg.classKey, cfg.isAI, 0, cfg.skinVariant || 0));
     this.winGoal = winGoal;
     this.activePlayerIdx = 0;
@@ -100,16 +128,25 @@ export class GameState {
     this.weekCounter = 1;
     this.phase = 'BOARD_TURN';
 
-    this.allNodes.forEach(n => {
-      if (n.townData && n.townData.isOccupiedByMonster) {
-        if (!n.townData.monsterMaxHp) {
-          n.townData.monsterMaxHp = n.townData.monsterHp;
-        }
-      }
-    });
+    // Clear every transient field so a new game can never render or resume leftovers
+    // from the previous session (a stale activeBattle would keep drawing the old arena).
+    this.remainingMoves = 0;
+    this.highlightedNodes = [];
+    this.activePreviewPath = [];
+    this.activeBattle = null;
+    this.activeBattleEnemyCombatant = null;
+    this.pendingTileNode = null;
+    this.pendingPvPVictim = null;
+    this.logs = [];
 
-    this.addLog(`⚔️ The Grand Dokapon Expedition เริ่มต้นขึ้นแล้วทั้ง 52 จังหวัด!`, 'level');
+    this.addLog(`⚔️ The Grand Dokapon Expedition เริ่มต้นขึ้นแล้วทั้ง ${this.getTownCount()} เมือง!`, 'level');
     this.startTurn();
+  }
+
+  /** Towns the player can actually liberate, i.e. nodes that carry town data AND
+   *  route into the town-liberation branch of tile arrival. */
+  getTownCount(): number {
+    return this.allNodes.filter(n => n.townData).length;
   }
 
   startTurn() {

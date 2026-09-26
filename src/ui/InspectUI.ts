@@ -4,6 +4,7 @@ import { BoardNode } from '../game/BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { getNodeEncounterPreview, MonsterProfile } from '../game/MonsterDatabase';
+import { escapeHtml } from '../util/Html';
 
 export class InspectUI {
   private game: GameState;
@@ -70,7 +71,9 @@ export class InspectUI {
     const netWorth = player.getNetWorth(this.game.allNodes);
     const ownedTownNames = player.townDeeds.map(id => {
       const node = this.game.allNodes.find(n => n.id === id);
-      return node ? `${node.name} (Lv.${node.townData?.level || 1})` : `เมือง #${id}`;
+      // node.name is overwritten by HomeUI with "บ้านพักของ <hero name>", so it can
+      // carry free-text input and must be escaped before it reaches innerHTML.
+      return node ? `${escapeHtml(node.name)} (Lv.${node.townData?.level || 1})` : `เมือง #${id}`;
     });
 
     const weaponDesc = player.equipment.weapon
@@ -106,7 +109,7 @@ export class InspectUI {
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h2 class="text-base font-bold text-amber-300 tracking-wider">${player.displayName}</h2>
+                <h2 class="text-base font-bold text-amber-300 tracking-wider">${escapeHtml(player.displayName)}</h2>
                 <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded border border-slate-700">
                   ${player.isDarkling ? 'จอมมารแห่งความมืด' : player.className}
                 </span>
@@ -331,7 +334,7 @@ export class InspectUI {
             <div class="flex justify-between items-center border-b border-blue-900/60 pb-1.5">
               <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                 <span>🛡️</span>
-                <span>${attacker.displayName} (ฝ่ายคุณ)</span>
+                <span>${escapeHtml(attacker.displayName)} (ฝ่ายคุณ)</span>
               </span>
               <span class="text-[10px] bg-blue-950 text-cyan-200 px-2 py-0.5 rounded font-bold">
                 LV. ${attacker.level}
@@ -371,7 +374,7 @@ export class InspectUI {
             <div class="flex justify-between items-center border-b border-rose-900/60 pb-1.5">
               <span class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
                 <span>⚔️</span>
-                <span>${defender.displayName} (คู่ต่อสู้)</span>
+                <span>${escapeHtml(defender.displayName)} (คู่ต่อสู้)</span>
               </span>
               <span class="text-[10px] bg-rose-950 text-rose-200 px-2 py-0.5 rounded font-bold">
                 LV. ${defender.level}
@@ -587,7 +590,7 @@ export class InspectUI {
             <h2 class="text-sm font-bold text-rose-300 flex items-center gap-1.5">
               <span>👹</span> ส่องข้อมูลอสูร & ยืนยันการเข้าปะทะ
             </h2>
-            <p class="text-[10px] text-slate-300">[${node.name}] มีอสูร <strong class="text-rose-300">${monster.name}</strong> คุ้มกันอยู่!</p>
+            <p class="text-[10px] text-slate-300">[${escapeHtml(node.name)}] มีอสูร <strong class="text-rose-300">${monster.name}</strong> คุ้มกันอยู่!</p>
           </div>
           <span class="text-2xl">${monster.icon}</span>
         </div>
@@ -595,7 +598,7 @@ export class InspectUI {
         <div class="grid grid-cols-2 gap-2 mb-2">
           <div class="pixel-box p-2.5 bg-slate-900/95 border-blue-500/70 text-[10px]">
             <div class="flex justify-between font-bold text-cyan-300 border-b border-slate-800 pb-1 mb-1">
-              <span>🛡️ ${player.displayName}</span><span>LV.${player.level}</span>
+              <span>🛡️ ${escapeHtml(player.displayName)}</span><span>LV.${player.level}</span>
             </div>
             <div>HP: ${player.hp}/${player.maxHp} | MP: ${player.mp}/${player.maxMp}</div>
             <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 rounded mt-1">

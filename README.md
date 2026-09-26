@@ -2,6 +2,8 @@
 
 A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring **Brown Dust 2** style HD Chibi Pixel Art, tactical combat dioramas, and competitive party mechanics.
 
+Single-player board campaign against up to 3 AI rivals (local hot-seat play is also supported).
+
 ![Dokapon Kingdom x Brown Dust 2 Style](https://raw.githubusercontent.com/Lunasias/chronicles_of_fortune/main/public/favicon.ico)
 
 ---
@@ -33,26 +35,22 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring **Brow
   - 4-member party line-up facing NE (Hero, Ranger/Archer, Priestess, Mage).
   - Brown Dust 2 style side turn queues with HP numbers and "BATTLE START >>" pill button.
 
+### 3. 🗺️ The World
+A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
+
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher recommended)
-- npm or pnpm
+- **Node.js v22 or higher** (the test suite uses `node --test` glob patterns)
+- npm
 
 ### Installation
 ```bash
-# Clone the repository
 git clone https://github.com/Lunasias/chronicles_of_fortune.git
-
-# Navigate into project directory
 cd chronicles_of_fortune
-
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
 ```
 
@@ -66,13 +64,52 @@ npm run preview
 
 ---
 
+## 🧪 Development
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server with HMR |
+| `npm run typecheck` | Strict TypeScript check, no emit |
+| `npm run build` | Type check + production bundle (incl. compiled Tailwind CSS) |
+| `npm test` | Unit tests for board-data integrity and HTML escaping |
+| `npm run check:css` | Verifies every utility class used by the app is in the compiled stylesheet |
+| `npm run verify` | Everything CI runs: typecheck → build → test → CSS coverage |
+
+**Always run `npm run verify` before pushing.** CI runs the same command.
+
+### Project layout
+```
+src/
+  engine/   Canvas renderers: isometric board, terrain, characters, VFX, audio
+  game/     Rules and state: board data, combat, economy, events, save/load
+  ui/       DOM and canvas UI layers
+  util/     Small shared helpers (HTML escaping)
+  styles/   Tailwind entry point
+reference/  Artist source art for scripts/generate_all_sprites.cjs.
+            Deliberately NOT under public/ so it is not shipped to production.
+scripts/    Manual one-off dev tooling - see scripts/README.md
+tests/      node:test suites (compiled from src by npm run pretest)
+```
+
+---
+
 ## 🛠️ Tech Stack
-- **Framework**: Vite + Vanilla TypeScript
+- **Framework**: Vite + Vanilla TypeScript (strict)
 - **Rendering Engine**: HTML5 Canvas (Procedural Pseudo-3D Volumetric Pixel Art & 2.5D Isometric Diorama)
 - **Audio**: Web Audio API Procedural Synthesizer (Retro 8-bit/16-bit sound effects & melodies)
-- **Styling**: Tailwind CSS + Custom Dokapon Pixel UI
+- **Styling**: Tailwind CSS compiled at build time (no CDN) + custom Dokapon pixel UI classes
+- **Tests**: `node:test` (no test-runner dependency)
+
+### Notes for maintainers
+- `src/game/BoardMap.ts` is both the level data **and** the pristine baseline for a new
+  game. Runtime board state (town ownership, town levels, built homes) lives on a deep
+  clone created by `GameState.resetBoard()`; never mutate the module constant directly.
+- Board and sprite data are generated/edited by the scripts in `scripts/`. Two of them
+  rewrite tracked source - they are dry-run by default and require `--write`.
+- Hero names and prank nicknames are user input. Escape them with `escapeHtml()` from
+  `src/util/Html.ts` (or use `textContent`) before putting them in `innerHTML`.
 
 ---
 
 ## 📜 License
-MIT License
+MIT License - see [LICENSE](LICENSE).

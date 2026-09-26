@@ -27,8 +27,12 @@ export class HomeUI {
     manageSection.classList.add('hidden');
     visitorSection.classList.add('hidden');
 
-    // Case 1: Empty node -> Buy plot for Home
-    if (node.type === 'empty' || !node.homeData) {
+    // Case 1: Vacant plot -> Buy plot for Home
+    // NOTE: the base map ships three pre-designated 'home' plots that are vacant land
+    // awaiting a buyer, so vacancy must be detected by the owner id (`ownerId: 0` is the
+    // vacant sentinel) and NOT by the absence of the homeData container. Checking only
+    // `!node.homeData` made those plots unbuyable and charged a visit fee instead.
+    if (node.type === 'empty' || !node.homeData || !node.homeData.ownerId) {
       buySection.classList.remove('hidden');
 
       const cost = 150;

@@ -1,6 +1,7 @@
 import { GameState } from '../game/GameState';
 import { audio } from '../engine/AudioSynthesizer';
 import { darklingSystem } from '../game/DarklingSystem';
+import { escapeHtml } from '../util/Html';
 
 export class WeeklyReportUI {
   private game: GameState;
@@ -63,7 +64,7 @@ export class WeeklyReportUI {
       row.innerHTML = `
         <div class="flex items-center gap-2">
           <span class="font-bold text-sm">${isFirst ? '👑 1st' : `${idx + 1}th`}</span>
-          <span class="font-bold" style="color: ${p.color}">${p.displayName} (${p.className})</span>
+          <span class="font-bold" style="color: ${p.color}">${escapeHtml(p.displayName)} (${escapeHtml(p.className)})</span>
         </div>
         <div class="flex items-center gap-3 text-xs">
           <span>🪙 ${p.gold}G</span>

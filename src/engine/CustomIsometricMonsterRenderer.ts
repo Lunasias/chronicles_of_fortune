@@ -26,6 +26,10 @@ const DIR_NAME_MAP: Record<IsoDirection, string> = {
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private monsterImageStore = new Map<string, HTMLImageElement>();
+  private loadedCount = 0;
+  private totalToLoad = 0;
+  private failedCount = 0;
+  private readyNotified = false;
   private currentDir: IsoDirection = 'SW';
   private isBack: boolean = false;
 
@@ -43,16 +47,15 @@ export class CustomIsometricMonsterRenderer {
     ];
     const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
 
+    // 1 portrait + (1 idle + 4 run + 4 attack) frames for each of the 8 directions.
+    this.totalToLoad = archetypes.length * (1 + directions.length * 9);
+
     for (const arch of archetypes) {
       // 1. Portrait Preview
       const img = new Image();
       img.src = `/assets/monsters/${arch}.png`;
-      img.onload = () => {
-        this.cache.clear();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
-        }
-      };
+      img.onload = () => this.markAssetLoaded();
+      img.onerror = () => this.markAssetFailed(`/assets/monsters/${arch}.png`);
       this.monsterImageStore.set(arch, img);
 
       // 2. Preload 8-Directional Idle and Attack Frames referencing the spellblade model
@@ -60,43 +63,60 @@ export class CustomIsometricMonsterRenderer {
         const dirName = DIR_NAME_MAP[dir];
 
         // Idle frame
+        const idleSrc = `/assets/monsters/${arch}/Idle/rotations/${dirName}.png`;
         const idleImg = new Image();
-        idleImg.src = `/assets/monsters/${arch}/Idle/rotations/${dirName}.png`;
-        idleImg.onload = () => {
-          this.cache.clear();
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
-          }
-        };
+        idleImg.src = idleSrc;
+        idleImg.onload = () => this.markAssetLoaded();
+        idleImg.onerror = () => this.markAssetFailed(idleSrc);
         this.monsterImageStore.set(`${arch}_idle_${dir}`, idleImg);
 
         // 4 Run frames per direction (32 Run frames per monster)
         for (let f = 0; f < 4; f++) {
+          const runSrc = `/assets/monsters/${arch}/Run/rotations/${dirName}_${f}.png`;
           const runImg = new Image();
-          runImg.src = `/assets/monsters/${arch}/Run/rotations/${dirName}_${f}.png`;
-          runImg.onload = () => {
-            this.cache.clear();
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
-            }
-          };
+          runImg.src = runSrc;
+          runImg.onload = () => this.markAssetLoaded();
+          runImg.onerror = () => this.markAssetFailed(runSrc);
           this.monsterImageStore.set(`${arch}_run_${dir}_${f}`, runImg);
         }
 
         // 4 Attack frames per direction (32 Attack frames per monster)
         for (let f = 0; f < 4; f++) {
+          const atkSrc = `/assets/monsters/${arch}/Attack/rotations/${dirName}_${f}.png`;
           const atkImg = new Image();
-          atkImg.src = `/assets/monsters/${arch}/Attack/rotations/${dirName}_${f}.png`;
-          atkImg.onload = () => {
-            this.cache.clear();
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
-            }
-          };
+          atkImg.src = atkSrc;
+          atkImg.onload = () => this.markAssetLoaded();
+          atkImg.onerror = () => this.markAssetFailed(atkSrc);
           this.monsterImageStore.set(`${arch}_attack_${dir}_${f}`, atkImg);
         }
       }
     }
+  }
+
+  /**
+   * Counts a settled sprite request and notifies once when every monster sheet is in.
+   *
+   * Previously each of the 1,314 images cleared the sprite cache and dispatched
+   * `monster-assets-loaded` individually. No listener ever subscribed to that event, so
+   * the whole burst was pure main-thread overhead that also discarded cached sprites
+   * while the board was trying to render.
+   */
+  private markAssetLoaded() {
+    this.loadedCount++;
+    if (this.loadedCount < this.totalToLoad || this.readyNotified) return;
+
+    this.readyNotified = true;
+    this.cache.clear();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+    }
+  }
+
+  private markAssetFailed(src: string) {
+    this.failedCount++;
+    console.warn(`[MonsterRenderer] Failed to load sprite: ${src}`);
+    // Still count it so one missing file cannot stall the ready notification.
+    this.markAssetLoaded();
   }
 
   public getMonsterArchetypeKey(mName: string): string {

@@ -23,6 +23,49 @@ export class BattleUI {
   public companionUsedThisBattle = false;
   public playerSkillUsedThisBattle = false;
 
+  /**
+   * Offscreen cache for the battle scenery layers.
+   *
+   * The biome backdrop and the colosseum floor together cost roughly 120 canvas
+   * operations, but every one of those drawing routines is a pure function of
+   * (w, h, time, biome/type/isBoss) - none of them read mutable game state. Only a handful
+   * of decorative elements actually animate with `time`, so the layers are re-rendered a
+   * few times per second and blitted every frame instead of being rebuilt at 60 fps.
+   */
+  private sceneryLayers = new Map<string, { canvas: HTMLCanvasElement; key: string; at: number }>();
+  private static readonly SCENERY_REFRESH_MS = 100;
+
+  private getSceneryLayer(
+    name: string,
+    w: number,
+    h: number,
+    time: number,
+    key: string,
+    draw: (layerCtx: CanvasRenderingContext2D) => void
+  ): HTMLCanvasElement {
+    let layer = this.sceneryLayers.get(name);
+    if (!layer || layer.canvas.width !== w || layer.canvas.height !== h) {
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      layer = { canvas, key: '', at: -Infinity };
+      this.sceneryLayers.set(name, layer);
+    }
+
+    const now = performance.now();
+    if (layer.key !== key || now - layer.at >= BattleUI.SCENERY_REFRESH_MS) {
+      const layerCtx = layer.canvas.getContext('2d')!;
+      layerCtx.setTransform(1, 0, 0, 1, 0, 0);
+      layerCtx.imageSmoothingEnabled = false;
+      layerCtx.clearRect(0, 0, w, h);
+      draw(layerCtx);
+      layer.key = key;
+      layer.at = now;
+    }
+
+    return layer.canvas;
+  }
+
   // Cinematic Combat Cutscene State
   public cutscene = {
     active: false,
@@ -971,12 +1014,38 @@ export class BattleUI {
     const biome = currentNode?.biome || 'grass';
     const isBoss = !!b.defender.isBoss || !!b.attacker.isBoss;
 
-    this.drawDynamicLocationBackdrop(ctx, w, h, time, currentNode, isBoss);
+    const backdropLayer = this.getSceneryLayer(
+      'backdrop',
+      w,
+      h,
+      time,
+      `${w}x${h}|${biome}|${currentNode?.type ?? 'empty'}|${isBoss ? 1 : 0}`,
+      layerCtx => this.drawDynamicLocationBackdrop(layerCtx, w, h, time, currentNode, isBoss)
+    );
+    ctx.drawImage(backdropLayer, 0, 0);
 
     // -----------------------------------------------------------------------
     // 2. GRAND EXPANSIVE 2.5D ISOMETRIC ARENA FLOOR THEMED BY BIOME
     // -----------------------------------------------------------------------
-    this.drawGrandIsometricColosseumFloor(ctx, arenaCX, arenaCY, arenaW, arenaH, arenaDrop, time, biome);
+    const floorLayer = this.getSceneryLayer(
+      'arenaFloor',
+      w,
+      h,
+      time,
+      `${w}x${h}|${biome}|${arenaCX}|${arenaCY}|${arenaW}|${arenaH}|${arenaDrop}`,
+      layerCtx =>
+        this.drawGrandIsometricColosseumFloor(
+          layerCtx,
+          arenaCX,
+          arenaCY,
+          arenaW,
+          arenaH,
+          arenaDrop,
+          time,
+          biome
+        )
+    );
+    ctx.drawImage(floorLayer, 0, 0);
 
     const pxCenter = arenaCX - arenaW * 0.22;
     const pyCenter = arenaCY + arenaH * 0.12;

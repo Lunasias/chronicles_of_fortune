@@ -132,7 +132,10 @@ export class PrankUI {
   private handleConfirmPrank() {
     if (!this.currentVictim) return;
     const p = this.currentWinner || this.game.activePlayer;
-    const sillyName = (document.getElementById('inputPrankName') as HTMLInputElement).value.trim() || 'Dummy';
+    // Cap the length in code too: the maxlength attribute is only a UI hint and this
+    // value becomes the victim's display name everywhere it is shown.
+    const rawName = (document.getElementById('inputPrankName') as HTMLInputElement).value.trim();
+    const sillyName = (rawName || 'Dummy').slice(0, 10);
 
     this.currentVictim.applyPrank(this.selectedPrankType, sillyName, 14);
     audio.fanfare();

@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { Player } from '../game/Player';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { ecosystemSystem } from '../game/EcosystemSystem';
+import { escapeHtml } from '../util/Html';
 
 export class HUD {
   private game: GameState;
@@ -153,7 +154,7 @@ export class HUD {
         btn.title = `คลิกเพื่อส่องสเตตัสของ ${pl.displayName} (${isCurrent ? 'คุณ' : 'คู่ต่อสู้'})`;
         btn.innerHTML = `
           <span>${pl.avatar}</span>
-          <span class="truncate max-w-[65px]">${pl.displayName}</span>
+          <span class="truncate max-w-[65px]">${escapeHtml(pl.displayName)}</span>
         `;
         btn.addEventListener('click', e => {
           e.stopPropagation();

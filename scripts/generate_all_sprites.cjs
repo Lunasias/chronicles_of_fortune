@@ -171,10 +171,14 @@ function getPixel(buf, w, h, x, y) {
 }
 
 // =============================================================================
-// LOAD BASE SPRITE FRAMES (from 'ดาบเวทสาว')
+// LOAD BASE SPRITE FRAMES (from 'reference/spellblade')
+//
+// These 72 frames are the artist reference the rest of the sheets are derived from.
+// They deliberately live OUTSIDE public/ so they are not shipped to production -
+// only the generated sprites under public/assets/ are served at runtime.
 // =============================================================================
 
-const BASE_DIR = 'public/assets/ดาบเวทสาว';
+const BASE_DIR = 'reference/spellblade';
 const DIRECTIONS = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west'];
 
 console.log('Loading base reference frames from:', BASE_DIR);

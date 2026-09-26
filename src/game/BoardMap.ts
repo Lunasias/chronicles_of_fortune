@@ -78,7 +78,16 @@ export interface BoardNode {
 }
 
 // =========================================================================================
-// MASSIVE DOKAPON CONTINENT: 155 NODES ACROSS 4 GRAND MACRO REALMS & 8 SUB-REGIONS
+// DOKAPON CONTINENT: 312 NODES ACROSS 6 GRAND MACRO REALMS & 15 SUB-REGIONS
+//
+// This array is also the pristine baseline for a new game. It must never be mutated
+// during play - runtime board state lives on a deep clone produced by
+// GameState.resetBoard(). Keep the JSON formatting: scripts/fix_board_connections.cjs and
+// scripts/rebalance_town_monsters.cjs rewrite this file in exactly this shape.
+//
+// Invariant (enforced by tests/board.test.mjs): a node carries `townData` if and only if
+// its `type` is 'town', every id 0..N-1 appears exactly once, no two nodes share a
+// grid position, neighbor links are symmetric and the graph is fully connected.
 // =========================================================================================
 export const DOKAPON_NODES: BoardNode[] = [
   {
@@ -698,19 +707,6 @@ export const DOKAPON_NODES: BoardNode[] = [
     "neighbors": [
       31
     ],
-    "townData": {
-      "name": "Deepwood Haven",
-      "level": 1,
-      "baseValue": 580,
-      "taxYield": 72,
-      "ownerId": null,
-      "isOccupiedByMonster": true,
-      "monsterName": "Shadow Panther Huntress Kaelia",
-      "monsterHp": 91,
-      "monsterAtk": 16,
-      "monsterDef": 10,
-      "monsterMaxHp": 91
-    },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "พงไพรมรกตเพรียกหา",
@@ -821,19 +817,6 @@ export const DOKAPON_NODES: BoardNode[] = [
       37,
       155
     ],
-    "townData": {
-      "name": "Willowbrook Outpost",
-      "level": 1,
-      "baseValue": 600,
-      "taxYield": 75,
-      "ownerId": null,
-      "isOccupiedByMonster": true,
-      "monsterName": "Dryad Matriarch Sylvana",
-      "monsterHp": 104,
-      "monsterAtk": 15,
-      "monsterDef": 8,
-      "monsterMaxHp": 104
-    },
     "realmId": "solaria",
     "realmName": "มหาอาณาจักรโซลาเรีย",
     "subRegionName": "พงไพรมรกตเพรียกหา",
@@ -1045,19 +1028,6 @@ export const DOKAPON_NODES: BoardNode[] = [
       46,
       48
     ],
-    "townData": {
-      "name": "Glacier Citadel",
-      "level": 1,
-      "baseValue": 650,
-      "taxYield": 80,
-      "ownerId": null,
-      "isOccupiedByMonster": true,
-      "monsterName": "Frost Wyrm Princess Glacia",
-      "monsterHp": 312,
-      "monsterAtk": 38,
-      "monsterDef": 27,
-      "monsterMaxHp": 312
-    },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
     "subRegionName": "ธารน้ำแข็งเหมันต์นิรันดร์",
@@ -1716,19 +1686,6 @@ export const DOKAPON_NODES: BoardNode[] = [
       79,
       81
     ],
-    "townData": {
-      "name": "Oasis Bastion",
-      "level": 1,
-      "baseValue": 680,
-      "taxYield": 85,
-      "ownerId": null,
-      "isOccupiedByMonster": true,
-      "monsterName": "Dune Empress Scorpia",
-      "monsterHp": 214,
-      "monsterAtk": 25,
-      "monsterDef": 18,
-      "monsterMaxHp": 214
-    },
     "realmId": "sunfire",
     "realmName": "สุลต่านซันไฟร์แดนสุริยัน",
     "subRegionName": "เนินทรายทองคำสุริยัน",
@@ -2011,19 +1968,6 @@ export const DOKAPON_NODES: BoardNode[] = [
       94,
       96
     ],
-    "townData": {
-      "name": "Forgepost Hold",
-      "level": 1,
-      "baseValue": 740,
-      "taxYield": 90,
-      "ownerId": null,
-      "isOccupiedByMonster": true,
-      "monsterName": "Crystal Cavern Behemoth Lithia",
-      "monsterHp": 291,
-      "monsterAtk": 41,
-      "monsterDef": 25,
-      "monsterMaxHp": 291
-    },
     "realmId": "frostpeak",
     "realmName": "จักรวรรดิธารน้ำแข็งฟรอสต์พีก",
     "subRegionName": "เตาหลอมศิลาคนแคระ",
@@ -4330,7 +4274,7 @@ export const DOKAPON_NODES: BoardNode[] = [
   {
     "id": 211,
     "gx": 20,
-    "gy": 16,
+    "gy": 18,
     "gz": 1,
     "type": "empty",
     "name": "Gearwheel Gate",
@@ -4379,7 +4323,7 @@ export const DOKAPON_NODES: BoardNode[] = [
   {
     "id": 213,
     "gx": 24,
-    "gy": 16,
+    "gy": 18,
     "gz": 1,
     "type": "blue",
     "name": "Steam Boiler Lane",

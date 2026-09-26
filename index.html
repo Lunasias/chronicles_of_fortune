@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chronicles of Fortune - ตำนานแห่งโชคชะตา</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS is compiled at build time and imported from src/main.ts -->
   <!-- Google Pixel Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,6 +15,14 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Explicit hook for canvas elements that must stay pixel-crisp when upscaled. The
+       universal rule above already covers it, but the class is used in markup and was
+       previously undefined, which made the stylesheet-coverage check flag it. */
+    .image-pixelated {
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }

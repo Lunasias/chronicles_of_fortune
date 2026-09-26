@@ -1,0 +1,15 @@
+/*
+ * Tailwind entry point.
+ *
+ * This replaces the `https://cdn.tailwindcss.com` script tag. The Play CDN ships a full
+ * JIT compiler to the browser and compiles styles at runtime, which Tailwind explicitly
+ * documents as not-for-production: it blocks rendering, inflates the payload, and makes a
+ * third-party CDN a hard dependency for the entire UI. Building the stylesheet ahead of
+ * time removes all three problems.
+ *
+ * The project's own component classes (pixel-box, pixel-btn, ...) stay in the inline
+ * <style> block in index.html; only Tailwind's base/components/utilities layers are here.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

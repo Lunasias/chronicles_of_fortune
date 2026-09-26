@@ -41,6 +41,8 @@ export class CustomIsometricHeroRenderer {
   private imageStore = new Map<string, HTMLImageElement>();
   private loadedCount = 0;
   private totalToLoad = 0;
+  private failedCount = 0;
+  private readyNotified = false;
 
   constructor() {
     this.preloadAllClassSprites();
@@ -63,17 +65,8 @@ export class CustomIsometricHeroRenderer {
         const img = new Image();
         const src = `/assets/${folder}/Idle/rotations/${fileName}`;
 
-        img.onload = () => {
-          this.loadedCount++;
-          // Clear cache on new asset availability to immediately re-render live sprites
-          this.cache.clear();
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
-          }
-        };
-        img.onerror = () => {
-          console.warn(`[HeroRenderer] Failed to load sprite: ${src}`);
-        };
+        img.onload = () => this.markAssetLoaded();
+        img.onerror = () => this.markAssetFailed(src);
         img.src = src;
         this.imageStore.set(key, img);
 
@@ -83,33 +76,52 @@ export class CustomIsometricHeroRenderer {
           for (let f = 0; f < 4; f++) {
             // Run state frame
             const runKey = `${folder}_run_${dir}_${f}`;
+            const runSrc = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
             const runImg = new Image();
-            runImg.onload = () => {
-              this.loadedCount++;
-              this.cache.clear();
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
-              }
-            };
-            runImg.src = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
+            runImg.onload = () => this.markAssetLoaded();
+            runImg.onerror = () => this.markAssetFailed(runSrc);
+            runImg.src = runSrc;
             this.imageStore.set(runKey, runImg);
 
             // Attack state frame
             const atkKey = `${folder}_attack_${dir}_${f}`;
+            const atkSrc = `/assets/${folder}/Attack/rotations/${baseName}_${f}.png`;
             const atkImg = new Image();
-            atkImg.onload = () => {
-              this.loadedCount++;
-              this.cache.clear();
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
-              }
-            };
-            atkImg.src = `/assets/${folder}/Attack/rotations/${baseName}_${f}.png`;
+            atkImg.onload = () => this.markAssetLoaded();
+            atkImg.onerror = () => this.markAssetFailed(atkSrc);
+            atkImg.src = atkSrc;
             this.imageStore.set(atkKey, atkImg);
           }
         }
       }
     }
+  }
+
+  /**
+   * Counts a finished sprite request (loaded or failed) and notifies listeners exactly
+   * once, when the whole sheet set has settled.
+   *
+   * Previously every single image cleared the sprite cache and dispatched
+   * `hero-assets-loaded`, which meant 360 cache wipes and 360 listener callbacks during
+   * boot. That threw away freshly rendered sprites and re-rendered the HUD avatar and
+   * every roster preview once per image.
+   */
+  private markAssetLoaded() {
+    this.loadedCount++;
+    if (this.loadedCount < this.totalToLoad || this.readyNotified) return;
+
+    this.readyNotified = true;
+    this.cache.clear();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
+    }
+  }
+
+  private markAssetFailed(src: string) {
+    this.failedCount++;
+    console.warn(`[HeroRenderer] Failed to load sprite: ${src}`);
+    // Still count it so a single missing file can never stall the ready notification.
+    this.markAssetLoaded();
   }
 
   private getImage(
