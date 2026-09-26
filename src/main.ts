@@ -670,11 +670,6 @@ class DokaponApp {
     document.getElementById('checkSound')?.addEventListener('change', e => {
       audio.enabled = (e.target as HTMLInputElement).checked;
     });
-    document.getElementById('checkScanlines')?.addEventListener('change', e => {
-      document.getElementById('scanlineOverlay')!.style.display = (e.target as HTMLInputElement).checked
-        ? 'block'
-        : 'none';
-    });
 
     // Play again
     document.getElementById('btnPlayAgain')?.addEventListener('click', () => {

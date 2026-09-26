@@ -89,31 +89,14 @@
       touch-action: none;
     }
 
-    /* =========================================================================
-       GLOBAL MAGICAL BLOOM EFFECT FILTER (Full-game Post-processing Pass)
-       =========================================================================
-       Hard-stepped, not blurred. Three drop-shadows with a zero blur radius give a
-       1px / 2px / 3px coloured halo, which is the pixel-art way to bloom: the canvas
-       stays hard-edged and gains a chromatic rim instead of a soft glow. The three
-       zero-blur passes plus the tone pass replace `drop-shadow(0 0 22px ...)`, which
-       was the single softest thing on screen. */
-    #gameCanvas, #battleCanvas, #worldMapCanvas, .game-bloom-filter {
-      filter: drop-shadow(1px 0 0 rgba(56, 189, 248, 0.5))
-              drop-shadow(-1px 0 0 rgba(168, 85, 247, 0.4))
-              drop-shadow(0 2px 0 rgba(59, 130, 246, 0.28))
-              contrast(106%)
-              brightness(104%)
-              saturate(112%);
-    }
-
-    .bloom-ambient-lens {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.05) 0%, rgba(168, 85, 247, 0.04) 45%, rgba(15, 23, 42, 0.12) 100%);
-      mix-blend-mode: screen;
-      z-index: 1;
-    }
+    /* No post-processing filter on the canvas.
+       There used to be a full-game "bloom" here, and it ended up as three zero-blur
+       drop-shadows: a cyan copy of every drawn pixel one pixel right and a magenta copy
+       one pixel left. That is chromatic aberration, and on hard-edged pixel art it fringes
+       every edge in red and blue - tiring to look at, and it made the whole game look like
+       it had a filter over it. A pixel-art scene is meant to be shown as drawn.
+       `image-rendering: pixelated` above is not a filter: it stops the browser smoothing
+       the canvas when it is scaled, which is the opposite of one. */
 
         /* ===================================================================
        PIXEL UI SYSTEM
@@ -477,16 +460,6 @@
       animation: pixelBlink 0.9s steps(1, end) infinite;
     }
 
-    /* Dokapon Scanlines effect: a hard 4px stripe, no gradient falloff. */
-    .scanlines {
-      background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%,
-        rgba(0, 0, 0, 0.25) 50%
-      );
-      background-size: 100% 4px;
-      pointer-events: none;
-    }
-
     /* -------- scrollbars --------
        A square thumb on a sunken track, so a scrollbar looks like part of the UI
        rather than like the operating system's. */
@@ -514,14 +487,9 @@
 </head>
 <body class="w-screen h-screen relative bg-slate-950 flex flex-col items-center justify-center select-none overflow-hidden">
 
-  <!-- Scanlines overlay (z-35) -->
-  <div id="scanlineOverlay" class="scanlines absolute inset-0 z-35 pointer-events-none opacity-30"></div>
-
   <!-- MAIN 2.5D ISOMETRIC VIEWPORT (z-0) -->
   <div id="canvasWrapper" class="relative w-full h-full flex items-center justify-center overflow-hidden z-0">
-    <canvas id="gameCanvas" class="block w-full h-full bg-[#080d1a] cursor-grab active:cursor-grabbing game-bloom-filter"></canvas>
-    <!-- Cinematic Full-Game Bloom Ambient Lens -->
-    <div class="bloom-ambient-lens"></div>
+    <canvas id="gameCanvas" class="block w-full h-full bg-[#080d1a] cursor-grab active:cursor-grabbing"></canvas>
   </div>
 
   <!-- FLOATING DAMAGE / NOTICE CONTAINER (z-30) -->
@@ -777,8 +745,7 @@
   <div id="battleScreen" class="hidden absolute inset-0 z-40 bg-slate-950 flex flex-col pointer-events-auto">
     <!-- Battle Canvas / Arena Viewport -->
     <div class="relative flex-1 bg-slate-900 flex items-center justify-center overflow-hidden border-b-4 border-slate-800">
-      <canvas id="battleCanvas" class="w-full h-full block game-bloom-filter"></canvas>
-      <div class="bloom-ambient-lens"></div>
+      <canvas id="battleCanvas" class="w-full h-full block"></canvas>
       
       <!-- Top Battle Status Bars -->
       <div class="absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 flex justify-between items-start pointer-events-none gap-1 sm:gap-2">

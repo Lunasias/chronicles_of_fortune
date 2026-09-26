@@ -110,6 +110,10 @@ if (missing.length) {
 // ---------------------------------------------------------------- hard spot checks
 // The theme-dependent utilities. Each of these was silently doing nothing until tailwind.config.js
 // was given the missing step, so they are the ones worth failing the build over.
+//
+// `z-35` was on this list until the CRT scanline overlay was removed: it was the only element
+// using that step, so Tailwind stopped generating it, and asserting its presence would now assert
+// that a removed overlay still exists.
 const mustHave = [
   'max-w-\\[95vw\\]',
   'sm\\:text-\\[10px\\]',
@@ -119,7 +123,6 @@ const mustHave = [
   'bg-\\[\\#080d1a\\]',
   'pointer-events-none',
   'z-25',
-  'z-35',
   'z-45',
   'xs\\:inline'
 ];
@@ -168,5 +171,29 @@ if (glassFails.length) {
   process.exit(1);
 }
 console.log(`no glass chrome in dist/index.html: ${glassUtilities.length}/${glassUtilities.length} clean`);
+
+// ---------------------------------------------------------------- no screen filters
+// Nothing may post-process the whole play area again. This one has a history: a full-game "bloom"
+// that started as three soft drop-shadows and was later "pixelised" into three ZERO-BLUR ones -
+// `drop-shadow(1px 0 0 cyan)` and `drop-shadow(-1px 0 0 magenta)` on the same element is chromatic
+// aberration, which fringes every edge of hard-edged pixel art in red and blue and is genuinely
+// tiring to look at. The scanline overlay and the screen-blended lens were two more of the same
+// kind. A pixel-art scene is meant to be shown as drawn, so all three are asserted absent.
+//
+// Matched on the CSS property rather than on the bare word, because the stylesheet's own comment
+// explaining the removal mentions drop-shadows.
+const screenFilterTokens = [
+  'filter: drop-shadow',
+  'filter:drop-shadow',
+  'scanlines',
+  'bloom-ambient-lens',
+  'game-bloom-filter'
+];
+const filterFails = screenFilterTokens.filter(sel => builtHtml.includes(sel));
+if (filterFails.length) {
+  console.error('SCREEN FILTER REGRESSION in dist/index.html: ' + filterFails.join(', '));
+  process.exit(1);
+}
+console.log(`no screen filters in dist/index.html: ${screenFilterTokens.length}/${screenFilterTokens.length} clean`);
 
 console.log('\nOK: compiled stylesheet covers every utility class used by the app.');
