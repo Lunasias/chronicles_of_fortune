@@ -21,23 +21,26 @@ const BACKDROP = [14, 18, 28];
 function writeContactSheet({ outFile, cells, scale, cols, title, note }) {
   if (cells.length === 0) throw new Error('contact sheet needs at least one cell');
 
-  const size = cells[0].surface.w;
+  // Cells may be non-square (an isometric floor tile is 104x82, not 64x64), so the grid is laid
+  // out from the first cell's own dimensions and every other cell must match them.
+  const { w: sw, h: sh } = cells[0].surface;
   const rows = Math.ceil(cells.length / cols);
-  const cell = size * scale;
-  const w = cell * cols;
-  const h = cell * rows;
+  const cellW = sw * scale;
+  const cellH = sh * scale;
+  const w = cellW * cols;
+  const h = cellH * rows;
   const sheet = Buffer.alloc(w * h * 4);
 
   cells.forEach((c, i) => {
     const s = c.surface;
-    if (s.w !== size || s.h !== size) {
-      throw new Error(`${c.label} is ${s.w}x${s.h}, expected ${size}x${size} to match the sheet`);
+    if (s.w !== sw || s.h !== sh) {
+      throw new Error(`${c.label} is ${s.w}x${s.h}, expected ${sw}x${sh} to match the sheet`);
     }
-    const ox = (i % cols) * cell;
-    const oy = Math.floor(i / cols) * cell;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const si = (y * size + x) * 4;
+    const ox = (i % cols) * cellW;
+    const oy = Math.floor(i / cols) * cellH;
+    for (let y = 0; y < sh; y++) {
+      for (let x = 0; x < sw; x++) {
+        const si = (y * sw + x) * 4;
         const a = s.data[si + 3];
         for (let sy = 0; sy < scale; sy++) {
           for (let sx = 0; sx < scale; sx++) {

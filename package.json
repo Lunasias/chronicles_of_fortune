@@ -17,7 +17,8 @@
     "gen:companions": "node scripts/generate_companion_sprites.cjs",
     "gen:buildings": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_building_sprites.cjs --sheet",
     "gen:foliage": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_foliage_sprites.cjs --sheet",
-    "gen:art": "npm run gen:buildings && npm run gen:foliage",
+    "gen:terrain": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_terrain_sprites.cjs --sheet",
+    "gen:art": "npm run gen:buildings && npm run gen:foliage && npm run gen:terrain",
     "verify": "npm run typecheck && npm run build && npm test && npm run check:css"
   },
   "devDependencies": {

@@ -1,5 +1,7 @@
 import { BoardNode, BiomeType, RealmId } from '../game/BoardMap';
 import { TimeOfDay } from '../game/EcosystemSystem';
+import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
+import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H } from './IsometricTerrainPainter';
 
 export interface TerrainTile {
   gx: number;
@@ -291,117 +293,17 @@ export class IsometricTerrainEngine {
   }
 
   // =========================================================================
-  // PRE-RENDERED ISOMETRIC TILE SPRITE CACHE (60 FPS Hardware Blitting)
+  // PIXEL-ART TILE SPRITE CACHE (60 FPS Hardware Blitting)
   // =========================================================================
-  private tileSpriteCache = new Map<string, HTMLCanvasElement>();
-
+  /**
+   * The pixel-art tile sprite.
+   *
+   * The geometry (96x48 tile, 18px cliffs) lives in `IsometricTerrainPainter`, which paints a
+   * plain RGBA buffer with no DOM access so the same art can be exported to PNG and re-painted
+   * byte-for-byte in a test. This method is only the biome/cliff/night lookup.
+   */
   public getTileSprite(biome: BiomeType, hasCliffs: boolean, isNight: boolean): HTMLCanvasElement {
-    const key = `${biome}_${hasCliffs ? 'c' : 'f'}_${isNight ? 'n' : 'd'}`;
-    if (this.tileSpriteCache.has(key)) {
-      return this.tileSpriteCache.get(key)!;
-    }
-
-    const hw = this.tileWidth / 2;
-    const hh = this.tileHeight / 2;
-    const cliffHeight = 18;
-
-    const cw = 104;
-    const ch = 82;
-    const canvas = document.createElement('canvas');
-    canvas.width = cw;
-    canvas.height = ch;
-    const ctx = canvas.getContext('2d')!;
-    ctx.imageSmoothingEnabled = false;
-
-    const cx = 52;
-    const cy = 28;
-
-    const colors = this.getBiomeColors(biome, isNight ? 'NIGHT' : 'DAY');
-
-    // 1. 3D Cliff Faces (rendered on exposed edges)
-    if (hasCliffs) {
-      // Left 3D Face
-      ctx.fillStyle = colors.cliffLeft;
-      ctx.beginPath();
-      ctx.moveTo(cx - hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx, cy + hh + cliffHeight);
-      ctx.lineTo(cx - hw, cy + cliffHeight);
-      ctx.closePath();
-      ctx.fill();
-
-      // Sedimentary strata fissures on Left Face
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(cx - hw * 0.85, cy + cliffHeight * 0.35);
-      ctx.lineTo(cx, cy + hh + cliffHeight * 0.35);
-      ctx.moveTo(cx - hw * 0.65, cy + cliffHeight * 0.72);
-      ctx.lineTo(cx, cy + hh + cliffHeight * 0.72);
-      ctx.stroke();
-
-      // Right 3D Face
-      ctx.fillStyle = colors.cliffRight;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.lineTo(cx + hw, cy + cliffHeight);
-      ctx.lineTo(cx, cy + hh + cliffHeight);
-      ctx.closePath();
-      ctx.fill();
-
-      // Sedimentary strata fissures on Right Face
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + hh + cliffHeight * 0.4);
-      ctx.lineTo(cx + hw * 0.85, cy + cliffHeight * 0.4);
-      ctx.moveTo(cx, cy + hh + cliffHeight * 0.76);
-      ctx.lineTo(cx + hw * 0.65, cy + cliffHeight * 0.76);
-      ctx.stroke();
-
-      // Cliff base ambient occlusion drop shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.beginPath();
-      ctx.moveTo(cx - hw, cy + cliffHeight);
-      ctx.lineTo(cx, cy + hh + cliffHeight);
-      ctx.lineTo(cx + hw, cy + cliffHeight);
-      ctx.lineTo(cx, cy + hh + cliffHeight + 7);
-      ctx.closePath();
-      ctx.fill();
-
-      // Natural grass/soil overhang lip on cliff crest
-      ctx.strokeStyle = colors.accent;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(cx - hw, cy);
-      ctx.lineTo(cx, cy + hh);
-      ctx.lineTo(cx + hw, cy);
-      ctx.stroke();
-    }
-
-    // 2. Isometric Diamond Top Face with Depth Shading Gradient
-    const topGrad = ctx.createLinearGradient(cx, cy - hh, cx, cy + hh);
-    topGrad.addColorStop(0, colors.accent); // Light on upper corner
-    topGrad.addColorStop(0.45, colors.top);  // Midtone body
-    topGrad.addColorStop(1, colors.top);    // Shadowed lower corner
-    ctx.fillStyle = topGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - hh);
-    ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx - hw, cy);
-    ctx.closePath();
-    ctx.fill();
-
-    // 3. Biome-Specific Ground Surface Details
-    this.drawBiomeSurfaceDetails(ctx, cx, cy, hw, hh, biome, 0, colors);
-
-    // 4. Subtle Border Contour
-    ctx.strokeStyle = colors.border;
-    ctx.lineWidth = 1.0;
-    ctx.stroke();
-
-    this.tileSpriteCache.set(key, canvas);
-    return canvas;
+    return isometricTerrainRenderer.getTileSprite(biome, { cliffs: hasCliffs, night: isNight });
   }
 
   // =========================================================================
@@ -419,8 +321,8 @@ export class IsometricTerrainEngine {
     const isNight = timeOfDay === 'NIGHT';
     const hw = this.tileWidth / 2;
     const hh = this.tileHeight / 2;
-    const cliffHeight = 18;
-    const wave = Math.sin(time * 0.003) * 2.5;
+    const cliffHeight = TERRAIN_CLIFF_H;
+    const bob = Math.round(Math.sin(time * 0.003) * 1.5);
 
     // Direct iteration over pre-sorted terrainTiles with zero allocations!
     const tiles = this.terrainTiles;
@@ -435,13 +337,46 @@ export class IsometricTerrainEngine {
 
       // Shoreline ocean foam waves around perimeter cliffs
       if (tile.isEdge) {
-        this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + wave, hw, hh, isNight);
+        this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + bob, hw, hh, isNight, time);
       }
 
-      // Zero-lag hardware GPU texture blit
+      // Zero-lag hardware GPU texture blit. The offset is the painter's own geometry, so the
+      // rhombus centre lands exactly on the tile's world position.
       const hasCliffs = tile.hasSouthCliff || tile.hasWestCliff || tile.hasEastCliff;
       const sprite = this.getTileSprite(tile.biome, hasCliffs, isNight);
-      ctx.drawImage(sprite, tile.x - 52, tile.y - 28);
+      ctx.drawImage(sprite, tile.x - TERRAIN_BLIT_X, tile.y - TERRAIN_BLIT_Y);
+    }
+  }
+
+  /**
+   * A 2:1 isometric ring drawn as integer 2x1 blocks.
+   *
+   * `ctx.ellipse` antialiases, which made the surf the one soft-edged thing on an otherwise
+   * hard-edged board. Scanning x and plotting the two arcs per column, rounded to whole pixels,
+   * gives the same shape with crisp edges. `phase` scrolls a dash pattern through the ring so the
+   * crest reads as advancing surf instead of as a drawn circle.
+   */
+  private isoRing(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    rx: number,
+    ry: number,
+    color: string,
+    thickness: number,
+    phase: number,
+    dashed: boolean
+  ): void {
+    ctx.fillStyle = color;
+    const x0 = Math.round(cx - rx);
+    const x1 = Math.round(cx + rx);
+    for (let x = x0; x <= x1; x += thickness) {
+      const t = (x - cx) / rx;
+      if (t < -1 || t > 1) continue;
+      if (dashed && (Math.floor((x - x0) / thickness) + Math.round(phase)) % 6 < 2) continue;
+      const dy = ry * Math.sqrt(Math.max(0, 1 - t * t));
+      ctx.fillRect(x, Math.round(cy - dy), thickness, 1);
+      ctx.fillRect(x, Math.round(cy + dy), thickness, 1);
     }
   }
 
@@ -451,18 +386,25 @@ export class IsometricTerrainEngine {
     cy: number,
     hw: number,
     hh: number,
-    isNight: boolean
+    isNight: boolean,
+    time: number
   ) {
-    ctx.fillStyle = isNight ? 'rgba(8, 47, 73, 0.35)' : 'rgba(14, 165, 233, 0.25)';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, hw + 14, hh + 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = isNight ? 'rgba(186, 230, 253, 0.35)' : 'rgba(240, 249, 255, 0.55)';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, hw + 10, hh + 6, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    // Two quantised halo rings: a wider, fainter one behind a tighter, stronger one. Reading as
+    // a falloff without a gradient.
+    this.isoRing(ctx, cx, cy, hw + 16, hh + 9, isNight ? 'rgba(8, 47, 73, 0.22)' : 'rgba(14, 165, 233, 0.16)', 2, 0, false);
+    this.isoRing(ctx, cx, cy, hw + 11, hh + 6, isNight ? 'rgba(8, 47, 73, 0.34)' : 'rgba(14, 165, 233, 0.26)', 2, 0, false);
+    // The surf itself: a dashed crest scrolling outward from the cliff foot.
+    this.isoRing(
+      ctx,
+      cx,
+      cy,
+      hw + 8,
+      hh + 5,
+      isNight ? 'rgba(186, 230, 253, 0.42)' : 'rgba(240, 249, 255, 0.62)',
+      2,
+      (time * 0.02) % 6,
+      true
+    );
   }
 
   // =========================================================================
@@ -486,303 +428,6 @@ export class IsometricTerrainEngine {
       }
       this.drawEnvironmentProp(ctx, prop, time);
     }
-  }
-
-  // Get color palette for each biome adapted for day/night
-  private getBiomeColors(biome: BiomeType, timeOfDay: TimeOfDay): {
-    top: string;
-    accent: string;
-    cliffLeft: string;
-    cliffRight: string;
-    border: string;
-  } {
-    const isNight = timeOfDay === 'NIGHT';
-
-    switch (biome) {
-      case 'grass':
-        // Solaria rolling green grasslands (Authentic Dark Fantasy Olive Meadow)
-        return {
-          top: isNight ? '#0e2917' : '#276239',
-          accent: isNight ? '#164324' : '#39834e',
-          cliffLeft: isNight ? '#141210' : '#382012',
-          cliffRight: isNight ? '#1d1917' : '#4d2d19',
-          border: isNight ? '#0a1d10' : '#1b4327'
-        };
-
-      case 'forest':
-        // Deep mossy Gloomwood forest
-        return {
-          top: isNight ? '#081f12' : '#174728',
-          accent: isNight ? '#10301c' : '#226038',
-          cliffLeft: isNight ? '#0f141f' : '#2a1a10',
-          cliffRight: isNight ? '#17202e' : '#3b2516',
-          border: isNight ? '#06160d' : '#11331c'
-        };
-
-      case 'snow':
-        // Frostpeak glacial tundra & snowy crags
-        return {
-          top: isNight ? '#1e293b' : '#e2e8f0',
-          accent: isNight ? '#38bdf8' : '#f8fafc',
-          cliffLeft: isNight ? '#090d16' : '#475569',
-          cliffRight: isNight ? '#0f172a' : '#64748b',
-          border: isNight ? '#38bdf8' : '#cbd5e1'
-        };
-
-      case 'desert':
-        // Sunfire golden sand dunes
-        return {
-          top: isNight ? '#3f2512' : '#d97706',
-          accent: isNight ? '#78350f' : '#f59e0b',
-          cliffLeft: isNight ? '#261205' : '#652b09',
-          cliffRight: isNight ? '#451a03' : '#883b0c',
-          border: isNight ? '#78350f' : '#b45309'
-        };
-
-      case 'volcano':
-        // Sunfire scorched basalt & glowing magma cracks
-        return {
-          top: isNight ? '#18181b' : '#27272a',
-          accent: '#ea580c',
-          cliffLeft: '#09090b',
-          cliffRight: '#18181b',
-          border: '#450a0a'
-        };
-
-      case 'cavern':
-        // Subterranean slate & mineral stone
-        return {
-          top: isNight ? '#0f172a' : '#334155',
-          accent: isNight ? '#38bdf8' : '#475569',
-          cliffLeft: '#090d16',
-          cliffRight: '#1e293b',
-          border: '#1e293b'
-        };
-
-      case 'coral':
-        // Shallow turquoise reef waters
-        return {
-          top: isNight ? '#083344' : '#0891b2',
-          accent: isNight ? '#0e7490' : '#22d3ee',
-          cliffLeft: '#042f2e',
-          cliffRight: '#0d9488',
-          border: '#0891b2'
-        };
-
-      case 'celestial':
-        return {
-          top: isNight ? '#1e1b4b' : '#fef08a',
-          accent: isNight ? '#818cf8' : '#ffffff',
-          cliffLeft: isNight ? '#0f172a' : '#cbd5e1',
-          cliffRight: isNight ? '#1e293b' : '#e2e8f0',
-          border: isNight ? '#4338ca' : '#f59e0b'
-        };
-
-      case 'fairy_grove':
-        return {
-          top: isNight ? '#2e1065' : '#ec4899',
-          accent: isNight ? '#d946ef' : '#f472b6',
-          cliffLeft: isNight ? '#1e1b4b' : '#831843',
-          cliffRight: isNight ? '#312e81' : '#9d174d',
-          border: isNight ? '#a21caf' : '#db2777'
-        };
-
-      case 'crystal_cavern':
-        return {
-          top: isNight ? '#083344' : '#0284c7',
-          accent: isNight ? '#06b6d4' : '#38bdf8',
-          cliffLeft: isNight ? '#082f49' : '#0369a1',
-          cliffRight: isNight ? '#0c4a6e' : '#075985',
-          border: isNight ? '#0284c7' : '#0ea5e9'
-        };
-
-      case 'castle':
-        return {
-          top: isNight ? '#1e293b' : '#475569',
-          accent: isNight ? '#334155' : '#64748b',
-          cliffLeft: isNight ? '#0f172a' : '#1e293b',
-          cliffRight: isNight ? '#1e293b' : '#334155',
-          border: isNight ? '#0f172a' : '#334155'
-        };
-
-      case 'steampunk':
-        // Brass, bronze, and copper clockwork plates
-        return {
-          top: isNight ? '#29180b' : '#78350f',
-          accent: isNight ? '#d97706' : '#fbbf24',
-          cliffLeft: isNight ? '#170c05' : '#451a03',
-          cliffRight: isNight ? '#261205' : '#5b2204',
-          border: isNight ? '#b45309' : '#d97706'
-        };
-
-      case 'waterfall_forest':
-        // Lush emerald moss, turquoise water ripples, wet river basalt
-        return {
-          top: isNight ? '#064e3b' : '#047857',
-          accent: isNight ? '#34d399' : '#10b981',
-          cliffLeft: isNight ? '#022c22' : '#065f46',
-          cliffRight: isNight ? '#064e3b' : '#047857',
-          border: isNight ? '#059669' : '#34d399'
-        };
-
-      case 'sakura_shrine':
-        // Soft vermilion earth, cobblestone paths, and pink blossom grass
-        return {
-          top: isNight ? '#2e1026' : '#831843',
-          accent: isNight ? '#f472b6' : '#fbcfe8',
-          cliffLeft: isNight ? '#1a0815' : '#500724',
-          cliffRight: isNight ? '#240a1d' : '#700c35',
-          border: isNight ? '#db2777' : '#f43f5e'
-        };
-
-      case 'abyss':
-      default:
-        // Cursed void obsidian with arcane violet veins
-        return {
-          top: isNight ? '#150624' : '#250e4f',
-          accent: '#a855f7',
-          cliffLeft: '#090214',
-          cliffRight: '#180527',
-          border: '#4c1d95'
-        };
-    }
-  }
-
-  // Draw natural surface texture lines / speckles on top face
-  private drawBiomeSurfaceDetails(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    hw: number,
-    hh: number,
-    biome: BiomeType,
-    time: number,
-    colors: ReturnType<IsometricTerrainEngine['getBiomeColors']>
-  ) {
-    ctx.save();
-
-    if (biome === 'grass' || biome === 'forest') {
-      // Textured grass blade tufts & dark earth speckles
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 16, cy - 8, 3, 2);
-      ctx.fillRect(cx - 15, cy - 10, 1, 2);
-      ctx.fillRect(cx + 12, cy + 3, 3, 2);
-      ctx.fillRect(cx + 13, cy + 1, 1, 2);
-      ctx.fillRect(cx - 6, cy + 7, 4, 2);
-      ctx.fillRect(cx + 18, cy - 7, 3, 2);
-
-      // Subdued stone pebble clusters
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-      ctx.fillRect(cx - 10, cy + 4, 2, 2);
-      ctx.fillRect(cx + 8, cy - 10, 3, 2);
-      ctx.fillRect(cx + 2, cy - 5, 2, 1);
-    } else if (biome === 'snow') {
-      // Snowdrift ripple highlights & ice sparkle
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 18, cy - 4, 8, 2);
-      ctx.fillRect(cx + 6, cy + 6, 10, 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(cx - 2, cy - 8, 2, 2);
-      ctx.fillRect(cx + 14, cy - 2, 2, 2);
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
-      ctx.fillRect(cx - 10, cy + 6, 4, 2);
-    } else if (biome === 'desert') {
-      // Wind-blown sand ripples & desert pebbles
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 20, cy - 4, 12, 1.5);
-      ctx.fillRect(cx - 6, cy + 4, 16, 1.5);
-      ctx.fillRect(cx + 8, cy - 8, 10, 1.5);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-      ctx.fillRect(cx + 3, cy - 1, 2, 2);
-    } else if (biome === 'volcano') {
-      // Glowing magma fissures
-      ctx.fillStyle = '#f97316';
-      ctx.beginPath();
-      ctx.moveTo(cx - 16, cy - 4);
-      ctx.lineTo(cx - 4, cy + 2);
-      ctx.lineTo(cx + 12, cy - 2);
-      ctx.lineWidth = 1.8;
-      ctx.strokeStyle = '#ef4444';
-      ctx.stroke();
-
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(cx - 4, cy + 1, 3, 2);
-    } else if (biome === 'abyss') {
-      // Pulsing arcane rune veins
-      const pulse = 0.5 + Math.sin(time * 0.003) * 0.3;
-      ctx.strokeStyle = `rgba(168, 85, 247, ${pulse})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(cx - 14, cy);
-      ctx.lineTo(cx, cy - 6);
-      ctx.lineTo(cx + 14, cy + 2);
-      ctx.stroke();
-    } else if (biome === 'celestial') {
-      // Golden starlight sparkles & holy runes
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 10, cy - 4, 3, 3);
-      ctx.fillRect(cx + 8, cy + 3, 3, 3);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(cx - 9, cy - 3, 1, 1);
-      ctx.fillRect(cx + 9, cy + 4, 1, 1);
-    } else if (biome === 'fairy_grove') {
-      // Luminescent floral spores and blossom petals
-      ctx.fillStyle = '#f472b6';
-      ctx.beginPath();
-      ctx.arc(cx - 12, cy - 2, 2.5, 0, Math.PI * 2);
-      ctx.arc(cx + 10, cy + 4, 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (biome === 'crystal_cavern') {
-      // Glowing crystal shards
-      ctx.fillStyle = colors.accent;
-      ctx.beginPath();
-      ctx.moveTo(cx - 8, cy - 6);
-      ctx.lineTo(cx - 6, cy - 1);
-      ctx.lineTo(cx - 10, cy - 1);
-      ctx.closePath();
-      ctx.fill();
-    } else if (biome === 'castle') {
-      // Flagstone tile seams
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(cx - 16, cy);
-      ctx.lineTo(cx + 16, cy);
-      ctx.stroke();
-    } else if (biome === 'steampunk') {
-      // Brass cogs & copper pipe rivets
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(cx - 10, cy - 3, 5, 5);
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(cx - 9, cy - 2, 3, 3);
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(cx + 8, cy + 2, 4, 4);
-    } else if (biome === 'sakura_shrine') {
-      // Delicate falling cherry blossom petals
-      ctx.fillStyle = '#fbcfe8';
-      ctx.beginPath();
-      ctx.ellipse(cx - 12, cy - 3, 3, 1.8, 0.4, 0, Math.PI * 2);
-      ctx.ellipse(cx + 10, cy + 4, 3.2, 2, -0.3, 0, Math.PI * 2);
-      ctx.ellipse(cx - 2, cy + 6, 2.5, 1.5, 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (biome === 'waterfall_forest') {
-      // Cascading turquoise stream ripples and glistening river pebbles
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.arc(cx - 8, cy - 2, 7, -0.2, Math.PI * 0.6);
-      ctx.stroke();
-      ctx.strokeStyle = '#67e8f9';
-      ctx.beginPath();
-      ctx.arc(cx + 6, cy + 3, 5, 0.4, Math.PI * 1.1);
-      ctx.stroke();
-      // River dew sparkle
-      ctx.fillStyle = '#a5f3fc';
-      ctx.fillRect(cx - 1, cy - 4, 2, 2);
-      ctx.fillRect(cx + 12, cy, 1.5, 1.5);
-    }
-
-    ctx.restore();
   }
 
   // =========================================================================
@@ -824,7 +469,7 @@ export class IsometricTerrainEngine {
     }
   }
 
-  // 1. ROCKS & BOULDERS (หิน)
+  // 1. ROCKS & BOULDERS (เธซเธดเธ)
   private drawRockProp(
     ctx: CanvasRenderingContext2D,
     px: number,
@@ -906,7 +551,7 @@ export class IsometricTerrainEngine {
     }
   }
 
-  // 2. GRASS TUFTS (กอหญ้า 3D พิกเซล)
+  // 2. GRASS TUFTS (เธเธญเธซเธเนเธฒ 3D เธเธดเธเน€เธเธฅ)
   private drawGrassTuftProp(
     ctx: CanvasRenderingContext2D,
     px: number,
@@ -966,7 +611,7 @@ export class IsometricTerrainEngine {
     ctx.fillRect(px + 7, py - bh * 0.9, 2, 2);
   }
 
-  // 3. WILDFLOWER PATCHES (แปลงดอกไม้ป่า)
+  // 3. WILDFLOWER PATCHES (เนเธเธฅเธเธ”เธญเธเนเธกเนเธเนเธฒ)
   private drawFlowerPatchProp(
     ctx: CanvasRenderingContext2D,
     px: number,
@@ -1011,7 +656,7 @@ export class IsometricTerrainEngine {
     ctx.fill();
   }
 
-  // 4. SHRUBS & BUSHES (พุ่มไม้)
+  // 4. SHRUBS & BUSHES (เธเธธเนเธกเนเธกเน)
   private drawShrubProp(
     ctx: CanvasRenderingContext2D,
     px: number,
@@ -1074,7 +719,7 @@ export class IsometricTerrainEngine {
     ctx.fillRect(px + sw * 0.15, py - sh * 0.55, 4, 2);
   }
 
-  // 5. MAGICAL CRYSTALS (คริสตัลน้ำแข็งหรืออเวจี)
+  // 5. MAGICAL CRYSTALS (เธเธฃเธดเธชเธ•เธฑเธฅเธเนเธณเนเธเนเธเธซเธฃเธทเธญเธญเน€เธงเธเธต)
   private drawCrystalProp(
     ctx: CanvasRenderingContext2D,
     px: number,

@@ -17,6 +17,7 @@ dist-ssr/
 # Review sheets emitted by `npm run gen:art`
 .building-sheet.png
 .foliage-sheet.png
+.terrain-sheet.png
 
 # Logs
 npm-debug.log*
