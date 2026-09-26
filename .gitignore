@@ -20,6 +20,9 @@ dist-ssr/
 .terrain-sheet.png
 .prop-sheet.png
 .prop-variants-sheet.png
+.sky-sheet.png
+.celestial-sheet.png
+.cloud-sheet.png
 
 # Logs
 npm-debug.log*

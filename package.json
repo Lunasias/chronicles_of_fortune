@@ -19,7 +19,8 @@
     "gen:foliage": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_foliage_sprites.cjs --sheet",
     "gen:terrain": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_terrain_sprites.cjs --sheet",
     "gen:props": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_prop_sprites.cjs",
-    "gen:art": "npm run gen:buildings && npm run gen:foliage && npm run gen:terrain && npm run gen:props",
+    "gen:sky": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_sky_sprites.cjs",
+    "gen:art": "npm run gen:buildings && npm run gen:foliage && npm run gen:terrain && npm run gen:props && npm run gen:sky",
     "verify": "npm run typecheck && npm run build && npm test && npm run check:css"
   },
   "devDependencies": {

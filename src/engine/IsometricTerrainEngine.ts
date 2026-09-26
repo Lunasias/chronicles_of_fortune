@@ -43,6 +43,11 @@ export class IsometricTerrainEngine {
   public environmentProps: EnvironmentProp[] = [];
   private tileGrid = new Map<string, TerrainTile>();
   public isInitialized = false;
+  /**
+   * World-space extent of the continent, in the board's own pixel coordinates. The background
+   * uses it to place the cloud sea beneath the floating island.
+   */
+  public worldBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
   // Spatial Grid Partitioning (Zero-lag Frustum Culling)
   public bucketSize = 400;
@@ -235,6 +240,25 @@ export class IsometricTerrainEngine {
         this.propBuckets.set(key, list);
       }
       list.push(prop);
+    }
+
+    // 6. World-space extent of the continent.
+    // Computed once here rather than per frame, because the cloud sea under the board and the
+    // floating-island shading both need it and both run every frame.
+    this.worldBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    if (this.terrainTiles.length > 0) {
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      for (const tile of this.terrainTiles) {
+        if (tile.x < minX) minX = tile.x;
+        if (tile.x > maxX) maxX = tile.x;
+        if (tile.y < minY) minY = tile.y;
+        if (tile.y > maxY) maxY = tile.y;
+      }
+      // Half a tile of padding each side, so the outermost cliffs are inside the bounds.
+      this.worldBounds = { minX: minX - 48, maxX: maxX + 48, minY: minY - 24, maxY: maxY + 24 };
     }
 
     this.isInitialized = true;

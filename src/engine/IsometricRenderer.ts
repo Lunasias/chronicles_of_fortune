@@ -272,6 +272,13 @@ export class IsometricRenderer {
     // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
     worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
 
+    // 2.4 The cloud sea the floating continent rises out of. Drawn in world space below the
+    // board's lowest tile, so the map reads as an island in the sky rather than as a flat
+    // continent.
+    if (isometricTerrainEngine.isInitialized) {
+      worldBackground.renderCloudSea(ctx, time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
+    }
+
     const halfW = (w / 2) / this.camera.zoom + 200;
     const halfH = (h / 2) / this.camera.zoom + 200;
     const minX = this.camera.x - halfW;

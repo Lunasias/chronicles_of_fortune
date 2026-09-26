@@ -1,0 +1,51 @@
+Rebuild the world background as pixel art and add the cloud sea under the map
+
+The background was the last large all-vector surface in the game: a createLinearGradient sky,
+createRadialGradient suns, moons and flares, a shadowBlur rim light on the mountain ridges, two
+more gradients for the valley mist, a rotated gradient for the aurora, three ctx.ellipse calls
+per cloud per frame, a ctx.arc per star, per mote and per shooting-star trail, and a polygon per
+bird. Smooth gradients and blur halos are the two things that most reliably break a pixel-art
+look, and the sky is the largest surface on screen.
+
+SkyPainter paints the sky, the celestial bodies and the clouds from plain RGBA buffers, so the
+background is hard-edged like everything in front of it.
+
+  * The sky is DISCRETE BANDS, not a gradient. That is the period-correct technique, and it is
+    measurable: each 512px strip now has exactly SKY_BANDS (18) distinct colours. A gradient has
+    thousands. Band edges are joined by a 4x4 ordered dither so the ramp still reads as
+    continuous without a single interpolated pixel.
+
+  * The sky buffer is 64px wide and tiles horizontally. A 4x4 Bayer threshold has a period of 4,
+    so a 64-wide tile wraps exactly and the dither is seamless; every row is a single flat colour,
+    so stretching it to the viewport cannot blur anything. A full-height sky therefore costs one
+    64-wide canvas instead of a screen-sized buffer per time of day.
+
+  * Celestial halos are five ordered-dither rings rather than a radial gradient, which is how a
+    pixel artist implies a glow. The moon is the disc minus an offset disc.
+
+  * Clouds are quantised puff clusters with a lit top rim, a shaded base and a flat bottom, drawn
+    at three baked sizes and blitted 1:1. Nothing in the background is ever rescaled.
+
+New: the cloud sea the floating continent rises out of. Three world-space rows drawn between the
+sky and the terrain and placed below the board's lowest tile, so the map reads as an island in the
+sky rather than as a continent printed on a wall. The far row is larger and fainter and the near
+row brighter, which gives the layer depth without a fog gradient. It needs the terrain's
+world-space extent, so IsometricTerrainEngine now computes and caches `worldBounds` once at init
+rather than the renderer scanning 300-odd tiles every frame.
+
+The mountain ridges keep their authored sine profile but are now drawn one integer column at a
+time and rounded, so the peaks are stair-stepped. The rim light's shadowBlur is replaced by a
+dotted one-pixel line - a Gaussian blur had no business in a game with no other blur - and the
+valley mist is four dithered bands. Stars, motes, bird wings and shooting-star tails are all
+integer fillRect blocks now.
+
+Verification: 129 tests, all green. tests/sky.test.mjs adds 13 cases: the band count, that each
+row is flat and its dither repeats so the tile is seamless, that the ramp is monotonic once the
+dither oscillation is averaged out over a multiple of four rows, that the sky is fully opaque at
+four different heights, the sun's upper-left lighting and the moon's crescent asymmetry, cloud
+size ordering, that a sea cloud is flatter than a sky cloud, cloud shading and top lighting and
+the uniform rim colour, and byte-for-byte comparison of the nine exported sky models.
+
+scripts/lib/contact_sheet.cjs gained an optional fixed cell size, because the three cloud size
+buckets cannot share a grid without one and the sky strips, suns and moon are three different
+shapes.

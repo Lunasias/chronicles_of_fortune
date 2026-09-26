@@ -1,4 +1,5 @@
 import { TimeOfDay } from '../game/EcosystemSystem';
+import { SKY_TILE_W, skyRenderer } from './SkyRenderer';
 
 export interface CameraViewport {
   x: number;
@@ -164,8 +165,8 @@ export class WorldBackground {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // 1. SKY GRADIENT PER TIME OF DAY
-    this.renderSkyGradient(ctx, screenWidth, screenHeight, timeOfDay);
+    // 1. BANDED PIXEL SKY PER TIME OF DAY
+    this.renderSkyGradient(ctx, screenWidth, screenHeight, timeOfDay, time);
 
     // 2. CELESTIAL BODIES, STARS & GOD RAYS
     switch (timeOfDay) {
@@ -192,267 +193,147 @@ export class WorldBackground {
     ctx.restore();
   }
 
+  // --- BANDED PIXEL SKY ---
+  /**
+   * Blits the banded sky strip.
+   *
+   * The strip is `SKY_TILE_W` wide and tiles horizontally. Every row of it is a single flat
+   * colour, so stretching the tile to the viewport width and height cannot blur anything - which
+   * is why a full-height sky costs one 64-wide canvas instead of a screen-sized buffer per time
+   * of day. `imageSmoothingEnabled` is off anyway, so even the horizontal stretch is nearest
+   * neighbour.
+   */
   private renderSkyGradient(
     ctx: CanvasRenderingContext2D,
     screenWidth: number,
     screenHeight: number,
-    timeOfDay: TimeOfDay
+    timeOfDay: TimeOfDay,
+    time: number
   ) {
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, screenHeight);
-
-    switch (timeOfDay) {
-      case 'DAWN':
-        // Soft pastel lavender -> morning rose -> golden dawn horizon
-        skyGrad.addColorStop(0, '#1e1b4b');
-        skyGrad.addColorStop(0.28, '#4338ca');
-        skyGrad.addColorStop(0.55, '#818cf8');
-        skyGrad.addColorStop(0.76, '#f472b6');
-        skyGrad.addColorStop(0.92, '#fb923c');
-        skyGrad.addColorStop(1.0, '#fef08a');
-        break;
-
-      case 'DAY':
-        // Radiant crystal azure sky -> sunny horizon
-        skyGrad.addColorStop(0, '#0284c7');
-        skyGrad.addColorStop(0.28, '#0ea5e9');
-        skyGrad.addColorStop(0.6, '#38bdf8');
-        skyGrad.addColorStop(0.85, '#7dd3fc');
-        skyGrad.addColorStop(1.0, '#bae6fd');
-        break;
-
-      case 'DUSK':
-        // Rich twilight violet -> crimson -> burning orange ember horizon
-        skyGrad.addColorStop(0, '#0f172a');
-        skyGrad.addColorStop(0.25, '#312e81');
-        skyGrad.addColorStop(0.52, '#6b21a8');
-        skyGrad.addColorStop(0.74, '#c026d3');
-        skyGrad.addColorStop(0.88, '#ea580c');
-        skyGrad.addColorStop(1.0, '#fde047');
-        break;
-
-      case 'NIGHT':
-        // Clear luminous celestial sapphire night - NOT muddy black!
-        skyGrad.addColorStop(0, '#030712');   // Deep cosmic void zenith
-        skyGrad.addColorStop(0.24, '#09152e'); // Midnight navy
-        skyGrad.addColorStop(0.55, '#0f274a'); // Celestial indigo
-        skyGrad.addColorStop(0.82, '#173b6a'); // Moonlit sapphire
-        skyGrad.addColorStop(1.0, '#1e4b85');  // Ethereal glowing nocturnal horizon
-        break;
+    const sky = skyRenderer.getSky(timeOfDay, screenHeight);
+    ctx.imageSmoothingEnabled = false;
+    // A slow horizontal drift, rounded to whole pixels so the dither never shimmers.
+    const drift = Math.round((time * 0.002) % SKY_TILE_W);
+    for (let x = -SKY_TILE_W + drift; x < screenWidth + SKY_TILE_W; x += SKY_TILE_W) {
+      ctx.drawImage(sky, x, 0, SKY_TILE_W, screenHeight);
     }
-
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, screenWidth, screenHeight);
   }
 
   // --- CELESTIAL BODIES ---
 
-  private renderDawnSun(
+  /**
+   * A sun or moon blitted from a painted disc.
+   *
+   * The halo used to be a `createRadialGradient`; it is now a set of ordered-dither rings inside
+   * the sprite, which is how a pixel artist implies a glow. `crescent` draws the moon's disc
+   * minus an offset disc.
+   */
+  private renderCelestial(
     ctx: CanvasRenderingContext2D,
     w: number,
     h: number,
-    time: number
+    time: number,
+    timeOfDay: TimeOfDay
   ) {
-    const sunX = w * 0.72;
-    const sunY = h * 0.38;
-    const sunRadius = 40;
+    const config = {
+      DAWN: { x: 0.72, y: 0.38, r: 40, bob: 6, crescent: false },
+      DAY: { x: 0.76, y: 0.24, r: 46, bob: 8, crescent: false },
+      DUSK: { x: 0.7, y: 0.62, r: 44, bob: 10, crescent: false },
+      NIGHT: { x: 0.76, y: 0.2, r: 34, bob: 5, crescent: true }
+    }[timeOfDay as 'DAWN' | 'DAY' | 'DUSK' | 'NIGHT'];
 
-    // Golden morning flare
-    const flareGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.5, sunX, sunY, w * 0.5);
-    flareGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
-    flareGrad.addColorStop(0.25, 'rgba(251, 146, 60, 0.45)');
-    flareGrad.addColorStop(0.6, 'rgba(244, 114, 182, 0.2)');
-    flareGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
-    ctx.fillStyle = flareGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Rising Sun Orb
-    const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius);
-    sunGrad.addColorStop(0, '#ffffff');
-    sunGrad.addColorStop(0.6, '#fef08a');
-    sunGrad.addColorStop(1, '#f97316');
-    ctx.fillStyle = sunGrad;
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Morning Sunbeams
-    ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.fillStyle = '#fef08a';
-    for (let r = -4; r <= 4; r++) {
-      const angle = r * 0.18 + Math.sin(time * 0.0005) * 0.03;
-      ctx.beginPath();
-      ctx.moveTo(sunX, sunY);
-      ctx.lineTo(sunX + Math.cos(angle - 1.6) * 1600, sunY + Math.sin(angle - 1.6) * 1600);
-      ctx.lineTo(sunX + Math.cos(angle - 1.45) * 1600, sunY + Math.sin(angle - 1.45) * 1600);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
+    const bob = Math.round(Math.sin(time * 0.0004) * config.bob);
+    const sprite = skyRenderer.getCelestial(config.r, timeOfDay, config.crescent);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      sprite,
+      Math.round(w * config.x - sprite.width / 2),
+      Math.round(h * config.y - sprite.height / 2) + bob
+    );
   }
 
-  private renderDaySun(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number
-  ) {
-    const sunX = w * 0.74;
-    const sunY = h * 0.18;
-    const sunRadius = 44;
-
-    // Brilliant Solar Corona
-    const flareGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.7, sunX, sunY, w * 0.52);
-    flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    flareGrad.addColorStop(0.2, 'rgba(254, 240, 138, 0.55)');
-    flareGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.2)');
-    flareGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = flareGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Radiant Sun Core
-    const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius);
-    sunGrad.addColorStop(0, '#ffffff');
-    sunGrad.addColorStop(0.7, '#fef9c3');
-    sunGrad.addColorStop(1, '#fde047');
-    ctx.fillStyle = sunGrad;
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 8 Solar Flare Prongs
-    ctx.save();
-    ctx.strokeStyle = 'rgba(254, 240, 138, 0.7)';
-    ctx.lineWidth = 2.5;
-    const rot = time * 0.0003;
-    for (let i = 0; i < 8; i++) {
-      const a = rot + (i * Math.PI) / 4;
-      const len = 18 + Math.sin(time * 0.002 + i) * 6;
-      ctx.beginPath();
-      ctx.moveTo(sunX + Math.cos(a) * (sunRadius + 4), sunY + Math.sin(a) * (sunRadius + 4));
-      ctx.lineTo(sunX + Math.cos(a) * (sunRadius + 4 + len), sunY + Math.sin(a) * (sunRadius + 4 + len));
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Clean Golden Sunlight Rays
-    ctx.save();
-    ctx.globalAlpha = 0.10;
-    ctx.fillStyle = '#ffffff';
-    for (let r = -3; r <= 3; r++) {
-      const angle = r * 0.22 + Math.sin(time * 0.0004 + r) * 0.03;
-      ctx.beginPath();
-      ctx.moveTo(sunX, sunY);
-      ctx.lineTo(sunX + Math.cos(angle + 1.2) * 1800, sunY + Math.sin(angle + 1.2) * 1800);
-      ctx.lineTo(sunX + Math.cos(angle + 1.34) * 1800, sunY + Math.sin(angle + 1.34) * 1800);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
+  private renderDawnSun(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    this.renderCelestial(ctx, w, h, time, 'DAWN');
   }
 
-  private renderDuskSun(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number
-  ) {
-    const sunX = w * 0.70;
-    const sunY = h * 0.44;
-    const sunRadius = 50;
+  private renderDaySun(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    this.renderCelestial(ctx, w, h, time, 'DAY');
+  }
 
-    // Fiery Twilight Corona
-    const flareGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.6, sunX, sunY, w * 0.55);
-    flareGrad.addColorStop(0, 'rgba(251, 146, 60, 0.85)');
-    flareGrad.addColorStop(0.25, 'rgba(234, 88, 12, 0.55)');
-    flareGrad.addColorStop(0.55, 'rgba(192, 38, 211, 0.28)');
-    flareGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
-    ctx.fillStyle = flareGrad;
-    ctx.fillRect(0, 0, w, h);
+  private renderDuskSun(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    this.renderCelestial(ctx, w, h, time, 'DUSK');
+  }
 
-    // Warm Sinking Sun Orb
-    const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius);
-    sunGrad.addColorStop(0, '#fef08a');
-    sunGrad.addColorStop(0.5, '#f97316');
-    sunGrad.addColorStop(1, '#dc2626');
-    ctx.fillStyle = sunGrad;
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Crepuscular Sunset Rays
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = '#fde047';
-    for (let r = -4; r <= 4; r++) {
-      const angle = r * 0.2 + Math.sin(time * 0.0004) * 0.03;
-      ctx.beginPath();
-      ctx.moveTo(sunX, sunY);
-      ctx.lineTo(sunX + Math.cos(angle - 1.4) * 1700, sunY + Math.sin(angle - 1.4) * 1700);
-      ctx.lineTo(sunX + Math.cos(angle - 1.25) * 1700, sunY + Math.sin(angle - 1.25) * 1700);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
+  private renderNightMoon(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+    this.renderCelestial(ctx, w, h, time, 'NIGHT');
   }
 
   // --- LUMINOUS NIGHT SYSTEM (Bright, Clear & Enchanting) ---
 
+  /**
+   * Aurora bands, stars and shooting stars.
+   *
+   * The aurora was a rotated linear gradient; it is now discrete bands so it matches the sky.
+   * Stars and shooting stars are integer `fillRect` blocks rather than `ctx.arc`, because a
+   * one-pixel star is the point.
+   */
   private renderNightStarsAndAurora(
     ctx: CanvasRenderingContext2D,
     w: number,
     h: number,
     time: number
   ) {
-    // 1. Soft Cosmic Aurora Ribbon
-    ctx.save();
-    const auroraGrad = ctx.createLinearGradient(0, 0, w, h * 0.45);
-    auroraGrad.addColorStop(0, 'rgba(56, 189, 248, 0.0)');
-    auroraGrad.addColorStop(0.3, `rgba(56, 189, 248, ${0.08 + Math.sin(time * 0.0008) * 0.03})`);
-    auroraGrad.addColorStop(0.65, `rgba(168, 85, 247, ${0.09 + Math.cos(time * 0.0007) * 0.03})`);
-    auroraGrad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
-    ctx.fillStyle = auroraGrad;
-    ctx.fillRect(0, 0, w, h * 0.55);
-    ctx.restore();
-
-    // 2. Twinkling Stars
-    ctx.save();
-    this.stars.forEach(s => {
-      const sx = s.x * w;
-      const sy = s.y * h;
-      const twinkle = Math.sin(time * s.twinkleSpeed + s.twinkleOffset);
-      const curAlpha = Math.max(0.15, Math.min(1.0, s.alpha + twinkle * 0.35));
-
-      if (s.isDiamond && curAlpha > 0.6) {
-        // 4-point sparkle star
-        ctx.fillStyle = `rgba(224, 242, 254, ${curAlpha})`;
-        const sparkSize = s.size * 2.2;
-        ctx.beginPath();
-        ctx.moveTo(sx, sy - sparkSize);
-        ctx.lineTo(sx + s.size * 0.4, sy);
-        ctx.lineTo(sx, sy + sparkSize);
-        ctx.lineTo(sx - s.size * 0.4, sy);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(sx - sparkSize, sy);
-        ctx.lineTo(sx, sy + s.size * 0.4);
-        ctx.lineTo(sx + sparkSize, sy);
-        ctx.lineTo(sx, sy - s.size * 0.4);
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        // Round twinkling star
-        ctx.fillStyle = `rgba(240, 249, 255, ${curAlpha})`;
-        ctx.beginPath();
-        ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
-        ctx.fill();
+    // Aurora: four bands leaning across the upper sky, each a row of integer dashes so the band
+    // has a marching, patterned edge instead of a soft gradient end.
+    const bands = [
+      { y: h * 0.1, amp: 26, color: 'rgba(52, 211, 153, 0.22)', period: 190 },
+      { y: h * 0.16, amp: 34, color: 'rgba(56, 189, 248, 0.18)', period: 240 },
+      { y: h * 0.22, amp: 22, color: 'rgba(192, 132, 252, 0.16)', period: 300 },
+      { y: h * 0.28, amp: 40, color: 'rgba(167, 243, 208, 0.12)', period: 360 }
+    ];
+    for (const band of bands) {
+      ctx.fillStyle = band.color;
+      for (let x = 0; x < w; x += 3) {
+        const y = band.y + Math.sin((x + time * 0.02) / band.period) * band.amp;
+        // Vertical falloff in coarse steps, so the band fades by getting sparser rather than by
+        // getting more transparent.
+        const rows = 10 + Math.round(Math.sin(x / 90) * 5);
+        for (let k = 0; k < rows; k += 2) {
+          if ((x / 3 + k) % 3 === 0) continue;
+          ctx.fillRect(x, Math.round(y + k), 3, 1);
+        }
       }
-    });
-    ctx.restore();
+    }
 
-    // 3. Periodic Shooting Stars (Meteors)
     this.updateAndRenderShootingStars(ctx, w, h, time);
+
+    for (const s of this.stars) {
+      const twinkle = 0.45 + Math.abs(Math.sin(time * s.twinkleSpeed + s.twinkleOffset)) * 0.55;
+      ctx.fillStyle = `rgba(226, 232, 240, ${s.alpha * twinkle})`;
+      const size = Math.max(1, Math.round(s.size));
+      if (s.isDiamond) {
+        // A four-pixel plus: the pixel-art idiom for a bright star.
+        ctx.fillRect(Math.round(s.x) - 1, Math.round(s.y), 3, 1);
+        ctx.fillRect(Math.round(s.x), Math.round(s.y) - 1, 1, 3);
+      } else {
+        ctx.fillRect(Math.round(s.x), Math.round(s.y), size, size);
+      }
+    }
+  }
+
+  private renderFadingStars(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    time: number,
+    alpha: number
+  ) {
+    for (const s of this.stars) {
+      const twinkle = 0.4 + Math.abs(Math.sin(time * s.twinkleSpeed + s.twinkleOffset)) * 0.6;
+      ctx.fillStyle = `rgba(226, 232, 240, ${s.alpha * twinkle * alpha})`;
+      const size = Math.max(1, Math.round(s.size));
+      ctx.fillRect(Math.round(s.x), Math.round(s.y), size, size);
+    }
   }
 
   private updateAndRenderShootingStars(
@@ -462,151 +343,58 @@ export class WorldBackground {
     time: number
   ) {
     this.shootingStarTimer++;
-    if (this.shootingStarTimer > 180 && Math.random() < 0.04) {
+    if (this.shootingStarTimer > 260 + Math.random() * 320) {
       this.shootingStarTimer = 0;
-      const inactive = this.shootingStars.find(s => !s.active);
-      if (inactive) {
-        inactive.active = true;
-        inactive.x = Math.random() * w * 0.85;
-        inactive.y = Math.random() * h * 0.35;
-        inactive.vx = 7 + Math.random() * 6;
-        inactive.vy = 3 + Math.random() * 4;
-        inactive.length = 60 + Math.random() * 50;
-        inactive.life = 0;
-        inactive.maxLife = 28 + Math.random() * 14;
+      const star = this.shootingStars.find(s => !s.active);
+      if (star) {
+        star.active = true;
+        star.life = 0;
+        star.maxLife = 50 + Math.random() * 40;
+        star.x = w * (0.15 + Math.random() * 0.6);
+        star.y = h * (0.05 + Math.random() * 0.3);
+        star.vx = 5 + Math.random() * 4;
+        star.vy = 2 + Math.random() * 2;
+        star.length = 50 + Math.random() * 60;
       }
     }
 
-    ctx.save();
-    this.shootingStars.forEach(s => {
-      if (!s.active) return;
+    for (const s of this.shootingStars) {
+      if (!s.active) continue;
       s.life++;
       s.x += s.vx;
       s.y += s.vy;
-
-      const progress = s.life / s.maxLife;
-      const alpha = Math.sin(progress * Math.PI) * 0.85;
-
-      const tailX = s.x - (s.vx / 10) * s.length;
-      const tailY = s.y - (s.vy / 10) * s.length;
-
-      const grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-      grad.addColorStop(0.7, `rgba(186, 230, 253, ${alpha * 0.6})`);
-      grad.addColorStop(1, `rgba(255, 255, 255, ${alpha})`);
-
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(tailX, tailY);
-      ctx.lineTo(s.x, s.y);
-      ctx.stroke();
-
       if (s.life >= s.maxLife) {
         s.active = false;
+        continue;
       }
-    });
-    ctx.restore();
-  }
 
-  private renderFadingStars(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number,
-    maxAlpha: number
-  ) {
-    ctx.save();
-    this.stars.slice(0, 45).forEach(s => {
-      const sx = s.x * w;
-      const sy = s.y * h * 0.6;
-      const twinkle = Math.sin(time * s.twinkleSpeed + s.twinkleOffset);
-      const curAlpha = Math.max(0.05, Math.min(maxAlpha, s.alpha * maxAlpha + twinkle * 0.1));
-      ctx.fillStyle = `rgba(255, 255, 255, ${curAlpha})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, s.size * 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-
-  private renderNightMoon(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number
-  ) {
-    const moonX = w * 0.74;
-    const moonY = h * 0.20;
-    const moonRadius = 42;
-
-    // 1. Ethereal Moonlit Aura & Halo (Expands soft light into the night)
-    const moonHalo = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.8, moonX, moonY, w * 0.48);
-    moonHalo.addColorStop(0, 'rgba(224, 242, 254, 0.75)');
-    moonHalo.addColorStop(0.18, 'rgba(186, 230, 253, 0.42)');
-    moonHalo.addColorStop(0.45, 'rgba(56, 189, 248, 0.16)');
-    moonHalo.addColorStop(0.8, 'rgba(99, 102, 241, 0.05)');
-    moonHalo.addColorStop(1, 'rgba(3, 7, 18, 0)');
-    ctx.fillStyle = moonHalo;
-    ctx.fillRect(0, 0, w, h);
-
-    // 2. Luminous Silver Full Moon Core
-    const moonGrad = ctx.createRadialGradient(moonX - 10, moonY - 10, 4, moonX, moonY, moonRadius);
-    moonGrad.addColorStop(0, '#ffffff');
-    moonGrad.addColorStop(0.4, '#f1f5f9');
-    moonGrad.addColorStop(0.85, '#cbd5e1');
-    moonGrad.addColorStop(1, '#94a3b8');
-
-    ctx.fillStyle = moonGrad;
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 3. Delicate Lunar Maria (Craters / Soft Surface Textures)
-    ctx.save();
-    ctx.fillStyle = 'rgba(148, 163, 184, 0.32)';
-    ctx.beginPath();
-    ctx.ellipse(moonX - 12, moonY - 8, 11, 7, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(moonX + 10, moonY + 12, 14, 9, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(moonX + 4, moonY - 14, 8, 6, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(moonX - 14, moonY + 14, 9, 6, 0.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // 4. Brilliant Moon Rim Glow
-    ctx.save();
-    ctx.strokeStyle = '#e0f2fe';
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = '#38bdf8';
-    ctx.shadowBlur = 24;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // 5. Gentle Moonbeams / Silver Light Shafts
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    ctx.fillStyle = '#bae6fd';
-    for (let r = -3; r <= 3; r++) {
-      const angle = r * 0.2 + Math.sin(time * 0.0003 + r) * 0.03;
-      ctx.beginPath();
-      ctx.moveTo(moonX, moonY);
-      ctx.lineTo(moonX + Math.cos(angle + 1.2) * 1600, moonY + Math.sin(angle + 1.2) * 1600);
-      ctx.lineTo(moonX + Math.cos(angle + 1.32) * 1600, moonY + Math.sin(angle + 1.32) * 1600);
-      ctx.closePath();
-      ctx.fill();
+      const fade = 1 - s.life / s.maxLife;
+      // A staircase tail of integer blocks, tapering as it goes, rather than a gradient stroke.
+      const steps = 14;
+      for (let i = 0; i < steps; i++) {
+        const t = i / steps;
+        const bx = Math.round(s.x - s.vx * (s.length / 12) * t);
+        const by = Math.round(s.y - s.vy * (s.length / 12) * t);
+        const a = fade * (1 - t) * 0.9;
+        ctx.fillStyle = `rgba(226, 232, 240, ${a})`;
+        const size = t < 0.25 ? 2 : 1;
+        ctx.fillRect(bx, by, size, size);
+      }
+      ctx.fillStyle = `rgba(255, 255, 255, ${fade})`;
+      ctx.fillRect(Math.round(s.x), Math.round(s.y), 2, 2);
     }
-    ctx.restore();
   }
 
   // --- PARALLAX MOUNTAINS & LANDMARKS ---
 
+  /**
+   * Two parallax mountain ridges and a banded valley mist.
+   *
+   * The ridges kept their authored sine profile but are now drawn one integer column at a time
+   * and rounded, so the peaks are stair-stepped instead of a smooth polygon. The rim light used
+   * `shadowBlur`, which is a Gaussian blur in a game with no other blur anywhere; it is now a
+   * dotted one-pixel line, and the mist is four dithered bands instead of a linear gradient.
+   */
   private renderParallaxMountains(
     ctx: CanvasRenderingContext2D,
     camera: CameraViewport,
@@ -617,114 +405,106 @@ export class WorldBackground {
   ) {
     const horizonY = h * 0.68;
 
-    // Palette per time of day
     let layer1Color = 'rgba(79, 70, 229, 0.45)';
     let layer2Color = 'rgba(91, 33, 182, 0.65)';
     let mistColor1 = 'rgba(251, 146, 60, 0.25)';
     let mistColor2 = 'rgba(244, 114, 182, 0.4)';
-    let monolithCore = '#fde047';
     let rimLightColor: string | null = null;
 
     switch (timeOfDay) {
       case 'DAWN':
-        layer1Color = 'rgba(99, 102, 241, 0.42)'; // Misty lavender peaks
-        layer2Color = 'rgba(109, 40, 217, 0.62)'; // Morning pine ridges
+        layer1Color = 'rgba(99, 102, 241, 0.42)';
+        layer2Color = 'rgba(109, 40, 217, 0.62)';
         mistColor1 = 'rgba(251, 146, 60, 0.28)';
         mistColor2 = 'rgba(244, 114, 182, 0.35)';
-        monolithCore = '#fde047';
         break;
-
       case 'DAY':
-        layer1Color = 'rgba(30, 58, 138, 0.38)'; // Distant alpine peaks
-        layer2Color = 'rgba(20, 83, 45, 0.65)';  // Verdant emerald ridges
+        layer1Color = 'rgba(30, 58, 138, 0.38)';
+        layer2Color = 'rgba(20, 83, 45, 0.65)';
         mistColor1 = 'rgba(186, 230, 253, 0.22)';
         mistColor2 = 'rgba(224, 242, 254, 0.35)';
-        monolithCore = '#38bdf8';
         break;
-
       case 'DUSK':
-        layer1Color = 'rgba(76, 29, 149, 0.65)'; // Twilight royal peaks
-        layer2Color = 'rgba(67, 16, 42, 0.78)';  // Warm obsidian ridges
+        layer1Color = 'rgba(76, 29, 149, 0.65)';
+        layer2Color = 'rgba(67, 16, 42, 0.78)';
         mistColor1 = 'rgba(234, 88, 12, 0.32)';
         mistColor2 = 'rgba(192, 38, 211, 0.42)';
-        monolithCore = '#f97316';
-        rimLightColor = 'rgba(251, 191, 36, 0.55)'; // Amber sunset rim
+        rimLightColor = 'rgba(251, 191, 36, 0.55)';
         break;
-
       case 'NIGHT':
-        // Slate-navy mountain silhouettes with luminous silver moonlight rim lighting!
-        layer1Color = 'rgba(15, 23, 42, 0.78)'; // Luminous deep slate
-        layer2Color = 'rgba(10, 18, 36, 0.88)'; // Sharp obsidian crags
+        layer1Color = 'rgba(15, 23, 42, 0.78)';
+        layer2Color = 'rgba(10, 18, 36, 0.88)';
         mistColor1 = 'rgba(30, 58, 138, 0.25)';
         mistColor2 = 'rgba(15, 23, 42, 0.55)';
-        monolithCore = '#38bdf8'; // Glowing cyan mana crystal
-        rimLightColor = 'rgba(147, 197, 253, 0.65)'; // Bright silver-blue moonlight rim!
+        rimLightColor = 'rgba(147, 197, 253, 0.65)';
         break;
     }
 
-    // Layer 1: Distant Peaks (Parallax factor 0.04)
-    const p1 = camera.x * 0.04;
-    ctx.fillStyle = layer1Color;
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY);
-    for (let x = -200; x <= w + 200; x += 55) {
-      const worldDistX = x + p1;
-      const peak =
-        Math.sin(worldDistX * 0.003) * 125 +
-        Math.cos(worldDistX * 0.008) * 60 +
-        Math.sin(worldDistX * 0.018) * 28;
-      ctx.lineTo(x, horizonY - 150 - peak);
-    }
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    // Layer 2: Mid Crags & Ridges (Parallax factor 0.09)
-    const p2 = camera.x * 0.09;
-    ctx.fillStyle = layer2Color;
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY + 30);
-    const ridgePoints: { x: number; y: number }[] = [];
-    for (let x = -200; x <= w + 200; x += 45) {
-      const worldDistX = x + p2;
-      const peak =
-        Math.sin(worldDistX * 0.006 + 1.2) * 95 +
-        Math.cos(worldDistX * 0.014) * 45;
-      const ry = horizonY - 70 - peak;
-      ridgePoints.push({ x, y: ry });
-      ctx.lineTo(x, ry);
-    }
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    // Moonlight or Sunset Rim Lighting on Ridge Edges (ensures mountains are never lost in darkness)
-    if (rimLightColor && ridgePoints.length > 0) {
-      ctx.save();
-      ctx.strokeStyle = rimLightColor;
-      ctx.lineWidth = timeOfDay === 'NIGHT' ? 2.5 : 2.0;
-      ctx.shadowColor = rimLightColor;
-      ctx.shadowBlur = timeOfDay === 'NIGHT' ? 12 : 6;
-      ctx.beginPath();
-      ctx.moveTo(ridgePoints[0].x, ridgePoints[0].y);
-      for (let i = 1; i < ridgePoints.length; i++) {
-        ctx.lineTo(ridgePoints[i].x, ridgePoints[i].y);
+    const ridge = (
+      color: string,
+      parallax: number,
+      baseline: number,
+      lift: number,
+      freq: { a: number; b: number; phase: number },
+      fillToBottom: boolean
+    ): number[] => {
+      const p = camera.x * parallax;
+      const heights: number[] = [];
+      ctx.fillStyle = color;
+      for (let x = -200; x <= w + 200; x++) {
+        const wx = x + p;
+        const peak =
+          Math.sin(wx * freq.a) * 125 + Math.cos(wx * freq.b + freq.phase) * 60;
+        const y = Math.round(baseline - lift - peak);
+        heights.push(y);
+        // One integer column per screen pixel: a stair-stepped ridge, drawn with fillRect so it
+        // cannot antialias.
+        ctx.fillRect(x, y, 1, fillToBottom ? h - y : 0);
       }
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.restore();
+      return heights;
+    };
+
+    // Layer 1: distant peaks, silhouette only.
+    const far = ridge(layer1Color, 0.04, horizonY, 150, { a: 0.003, b: 0.008, phase: 0 }, true);
+
+    // Layer 2: mid ridges, filled down to the bottom of the screen.
+    const near = ridge(layer2Color, 0.09, horizonY + 30, 70, { a: 0.006, b: 0.014, phase: 1.2 }, true);
+
+    // Rim light along the near ridge: a dotted one-pixel line, so a lit peak reads without a
+    // Gaussian blur.
+    if (rimLightColor) {
+      ctx.fillStyle = rimLightColor;
+      for (let x = 0; x < w; x++) {
+        const y = near[x + 200];
+        if (y === undefined) continue;
+        // Denser along the upper edges, sparser down the slopes.
+        if (x % 3 === 0 || near[x + 199] !== y || near[x + 201] !== y) ctx.fillRect(x, y, 1, 1);
+      }
     }
 
-    // Layer 3: Horizon Valley Mist & Atmosphere
-    const mistGrad = ctx.createLinearGradient(0, horizonY - 50, 0, h);
-    mistGrad.addColorStop(0, mistColor1);
-    mistGrad.addColorStop(0.5, mistColor2);
-    mistGrad.addColorStop(1, 'rgba(10, 15, 30, 0.7)');
+    // Valley mist: four dithered bands. A gradient here would be the only smooth ramp left in the
+    // whole background.
+    const mistTop = Math.round(horizonY - 50);
+    const mistRows = h - mistTop;
+    const bands = [mistColor1, mistColor1, mistColor2, mistColor2];
+    for (let i = 0; i < bands.length; i++) {
+      const y0 = mistTop + Math.round((mistRows * i) / bands.length);
+      const y1 = mistTop + Math.round((mistRows * (i + 1)) / bands.length);
+      ctx.fillStyle = bands[i];
+      for (let y = y0; y < y1; y++) ctx.fillRect(0, y, w, 1);
+    }
+    // The deepest band is the fog the continent rises out of.
+    ctx.fillStyle = 'rgba(10, 15, 30, 0.7)';
+    for (let y = mistTop + Math.round(mistRows * 0.75); y < h; y++) ctx.fillRect(0, y, w, 1);
 
-    ctx.fillStyle = mistGrad;
-    ctx.fillRect(0, horizonY - 50, w, h - (horizonY - 50));
+    // A bright waterline where the mist meets the horizon, so the far ridge does not just stop.
+    ctx.fillStyle = mistColor2;
+    for (let x = 0; x < w; x += 2) {
+      const y = far[x + 200];
+      if (y === undefined) continue;
+      ctx.fillRect(x, y + 1, 1, 1);
+    }
+    void time;
   }
 
   // --- ATMOSPHERE: CLOUDS, BIRDS & MOTES ---
@@ -740,61 +520,35 @@ export class WorldBackground {
     this.renderAmbientMotes(ctx, time, timeOfDay);
   }
 
+  /**
+   * World-space clouds blitted from painted sprites.
+   *
+   * The sprite is chosen by size bucket and shape index and blitted 1:1; the old version drew
+   * three `ctx.ellipse` calls per cloud per frame, which antialiased and never cached.
+   */
   private renderClouds(
     ctx: CanvasRenderingContext2D,
     camera: CameraViewport,
     time: number,
     timeOfDay: TimeOfDay
   ) {
-    ctx.save();
-    let bodyColor = 'rgba(255, 255, 255, 0.65)';
-    let rimColor = 'rgba(186, 230, 253, 0.35)';
-
-    switch (timeOfDay) {
-      case 'DAWN':
-        bodyColor = 'rgba(251, 207, 232, 0.55)';
-        rimColor = 'rgba(254, 240, 138, 0.45)';
-        break;
-      case 'DAY':
-        bodyColor = 'rgba(255, 255, 255, 0.70)';
-        rimColor = 'rgba(186, 230, 253, 0.40)';
-        break;
-      case 'DUSK':
-        bodyColor = 'rgba(192, 132, 252, 0.55)';
-        rimColor = 'rgba(251, 146, 60, 0.45)';
-        break;
-      case 'NIGHT':
-        // Translucent moonlit clouds with soft silver rim
-        bodyColor = 'rgba(51, 65, 85, 0.45)';
-        rimColor = 'rgba(186, 230, 253, 0.42)';
-        break;
-    }
-
-    this.clouds.forEach(c => {
+    ctx.imageSmoothingEnabled = false;
+    this.clouds.forEach((c, i) => {
       c.x += c.speed;
       if (c.x > 2600) {
         c.x = -2600;
         c.y = -700 + Math.random() * 850;
       }
 
-      const drawX = c.x;
-      const drawY = c.y + Math.sin(time * 0.0008 + c.speed) * 12;
-
-      // Cloud body
-      ctx.fillStyle = bodyColor;
-      ctx.beginPath();
-      ctx.ellipse(drawX, drawY, c.width * 0.45, c.height * 0.45, 0, 0, Math.PI * 2);
-      ctx.ellipse(drawX - c.width * 0.22, drawY + 8, c.width * 0.3, c.height * 0.4, 0, 0, Math.PI * 2);
-      ctx.ellipse(drawX + c.width * 0.22, drawY + 6, c.width * 0.32, c.height * 0.42, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Rim lighting under / around clouds
-      ctx.fillStyle = rimColor;
-      ctx.beginPath();
-      ctx.ellipse(drawX, drawY + c.height * 0.2, c.width * 0.36, c.height * 0.18, 0, 0, Math.PI * 2);
-      ctx.fill();
+      const drawX = Math.round(c.x);
+      const drawY = Math.round(c.y + Math.sin(time * 0.0008 + c.speed) * 12);
+      const sizeIndex = c.width < 220 ? 0 : c.width < 330 ? 1 : 2;
+      const sprite = skyRenderer.getCloud('sky', i % 3, sizeIndex, timeOfDay);
+      ctx.globalAlpha = Math.min(1, c.opacity + 0.25);
+      ctx.drawImage(sprite, drawX - Math.round(sprite.width / 2), drawY - Math.round(sprite.height / 2));
     });
-    ctx.restore();
+    ctx.globalAlpha = 1;
+    void camera;
   }
 
   private renderWildlife(
@@ -831,15 +585,22 @@ export class WorldBackground {
         b.y = -620 + Math.random() * 450;
       }
 
-      const wingY = Math.sin(b.wingPhase) * b.size;
-
-      ctx.beginPath();
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(b.x - b.size * 1.6, b.y - wingY);
-      ctx.lineTo(b.x - b.size * 0.7, b.y);
-      ctx.lineTo(b.x + b.size * 1.6, b.y - wingY);
-      ctx.closePath();
-      ctx.fill();
+      // A bird is three to five integer blocks: a body and two wings whose flap height is
+      // rounded. Drawing it as a polygon - which is what this used to do - antialiases the wing
+      // tips of a sprite that is only a few pixels across to begin with.
+      const bx = Math.round(b.x);
+      const by = Math.round(b.y);
+      const span = Math.max(2, Math.round(b.size * 1.6));
+      const wing = Math.round(Math.sin(b.wingPhase) * b.size);
+      ctx.fillRect(bx, by, 2, 1);
+      // Left and right wings, mirrored, so a flap reads as a flap rather than a drift.
+      for (let i = 1; i <= span; i++) {
+        const drop = Math.round((wing * i) / span);
+        ctx.fillRect(bx - i, by - drop, 1, 1);
+        ctx.fillRect(bx + 1 + i, by - drop, 1, 1);
+      }
+      // The body sits one pixel below the wing line, so the bird has a direction.
+      ctx.fillRect(bx, by + 1, 2, 1);
     });
     ctx.restore();
   }
@@ -889,10 +650,67 @@ export class WorldBackground {
       }
 
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.75})`;
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
-      ctx.fill();
+      // A mote is a plus of integer blocks with a brighter centre, not a ctx.arc circle: at this
+      // size an antialiased circle is a grey smudge rather than a spark.
+      const mx = Math.round(m.x);
+      const my = Math.round(m.y);
+      const size = Math.max(1, Math.round(m.size));
+      for (let i = -size; i <= size; i++) {
+        ctx.fillRect(mx + i, my, 1, 1);
+        ctx.fillRect(mx, my + i, 1, 1);
+      }
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+      ctx.fillRect(mx, my, 1, 1);
     });
+    ctx.restore();
+  }
+
+  /**
+   * The cloud sea the floating continent rises out of.
+   *
+   * This is a world-space layer drawn between the sky and the terrain, so it parallaxes with the
+   * board instead of sliding past it, and it is drawn BELOW the board's lowest tile so the
+   * continent reads as floating rather than as a map printed on a wall. Two rows: a far row of
+   * larger, darker clouds higher up, and a near row of brighter ones lower down, which is what
+   * gives the layer depth without a fog gradient.
+   *
+   * `bounds` is the terrain's world-space extent, which the renderer already computes for its
+   * frustum culling.
+   */
+  public renderCloudSea(
+    ctx: CanvasRenderingContext2D,
+    time: number,
+    timeOfDay: TimeOfDay,
+    bounds: { minX: number; maxX: number; maxY: number }
+  ) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+
+    const span = Math.max(600, bounds.maxX - bounds.minX);
+    const rows: Array<{ dy: number; alpha: number; sizes: number[]; step: number }> = [
+      { dy: 46, alpha: 0.5, sizes: [2, 1, 2, 0], step: 260 },
+      { dy: 108, alpha: 0.72, sizes: [1, 2, 0, 1], step: 210 },
+      { dy: 178, alpha: 0.9, sizes: [2, 2, 1, 2], step: 250 }
+    ];
+
+    rows.forEach((row, rowIndex) => {
+      const y = Math.round(bounds.maxY + row.dy);
+      // A slow drift, offset per row so the layers do not move as one block.
+      const drift = time * (0.012 + rowIndex * 0.008);
+      const count = Math.max(4, Math.ceil(span / row.step) + 3);
+      ctx.globalAlpha = row.alpha;
+      for (let i = 0; i < count; i++) {
+        const x = Math.round(bounds.minX - row.step + i * row.step + (drift % row.step));
+        const sizeIndex = row.sizes[i % row.sizes.length];
+        const variant = (i + rowIndex) % 3;
+        const sprite = skyRenderer.getCloud('sea', variant, sizeIndex, timeOfDay);
+        // Every other cloud is nudged vertically so the row is not a ruler-straight line.
+        const bob = (i % 2 === 0 ? 1 : -1) * 9;
+        ctx.drawImage(sprite, x, y + bob - Math.round(sprite.height / 2));
+      }
+    });
+
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 }

@@ -17,30 +17,48 @@ const BACKDROP = [14, 18, 28];
  * @param {number} options.cols           Columns in the grid.
  * @param {string} options.title          Printed in the console line.
  * @param {string} [options.note]         Optional extra console line.
+ * @param {number} [options.cellW]        Fixed cell width; cells are centred in it. Defaults to
+ *                                        the first cell's width, in which case every cell must
+ *                                        match. Use it for a set whose members differ in size,
+ *                                        such as the three cloud size buckets.
+ * @param {number} [options.cellH]        Fixed cell height; see `cellW`.
  */
-function writeContactSheet({ outFile, cells, scale, cols, title, note }) {
+function writeContactSheet({ outFile, cells, scale, cols, title, note, cellW, cellH }) {
   if (cells.length === 0) throw new Error('contact sheet needs at least one cell');
 
-  // Cells may be non-square (an isometric floor tile is 104x82, not 64x64), so the grid is laid
-  // out from the first cell's own dimensions and every other cell must match them.
-  const { w: sw, h: sh } = cells[0].surface;
+  // Cells may be non-square (an isometric floor tile is 104x82, not 64x64) and may differ in size
+  // between buckets, so the grid is laid out from an explicit cell size and each sprite is centred
+  // in it.
+  const fixed = cellW !== undefined || cellH !== undefined;
+  const sw = cellW ?? cells[0].surface.w;
+  const sh = cellH ?? cells[0].surface.h;
+  if (!fixed) {
+    for (const c of cells) {
+      if (c.surface.w !== sw || c.surface.h !== sh) {
+        throw new Error(
+          `${c.label} is ${c.surface.w}x${c.surface.h}, expected ${sw}x${sh} to match the sheet`
+        );
+      }
+    }
+  }
+
   const rows = Math.ceil(cells.length / cols);
-  const cellW = sw * scale;
-  const cellH = sh * scale;
-  const w = cellW * cols;
-  const h = cellH * rows;
+  const cellPW = sw * scale;
+  const cellPH = sh * scale;
+  const w = cellPW * cols;
+  const h = cellPH * rows;
   const sheet = Buffer.alloc(w * h * 4);
 
   cells.forEach((c, i) => {
     const s = c.surface;
-    if (s.w !== sw || s.h !== sh) {
-      throw new Error(`${c.label} is ${s.w}x${s.h}, expected ${sw}x${sh} to match the sheet`);
+    if (s.w > sw || s.h > sh) {
+      throw new Error(`${c.label} is ${s.w}x${s.h}, which does not fit the ${sw}x${sh} cell`);
     }
-    const ox = (i % cols) * cellW;
-    const oy = Math.floor(i / cols) * cellH;
-    for (let y = 0; y < sh; y++) {
-      for (let x = 0; x < sw; x++) {
-        const si = (y * sw + x) * 4;
+    const ox = (i % cols) * cellPW + Math.floor((sw - s.w) / 2) * scale;
+    const oy = Math.floor(i / cols) * cellPH + Math.floor((sh - s.h) / 2) * scale;
+    for (let y = 0; y < s.h; y++) {
+      for (let x = 0; x < s.w; x++) {
+        const si = (y * s.w + x) * 4;
         const a = s.data[si + 3];
         for (let sy = 0; sy < scale; sy++) {
           for (let sx = 0; sx < scale; sx++) {
