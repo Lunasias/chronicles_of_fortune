@@ -1,0 +1,51 @@
+Calm the floor so a biome reads as one surface, and remove the dark screen frame
+
+Two complaints, both fixed.
+
+1. The floor looked dizzying once tiles met, and a biome did not read as one piece of land.
+   Three separate causes, all in the tile itself:
+
+   * The top face ran an ordered-dither RAMP across every tile - up to 58% density of the lit tone
+     at the west edge, falling to the shaded tone at the east. Tiled 312 times that is a sawtooth
+     repeating every 96 pixels. It is now a single fixed-density 4x4 Bayer speckle at 16%, which is
+     the same everywhere and, because 96 and 48 are both multiples of the 4-pixel period, lines up
+     exactly across a tile boundary. One continuous speckled surface, no seam.
+
+   * Every tile carried a 3px bevel on all four edges, which drew a bright and dark diamond outline
+     around every single tile - a visible grid of separate objects. The bevels are gone. A floor's
+     light direction belongs to the scene, not to each tile: it lives in the two cliff faces (lit
+     west, shaded east, and only drawn where the ground actually changes height) and in the ambient
+     occlusion under every structure, tree and prop.
+
+   * Every tile painted the identical detail at the identical position, so a field of two hundred
+     tiles showed the same grass tuft in a perfect grid. `drawSurface` now takes a variant offset,
+     picked by the renderer from the tile's grid position with a pair of multipliers coprime with the
+     variant count, so neighbouring tiles scatter differently. Four layouts per biome, which breaks
+     the grid at board zoom without quadrupling the sprite cache.
+
+   The grid contour is also fainter (0.55 -> 0.3 alpha), so tiles merge while the board still reads
+   as spaces.
+
+   This changes what the light test should assert, and the reasoning is worth recording. Satisfying
+   "flat tiles are lit from the left" required exactly the ramp that caused the complaint, so a flat
+   tile now has to be NEUTRAL than lit: the assertion is |left - right| < 0.02, which passes with a
+   worst case of 0.009. The tile-level light assertion moved to the cliffed tiles, where the light
+   actually is, and now requires a 0.02 margin on the whole sprite (worst case 0.040). The existing
+   test that the two cliff faces agree with each other is unchanged.
+
+   Two new tests replace the weaker one the ramp needed. The speckle is now measured on the BARE
+   ground, via a new `detail: false` option: an earlier version measured the tile with its detail on
+   and had to accept a 0.06 density spread, because a grass tuft sitting on four speckle pixels is
+   indistinguishable from a speckle that moved - a threshold loose enough to pass almost anything.
+   The bare ground is asserted to be exactly two tones, periodic with the tile dimensions, under
+   0.16 contrast, and even in density to within 0.05. A second test proves `detail: false` is a real
+   switch and not a way to pass against a blank tile.
+
+2. There was a dark frame around the play area. It was the screen vignette this project gained two
+   commits ago - first a radial gradient, then hard bands - and either way it reads as a black
+   border around the board rather than as atmosphere, which is not what a board game wants around
+   the board. Removed outright from the board renderer. The battle cutscene keeps its dimming,
+   because that is functional dimming for the duration of a cutscene.
+
+Verification: 133 tests green, typecheck green, 11/11 Tailwind spot checks, 12/12 pixel UI
+components present, 8/8 glass utilities absent. The 60 committed floor tiles are regenerated.

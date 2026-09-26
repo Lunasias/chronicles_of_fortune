@@ -4,7 +4,7 @@ import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
-import { pixelDisc, pixelEllipse, pixelGlow, pixelRing, pixelVignette } from './PixelFx';
+import { pixelDisc, pixelEllipse, pixelGlow, pixelRing } from './PixelFx';
 
 export interface Camera2D {
   x: number;
@@ -324,11 +324,9 @@ export class IsometricRenderer {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // 10. Dark Fantasy Gothic Atmospheric Vignette Overlay
-    // Hard bands drawn inward from the screen edge rather than a radial gradient. A screen-sized
-    // gradient is both the most expensive soft draw in the frame and the most out of place here;
-    // banded edges read as a CRT bezel, which is what this overlay always wanted to be.
-    pixelVignette(ctx, w, h, '#02040a', 7, 0.75);
+    // No screen vignette. There was one - first a radial gradient, then hard bands - and either
+    // way it reads as a dark frame around the play area rather than as atmosphere, which is not
+    // what a board game wants around the board.
   }
 
 

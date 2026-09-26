@@ -1,7 +1,7 @@
 import { BoardNode, BiomeType, RealmId } from '../game/BoardMap';
 import { TimeOfDay } from '../game/EcosystemSystem';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
-import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H } from './IsometricTerrainPainter';
+import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H, TERRAIN_VARIANTS } from './IsometricTerrainPainter';
 import { PROP_BASE_X, PROP_BASE_Y } from './IsometricPropPainter';
 
 export interface TerrainTile {
@@ -327,8 +327,8 @@ export class IsometricTerrainEngine {
    * plain RGBA buffer with no DOM access so the same art can be exported to PNG and re-painted
    * byte-for-byte in a test. This method is only the biome/cliff/night lookup.
    */
-  public getTileSprite(biome: BiomeType, hasCliffs: boolean, isNight: boolean): HTMLCanvasElement {
-    return isometricTerrainRenderer.getTileSprite(biome, { cliffs: hasCliffs, night: isNight });
+  public getTileSprite(biome: BiomeType, hasCliffs: boolean, isNight: boolean, variant = 0): HTMLCanvasElement {
+    return isometricTerrainRenderer.getTileSprite(biome, { cliffs: hasCliffs, night: isNight, variant });
   }
 
   // =========================================================================
@@ -368,7 +368,12 @@ export class IsometricTerrainEngine {
       // Zero-lag hardware GPU texture blit. The offset is the painter's own geometry, so the
       // rhombus centre lands exactly on the tile's world position.
       const hasCliffs = tile.hasSouthCliff || tile.hasWestCliff || tile.hasEastCliff;
-      const sprite = this.getTileSprite(tile.biome, hasCliffs, isNight);
+      // Detail variant from the grid position, so neighbouring tiles scatter differently instead
+      // of showing the same grass tuft in a perfect grid. The multiplier pair is coprime with the
+      // variant count, which spreads the four layouts evenly rather than banding them by row.
+      const variant =
+        (((tile.gx * 7 + tile.gy * 13) % TERRAIN_VARIANTS) + TERRAIN_VARIANTS) % TERRAIN_VARIANTS;
+      const sprite = this.getTileSprite(tile.biome, hasCliffs, isNight, variant);
       ctx.drawImage(sprite, tile.x - TERRAIN_BLIT_X, tile.y - TERRAIN_BLIT_Y);
     }
   }

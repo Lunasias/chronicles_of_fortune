@@ -21,6 +21,7 @@ import {
   TERRAIN_HW,
   TERRAIN_SPRITE_H,
   TERRAIN_SPRITE_W,
+  TERRAIN_VARIANTS,
   paintTerrainTile,
   resolveBiome,
   terrainPalette
@@ -54,6 +55,12 @@ const painted = new Map(cells.map(c => [c.label, c.surface]));
 
 /** Whether a point is on the top-face rhombus. */
 const onDiamond = (x, y) => Math.abs(x - TERRAIN_CX) / TERRAIN_HW + Math.abs(y - TERRAIN_CY) / TERRAIN_HH <= 1;
+
+/** The exact painted colour at a pixel, as a comparable string. */
+const keyOf = (surface, x, y) => {
+  const i = (y * surface.w + x) * 4;
+  return `${surface.data[i]},${surface.data[i + 1]},${surface.data[i + 2]}`;
+};
 
 const alphaAt = (surface, x, y) => {
   if (x < 0 || y < 0 || x >= surface.w || y >= surface.h) return 0;
@@ -252,27 +259,173 @@ test('every tile is shaded, not a flat colour fill', () => {
       if (l > brightest) brightest = l;
       if (l < darkest) darkest = l;
     }
-    assert.ok(colours.size >= 8, `${c.label} uses only ${colours.size} colours`);
+    // A calmed floor has a deliberately tight palette - the grasslands use seven tones - so the
+    // floor is only a guard against a single flat fill. The tonal-range check below is the real
+    // "is it shaded" assertion.
+    assert.ok(colours.size >= 6, `${c.label} uses only ${colours.size} colours`);
+    // A calmed floor is deliberately low-contrast - a night flat tile spans about 0.19 - so the
+    // threshold is per variant. A cliffed tile carries two rock faces and must span more.
+    const minimum = c.suffix.startsWith('cliff') ? 0.25 : 0.15;
     assert.ok(
-      brightest - darkest > 0.2,
+      brightest - darkest > minimum,
       `${c.label} only spans ${(brightest - darkest).toFixed(3)} of tonal range`
     );
   }
 });
 
-test('every tile is lit from the left', () => {
-  // The same rule the structures, trees and characters follow. On a flat horizontal face there is
-  // no wall normal, so this is really testing the bevel and ordered-dither convention: the west
-  // edges and the west half of the ramp must be brighter than the east ones.
+test('flat ground is neutral, so a run of tiles reads as one surface', () => {
+  // This replaced a "flat tiles are lit from the left" assertion, and the reason is worth
+  // recording: satisfying that assertion required a dither RAMP across every tile, up to 58%
+  // density of the lit tone on the west side falling to the shaded tone on the east. Tiled 312
+  // times that is a sawtooth repeating every 96 pixels - a biome looked like a stamped pattern
+  // instead of like ground, which is exactly the complaint the change addresses.
+  //
+  // A floor's light direction belongs to the scene, not to each tile. It lives in the cliff faces
+  // (asserted separately, and only drawn where the ground changes height) and in the ambient
+  // occlusion under every object standing on the ground. So the correct property for a flat tile
+  // is that it carries no systematic left-right bias at all.
   for (const c of cells) {
-    const flat = c.suffix.startsWith('flat');
-    const left = halfLuminance(c.surface, 'left', flat);
-    const right = halfLuminance(c.surface, 'right', flat);
+    if (!c.suffix.startsWith('flat')) continue;
+    const left = halfLuminance(c.surface, 'left', true);
+    const right = halfLuminance(c.surface, 'right', true);
+    assert.ok(
+      Math.abs(left - right) < 0.02,
+      `${c.label}: left half ${left.toFixed(3)} vs right half ${right.toFixed(3)} - flat ground must be neutral`
+    );
+  }
+});
+
+test('a cliffed tile is lit from the left, where the light actually is', () => {
+  // The west cliff face is the mid tone and the east face the dark one, so a raised tile reads as
+  // raised. This is the tile-level light assertion that replaced the flat-tile one.
+  for (const c of cells) {
+    if (!c.suffix.startsWith('cliff')) continue;
+    const left = halfLuminance(c.surface, 'left', false);
+    const right = halfLuminance(c.surface, 'right', false);
     assert.ok(
       left > right + 0.02,
       `${c.label}: left half ${left.toFixed(3)} vs right half ${right.toFixed(3)}`
     );
   }
+});
+
+test('the ground speckle is even and cannot show a seam', () => {
+  // The top face uses a fixed-density 4x4 Bayer mask. Two properties together are what make a
+  // field of tiles read as one continuous surface:
+  //
+  //   * the mask's period divides the tile dimensions, so it lines up exactly across a tile
+  //     boundary instead of restarting there. That is the seam guarantee, and it is arithmetic.
+  //   * the density is the same in every quadrant, so there is no gradient to band.
+  //
+  // Measured on the bare ground, with the biome detail switched off. An earlier version measured
+  // the tile with its detail on and had to accept a 0.06 density spread because the scatter - a
+  // grass tuft sitting on four speckle pixels - is indistinguishable from a speckle that moved.
+  // That threshold was loose enough to pass almost anything.
+  assert.equal((TERRAIN_HW * 2) % 4, 0, 'the tile width must be a multiple of the speckle period');
+  assert.equal((TERRAIN_HH * 2) % 4, 0, 'the tile height must be a multiple of the speckle period');
+
+  const lum = k => {
+    const [r, g, b] = k.split(',').map(Number);
+    return (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+  };
+
+  for (const biome of TERRAIN_BIOMES) {
+    const s = paintTerrainTile(biome, { cliffs: false, detail: false });
+
+    // The mask is a function of (x mod 4, y mod 4) alone. Scanned on an inset rhombus, because the
+    // outermost pixels of every row are the grid contour, which is not part of the speckle.
+    const inset = (x, y) =>
+      Math.abs(x - TERRAIN_CX) / TERRAIN_HW + Math.abs(y - TERRAIN_CY) / TERRAIN_HH <= 0.93;
+    for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
+      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW - 4; x++) {
+        if (!inset(x, y) || !inset(x + 4, y)) continue;
+        assert.equal(keyOf(s, x, y), keyOf(s, x + 4, y), `${biome} speckle is not periodic at ${x},${y}`);
+      }
+    }
+
+    const counts = new Map();
+    let area = 0;
+    for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
+      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x++) {
+        if (!inset(x, y)) continue;
+        area++;
+        const k = keyOf(s, x, y);
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+    }
+    let body = null;
+    let fleck = null;
+    let best = -1;
+    let worst = Infinity;
+    for (const [k, n] of counts) {
+      if (n > best) {
+        best = n;
+        body = k;
+      }
+      if (n < worst) {
+        worst = n;
+        fleck = k;
+      }
+    }
+
+    // Exactly two tones on the bare ground, and the body has to dominate it.
+    assert.equal(counts.size, 2, `${biome}'s bare ground uses ${counts.size} tones, expected 2`);
+    assert.ok(best / area > 0.6, `${biome}'s ground body covers only ${(best / area).toFixed(2)} of the bare ground`);
+
+    // Low contrast, so the speckle reads as texture rather than as a pattern.
+    assert.ok(
+      Math.abs(lum(body) - lum(fleck)) < 0.16,
+      `${biome}'s speckle contrast is ${Math.abs(lum(body) - lum(fleck)).toFixed(3)}`
+    );
+
+    const shares = [0, 0, 0, 0];
+    const totals = [0, 0, 0, 0];
+    for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
+      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x++) {
+        if (!inset(x, y)) continue;
+        const q = (x < TERRAIN_CX ? 0 : 1) + (y < TERRAIN_CY ? 0 : 2);
+        totals[q]++;
+        if (keyOf(s, x, y) === body) shares[q]++;
+      }
+    }
+    const values = shares.map((v, i) => v / Math.max(1, totals[i]));
+    const spread = Math.max(...values) - Math.min(...values);
+    // The mask is exactly periodic, so the residual spread is the rhombus clipping the 4x4
+    // pattern at its edges rather than a gradient. A gradient is caught decisively by the
+    // flat-ground neutrality test above, which bounds the left-right luminance difference.
+    assert.ok(spread < 0.05, `${biome} body-tone density varies by ${spread.toFixed(3)} across the tile`);
+  }
+});
+
+test('every biome actually paints its own surface detail', () => {
+  // The `detail` switch exists for the test above, so this proves it is a real switch rather than
+  // a way to make the speckle test pass against a blank tile.
+  for (const biome of TERRAIN_BIOMES) {
+    const bare = Buffer.from(paintTerrainTile(biome, { cliffs: false, detail: false }).data.buffer);
+    const full = Buffer.from(paintTerrainTile(biome, { cliffs: false }).data.buffer);
+    assert.ok(!bare.equals(full), `${biome} paints no surface detail at all`);
+  }
+});
+
+test('every biome scatters its detail differently from tile to tile', () => {
+  // One layout per biome is what produced the stamped-pattern look: the same grass tuft at the
+  // same spot on every tile, in a perfect grid.
+  assert.ok(TERRAIN_VARIANTS >= 3, 'a variant count of 1 or 2 would still visibly repeat');
+  for (const biome of TERRAIN_BIOMES) {
+    const seen = new Map();
+    for (let v = 0; v < TERRAIN_VARIANTS; v++) {
+      const bytes = Buffer.from(
+        paintTerrainTile(biome, { cliffs: false, variant: v }).data.buffer
+      ).toString('base64');
+      assert.ok(!seen.has(bytes), `${biome} variant ${v} is identical to variant ${seen.get(bytes)}`);
+      seen.set(bytes, v);
+    }
+  }
+  // And an out-of-range variant must normalise rather than index off the table.
+  // Normalisation is by absolute value, so -1 selects the same layout as 1.
+  const a = Buffer.from(paintTerrainTile('grass', { variant: -1 }).data.buffer);
+  const b = Buffer.from(paintTerrainTile('grass', { variant: 1 }).data.buffer);
+  assert.ok(a.equals(b), 'a negative variant should normalise into range');
 });
 
 test('the two cliff faces agree with the top face about the light', () => {

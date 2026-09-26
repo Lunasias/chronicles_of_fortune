@@ -457,66 +457,57 @@ function drawCliffs(s: IsoSurface, t: TerrainTones, seed: number): void {
 }
 
 /**
- * A 4x4 Bayer matrix: the ordered dither used to shade a large flat surface.
+ * A 4x4 Bayer matrix, used only as a constant-density texture mask.
  *
- * A gradient across a floor tile repeated 312 times reads as vertical banding, and a flat fill
- * reads as a colour swatch. An ordered dither ramp between them is the pixel-art answer, and it
- * is what gives the whole top face a left-bright / right-dark read instead of leaving the light
- * direction visible only in the two bevels.
+ * The floor previously ran a full ordered-dither *ramp* across every tile - up to 58% density of
+ * the lit tone at the west edge falling to the shaded tone at the east. Tiled 312 times that is a
+ * sawtooth repeating every 96 pixels, which is what made a biome look like a stamped pattern
+ * rather than like ground. The matrix is now used at one fixed density instead, which is a
+ * texture rather than a gradient.
  */
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
+/** Density of the ground's lighter speckle. Low enough to read as texture, not as pattern. */
+const GROUND_SPECKLE = 0.16;
+
 /**
- * The top face: flat body, bevels on all four edges, ordered-dither shading, sparse fleck.
+ * The top face: a flat body with one even speckle, and nothing else.
  *
- * A horizontal face has no wall normal, so its light direction has to come from bevels. The two
- * WEST edges (north-west and south-west) face the light and take `hi`; the two EAST edges take
- * `lo`. Bevelling only the top two edges instead would light the tile from the north vertex,
- * which reads as top-down light and contradicts every wall and roof standing on it.
+ * A floor has to read as ONE surface across a whole biome, so the tile carries no per-tile
+ * lighting at all. It used to have a dither ramp plus a bevel on all four edges, and the result
+ * was a bright and dark diamond outline around every single tile - a visible grid of separate
+ * objects rather than continuous ground.
+ *
+ * The light direction of the world is not lost by this: it lives in the cliff faces, which are
+ * lit west and shaded east and only appear where the ground actually changes height, plus the
+ * ambient occlusion under every structure, tree and prop. That is where a top-down view of
+ * terrain gets its form from.
+ *
+ * The speckle is a fixed-density 4x4 Bayer mask, so it is even across the tile and - because 96
+ * and 48 are both multiples of the 4-pixel period - it lines up exactly across tile boundaries.
+ * A run of tiles therefore shows one continuous speckled surface with no seam.
  */
-function drawTopFace(s: IsoSurface, t: TerrainTones, seed: number): void {
+function drawTopFace(s: IsoSurface, t: TerrainTones): void {
   const { CX, CY, HW, HH } = { CX: TERRAIN_CX, CY: TERRAIN_CY, HW: TERRAIN_HW, HH: TERRAIN_HH };
   s.diamond(CX, CY, HW, HH, t.top);
 
-  // Ordered-dither ramp: `hi` thins out from the west edge, `lo` thickens toward the east one.
   for (let y = CY - HH; y <= CY + HH; y++) {
     for (let x = CX - HW; x <= CX + HW; x++) {
       if (!onTile(x, y)) continue;
-      const u = (x - (CX - HW)) / (2 * HW);
-      const threshold = BAYER4[(y & 3) * 4 + (x & 3)] / 16;
-      const lit = Math.max(0, 0.58 - u * 1.25);
-      const shade = Math.max(0, u * 1.25 - 0.72);
-      if (threshold < lit) s.px(x, y, t.hi);
-      else if (threshold < shade) s.px(x, y, t.lo);
-      else if (noise2(x, y, seed) > 0.975) s.px(x, y, t.fleck, 0.7);
-    }
-  }
-
-  // Bevels last, so they sit cleanly on top of the dither.
-  for (let x = CX - HW; x <= CX + HW; x++) {
-    const west = x <= CX;
-    const upper = west ? edgeNW(x) : edgeNE(x);
-    const lower = west ? edgeSW(x) : edgeSE(x);
-    const near = west ? t.hi : t.lo;
-    for (const [edge, inward] of [
-      [upper, 1],
-      [lower, -1]
-    ] as Array<[number, number]>) {
-      s.px(x, edge, near);
-      s.px(x, edge + inward, near);
-      // The third pixel is dithered, so the band ends as a pixel-art transition rather than a
-      // razor line.
-      s.px(x, edge + inward * 2, noise2(x, inward + 4, seed) > 0.4 ? near : t.top);
+      if (BAYER4[(y & 3) * 4 + (x & 3)] / 16 >= GROUND_SPECKLE) continue;
+      s.px(x, y, t.fleck);
     }
   }
 }
 
-/** The front edges: a grid contour, so 312 tiles still read as a board rather than a smear. */
+/** The front edges: a faint grid contour, so the board is still readable as spaces. */
 function drawContour(s: IsoSurface, t: TerrainTones): void {
   const { CX, CY, HW, HH } = { CX: TERRAIN_CX, CY: TERRAIN_CY, HW: TERRAIN_HW, HH: TERRAIN_HH };
   for (let x = CX - HW; x <= CX + HW; x++) {
     const edge = x <= CX ? edgeSW(x) : edgeSE(x);
-    s.px(x, edge, t.border, 0.55);
+    // Faint on purpose. A strong line on every tile is the other half of what made a biome look
+    // like a grid of tiles, but some line is needed or the board stops reading as spaces.
+    s.px(x, edge, t.border, 0.3);
   }
 }
 
@@ -550,6 +541,27 @@ function cluster(
   }
 }
 
+/**
+ * How many detail layouts each biome has.
+ *
+ * The renderer picks one from the tile's grid position, so neighbouring tiles differ instead of
+ * repeating. Four is enough to break the grid at board zoom and keeps the sprite cache small.
+ */
+export const TERRAIN_VARIANTS = 4;
+
+/**
+ * Per-variant detail offset and noise seed.
+ *
+ * Offsets stay inside about a third of the tile so the scatter never piles up on one edge, and
+ * each variant gets its own noise seed so the ragged parts differ as well as the positions.
+ */
+const DETAIL_OFFSETS: Array<[number, number, number]> = [
+  [0, 0, 0],
+  [-9, 5, 31],
+  [8, -4, 67],
+  [-5, -9, 113]
+];
+
 /** A 4-point star: the pixel-art idiom for a sparkle, and legible at board zoom. */
 function sparkle(s: IsoSurface, x: number, y: number, color: string, core = '#ffffff'): void {
   tpx(s, x, y, core);
@@ -569,7 +581,19 @@ function ripple(s: IsoSurface, x0: number, y0: number, len: number, color: strin
   }
 }
 
-function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: boolean, seed: number): void {
+function drawSurface(
+  s: IsoSurface,
+  biome: BiomeType,
+  t: TerrainTones,
+  night: boolean,
+  seed: number,
+  dx: number,
+  dy: number
+): void {
+  // The whole detail layout is written around the tile centre, so shifting the centre shifts
+  // every cluster, tuft, ripple and vein at once.
+  const CX: number = TERRAIN_CX + dx;
+  const CY: number = TERRAIN_CY + dy;
   const glowStrength = night ? 0.72 : 0.42;
 
   switch (biome) {
@@ -583,33 +607,33 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [20, -8],
         [-26, 2]
       ]) {
-        const x = TERRAIN_CX + ox;
-        const y = TERRAIN_CY + oy;
+        const x = CX + ox;
+        const y = CY + oy;
         tpx(s, x, y, t.accent);
         tpx(s, x - 1, y - 1, t.accent);
         tpx(s, x + 1, y - 2, t.accent);
         tpx(s, x, y - 2, t.accentLo);
       }
-      cluster(s, TERRAIN_CX - 12, TERRAIN_CY + 5, 3, 2, t.accentLo, t.cliffFoot, seed + 1, 0.2);
-      cluster(s, TERRAIN_CX + 16, TERRAIN_CY + 7, 4, 2, t.accentLo, t.cliffFoot, seed + 2, 0.2);
+      cluster(s, CX - 12, CY + 5, 3, 2, t.accentLo, t.cliffFoot, seed + 1, 0.2);
+      cluster(s, CX + 16, CY + 7, 4, 2, t.accentLo, t.cliffFoot, seed + 2, 0.2);
       if (biome === 'forest' && t.glow) {
         // A pair of glowing spores, which is what distinguishes the Gloomwood from the meadow.
-        s.glowDisc(TERRAIN_CX - 22, TERRAIN_CY + 6, 3, 3, t.glow, glowStrength * 0.5);
-        tpx(s, TERRAIN_CX - 22, TERRAIN_CY + 6, t.glow);
-        tpx(s, TERRAIN_CX + 24, TERRAIN_CY - 4, t.glow);
+        s.glowDisc(CX - 22, CY + 6, 3, 3, t.glow, glowStrength * 0.5);
+        tpx(s, CX - 22, CY + 6, t.glow);
+        tpx(s, CX + 24, CY - 4, t.glow);
       }
       break;
     }
 
     case 'snow': {
       // Drift ripples follow the slope; sparkles are pure white so they survive the night palette.
-      ripple(s, TERRAIN_CX - 30, TERRAIN_CY - 8, 18, t.accent, 1);
-      ripple(s, TERRAIN_CX + 2, TERRAIN_CY + 10, 20, t.accent, -1);
-      ripple(s, TERRAIN_CX - 10, TERRAIN_CY + 14, 12, t.accentLo, 1);
-      cluster(s, TERRAIN_CX - 20, TERRAIN_CY + 12, 5, 2, t.accentLo, t.accent, seed + 3, 0.25);
+      ripple(s, CX - 30, CY - 8, 18, t.accent, 1);
+      ripple(s, CX + 2, CY + 10, 20, t.accent, -1);
+      ripple(s, CX - 10, CY + 14, 12, t.accentLo, 1);
+      cluster(s, CX - 20, CY + 12, 5, 2, t.accentLo, t.accent, seed + 3, 0.25);
       if (t.glow) {
-        sparkle(s, TERRAIN_CX + 16, TERRAIN_CY - 6, t.glow);
-        sparkle(s, TERRAIN_CX - 6, TERRAIN_CY + 2, t.glow);
+        sparkle(s, CX + 16, CY - 6, t.glow);
+        sparkle(s, CX - 6, CY + 2, t.glow);
       }
       break;
     }
@@ -623,24 +647,24 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [12, -10, 18],
         [22, -2, 14]
       ]) {
-        ripple(s, TERRAIN_CX + ox, TERRAIN_CY + oy, len, t.accent, 1);
+        ripple(s, CX + ox, CY + oy, len, t.accent, 1);
       }
-      cluster(s, TERRAIN_CX + 4, TERRAIN_CY + 4, 2, 2, t.accentLo, t.cliffFoot, seed + 4, 0.15);
+      cluster(s, CX + 4, CY + 4, 2, 2, t.accentLo, t.cliffFoot, seed + 4, 0.15);
       break;
     }
 
     case 'volcano': {
       // Basalt plates, then a magma fissure. The fissure is the only bright thing on the tile, so
       // it reads instantly as a hazard.
-      cluster(s, TERRAIN_CX - 24, TERRAIN_CY + 4, 5, 3, t.cliffDark, t.cliffMid, seed + 5, 0.25);
-      cluster(s, TERRAIN_CX + 18, TERRAIN_CY - 6, 6, 3, t.cliffDark, t.cliffMid, seed + 6, 0.25);
-      isoLine(s, TERRAIN_CX - 20, TERRAIN_CY - 6, TERRAIN_CX - 4, TERRAIN_CY + 2, t.cliffFoot);
-      isoLine(s, TERRAIN_CX - 4, TERRAIN_CY + 2, TERRAIN_CX + 14, TERRAIN_CY - 4, t.cliffFoot);
+      cluster(s, CX - 24, CY + 4, 5, 3, t.cliffDark, t.cliffMid, seed + 5, 0.25);
+      cluster(s, CX + 18, CY - 6, 6, 3, t.cliffDark, t.cliffMid, seed + 6, 0.25);
+      isoLine(s, CX - 20, CY - 6, CX - 4, CY + 2, t.cliffFoot);
+      isoLine(s, CX - 4, CY + 2, CX + 14, CY - 4, t.cliffFoot);
       if (t.glow) {
         for (let i = 0; i <= 34; i++) {
           const t0 = i / 34;
-          const x = TERRAIN_CX - 20 + t0 * 34;
-          const y = t0 < 0.41 ? TERRAIN_CY - 6 + (t0 / 0.41) * 8 : TERRAIN_CY + 2 - ((t0 - 0.41) / 0.59) * 6;
+          const x = CX - 20 + t0 * 34;
+          const y = t0 < 0.41 ? CY - 6 + (t0 / 0.41) * 8 : CY + 2 - ((t0 - 0.41) / 0.59) * 6;
           s.glowDisc(x, y, 3, 2.5, t.glow, glowStrength * 0.5);
           tpx(s, x, y, i % 8 === 0 ? '#fef08a' : t.glow);
         }
@@ -652,25 +676,25 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
       // Angular slate facets: two per tile, each a hard-edged polygon rather than a blob.
       s.poly(
         [
-          [TERRAIN_CX - 20, TERRAIN_CY + 2],
-          [TERRAIN_CX - 12, TERRAIN_CY - 2],
-          [TERRAIN_CX - 8, TERRAIN_CY + 3],
-          [TERRAIN_CX - 17, TERRAIN_CY + 6]
+          [CX - 20, CY + 2],
+          [CX - 12, CY - 2],
+          [CX - 8, CY + 3],
+          [CX - 17, CY + 6]
         ],
         t.cliffDark
       );
       s.poly(
         [
-          [TERRAIN_CX + 8, TERRAIN_CY - 2],
-          [TERRAIN_CX + 18, TERRAIN_CY - 6],
-          [TERRAIN_CX + 22, TERRAIN_CY],
-          [TERRAIN_CX + 12, TERRAIN_CY + 3]
+          [CX + 8, CY - 2],
+          [CX + 18, CY - 6],
+          [CX + 22, CY],
+          [CX + 12, CY + 3]
         ],
         t.cliffMid
       );
       if (t.glow) {
-        sparkle(s, TERRAIN_CX - 14, TERRAIN_CY + 1, t.glow);
-        tpx(s, TERRAIN_CX + 20, TERRAIN_CY - 3, t.glow);
+        sparkle(s, CX - 14, CY + 1, t.glow);
+        tpx(s, CX + 20, CY - 3, t.glow);
       }
       break;
     }
@@ -682,11 +706,11 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [-6, 8, -1],
         [14, -6, 1]
       ]) {
-        ripple(s, TERRAIN_CX + ox, TERRAIN_CY + oy, 16, t.accent, dir);
+        ripple(s, CX + ox, CY + oy, 16, t.accent, dir);
       }
-      cluster(s, TERRAIN_CX - 10, TERRAIN_CY - 6, 3, 3, t.accentLo, t.accent, seed + 7, 0.2);
-      cluster(s, TERRAIN_CX + 16, TERRAIN_CY + 6, 3, 4, t.accentLo, t.accent, seed + 8, 0.2);
-      if (t.glow) sparkle(s, TERRAIN_CX + 4, TERRAIN_CY - 2, t.glow);
+      cluster(s, CX - 10, CY - 6, 3, 3, t.accentLo, t.accent, seed + 7, 0.2);
+      cluster(s, CX + 16, CY + 6, 3, 4, t.accentLo, t.accent, seed + 8, 0.2);
+      if (t.glow) sparkle(s, CX + 4, CY - 2, t.glow);
       break;
     }
 
@@ -694,20 +718,20 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
       // A holy sigil in the middle, with starlight around it.
       s.poly(
         [
-          [TERRAIN_CX, TERRAIN_CY - 9],
-          [TERRAIN_CX + 7, TERRAIN_CY],
-          [TERRAIN_CX, TERRAIN_CY + 9],
-          [TERRAIN_CX - 7, TERRAIN_CY]
+          [CX, CY - 9],
+          [CX + 7, CY],
+          [CX, CY + 9],
+          [CX - 7, CY]
         ],
         t.accentLo,
         0.9
       );
       s.poly(
         [
-          [TERRAIN_CX, TERRAIN_CY - 5],
-          [TERRAIN_CX + 4, TERRAIN_CY],
-          [TERRAIN_CX, TERRAIN_CY + 5],
-          [TERRAIN_CX - 4, TERRAIN_CY]
+          [CX, CY - 5],
+          [CX + 4, CY],
+          [CX, CY + 5],
+          [CX - 4, CY]
         ],
         t.hi
       );
@@ -718,7 +742,7 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [16, -8],
         [-4, -12]
       ]) {
-        sparkle(s, TERRAIN_CX + ox, TERRAIN_CY + oy, t.accent);
+        sparkle(s, CX + ox, CY + oy, t.accent);
       }
       break;
     }
@@ -731,7 +755,7 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [22, -6],
         [-6, -8]
       ]) {
-        cluster(s, TERRAIN_CX + ox, TERRAIN_CY + oy, 4, 3, t.accent, t.hi, seed + ox, 0.28);
+        cluster(s, CX + ox, CY + oy, 4, 3, t.accent, t.hi, seed + ox, 0.28);
       }
       if (t.glow) {
         for (const [ox, oy] of [
@@ -739,8 +763,8 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
           [4, -4],
           [26, 2]
         ]) {
-          s.glowDisc(TERRAIN_CX + ox, TERRAIN_CY + oy, 4, 3.5, t.glow, glowStrength * 0.55);
-          tpx(s, TERRAIN_CX + ox, TERRAIN_CY + oy, '#ffffff');
+          s.glowDisc(CX + ox, CY + oy, 4, 3.5, t.glow, glowStrength * 0.55);
+          tpx(s, CX + ox, CY + oy, '#ffffff');
         }
       }
       break;
@@ -753,8 +777,8 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [2, -4, 14],
         [20, 6, 8]
       ]) {
-        const x = TERRAIN_CX + ox;
-        const y = TERRAIN_CY + oy;
+        const x = CX + ox;
+        const y = CY + oy;
         for (let i = 0; i <= h; i++) {
           const w = Math.max(0, Math.round((h - i) * 0.28));
           for (let dx = -w; dx <= w; dx++) tpx(s, x + dx, y - i, dx < 0 ? t.accent : t.accentLo);
@@ -769,17 +793,17 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
       // Flagstones: two seams each way, following the iso axes so the paving is square in world
       // space rather than on screen.
       for (const step of [-8, 10]) {
-        for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x++) {
+        for (let x = CX - TERRAIN_HW; x <= CX + TERRAIN_HW; x++) {
           tpx(s, x, edgeNW(x) + 14 + step, t.cliffFoot, 0.5);
         }
       }
-      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x += 16) {
-        for (let y = TERRAIN_CY - TERRAIN_HH; y <= TERRAIN_CY + TERRAIN_HH; y++) {
+      for (let x = CX - TERRAIN_HW; x <= CX + TERRAIN_HW; x += 16) {
+        for (let y = CY - TERRAIN_HH; y <= CY + TERRAIN_HH; y++) {
           if (!onTile(x, y)) continue;
           s.px(x, y, t.cliffFoot, 0.4);
         }
       }
-      cluster(s, TERRAIN_CX - 6, TERRAIN_CY + 8, 4, 2, t.cliffMid, t.accent, seed + 9, 0.3);
+      cluster(s, CX - 6, CY + 8, 4, 2, t.cliffMid, t.accent, seed + 9, 0.3);
       break;
     }
 
@@ -789,8 +813,8 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [-20, 2],
         [12, -2]
       ]) {
-        const x = TERRAIN_CX + ox;
-        const y = TERRAIN_CY + oy;
+        const x = CX + ox;
+        const y = CY + oy;
         s.poly(
           [
             [x - 8, y],
@@ -816,22 +840,22 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         tpx(s, x, y - 3, t.accent);
         tpx(s, x, y + 3, t.cliffFoot);
       }
-      if (t.glow) s.glowDisc(TERRAIN_CX - 20, TERRAIN_CY + 2, 6, 4, t.glow, glowStrength * 0.25);
+      if (t.glow) s.glowDisc(CX - 20, CY + 2, 6, 4, t.glow, glowStrength * 0.25);
       break;
     }
 
     case 'waterfall_forest': {
       // A stream crossing the tile, with riffles and dew.
-      for (let x = TERRAIN_CX - TERRAIN_HW; x <= TERRAIN_CX + TERRAIN_HW; x++) {
+      for (let x = CX - TERRAIN_HW; x <= CX + TERRAIN_HW; x++) {
         const y = edgeNW(x) + 22;
         if (!onTile(x, y)) continue;
         s.px(x, y, t.accent, 0.55);
         s.px(x, y + 1, t.accentLo, 0.4);
       }
-      ripple(s, TERRAIN_CX - 24, TERRAIN_CY - 2, 16, t.glow ?? t.accent, 1);
-      ripple(s, TERRAIN_CX + 4, TERRAIN_CY + 6, 14, t.hi, -1);
-      cluster(s, TERRAIN_CX - 30, TERRAIN_CY + 8, 3, 2, t.accentLo, t.accent, seed + 10, 0.2);
-      sparkle(s, TERRAIN_CX + 2, TERRAIN_CY - 8, t.hi);
+      ripple(s, CX - 24, CY - 2, 16, t.glow ?? t.accent, 1);
+      ripple(s, CX + 4, CY + 6, 14, t.hi, -1);
+      cluster(s, CX - 30, CY + 8, 3, 2, t.accentLo, t.accent, seed + 10, 0.2);
+      sparkle(s, CX + 2, CY - 8, t.hi);
       break;
     }
 
@@ -845,40 +869,40 @@ function drawSurface(s: IsoSurface, biome: BiomeType, t: TerrainTones, night: bo
         [26, -8],
         [-2, 2]
       ]) {
-        const x = TERRAIN_CX + ox;
-        const y = TERRAIN_CY + oy;
+        const x = CX + ox;
+        const y = CY + oy;
         tpx(s, x, y, t.accent);
         tpx(s, x + 1, y, t.accentLo);
         tpx(s, x, y - 1, t.glow ?? t.hi);
       }
-      ripple(s, TERRAIN_CX - 20, TERRAIN_CY + 12, 18, t.cliffMid, 1);
+      ripple(s, CX - 20, CY + 12, 18, t.cliffMid, 1);
       break;
     }
 
     case 'abyss':
     default: {
       // Arcane rune veins through obsidian. The sigil is what makes the Void tile unmistakable.
-      isoLine(s, TERRAIN_CX - 26, TERRAIN_CY + 4, TERRAIN_CX - 8, TERRAIN_CY - 4, t.cliffMid);
-      isoLine(s, TERRAIN_CX - 8, TERRAIN_CY - 4, TERRAIN_CX + 10, TERRAIN_CY + 5, t.cliffMid);
-      isoLine(s, TERRAIN_CX + 10, TERRAIN_CY + 5, TERRAIN_CX + 26, TERRAIN_CY - 3, t.cliffDark);
+      isoLine(s, CX - 26, CY + 4, CX - 8, CY - 4, t.cliffMid);
+      isoLine(s, CX - 8, CY - 4, CX + 10, CY + 5, t.cliffMid);
+      isoLine(s, CX + 10, CY + 5, CX + 26, CY - 3, t.cliffDark);
       s.poly(
         [
-          [TERRAIN_CX, TERRAIN_CY - 7],
-          [TERRAIN_CX + 6, TERRAIN_CY],
-          [TERRAIN_CX, TERRAIN_CY + 7],
-          [TERRAIN_CX - 6, TERRAIN_CY]
+          [CX, CY - 7],
+          [CX + 6, CY],
+          [CX, CY + 7],
+          [CX - 6, CY]
         ],
         t.glow ?? t.accent,
         0.55
       );
-      tpx(s, TERRAIN_CX, TERRAIN_CY, '#f3e8ff');
+      tpx(s, CX, CY, '#f3e8ff');
       for (const [ox, oy] of [
         [-16, -6],
         [18, 6],
         [-4, 10]
       ]) {
-        s.glowDisc(TERRAIN_CX + ox, TERRAIN_CY + oy, 4, 3, t.glow ?? t.accent, glowStrength * 0.5);
-        tpx(s, TERRAIN_CX + ox, TERRAIN_CY + oy, t.glow ?? t.accent);
+        s.glowDisc(CX + ox, CY + oy, 4, 3, t.glow ?? t.accent, glowStrength * 0.5);
+        tpx(s, CX + ox, CY + oy, t.glow ?? t.accent);
       }
       break;
     }
@@ -892,6 +916,20 @@ export interface TerrainPaintOptions {
   /** Draw the two exposed cliff faces. False for a tile hemmed in by neighbours. */
   cliffs?: boolean;
   night?: boolean;
+  /**
+   * Which detail layout to scatter, 0..TERRAIN_VARIANTS-1. The renderer derives it from the
+   * tile's grid position so neighbouring tiles differ; painting a whole biome with variant 0 is
+   * what produced the stamped-pattern look.
+   */
+  variant?: number;
+  /**
+   * Paint the biome's surface detail. Defaults to true.
+   *
+   * False gives the bare ground - body tone, speckle and the grid contour - which is what the
+   * speckle's own tests measure. They cannot measure it through the detail on top: a grass tuft
+   * sitting on four speckle pixels looks exactly like a speckle that moved.
+   */
+  detail?: boolean;
 }
 
 /** Every biome the painter understands, in board order. */
@@ -924,15 +962,17 @@ export function resolveBiome(biome: string): BiomeType {
  * `seed` varies the weathering and the surface scatter; the renderer always passes 0 so a tile
  * looks the same wherever it appears, and the exporter passes 0 too so the PNG matches.
  */
-export function paintTerrainTile(biome: string, options: TerrainPaintOptions = {}, seed = 0): IsoSurface {
+export function paintTerrainTile(biome: string, options: TerrainPaintOptions = {}): IsoSurface {
   const kind = resolveBiome(biome);
   const night = options.night === true;
   const t = tonesFor(terrainPalette(kind, night));
   const s = new IsoSurface(TERRAIN_SPRITE_W, TERRAIN_SPRITE_H);
+  const v = Math.abs(Math.floor(options.variant ?? 0)) % TERRAIN_VARIANTS;
+  const [dx, dy, seed] = DETAIL_OFFSETS[v];
 
   if (options.cliffs) drawCliffs(s, t, seed);
-  drawTopFace(s, t, seed);
-  drawSurface(s, kind, t, night, seed);
+  drawTopFace(s, t);
+  if (options.detail !== false) drawSurface(s, kind, t, night, seed, dx, dy);
   drawContour(s, t);
   return s;
 }

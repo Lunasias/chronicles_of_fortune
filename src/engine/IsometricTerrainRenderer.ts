@@ -18,7 +18,8 @@ export class IsometricTerrainRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
 
   public getTileSprite(biome: string, options: TerrainPaintOptions = {}): HTMLCanvasElement {
-    const key = `${biome}_${options.cliffs ? 'c' : 'f'}_${options.night ? 'n' : 'd'}`;
+    const variant = options.variant ?? 0;
+    const key = `${biome}_${options.cliffs ? 'c' : 'f'}_${options.night ? 'n' : 'd'}_v${variant}`;
     const cached = this.cache.get(key);
     if (cached) return cached;
 
