@@ -43,12 +43,22 @@ because the encoding hazard below is worth a worked example.
 | --- | --- |
 | `apply_pixel_ui_style.cjs` | Replaces the old glass chrome block in the inline `<style>` in `index.html` with the pixel-UI system. Refuses to write if the file already contains C1 control characters. |
 | `strip_glass_ui.cjs` | Sweeps the modern-glass utility tokens out of the markup and onto the pixel components. Dry-run by default; `--write` applies. Scoped to class-bearing strings, because a whole-file replace also hits prose — bare `transition` and `shadow` are real Tailwind utilities *and* ordinary English words. |
+| `pixelise_fx.cjs` | Replaces full-circle `ctx.arc`/`ctx.ellipse` pipelines with `PixelFx` primitives and deletes every `shadowBlur`. Dry-run by default. The forward scan picks up a following `stroke()` as well as a `fill()`, because every node seal is both filled and outlined. |
+| `pixelise_backdrops.cjs` | Rewrites the exact `createLinearGradient(0,0,0,h)` + full-rect fill shape into `pixelVerticalRamp`, keeping the authored stops. Covers the eleven battle arenas, the shop interior and the town view. |
 
 > ⚠️ **PowerShell `Get-Content | Set-Content` will destroy every non-ASCII character in a file.**
 > `index.html` and several UI sources contain Thai text; that pipeline re-encodes them, the build
-> still succeeds, and the UI comes out full of mojibake. Both scripts above are written in Node
-> for exactly this reason. A repo-wide scan for C1 control characters (U+0080–U+009F) is a quick
-> way to confirm nothing has been mangled.
+> still succeeds, and the UI comes out full of mojibake. Every script above is written in Node for
+> exactly this reason. A repo-wide scan for C1 control characters (U+0080–U+009F) is a quick way to
+> confirm nothing has been mangled.
+
+### Effects and overlays
+
+`src/engine/PixelFx.ts` holds the hard-edged primitives the board overlays, the combat VFX and the
+canvas UI scenes draw with: `pixelDisc`, `pixelEllipse`, `pixelRing`, `pixelGlow`, `pixelVignette`,
+`pixelStroke`, `pixelSpark`, `pixelBlock`, `pixelVerticalRamp` and `pixelRadialGlow`. They take a
+context and draw immediately rather than returning buffers, because effects are per-frame and
+short-lived. Reach for `pixelBlock` first: most effects are boxes.
 
 ### Companion model technique
 
