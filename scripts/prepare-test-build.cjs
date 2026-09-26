@@ -52,4 +52,31 @@ let visited = 0;
   }
 })(BUILD_DIR);
 
-console.log(`prepare-test-build: ${visited} files scanned, ${rewritten} import specifiers resolved`);
+// Node's ESM loader requires an import attribute for JSON modules, which tsc does not emit
+// (Vite resolves JSON imports natively, so only this test build needs the attribute).
+let jsonAttributes = 0;
+(function addJsonImportAttributes(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      addJsonImportAttributes(full);
+      continue;
+    }
+    if (!entry.name.endsWith('.js')) continue;
+
+    const before = fs.readFileSync(full, 'utf8');
+    const after = before.replace(
+      /(\bfrom\s*['"])(\.\.?\/[^'"]+\.json)(['"])(?!\s*with\b)/g,
+      (match, prefix, specifier, quote) => {
+        jsonAttributes++;
+        return `${prefix}${specifier}${quote} with { type: 'json' }`;
+      }
+    );
+    if (after !== before) fs.writeFileSync(full, after, 'utf8');
+  }
+})(BUILD_DIR);
+
+console.log(
+  `prepare-test-build: ${visited} files scanned, ${rewritten} import specifiers resolved, ` +
+    `${jsonAttributes} JSON import attributes added`
+);

@@ -1,4 +1,5 @@
 import { Player, CompanionData } from './Player';
+import { createCompanion } from './CompanionDatabase';
 import { BoardNode } from './BoardMap';
 
 export interface FantasyChoice {
@@ -1094,18 +1095,7 @@ export class FantasyEventManager {
           subtext: 'รับเจ้าหญิงมังกรเป็นคู่หู สู้ด้วยกัน และพักที่บ้านคุณ',
           icon: '💖',
           resolve: (player) => {
-            const companion: CompanionData = {
-              id: 'ignis',
-              name: 'เจ้าหญิงมังกร อิกนิส',
-              title: 'Dragon Princess Ignis',
-              avatar: '🐉🔥',
-              role: 'striker',
-              skillName: 'เพลิงมังกรเทวะ (Draconic Flare)',
-              skillDesc: 'พ่นลำแสงเพลิงมังกรทำลายล้าง สร้างดาเมจมหาศาล!',
-              affinity: 100,
-              dialogue: 'หึ! เจ้าต้องดูแลข้าดีๆ นะ ไม่งั้นข้าจะเผาเจ้าซะ!',
-              color: '#f43f5e'
-            };
+            const companion: CompanionData = createCompanion('ignis');
             player.companion = companion;
             const homeNote = player.homeNodeId !== null
               ? 'เธอได้ย้ายเข้าไปพักอาศัยที่บ้านพักส่วนตัวของคุณแล้ว!'
@@ -2742,19 +2732,7 @@ export class FantasyEventManager {
               };
             }
             player.gold -= 180;
-            player.companion = {
-              id: 'comp_hired_mia',
-              name: 'สาวหูแมวนักล่า มิอา',
-              title: 'มือสังหารกิลด์รับจ้าง',
-              avatar: '🐱🗡️',
-              role: 'striker',
-              skillName: 'Lupine Cat Claw Rush',
-              skillDesc: 'พุ่งกระโจนข่วนศัตรูต่อเนื่องด้วยกรงเล็บลมกรด!',
-              affinity: 100,
-              dialogue: 'สัญญาสามเทิร์นนี้ เหมียวจะปกป้องเจ้านายด้วยชีวิตเลยเมี๊ยว!',
-              color: '#10b981',
-              contractTurnsRemaining: 3
-            };
+            player.companion = createCompanion('mia', { contractTurnsRemaining: 3 });
             return {
               outcomeTitle: 'เซ็นสัญญาว่าจ้างมิอาสำเร็จ!',
               outcomeText: 'สาวหูแมว มิอา กระโดดกอดแขนคุณอย่างสนิทสนม! เธอจะร่วมทัพช่วยต่อสู้เป็นเวลา 3 เทิร์นเต็มนับจากนี้!',
@@ -2779,19 +2757,7 @@ export class FantasyEventManager {
               };
             }
             player.gold -= 220;
-            player.companion = {
-              id: 'comp_hired_sylphira',
-              name: 'เจ้าหญิงเอลฟ์ ซิลฟิรา',
-              title: 'มหาจอมเวทพฤกษาแห่งป่าน้ำตก',
-              avatar: '🧝‍♀️✨',
-              role: 'mage',
-              skillName: 'Emerald Waterfall Deluge',
-              skillDesc: 'อัญเชิญสายน้ำตกมรกตชำระล้างศัตรูและฟื้นฟูเลือด!',
-              affinity: 100,
-              dialogue: 'สายลมและผืนป่าจะคอยปกปักรักษาท่านตลอดการเดินทางนี้',
-              color: '#38bdf8',
-              contractTurnsRemaining: 3
-            };
+            player.companion = createCompanion('sylphira', { contractTurnsRemaining: 3 });
             return {
               outcomeTitle: 'เซ็นสัญญาว่าจ้างซิลฟิราสำเร็จ!',
               outcomeText: 'เจ้าหญิงเอลฟ์ ซิลฟิรา โบกคทาประกายแสงมรกต เธอจะร่วมทัพช่วยต่อสู้และคุ้มครองคุณเป็นเวลา 3 เทิร์นเต็ม!',

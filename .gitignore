@@ -10,6 +10,9 @@ dist-ssr/
 # Compiled output for `npm test`
 .test-build/
 
+# Review sheet emitted by `node scripts/generate_companion_sprites.cjs --contact-sheet`
+.companion-sheet.png
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

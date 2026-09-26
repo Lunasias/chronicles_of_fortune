@@ -465,7 +465,7 @@ export class InspectUI {
   // 3. MOVE TARGET SELECTION: MONSTER ENCOUNTER & STAT PREVIEW TOOLTIP
   // =========================================================================
   showMoveDestinationPreview(node: BoardNode, activePlayer: Player, screenX: number, screenY: number, steps?: number, maxRoll?: number) {
-    const preview = getNodeEncounterPreview(node);
+    const preview = getNodeEncounterPreview(node, activePlayer);
     const m = preview.featuredMonster;
 
     let statComparisonHtml = '';

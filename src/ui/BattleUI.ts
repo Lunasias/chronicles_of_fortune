@@ -7,6 +7,9 @@ import { combatVFX } from '../engine/CombatVFXEngine';
 import { BoardNode } from '../game/BoardMap';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
+import { companionSprites } from '../engine/CompanionSpriteRenderer';
+import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
+import type { CompanionData } from '../game/Player';
 
 export class BattleUI {
   private game: GameState;
@@ -34,6 +37,57 @@ export class BattleUI {
    */
   private sceneryLayers = new Map<string, { canvas: HTMLCanvasElement; key: string; at: number }>();
   private static readonly SCENERY_REFRESH_MS = 100;
+
+  /**
+   * Companion currently materialised on the battlefield. The summon is a timed appearance
+   * rather than a permanent combatant, so it is drawn as an overlay with its own fade.
+   */
+  private activeSummon: {
+    companion: CompanionData;
+    x: number;
+    y: number;
+    startedAt: number;
+    duration: number;
+  } | null = null;
+
+  private drawActiveSummon(ctx: CanvasRenderingContext2D, now: number) {
+    const summon = this.activeSummon;
+    if (!summon) return;
+
+    const elapsed = now - summon.startedAt;
+    if (elapsed >= summon.duration) {
+      this.activeSummon = null;
+      return;
+    }
+
+    const sprite = companionSprites.getCompanionSprite(summon.companion);
+    if (!sprite) return;
+
+    // Fade in quickly, hold, then fade out over the final third.
+    const fadeIn = Math.min(1, elapsed / 220);
+    const fadeOut = Math.min(1, (summon.duration - elapsed) / 420);
+    const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
+    const rise = Math.round((1 - fadeIn) * 14);
+    const scale = 1.5 + (1 - fadeIn) * 0.25;
+
+    const w = COMPANION_SPRITE_SIZE * scale;
+    const h = COMPANION_SPRITE_SIZE * scale;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+
+    // Ground glow under the companion so it reads as standing on the dais
+    ctx.fillStyle = summon.companion.color || '#ec4899';
+    ctx.globalAlpha = alpha * 0.25;
+    ctx.beginPath();
+    ctx.ellipse(summon.x, summon.y + h * 0.30, w * 0.34, h * 0.13, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sprite, summon.x - w / 2, summon.y - h * 0.62 - rise, w, h);
+    ctx.restore();
+  }
 
   private getSceneryLayer(
     name: string,
@@ -233,6 +287,8 @@ export class BattleUI {
     this.isScoutOpen = false;
     this.companionUsedThisBattle = false;
     this.playerSkillUsedThisBattle = false;
+    // Never carry a summon over from a previous battle.
+    this.activeSummon = null;
 
     // Switch to battle chiptune theme
     if (enemy.isBoss) {
@@ -360,8 +416,16 @@ export class BattleUI {
     if (activeP && activeP.companion && !this.companionUsedThisBattle) {
       if (btnSummonAtk) {
         btnSummonAtk.classList.remove('hidden');
+        // Show the companion's 64x64 model; fall back to the emoji only if the file has not
+        // loaded yet, so the button is never blank.
+        const spriteEl = document.getElementById('battleCompanionSprite') as HTMLCanvasElement | null;
+        const painted = spriteEl ? companionSprites.paintInto(spriteEl, activeP.companion) : false;
         const iconEl = document.getElementById('battleCompanionIcon');
-        if (iconEl) iconEl.innerText = activeP.companion.avatar;
+        if (iconEl) {
+          iconEl.innerText = activeP.companion.avatar;
+          iconEl.classList.toggle('hidden', painted);
+        }
+        spriteEl?.classList.toggle('hidden', !painted);
         const nameEl = document.getElementById('battleCompanionName');
         if (nameEl) nameEl.innerText = activeP.companion.name.split(' ')[0] || 'คู่หู';
         const skillEl = document.getElementById('battleCompanionSkill');
@@ -401,6 +465,8 @@ export class BattleUI {
     const enemyY = arenaCY - 25;
 
     const companion = player.companion;
+    // Materialise the companion's 64x64 model on the battlefield for the length of the summon.
+    this.activeSummon = { companion, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
 
     // Spawn magical companion warp portal
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, companion.color || '#ec4899');
@@ -452,6 +518,7 @@ export class BattleUI {
 
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, comp.color || '#ec4899');
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${comp.name}!`, 'crit');
+    this.activeSummon = { companion: comp, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
 
     // Heal player
     const healAmt = Math.max(25, Math.floor(playerC.maxHp * 0.35));
@@ -1280,6 +1347,9 @@ export class BattleUI {
       drawEnemy();
       drawHero();
     }
+
+    // 6. COMPANION MODEL (drawn with the combatants, under the VFX that accompany it)
+    this.drawActiveSummon(ctx, now);
 
     // -----------------------------------------------------------------------
     // 6. RENDER COMBAT VFX (Arcs, Runic Circles, Craters, Skill Cutscenes)

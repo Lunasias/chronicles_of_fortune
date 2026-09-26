@@ -26,8 +26,11 @@ import { InspectUI } from './ui/InspectUI';
 import { HomeUI } from './ui/HomeUI';
 import { FantasyEventUI } from './ui/FantasyEventUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
+import { scaleMonster, tierForNode } from './game/BalanceSystem';
+import type { ThreatTier } from './game/BalanceSystem';
 import { SaveManager } from './game/SaveManager';
 import { escapeHtml } from './util/Html';
+import { companionKeyForDefeatedMonster, createCompanion, getCompanionProfile } from './game/CompanionDatabase';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -182,7 +185,7 @@ class DokaponApp {
         }
 
         // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
-        const preview = getNodeEncounterPreview(clickedNode);
+        const preview = getNodeEncounterPreview(clickedNode, this.game.activePlayer);
         if (
           preview.featuredMonster &&
           (clickedNode.townData?.isOccupiedByMonster || clickedNode.type === 'boss') &&
@@ -1159,185 +1162,9 @@ class DokaponApp {
     const recruitChance = 0.28 + Math.min(0.25, winner.getTotalStat('luk') * 0.015);
     if (Math.random() > recruitChance) return;
 
-    interface RosterGirl {
-      name: string;
-      avatar: string;
-      bonusDesc: string;
-      color: string;
-      skillName: string;
-    }
-
-    const roster: Record<string, RosterGirl> = {
-      'Forest Goblin Marauder': {
-        name: 'ก็อบลินสาวขี้อ้อน ก็อบลี่ (Goblin Lass Gobby)',
-        avatar: '👺💚',
-        bonusDesc: '+6 ATK, ช่วยขโมยทอง 20G ในการรบ',
-        color: '#22c55e',
-        skillName: 'Goblin Gold Steal'
-      },
-      'Briar Kobold': {
-        name: 'โคโบลด์สาวน้อยหูตูบ ลูลู่ (Kobold Pup Lulu)',
-        avatar: '🐶✨',
-        bonusDesc: '+6 DEF, ขุดแร่หายากเพิ่มโชค LUK +5',
-        color: '#f59e0b',
-        skillName: 'Kobold Digging Barrier'
-      },
-      'Royal Slime Bloblet': {
-        name: 'สไลม์สาวใสบริสุทธิ์ พุดดิ้ง (Slime Girl Pudding)',
-        avatar: '💧💙',
-        bonusDesc: '+30 Max HP, ฟื้นฟูเลือดอัตโนมัติ',
-        color: '#38bdf8',
-        skillName: 'Gelatin Shield Blast'
-      },
-      'Meadow Wolf': {
-        name: 'บีสต์เกิร์ลหมาป่าทุ่งหญ้า ซิลวา (Meadow Wolf Silva)',
-        avatar: '🐺🍃',
-        bonusDesc: '+8 SPD, กระโจนกัดคู่ศัตรู',
-        color: '#84cc16',
-        skillName: 'Wolf Pack Pounce'
-      },
-      'Shadow Panther': {
-        name: 'สาวเสือดำรัตติกาล ชาโดว์ (Shadow Panther Shadow)',
-        avatar: '🐆🖤',
-        bonusDesc: '+8 ATK, +6 SPD, การโจมตีติดคริติคอลบ่อยขึ้น',
-        color: '#6366f1',
-        skillName: 'Night Ambush'
-      },
-      'Frost Skeleton Soldier': {
-        name: 'อัศวินสาววิญญาณเยือกแข็ง เอลซ่า (Frost Ghost Elsa)',
-        avatar: '❄️🤍',
-        bonusDesc: '+8 DEF, +6 MAG, เกราะน้ำแข็งดูดซับดาเมจ',
-        color: '#a5f3fc',
-        skillName: 'Frost Glaze Armor'
-      },
-      'Glacial Yeti Scout': {
-        name: 'เยติสาวขนนุ่ม ยูกิโกะ (Fluffy Yeti Yukiko)',
-        avatar: '❄️🐾',
-        bonusDesc: '+10 DEF, มอบความอบอุ่นต้านทานหนาว',
-        color: '#e0f2fe',
-        skillName: 'Snowstorm Hug'
-      },
-      'Ice Wyrmling': {
-        name: 'เจ้าหญิงมังกรน้ำแข็ง เกลเซีย (Ice Drake Glacia)',
-        avatar: '🐉❄️',
-        bonusDesc: '+9 MAG, พ่นไอเย็นแช่แข็งศัตรู',
-        color: '#06b6d4',
-        skillName: 'Glacial Breath'
-      },
-      'Dune Bandit Raider': {
-        name: 'สาวนักดาบทราย ซาฟิรา (Sand Dune Safira)',
-        avatar: '💃🗡️',
-        bonusDesc: '+8 ATK, +6 LUK, โบนัสทองคำหลังชนะศึก',
-        color: '#f97316',
-        skillName: 'Mirage Strike'
-      },
-      'Sandstone Mummy': {
-        name: 'ฟาโรห์สาวมัมมี่มนตรา เนเฟอร์ติติ (Mummy Queen Nefertiti)',
-        avatar: '🏺✨',
-        bonusDesc: '+10 MAG, ปลดปล่อยคำสาปโบราณ',
-        color: '#eab308',
-        skillName: 'Pharaoh Sand Curse'
-      },
-      'Brimstone Fire Imp': {
-        name: 'อิมป์สาวน้อยไฟลุก ฟิซซี่ (Brimstone Imp Fizzy)',
-        avatar: '🔥😈',
-        bonusDesc: '+8 MAG, เผาผลาญศัตรูต่อเนื่อง',
-        color: '#ef4444',
-        skillName: 'Hellfire Spark'
-      },
-      'Magma Scorpion': {
-        name: 'สาวแมงป่องหางเพลิง เซลิน่า (Magma Stinger Selina)',
-        avatar: '🦂🔥',
-        bonusDesc: '+7 ATK, +7 DEF, พิษลาวาเข้มข้น',
-        color: '#dc2626',
-        skillName: 'Molten Stinger'
-      },
-      'Obsidian Automaton': {
-        name: 'เมดจักรกลศิลาดำ แอนเดรีย (Obsidian Maid Andrea)',
-        avatar: '⚙️🖤',
-        bonusDesc: '+12 DEF, สร้างบาเรียหินดำดูดซับความเสียหาย',
-        color: '#475569',
-        skillName: 'Obsidian Barrier'
-      },
-      'Steampunk Automaton Princess Alice': {
-        name: 'เจ้าหญิงจักรกล อลิซ (Automaton Princess Alice)',
-        avatar: '⚙️👗',
-        bonusDesc: '+10 DEF, +6 MAG, คลื่นกระแทกไอน้ำ',
-        color: '#f59e0b',
-        skillName: 'Clockwork Overdrive'
-      },
-      'Steam Gear Gunner Victoria': {
-        name: 'มือปืนสาวสตรีมพังก์ วิกตอเรีย (Gunner Victoria)',
-        avatar: '🔫🎩',
-        bonusDesc: '+10 ATK, +8 SPD, ระดมยิงปืนกลสนับสนุน',
-        color: '#0ea5e9',
-        skillName: 'Gatling Suppressive Fire'
-      },
-      'Clockwork Maid Nicole': {
-        name: 'เมดสาวไขลาน นิโคล (Clockwork Nicole)',
-        avatar: '⏱️🎀',
-        bonusDesc: '+8 DEF, +8 SPD, เสิร์ฟชาฟื้นฟู HP/MP ทุกเทิร์น',
-        color: '#ec4899',
-        skillName: 'Earl Grey Restoration'
-      },
-      'Kitsune Shrine Maiden Chiyo': {
-        name: 'มิโกะจิ้งจอกเก้าหาง จิโยะ (Nine-Tailed Kitsune Chiyo)',
-        avatar: '🦊⛩️',
-        bonusDesc: '+10 MAG, +8 LUK, ปัดเป่าคำสาปและบัฟโชคลาภ',
-        color: '#f43f5e',
-        skillName: 'Nine Fox Spirit Fire'
-      },
-      'Sakura Blossom Tengu Ayame': {
-        name: 'เทนงูสาวขนนกซากุระ อายาเมะ (Sakura Tengu Ayame)',
-        avatar: '🌸🪶',
-        bonusDesc: '+10 SPD, +6 ATK, พัดสายลมคมกริบ',
-        color: '#f472b6',
-        skillName: 'Cherry Blossom Gale'
-      },
-      'Dryad Nymph Alura': {
-        name: 'นิมฟ์พฤกษา อาลูร่า (Dryad Nymph Alura)',
-        avatar: '🌿🌸',
-        bonusDesc: '+8 MAG, +35 HP, เถาวัลย์พันธนาการศัตรู',
-        color: '#10b981',
-        skillName: 'Nature Embrace'
-      },
-      'Abyssal Siren': {
-        name: 'ไซเรนสาวห้วงอเวจี เมโลดี้ (Abyss Siren Melody)',
-        avatar: '🧜‍♀️💜',
-        bonusDesc: '+11 MAG, ร้องเพลงสะกดจิตลดพลังศัตรู',
-        color: '#a855f7',
-        skillName: 'Siren Abyssal Lullaby'
-      },
-      'Chaos Slime': {
-        name: 'เคออสสไลม์สาวมืด โคลอี้ (Chaos Slime Chloe)',
-        avatar: '💜🫧',
-        bonusDesc: '+35 Max HP, หลบหลีกการโจมตีทางกายภาพ',
-        color: '#8b5cf6',
-        skillName: 'Void Fluid Split'
-      },
-      'Bandit Chief Garak': {
-        name: 'จอมโจรสาวโรบินฮู้ด การาเกะ (Banditess Gara)',
-        avatar: '🗡️🏴‍☠️',
-        bonusDesc: '+8 ATK, +8 SPD, เพิ่มทองที่ได้รับ 30%',
-        color: '#eab308',
-        skillName: 'Shadow Prowl Loot'
-      },
-      'Dragon Princess Ignis': {
-        name: 'เจ้าหญิงมังกรเพลิงบรรพกาล อิกนิส (Dragon Princess Ignis)',
-        avatar: '🐉🔥',
-        bonusDesc: '+15 ATK, +15 MAG, พ่นเปลวเพลิงมังกรบรรพกาลล้างผลาญ',
-        color: '#ef4444',
-        skillName: 'Ancient Dragon Flare'
-      }
-    };
-
-    const girl = roster[defeatedName] || {
-      name: `สาวน้อยอสูร ${defeatedName}`,
-      avatar: '🐾💖',
-      bonusDesc: '+6 All Stats, คุ้มกันภัยทุกการเดินทาง',
-      color: '#ec4899',
-      skillName: 'Beast Instinct'
-    };
+    // The companion roster lives in companions.json so that every entry also has a 64x64
+    // model generated from the same data (see scripts/generate_companion_sprites.cjs).
+    const profile = getCompanionProfile(companionKeyForDefeatedMonster(defeatedName));
 
     const hadMercenary = winner.companion && winner.companion.contractTurnsRemaining !== undefined;
     if (winner.companion && !hadMercenary) {
@@ -1348,23 +1175,11 @@ class DokaponApp {
       return;
     }
 
-    winner.companion = {
-      id: `comp_${Date.now()}`,
-      name: girl.name,
-      title: 'Monster Girl Companion',
-      avatar: girl.avatar,
-      role: 'striker',
-      skillName: girl.skillName,
-      skillDesc: girl.bonusDesc,
-      affinity: 50,
-      dialogue: 'ข้าจะติดตามและร่วมสู้เคียงบ่าเคียงไหล่กับท่านไปตลอดกาลค่ะ!',
-      bonusDesc: girl.bonusDesc,
-      color: girl.color
-    };
+    winner.companion = createCompanion(profile.key);
 
     audio.fanfare();
     this.game.addLog(
-      `💖 โชคชะตาผูกพัน! หลังพ่ายแพ้ ${defeatedName} ประทับใจในเสน่ห์และความกล้าหาญของคุณ! ขอร่วมเดินทางเคียงข้างเป็นคู่หูถาวร! [${girl.name}] (${girl.bonusDesc})!`,
+      `💖 โชคชะตาผูกพัน! หลังพ่ายแพ้ ${defeatedName} ประทับใจในเสน่ห์และความกล้าหาญของคุณ! ขอร่วมเดินทางเคียงข้างเป็นคู่หูถาวร! [${profile.name}] (${profile.skillDesc})!`,
       'level'
     );
   }
@@ -1373,18 +1188,28 @@ class DokaponApp {
     const data = townNode.townData!;
     this.game.addLog(`⚔️ ${townNode.name} ถูกยึดครองโดย ${data.monsterName}! ต่อสู้เพื่อปลดปล่อยเมือง!`, 'battle');
 
-    const monsterCombatant: Combatant = {
-      name: data.monsterName,
-      hp: data.monsterHp,
-      maxHp: data.monsterMaxHp || data.monsterHp,
-      mp: 30,
-      maxMp: 30,
-      atk: data.monsterAtk,
-      def: data.monsterDef,
-      mag: 8,
-      spd: 8,
-      luk: 6
-    };
+    // The town monster is scaled to the hero that is actually attacking, so a town can no
+    // longer be cleared with a single hit once the hero has levelled up.
+    const authoredMaxHp = data.monsterMaxHp || data.monsterHp;
+    const remainingRatio = Math.max(0.05, Math.min(1, data.monsterHp / authoredMaxHp));
+    const monsterCombatant: Combatant = scaleMonster(
+      {
+        name: data.monsterName,
+        tier: tierForNode(townNode.realmId, townNode.biome),
+        baseHp: authoredMaxHp,
+        baseAtk: data.monsterAtk,
+        baseDef: data.monsterDef,
+        baseMag: Math.round(data.monsterAtk * 0.7),
+        baseSpd: Math.round(data.monsterDef * 1.1),
+        baseLuk: 6,
+        mp: 30,
+        skillName: 'Oppressive Strike'
+      },
+      this.game.activePlayer
+    );
+    // Keep the "whoever lands the last hit takes the town" mechanic working across a
+    // scaled fight by carrying the already-inflicted damage over as a ratio.
+    monsterCombatant.hp = Math.max(1, Math.round(monsterCombatant.maxHp * remainingRatio));
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1397,9 +1222,11 @@ class DokaponApp {
         isekaiEventManager.onGameAction(winner.playerRef, 'town');
         this.checkPostCombatCompanionRecruitment(winner.playerRef, data.monsterName);
       } else {
-        // Monster survived! Persist remaining HP for last-hit opportunity
-        data.monsterHp = Math.max(1, Math.ceil(winner.hp));
-        this.game.addLog(`💀 โอกาสลาสช็อต! ${data.monsterName} รอดตายโดยเหลือ ${data.monsterHp}/${monsterCombatant.maxHp} HP! ใครๆ ก็ขโมยคิลได้!`, 'battle');
+        // Monster survived! Persist the remaining HP back onto the authored scale so the
+        // stored value stays a stable reference for the next, differently-levelled attacker.
+        const survivedRatio = monsterCombatant.maxHp > 0 ? winner.hp / monsterCombatant.maxHp : 0;
+        data.monsterHp = Math.max(1, Math.round(authoredMaxHp * survivedRatio));
+        this.game.addLog(`💀 โอกาสลาสช็อต! ${data.monsterName} รอดตายโดยเหลือ ${data.monsterHp}/${authoredMaxHp} HP! ใครๆ ก็ขโมยคิลได้!`, 'battle');
 
         if (loser.playerRef) {
           if (loser.hp <= 0) {
@@ -1421,18 +1248,21 @@ class DokaponApp {
   }
 
   private initiateTownRobberyBattle(townNode: BoardNode) {
-    const guardCombatant: Combatant = {
-      name: 'Town Captain',
-      hp: 95,
-      maxHp: 95,
-      mp: 20,
-      maxMp: 20,
-      atk: 18,
-      def: 13,
-      mag: 5,
-      spd: 9,
-      luk: 7
-    };
+    const guardCombatant: Combatant = scaleMonster(
+      {
+        name: 'Town Captain',
+        tier: tierForNode(townNode.realmId, townNode.biome),
+        baseHp: 95,
+        baseAtk: 18,
+        baseDef: 13,
+        baseMag: 5,
+        baseSpd: 9,
+        baseLuk: 7,
+        mp: 20,
+        skillName: 'Garrison Counterattack'
+      },
+      this.game.activePlayer
+    );
 
     this.battleUI.startBattle(guardCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1459,7 +1289,7 @@ class DokaponApp {
     const pickedName = roster[Math.floor(Math.random() * roster.length)];
 
     // Progressive Tier-Based Monster Difficulty Curve
-    let tier = 1;
+    let tier: ThreatTier = 1;
     const rId = tile.realmId;
     const biome = tile.biome || '';
 
@@ -1499,18 +1329,23 @@ class DokaponApp {
       spd = 24 + Math.floor(Math.random() * 8);
     }
 
-    const monsterCombatant: Combatant = {
-      name: pickedName,
-      hp: hp,
-      maxHp: hp,
-      mp: 20 + tier * 10,
-      maxMp: 20 + tier * 10,
-      atk: atk,
-      def: def,
-      mag: mag,
-      spd: spd,
-      luk: 5 + tier * 2
-    };
+    // Authored level-1 reference stats per tier. scaleMonster() grows them with the hero that
+    // walks into the encounter, so a tier-1 monster stays a short skirmish at any level
+    // instead of folding to a single hit, while a tier-4 monster stays lethal.
+    const monsterCombatant: Combatant = scaleMonster(
+      {
+        name: pickedName,
+        tier: tier as ThreatTier,
+        baseHp: hp,
+        baseAtk: atk,
+        baseDef: def,
+        baseMag: mag,
+        baseSpd: spd,
+        baseLuk: 5 + tier * 2,
+        mp: 20 + tier * 10
+      },
+      this.game.activePlayer
+    );
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1540,18 +1375,21 @@ class DokaponApp {
   }
 
   private initiateFishCombat(monsterName: string) {
-    const krakenCombatant: Combatant = {
-      name: monsterName,
-      hp: 115,
-      maxHp: 115,
-      mp: 40,
-      maxMp: 40,
-      atk: 17,
-      def: 11,
-      mag: 12,
-      spd: 10,
-      luk: 6
-    };
+    const krakenCombatant: Combatant = scaleMonster(
+      {
+        name: monsterName,
+        tier: 2,
+        baseHp: 115,
+        baseAtk: 17,
+        baseDef: 11,
+        baseMag: 12,
+        baseSpd: 10,
+        baseLuk: 6,
+        mp: 40,
+        skillName: 'Tidal Crush'
+      },
+      this.game.activePlayer
+    );
 
     this.battleUI.startBattle(krakenCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1570,18 +1408,21 @@ class DokaponApp {
   }
 
   private initiateBanditCombat() {
-    const banditCombatant: Combatant = {
-      name: 'Bandit Chief Garak',
-      hp: 125,
-      maxHp: 125,
-      mp: 30,
-      maxMp: 30,
-      atk: 19,
-      def: 12,
-      mag: 8,
-      spd: 12,
-      luk: 8
-    };
+    const banditCombatant: Combatant = scaleMonster(
+      {
+        name: 'Bandit Chief Garak',
+        tier: 3,
+        baseHp: 125,
+        baseAtk: 19,
+        baseDef: 12,
+        baseMag: 8,
+        baseSpd: 12,
+        baseLuk: 8,
+        mp: 30,
+        skillName: 'Ambush Volley'
+      },
+      this.game.activePlayer
+    );
 
     this.battleUI.startBattle(banditCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1601,21 +1442,29 @@ class DokaponApp {
   }
 
   private initiateBossBattle() {
-    this.game.addLog(`⚠️ มังกรโบราณผู้ยิ่งใหญ่จุติลงมา! การต่อสู้แห่งตำนาน! (HP: ${this.bossCurrentHp}/${this.bossMaxHp})`, 'battle');
+    // The boss scales with the challenger like every other monster, but the damage already
+    // inflicted is carried over as a ratio so the "last hit takes the glory" rule survives.
+    const authoredMaxHp = this.bossMaxHp;
+    const remainingRatio = Math.max(0.05, Math.min(1, this.bossCurrentHp / authoredMaxHp));
+    const bossCombatant: Combatant = scaleMonster(
+      {
+        name: 'Dragon Princess Ignis',
+        tier: 6,
+        isBoss: true,
+        baseHp: authoredMaxHp,
+        baseAtk: 65,
+        baseDef: 38,
+        baseMag: 48,
+        baseSpd: 22,
+        baseLuk: 15,
+        mp: 150,
+        skillName: 'Ancient Dragon Flare'
+      },
+      this.game.activePlayer
+    );
+    bossCombatant.hp = Math.max(1, Math.round(bossCombatant.maxHp * remainingRatio));
 
-    const bossCombatant: Combatant = {
-      name: 'Dragon Princess Ignis',
-      hp: this.bossCurrentHp,
-      maxHp: this.bossMaxHp,
-      mp: 150,
-      maxMp: 150,
-      atk: 65,
-      def: 38,
-      mag: 48,
-      spd: 22,
-      luk: 15,
-      isBoss: true
-    };
+    this.game.addLog(`⚠️ มังกรโบราณผู้ยิ่งใหญ่จุติลงมา! การต่อสู้แห่งตำนาน! (HP: ${bossCombatant.hp}/${bossCombatant.maxHp})`, 'battle');
 
     this.battleUI.startBattle(bossCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -1626,9 +1475,10 @@ class DokaponApp {
         this.game.phase = 'VICTORY';
         this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon Princess Ignis');
       } else {
-        // Dragon survived! Persist remaining boss HP
-        this.bossCurrentHp = Math.max(1, Math.ceil(winner.hp));
-        this.game.addLog(`🐉 Dragon Princess Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${this.bossMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากได้!`, 'battle');
+        // Dragon survived! Persist the remaining HP back onto the authored scale.
+        const survivedRatio = bossCombatant.maxHp > 0 ? winner.hp / bossCombatant.maxHp : 0;
+        this.bossCurrentHp = Math.max(1, Math.round(authoredMaxHp * survivedRatio));
+        this.game.addLog(`🐉 Dragon Princess Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${authoredMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากได้!`, 'battle');
         if (loser.playerRef) {
           const lostGold = Math.floor(loser.playerRef.gold * 0.40);
           loser.playerRef.gold -= lostGold;

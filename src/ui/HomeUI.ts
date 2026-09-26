@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { Player } from '../game/Player';
 import { BoardNode } from '../game/BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
+import { companionSprites } from '../engine/CompanionSpriteRenderer';
 
 export class HomeUI {
   private game: GameState;
@@ -100,7 +101,14 @@ export class HomeUI {
       const companionBox = document.getElementById('homeCompanionBox')!;
       if (player.companion) {
         companionBox.classList.remove('hidden');
-        document.getElementById('homeCompanionAvatar')!.innerText = player.companion.avatar;
+        // Show the companion's 64x64 model; the emoji is only a fallback for the moment
+        // before the file has finished loading.
+        const spriteEl = document.getElementById('homeCompanionSprite') as HTMLCanvasElement | null;
+        const painted = spriteEl ? companionSprites.paintInto(spriteEl, player.companion) : false;
+        const avatarEl = document.getElementById('homeCompanionAvatar')!;
+        avatarEl.innerText = player.companion.avatar;
+        avatarEl.classList.toggle('hidden', painted);
+        spriteEl?.classList.toggle('hidden', !painted);
         document.getElementById('homeCompanionName')!.innerText = player.companion.name;
         document.getElementById('homeCompanionDesc')!.innerText = player.companion.skillDesc;
         document.getElementById('homeCompanionSpeech')!.innerText = `"${player.companion.dialogue}"`;

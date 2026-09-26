@@ -1,4 +1,6 @@
 import { BoardNode } from './BoardMap';
+import { Player } from './Player';
+import { judgeThreat, scaleMonster, tierForNode } from './BalanceSystem';
 
 export interface MonsterProfile {
   name: string;
@@ -692,7 +694,7 @@ export const REALM_MONSTER_ROSTERS: Record<string, MonsterProfile[]> = {
   ]
 };
 
-export function getNodeEncounterPreview(node: BoardNode): {
+export interface NodeEncounterPreview {
   typeLabel: string;
   encounterChancePercent: number;
   threatLevel: 'SAFE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'BOSS';
@@ -700,7 +702,77 @@ export function getNodeEncounterPreview(node: BoardNode): {
   threatDescription: string;
   featuredMonster?: MonsterProfile;
   roster: MonsterProfile[];
-} {
+}
+
+/**
+ * Builds the encounter information for a node, scaled to the hero that is looking at it.
+ *
+ * The authored monster stats are the level-1 reference; the monster a hero actually fights is
+ * produced by `scaleMonster`, so the numbers shown while scouting must come from the same
+ * place or the tooltip would promise a fight that does not happen.
+ */
+export function getNodeEncounterPreview(node: BoardNode, player?: Player | null): NodeEncounterPreview {
+  const preview = buildNodeEncounterPreview(node);
+  if (!player || preview.roster.length === 0) return preview;
+
+  const isBossNode = node.type === 'boss' || node.type === 'dark_gate';
+  const tier = tierForNode(node.realmId, node.biome, isBossNode);
+
+  const scaleProfile = (monster: MonsterProfile): MonsterProfile => {
+    const scaled = scaleMonster(
+      {
+        name: monster.name,
+        tier,
+        isBoss: isBossNode,
+        baseHp: monster.maxHp || monster.hp,
+        baseAtk: monster.atk,
+        baseDef: monster.def,
+        baseMag: monster.mag,
+        baseSpd: monster.spd,
+        baseLuk: monster.luk,
+        mp: monster.mp
+      },
+      player
+    );
+    return {
+      ...monster,
+      hp: scaled.hp,
+      maxHp: scaled.maxHp,
+      mp: scaled.mp,
+      maxMp: scaled.maxMp,
+      atk: scaled.atk,
+      def: scaled.def,
+      mag: scaled.mag,
+      spd: scaled.spd,
+      luk: scaled.luk
+    };
+  };
+
+  const roster = preview.roster.map(scaleProfile);
+  const featuredMonster = preview.featuredMonster ? scaleProfile(preview.featuredMonster) : undefined;
+
+  if (!featuredMonster) return { ...preview, roster };
+
+  // Replace the hand-written threat label with one derived from the scaled fight, so a
+  // "HIGH" warning cannot sit next to numbers that are actually trivial.
+  const threat = judgeThreat(featuredMonster, player);
+  return {
+    ...preview,
+    roster,
+    featuredMonster,
+    threatColor: threat.color,
+    threatDescription: threat.description,
+    threatLevel: isBossNode
+      ? 'BOSS'
+      : threat.verdict === 'DEADLY' || threat.verdict === 'HARD'
+        ? 'HIGH'
+        : threat.verdict === 'FAIR'
+          ? 'MEDIUM'
+          : 'LOW'
+  };
+}
+
+function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
   const realmKey = node.realmId || 'solaria';
   const roster = REALM_MONSTER_ROSTERS[node.biome || ''] || REALM_MONSTER_ROSTERS[realmKey] || REALM_MONSTER_ROSTERS.solaria;
 

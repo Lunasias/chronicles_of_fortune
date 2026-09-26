@@ -38,6 +38,20 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
 ### 3. 🗺️ The World
 A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
 
+### 4. 💖 Companions
+**26 recruitable companions**, each with its own **64×64 pixel-art model**, drawn from the
+monster girls you spare in battle, the guild's hired mercenaries, and story events. A
+companion can be summoned once per battle for a powerful assist, and the emergency assist
+can save a hero from a killing blow. Every companion's model is generated from a single
+data file, so adding one is a JSON entry plus `npm run gen:companions`.
+
+### 5. ⚖️ Scaling Enemies
+Monster stats are authored as the balance point for a **level-1 hero** and then scaled at
+battle time to whoever is actually attacking. A tier-1 encounter stays a short skirmish and
+a tier-4 encounter stays lethal, whether the hero is level 1 or level 30 — no more
+one-shotting a region you have out-levelled, and no more walking into a fight you cannot
+lose. The scouting tooltip reports the fight it will actually be, in rounds.
+
 ---
 
 ## 🚀 Getting Started
@@ -71,8 +85,9 @@ npm run preview
 | `npm run dev` | Vite dev server with HMR |
 | `npm run typecheck` | Strict TypeScript check, no emit |
 | `npm run build` | Type check + production bundle (incl. compiled Tailwind CSS) |
-| `npm test` | Unit tests for board-data integrity and HTML escaping |
+| `npm test` | Unit tests for board-data integrity, HTML escaping, save/load, enemy scaling and companion models |
 | `npm run check:css` | Verifies every utility class used by the app is in the compiled stylesheet |
+| `npm run gen:companions` | Regenerates the 64×64 companion models from `src/game/companions.json` |
 | `npm run verify` | Everything CI runs: typecheck → build → test → CSS coverage |
 
 **Always run `npm run verify` before pushing.** CI runs the same command.
@@ -115,6 +130,14 @@ tests/      node:test suites (compiled from src by npm run pretest)
   rewrite tracked source - they are dry-run by default and require `--write`.
 - Hero names and prank nicknames are user input. Escape them with `escapeHtml()` from
   `src/util/Html.ts` (or use `textContent`) before putting them in `innerHTML`.
+- `src/game/companions.json` is the single source of truth for companions: names, skill text
+  and the art recipe for the 64×64 model. `CompanionDatabase.ts` reads it at runtime and
+  `scripts/generate_companion_sprites.cjs` reads it to draw the PNGs, so a companion cannot
+  exist without a model. `npm test` enforces that.
+- Enemy stats authored in `BoardMap` and the encounter tables are the **level-1 reference**,
+  not the numbers a hero fights. `src/game/BalanceSystem.ts` scales them to the actual
+  attacker; always build a `Combatant` through `scaleMonster()` so the fight matches what the
+  scouting tooltip promised.
 
 ---
 

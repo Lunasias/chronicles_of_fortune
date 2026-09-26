@@ -688,7 +688,8 @@
         </button>
         <!-- Companion Summon Assistant -->
         <button id="btnCmdSummonCompanion" class="hidden command-card pixel-btn-pink p-1.5 sm:p-2 flex flex-col items-center justify-center text-white border-2 border-pink-400 min-h-[50px] sm:min-h-[64px] touch-manipulation">
-          <span class="text-lg sm:text-xl mb-0.5" id="battleCompanionIcon">💖🐉</span>
+          <canvas id="battleCompanionSprite" width="64" height="64" class="image-pixelated w-8 h-8 sm:w-9 sm:h-9 mb-0.5"></canvas>
+          <span class="text-lg sm:text-xl mb-0.5 hidden" id="battleCompanionIcon">💖🐉</span>
           <span class="text-[11px] sm:text-xs font-bold truncate max-w-full" id="battleCompanionName">เรียกคู่หู</span>
           <span class="text-[8px] text-pink-200" id="battleCompanionSkill">โจมตีประสาน</span>
         </button>
@@ -1531,7 +1532,8 @@
 
         <!-- Companion Living at Home -->
         <div id="homeCompanionBox" class="hidden pixel-box-pink p-3 text-left flex items-start gap-3 my-1">
-          <span id="homeCompanionAvatar" class="text-3xl">🐉💖</span>
+          <canvas id="homeCompanionSprite" width="64" height="64" class="image-pixelated w-12 h-12 shrink-0"></canvas>
+          <span id="homeCompanionAvatar" class="text-3xl hidden">🐉💖</span>
           <div class="flex-1">
             <div class="text-xs font-bold text-pink-300 flex items-center gap-1.5">
               <span id="homeCompanionName">เจ้าหญิงมังกร อิกนิส</span>

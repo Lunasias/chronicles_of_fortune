@@ -181,6 +181,8 @@ export interface GuildQuest {
 
 export interface CompanionData {
   id: string;
+  /** Key into companions.json, which resolves the 64x64 model. Stable across saves. */
+  spriteKey?: string;
   name: string;
   title: string;
   avatar: string;

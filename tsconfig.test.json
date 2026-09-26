@@ -9,7 +9,9 @@
     "allowImportingTsExtensions": false
   },
   "include": [
+    "src/game/BalanceSystem.ts",
     "src/game/BoardMap.ts",
+    "src/game/CompanionDatabase.ts",
     "src/game/GameState.ts",
     "src/game/SaveManager.ts",
     "src/util/Html.ts"
