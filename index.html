@@ -942,6 +942,20 @@
         </div>
       </div>
     </div>
+
+    <!-- PASS & PLAY PRIVACY SHIELD FOR 2-PLAYER LOCAL DUELS -->
+    <div id="battlePrivacyShield" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex flex-col items-center justify-center p-4 text-center">
+      <div class="pixel-box-gold max-w-sm w-full p-4 flex flex-col items-center">
+        <div class="text-3xl mb-2">🛡️🙈</div>
+        <h3 id="privacyShieldRoleTitle" class="text-sm font-bold text-amber-300 mb-1">ม่านบังหน้าจอ (PASS & PLAY)</h3>
+        <p id="privacyShieldPlayerText" class="text-xs text-slate-300 mb-4 leading-relaxed">
+          ถึงตาของผู้เล่น โปรดรับอุปกรณ์และคลิกเพื่อเลือกคำสั่งลับ!
+        </p>
+        <button id="btnPrivacyShieldReady" class="pixel-btn pixel-btn-gold px-4 py-2 text-xs font-bold touch-manipulation">
+          👁️ พร้อมแล้ว (เปิดคำสั่งลับ)
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- PVP VICTORY SPOILS & HUMILIATION / PRANK MODAL (z-40) -->
@@ -1670,6 +1684,26 @@
           <option value="boss">ปราบจอมมังกร</option>
           <option value="gold">สะสมทอง 3,000 ก่อน</option>
         </select>
+      </div>
+
+      <!-- GAME MODE & HOUSE RULES (Track 4: Blitz Mode & House Rules) -->
+      <div class="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
+        <span class="font-bold">โหมดเกม:</span>
+        <div class="flex gap-2">
+          <button id="btnModeStandard" class="game-mode-btn pixel-btn pixel-btn-gold px-2.5 py-1 text-xs text-slate-950 font-bold" data-mode="standard">
+            Standard (มาตรฐาน)
+          </button>
+          <button id="btnModeBlitz" class="game-mode-btn pixel-btn px-2.5 py-1 text-xs text-amber-300" data-mode="blitz">
+            ⚡ Blitz (20 วันตัดสิน)
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-300 pt-1">
+        <span>กฎพิเศษ (House Rules):</span>
+        <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-purple-300">
+          <input type="checkbox" id="checkAllowDarkling" checked class="cursor-pointer">
+          <span>อนุญาตการกลายร่างเป็น Darkling</span>
+        </label>
       </div>
 
       <div class="flex justify-between items-center pt-2">

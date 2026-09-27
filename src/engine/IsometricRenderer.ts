@@ -1450,6 +1450,20 @@ export class IsometricRenderer {
         pixelDisc(ctx, p.x, p.y, p.size * 0.8, ctx.fillStyle);
         ctx.fill();
       });
+    } else if (weather === 'blood_moon') {
+      // Crimson embers & blood moon mist
+      this.particles.forEach((p, idx) => {
+        p.x += Math.sin(time * 0.002 + idx) * 0.9;
+        p.y -= p.vy * 0.5 + 0.3;
+        if (p.y < -1600) p.y = 1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = idx % 2 === 0 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(185, 28, 28, 0.65)';
+        ctx.beginPath();
+        pixelDisc(ctx, p.x, p.y, p.size * 1.1, ctx.fillStyle);
+        ctx.fill();
+      });
     } else {
       // Clear Skies / Sunny: Gentle golden pollen / leaf motes
       this.particles.forEach(p => {

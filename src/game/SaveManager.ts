@@ -46,6 +46,10 @@ export interface SerializedPlayer {
   inventory: any[];
   fieldSpells: string[];
   rustTurns: number;
+  poisonTurns?: number;
+  freezeTurns?: number;
+  blindTurns?: number;
+  curseTurns?: number;
   foodBuff: any;
   activeGuildQuest: any;
   guildRank: string;
@@ -151,7 +155,12 @@ export class SaveManager {
           facing: p.facing, activeSpinnerMultiplier: p.activeSpinnerMultiplier,
           equipment: JSON.parse(JSON.stringify(p.equipment)),
           inventory: JSON.parse(JSON.stringify(p.inventory)),
-          fieldSpells: [...p.fieldSpells], rustTurns: p.rustTurns,
+          fieldSpells: [...p.fieldSpells],
+          rustTurns: p.rustTurns,
+          poisonTurns: p.poisonTurns,
+          freezeTurns: p.freezeTurns,
+          blindTurns: p.blindTurns,
+          curseTurns: p.curseTurns,
           foodBuff: p.foodBuff ? JSON.parse(JSON.stringify(p.foodBuff)) : null,
           activeGuildQuest: p.activeGuildQuest ? JSON.parse(JSON.stringify(p.activeGuildQuest)) : null,
           guildRank: p.guildRank, completedQuestsCount: p.completedQuestsCount,
@@ -274,6 +283,10 @@ export class SaveManager {
         p.inventory = Array.isArray(sp.inventory) ? sp.inventory : [];
         p.fieldSpells = Array.isArray(sp.fieldSpells) ? sp.fieldSpells : [];
         p.rustTurns = Math.max(0, numOr(sp.rustTurns, 0));
+        p.poisonTurns = Math.max(0, numOr(sp.poisonTurns, 0));
+        p.freezeTurns = Math.max(0, numOr(sp.freezeTurns, 0));
+        p.blindTurns = Math.max(0, numOr(sp.blindTurns, 0));
+        p.curseTurns = Math.max(0, numOr(sp.curseTurns, 0));
         p.foodBuff = sp.foodBuff || null;
         p.activeGuildQuest = sp.activeGuildQuest || null;
         p.guildRank = (sp.guildRank as any) || 'F';

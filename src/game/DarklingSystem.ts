@@ -1,6 +1,7 @@
 import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
+import { royalDecreeSystem } from './RoyalDecreeSystem';
 
 export class DarklingSystem {
   // Check if player qualifies for Darkling transformation
@@ -41,6 +42,17 @@ export class DarklingSystem {
 
     // Transform into The Darkling
     darklingPlayer.becomeDarkling();
+
+    // Grant apocalyptic Darkling spells
+    darklingPlayer.fieldSpells = ['dark_calamity', 'dark_plague', 'swap'];
+
+    // Issue Royal Wanted Bounty for Darkling hunter rewards
+    royalDecreeSystem.issueWantedBounty(
+      darklingPlayer,
+      3000,
+      'กลายร่างเป็น Darkling ผู้ทำลายล้างอาณาจักร! สังหารเพื่อรับค่าหัวหลวง!'
+    );
+
     audio.darklingRoar();
     audio.playBgm('darkling');
   }

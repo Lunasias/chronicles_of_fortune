@@ -35,6 +35,11 @@ export interface RoundResult {
   isCritical?: boolean;
   isFleeSuccess?: boolean;
   narration: string;
+  isMiss?: boolean;
+  vampiricHeal?: number;
+  burnDamage?: number;
+  goldStolen?: number;
+  curseInflicted?: boolean;
 }
 
 
@@ -206,6 +211,11 @@ export class BattleEngine {
 
   // Resolve Dokapon Rock-Paper-Scissors Mindgame
   resolveRound(atkAction: AttackerAction, defAction: DefenderAction): RoundResult {
+    const rawResult = this.executeRoundLogic(atkAction, defAction);
+    return this.applyPassivesAndSynergies(rawResult);
+  }
+
+  private executeRoundLogic(atkAction: AttackerAction, defAction: DefenderAction): RoundResult {
     let damageToDefender = 0;
     let damageToAttacker = 0;
     let isCounterSuccess = false;
@@ -219,6 +229,24 @@ export class BattleEngine {
 
     const a = this.attacker;
     const d = this.defender;
+
+    // Blindness Accuracy Check
+    if (a.playerRef && a.playerRef.blindTurns > 0 && atkAction !== 'skill' && Math.random() < 0.40) {
+      audio.miss();
+      narration = `👁️ ${a.name} ติดสถานะตาบอด (Blind)! การโจมตีพลาดเป้าอย่างสิ้นเชิง! (0 ดาเมจ)`;
+      return {
+        attackerAction: atkAction,
+        defenderAction: defAction,
+        damageToDefender: 0,
+        damageToAttacker: 0,
+        isCounterSuccess,
+        isStrikeSuccess,
+        isMagicBlocked,
+        isGiveUp,
+        isDodged: true,
+        narration
+      };
+    }
 
     // 1. Give Up / Flee Mechanism
     if (defAction === 'give_up') {
@@ -610,5 +638,66 @@ export class BattleEngine {
       isCritical: isCrit,
       narration
     };
+  }
+
+  private applyPassivesAndSynergies(result: RoundResult): RoundResult {
+    const a = this.attacker;
+    const d = this.defender;
+
+    // Guardian companion passive on defender
+    if (d.playerRef && d.playerRef.companion && d.playerRef.companion.role === 'guardian' && result.damageToDefender > 0) {
+      const reduced = Math.round(result.damageToDefender * 0.88);
+      const diff = result.damageToDefender - reduced;
+      result.damageToDefender = reduced;
+      d.hp = Math.min(d.maxHp, d.hp + diff);
+      result.narration += ` 🛡️ [คู่หูผู้พิทักษ์ลดทอน ${diff}]`;
+    }
+
+    // Striker companion passive on attacker
+    if (a.playerRef && a.playerRef.companion && a.playerRef.companion.role === 'striker' && result.damageToDefender > 0) {
+      const bonus = Math.round(result.damageToDefender * 0.12);
+      result.damageToDefender += bonus;
+      d.hp = Math.max(0, d.hp - bonus);
+      result.narration += ` ⚔️ [คู่หูจู่โจมโบนัส +${bonus}]`;
+    }
+
+    // Weapon & Equipment Passives
+    if (a.playerRef && result.damageToDefender > 0) {
+      const passives = a.playerRef.getActivePassives();
+      if (passives.includes('vampiric')) {
+        const heal = Math.round(result.damageToDefender * 0.20);
+        a.hp = Math.min(a.maxHp, a.hp + heal);
+        result.narration += ` 🩸 [ดูดเลือด +${heal} HP]`;
+      }
+      if (passives.includes('burn')) {
+        const burnDmg = Math.round(result.damageToDefender * 0.15);
+        d.hp = Math.max(0, d.hp - burnDmg);
+        result.damageToDefender += burnDmg;
+        result.narration += ` 🔥 [เพลิงแผดเผา +${burnDmg}]`;
+      }
+      if (passives.includes('gold_steal') && d.playerRef) {
+        const stolen = Math.min(120, Math.max(10, Math.round(d.playerRef.gold * 0.08)));
+        d.playerRef.gold -= stolen;
+        a.playerRef.gold += stolen;
+        result.narration += ` 💰 [ขโมยทอง +${stolen}G]`;
+      }
+      if (passives.includes('curse_strike') && d.playerRef && Math.random() < 0.40) {
+        d.playerRef.curseTurns = 4;
+        result.narration += ` 💀 [ติดคำสาปมรณะ!]`;
+      }
+    }
+
+    // Counter boost shield passive on defender
+    if (d.playerRef && result.isCounterSuccess && result.damageToAttacker > 0) {
+      const passives = d.playerRef.getActivePassives();
+      if (passives.includes('counter_boost')) {
+        const extraCounter = Math.round(result.damageToAttacker * 0.30);
+        result.damageToAttacker += extraCounter;
+        a.hp = Math.max(0, a.hp - extraCounter);
+        result.narration += ` 🪞 [โล่สะท้อน +${extraCounter}]`;
+      }
+    }
+
+    return result;
   }
 }

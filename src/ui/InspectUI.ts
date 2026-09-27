@@ -98,6 +98,49 @@ export class InspectUI {
     const bonusSpd = totalSpd - player.spd;
     const bonusLuk = totalLuk - player.luk;
 
+    const ailments = player.getStatusAilments();
+    const ailmentsHtml = ailments.length > 0
+      ? `<div class="mb-3 p-2 bg-rose-950/80 border border-rose-700 text-rose-200 text-xs flex flex-wrap gap-2 items-center">
+          <span class="font-bold text-rose-400">⚠️ สถานะผิดปกติ:</span>
+          ${ailments.map(a => `<span class="bg-rose-900/90 px-1.5 py-0.5 border border-rose-500 font-bold">${a.icon} ${a.name} (${a.turns}T)</span>`).join('')}
+        </div>`
+      : '';
+
+    const passives = player.getActivePassives();
+    const hasHoly = player.hasSetBonus('holy_set');
+    const passivesHtml = (passives.length > 0 || hasHoly)
+      ? `<div class="mb-3 p-2 bg-amber-950/70 border border-amber-700 text-amber-200 text-xs flex flex-wrap gap-2 items-center">
+          <span class="font-bold text-amber-400">✨ พาสซีฟอุปกรณ์:</span>
+          ${passives.map(p => `<span class="bg-amber-900/80 px-1.5 py-0.5 border border-amber-600 font-bold">${p.toUpperCase()}</span>`).join('')}
+          ${hasHoly ? '<span class="bg-yellow-900/90 px-1.5 py-0.5 border border-yellow-400 text-yellow-300 font-bold">👑 HOLY SET BONUS (ฟื้น 8% HP)</span>' : ''}
+        </div>`
+      : '';
+
+    let companionHtml = '';
+    if (player.companion) {
+      const comp = player.companion;
+      const roleDescs: Record<string, string> = {
+        striker: '⚔️ Striker: เพิ่มดาเมจโจมตี 12%',
+        guardian: '🛡️ Guardian: ลดดาเมจที่ได้รับ 12%',
+        healer: '💖 Healer: ฟื้นฟู 5% HP ทุกเทิร์น',
+        mage: '🔮 Mage: ฟื้นฟู 5 MP ทุกเทิร์น',
+        slime: '🪙 Slime: โบนัสเหรียญทองเมือง +15%'
+      };
+      const roleText = roleDescs[comp.role || 'striker'] || '💖 คู่หูร่วมรบ';
+      companionHtml = `
+        <div class="mb-3 p-2.5 bg-pink-950/70 border border-pink-700 text-pink-200 text-xs flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">${comp.avatar || '💖'}</span>
+            <div>
+              <div class="font-bold text-pink-300">${comp.name} (${comp.title || 'คู่หู'})</div>
+              <div class="text-[10px] text-pink-100">${roleText}</div>
+            </div>
+          </div>
+          <span class="text-[10px] bg-pink-900/80 px-2 py-0.5 border border-pink-500 font-bold text-pink-200 uppercase">${comp.role || 'Companion'}</span>
+        </div>
+      `;
+    }
+
     this.inspectModal.innerHTML = `
       <div class="pixel-box-gold max-w-xl w-full p-5 relative flex flex-col max-h-[90vh] overflow-y-auto">
         <!-- Header -->
@@ -182,6 +225,10 @@ export class InspectUI {
             <span class="text-[8px] text-slate-500">เงิน + เมือง + อาวุธ</span>
           </div>
         </div>
+
+        ${ailmentsHtml}
+        ${passivesHtml}
+        ${companionHtml}
 
         ${player.canPromote() ? `
           <div class="pixel-box-gold p-3 mb-3 border-2 border-amber-400 bg-amber-950/70 flex items-center justify-between gap-2">

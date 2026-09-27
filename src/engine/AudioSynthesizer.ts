@@ -388,6 +388,12 @@ export class AudioSynthesizer {
     setTimeout(() => this.playTone(60, 'triangle', 0.22, 0.28), 30);
   }
 
+  miss() {
+    // Swoosh air miss
+    this.playTone(180, 'sawtooth', 0.08, 0.15);
+    setTimeout(() => this.playTone(120, 'sine', 0.1, 0.12), 40);
+  }
+
   giveUpDefeat() {
     // Descending sad defeat chord
     const notes = [392.0, 349.2, 311.1, 261.6];

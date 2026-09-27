@@ -261,6 +261,54 @@ export const FIELD_SPELLS: Record<string, FieldSpellData> = {
     desc: 'กัดกร่อนอาวุธและชุดเกราะ ลดพลัง ATK และ DEF ของเป้าหมาย 30% นาน 3 เทิร์น',
     requiresTarget: true
   },
+  poison_dart: {
+    id: 'poison_dart',
+    name: 'ลูกดอกพิษ (Poison Dart)',
+    icon: '☠️',
+    mpCost: 16,
+    desc: 'ยิงลูกดอกพิษร้ายแรงใส่เป้าหมาย ติดสถานะ Poison 4 เทิร์น เสียเลือดเรื่อย ๆ',
+    requiresTarget: true
+  },
+  frost_freeze: {
+    id: 'frost_freeze',
+    name: 'พายุเยือกแข็ง (Frost Freeze)',
+    icon: '❄️',
+    mpCost: 22,
+    desc: 'ร่ายพายุหิมะแช่แข็งเป้าหมาย ติดสถานะ Freeze 2 เทิร์น ทอยเต๋าได้แค่ 1 แต้ม!',
+    requiresTarget: true
+  },
+  flash_blind: {
+    id: 'flash_blind',
+    name: 'หมอกบอดตา (Flash Blind)',
+    icon: '👁️',
+    mpCost: 18,
+    desc: 'สาดแสงจ้าใส่เป้าหมาย ตาบอด 3 เทิร์น โจมตีพลาด 40% ในการต่อสู้',
+    requiresTarget: true
+  },
+  assassin_hit: {
+    id: 'assassin_hit',
+    name: 'สัญญาจ้างนักฆ่า (Assassin Contract)',
+    icon: '🥷',
+    mpCost: 35,
+    desc: 'ส่งมือสังหารรับจ้างบุกจู่โจมเป้าหมาย ชิงเงิน 35% และส่งกลับรักษาตัวที่บ้าน/ปราสาท!',
+    requiresTarget: true
+  },
+  dark_calamity: {
+    id: 'dark_calamity',
+    name: 'มหาภัยพิบัติแห่งความมืด (Demonic Calamity)',
+    icon: '☄️',
+    mpCost: 40,
+    desc: 'พลังเฉพาะจอมมาร! ทำลายปราการเมืองของคู่แข่ง 2 เมือง ปลดปล่อยมอนสเตอร์ยึดคืน!',
+    requiresTarget: false
+  },
+  dark_plague: {
+    id: 'dark_plague',
+    name: 'หมอกมรณะกลืนวิญญาณ (Plague Cloud)',
+    icon: '🌪️',
+    mpCost: 45,
+    desc: 'พลังเฉพาะจอมมาร! ปล่อยหมอกคำสาปและพิษร้ายแรงใส่คู่แข่งทุกคนบนกระดาน!',
+    requiresTarget: false
+  },
   holy_sanctuary: {
     id: 'holy_sanctuary',
     name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)',
@@ -310,7 +358,7 @@ export interface CompanionData {
   name: string;
   title: string;
   avatar: string;
-  role: 'striker' | 'healer' | 'guardian' | 'mage';
+  role: 'striker' | 'healer' | 'guardian' | 'mage' | 'slime';
   skillName: string;
   skillDesc: string;
   affinity: number;
@@ -415,6 +463,43 @@ export class Player {
   public inventory: EquipmentItem[] = [];
   public fieldSpells: string[] = [];
   public rustTurns: number = 0;
+  public poisonTurns: number = 0;
+  public freezeTurns: number = 0;
+  public blindTurns: number = 0;
+  public curseTurns: number = 0;
+
+  public getStatusAilments(): Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse'; name: string; icon: string; turns: number }> {
+    const list: Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse'; name: string; icon: string; turns: number }> = [];
+    if (this.rustTurns > 0) list.push({ type: 'rust', name: 'สนิมกัดกร่อน (Rust)', icon: '🛡️', turns: this.rustTurns });
+    if (this.poisonTurns > 0) list.push({ type: 'poison', name: 'พิษร้ายแรง (Poison)', icon: '☠️', turns: this.poisonTurns });
+    if (this.freezeTurns > 0) list.push({ type: 'freeze', name: 'แช่แข็ง (Freeze)', icon: '❄️', turns: this.freezeTurns });
+    if (this.blindTurns > 0) list.push({ type: 'blind', name: 'ตาบอด (Blind)', icon: '👁️', turns: this.blindTurns });
+    if (this.curseTurns > 0) list.push({ type: 'curse', name: 'คำสาปมรณะ (Doom Curse)', icon: '💀', turns: this.curseTurns });
+    return list;
+  }
+
+  public cleanseAilments(): void {
+    this.rustTurns = 0;
+    this.poisonTurns = 0;
+    this.freezeTurns = 0;
+    this.blindTurns = 0;
+    this.curseTurns = 0;
+  }
+
+  public hasSetBonus(setName: string): boolean {
+    const equipped = Object.values(this.equipment).filter(e => e && e.setName === setName);
+    return equipped.length >= 2;
+  }
+
+  public getActivePassives(): string[] {
+    const passives: string[] = [];
+    Object.values(this.equipment).forEach(eq => {
+      if (eq && eq.passive && !passives.includes(eq.passive)) {
+        passives.push(eq.passive);
+      }
+    });
+    return passives;
+  }
 
   // Active Food & Adventurer Guild Quest
   public foodBuff: FoodBuff | null = null;
@@ -709,15 +794,68 @@ export class Player {
       this.rustTurns--;
     }
 
+    let poisonDamage = 0;
+    if (this.poisonTurns > 0) {
+      this.poisonTurns--;
+      poisonDamage = Math.max(3, Math.round(this.maxHp * 0.06));
+      this.hp = Math.max(1, this.hp - poisonDamage);
+    }
+
+    if (this.freezeTurns > 0) this.freezeTurns--;
+    if (this.blindTurns > 0) this.blindTurns--;
+
+    let curseTriggered = false;
+    if (this.curseTurns > 0) {
+      this.curseTurns--;
+      if (this.curseTurns === 0) {
+        curseTriggered = true;
+        this.hp = 1;
+      }
+    }
+
+    let hpHealed = 0;
+    // Holy Set Bonus: 8% Max HP regen per turn
+    if (this.hasSetBonus('holy_set') && this.hp < this.maxHp) {
+      const heal = Math.round(this.maxHp * 0.08);
+      this.hp = Math.min(this.maxHp, this.hp + heal);
+      hpHealed += heal;
+    }
+
+    // Companion Healer Passive
+    if (this.companion && this.companion.role === 'healer' && this.hp < this.maxHp) {
+      const heal = Math.round(this.maxHp * 0.05);
+      this.hp = Math.min(this.maxHp, this.hp + heal);
+      hpHealed += heal;
+    }
+
+    let mpHealed = 0;
+    // Companion Mage Passive
+    if (this.companion && this.companion.role === 'mage' && this.mp < this.maxMp) {
+      const mana = 5;
+      this.mp = Math.min(this.maxMp, this.mp + mana);
+      mpHealed += mana;
+    }
+
     // Tick down mercenary companion contract (จำกัดสัญญา 3 เทิร์นจากกิลด์)
+    let companionDeparted: string | undefined = undefined;
     if (this.companion && this.companion.contractTurnsRemaining !== undefined) {
       this.companion.contractTurnsRemaining--;
       if (this.companion.contractTurnsRemaining <= 0) {
-        const departedName = this.companion.name;
+        companionDeparted = this.companion.name;
         this.companion = null;
-        return { companionDeparted: departedName };
       }
     }
-    return {};
+
+    return {
+      companionDeparted,
+      poisonDamage: poisonDamage > 0 ? poisonDamage : undefined,
+      curseTriggered: curseTriggered ? true : undefined,
+      hpHealed: hpHealed > 0 ? hpHealed : undefined,
+      mpHealed: mpHealed > 0 ? mpHealed : undefined
+    };
+  }
+
+  tickTurnEffects() {
+    return this.tickTurn();
   }
 }

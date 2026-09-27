@@ -26,23 +26,23 @@ export const SHOP_CATALOG: EquipmentItem[] = [
 
   // Weapons (Tiers 1–5: Progressive Scaled Costs)
   { id: 'wpn_broadsword', name: 'T1 ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 320, atk: 8, desc: 'คมดาบกล้าแกร่งเบื้องต้น (+8 ATK)', icon: '⚔️' },
-  { id: 'wpn_mithril_edge', name: 'T2 คมดาบมิธริล (Mithril Edge)', type: 'weapon', cost: 1200, atk: 15, spd: 3, desc: 'ดาบเบาและคมกริบ (+15 ATK, +3 SPD)', icon: '🗡️' },
-  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 4200, atk: 26, mag: 6, desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+26 ATK, +6 MAG)', icon: '🔥⚔️' },
-  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 12500, atk: 42, def: 10, mag: 10, desc: 'ดาบเทวะศักดิ์สิทธิ์ (+42 ATK, +10 DEF, +10 MAG)', icon: '🌟⚔️' },
-  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 32000, atk: 65, spd: 15, luk: 15, desc: 'ดาบโบราณสะท้านภพ (+65 ATK, +15 SPD, +15 LUK)', icon: '👑⚔️' },
+  { id: 'wpn_mithril_edge', name: 'T2 คมดาบมิธริล (Mithril Edge)', type: 'weapon', cost: 1200, atk: 15, spd: 3, passive: 'gold_steal', desc: 'ดาบเบาและคมกริบ (+15 ATK, +3 SPD) • ขโมยเงิน 8% เมื่อโจมตี', icon: '🗡️' },
+  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 4200, atk: 26, mag: 6, passive: 'burn', desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+26 ATK, +6 MAG) • เผาศัตรูเพิ่ม 15% ดาเมจ', icon: '🔥⚔️' },
+  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 12500, atk: 42, def: 10, mag: 10, passive: 'vampiric', setName: 'holy_set', desc: 'ดาบเทวะศักดิ์สิทธิ์ (+42 ATK, +10 DEF, +10 MAG) • ดูดเลือด 20% [เซ็ตศักดิ์สิทธิ์]', icon: '🌟⚔️' },
+  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 32000, atk: 65, spd: 15, luk: 15, passive: 'curse_strike', desc: 'ดาบโบราณสะท้านภพ (+65 ATK, +15 SPD, +15 LUK) • ติดคำสาปมรณะแก่ศัตรู', icon: '👑⚔️' },
 
   // Shields (Tiers 1–5: Progressive Scaled Costs)
   { id: 'shd_buckler', name: 'T1 โล่กลมไม้โอ๊ค (Round Buckler)', type: 'shield', cost: 260, def: 6, desc: 'โล่ป้องกันเบื้องต้น (+6 DEF)', icon: '🛡️' },
   { id: 'shd_knight', name: 'T2 โล่อัศวินเหล็กกล้า (Knight Shield)', type: 'shield', cost: 980, def: 14, atk: 3, desc: 'โล่ปะทะกระแทกศัตรู (+14 DEF, +3 ATK)', icon: '🛡️⚔️' },
   { id: 'shd_dragon_scale', name: 'T3 โล่เกล็ดมังกร (Dragon Shield)', type: 'shield', cost: 3600, def: 24, mag: 6, desc: 'เกล็ดมังกรต้านเพลิงและเวทมนตร์ (+24 DEF, +6 MAG)', icon: '🐉🛡️' },
-  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 10800, def: 38, mag: 12, luk: 8, desc: 'โล่เทวาพิทักษ์กาย (+38 DEF, +12 MAG, +8 LUK)', icon: '✨🛡️' },
-  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 28000, def: 55, mag: 18, spd: 8, desc: 'โล่กระจกสะท้อนเวทมนตร์ (+55 DEF, +18 MAG, +8 SPD)', icon: '🪞🛡️' },
+  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 10800, def: 38, mag: 12, luk: 8, passive: 'hp_regen', setName: 'holy_set', desc: 'โล่เทวาพิทักษ์กาย (+38 DEF, +12 MAG, +8 LUK) • [เซ็ตศักดิ์สิทธิ์: รีเจน HP]', icon: '✨🛡️' },
+  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 28000, def: 55, mag: 18, spd: 8, passive: 'counter_boost', desc: 'โล่กระจกสะท้อนเวทมนตร์ (+55 DEF, +18 MAG, +8 SPD) • สวนกลับแรงขึ้น 30%', icon: '🪞🛡️' },
 
   // Armor (Tiers 1–5: Progressive Scaled Costs)
   { id: 'arm_iron_cuirass', name: 'T1 เกราะอกเหล็กกล้า (Iron Cuirass)', type: 'armor', cost: 280, def: 8, desc: 'เกราะเหล็กเนื้อแน่น (+8 DEF)', icon: '🦺' },
   { id: 'arm_mithril_chain', name: 'T2 เสื้อโซ่ถักมิธริล (Mithril Mail)', type: 'armor', cost: 1100, def: 18, spd: 4, desc: 'โซ่ถักน้ำหนักเบาคล่องตัว (+18 DEF, +4 SPD)', icon: '⛓️' },
   { id: 'arm_dragon_scale', name: 'T3 เกราะเกล็ดมังกรเพลิง (Dragon Armor)', type: 'armor', cost: 3900, def: 30, atk: 6, desc: 'เกราะเกล็ดหลอมลาวา (+30 DEF, +6 ATK)', icon: '🐲🦺' },
-  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 11500, def: 42, mag: 16, luk: 10, desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+42 DEF, +16 MAG, +10 LUK)', icon: '👘✨' },
+  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 11500, def: 42, mag: 16, luk: 10, passive: 'mp_regen', setName: 'holy_set', desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+42 DEF, +16 MAG, +10 LUK) • [เซ็ตศักดิ์สิทธิ์]', icon: '👘✨' },
   { id: 'arm_valkyrie_plate', name: 'T5 เกราะวัลคิรีไร้พ่าย (Valkyrie Plate)', type: 'armor', cost: 30000, def: 60, atk: 12, spd: 12, desc: 'เกราะทองคำขาวแห่งวัลคิรี (+60 DEF, +12 ATK, +12 SPD)', icon: '👑🦺' },
 
   // Accessories (Tiers 1–5: Progressive Scaled Costs)
@@ -56,6 +56,10 @@ export const SHOP_CATALOG: EquipmentItem[] = [
   { id: 'spell_zap', name: 'สายฟ้าฟาด (Field Zap)', type: 'spell', cost: 220, desc: 'ฟาดสายฟ้าสร้างความเสียหาย 35 ดาเมจใส่คู่แข่ง', icon: '⚡' },
   { id: 'spell_swap', name: 'สลับมิติ (Warp Swap)', type: 'spell', cost: 380, desc: 'สลับตำแหน่งบนกระดานกับคู่แข่งทันที', icon: '🌀' },
   { id: 'spell_curse', name: 'คำสาปสนิม (Curse of Rust)', type: 'spell', cost: 450, desc: 'ลดพลัง ATK และ DEF ของเป้าหมาย 30% นาน 3 เทิร์น', icon: '🩸' },
+  { id: 'spell_poison_dart', name: 'ลูกดอกพิษ (Poison Dart)', type: 'spell', cost: 340, desc: 'ยิงพิษใส่เป้าหมาย ติดสถานะ Poison 4 เทิร์น เสียเลือดเรื่อย ๆ', icon: '☠️' },
+  { id: 'spell_blizzard', name: 'พายุเยือกแข็ง (Frost Freeze)', type: 'spell', cost: 420, desc: 'แช่แข็งคู่แข่ง ติดสถานะ Freeze 2 เทิร์น ทอยเต๋าได้แค่ 1 แต้ม!', icon: '❄️' },
+  { id: 'spell_blind', name: 'หมอกบอดตา (Flash Blind)', type: 'spell', cost: 360, desc: 'สาดแสงจ้าใส่เป้าหมาย ตาบอด 3 เทิร์น โจมตีพลาด 40% ในการต่อสู้', icon: '👁️' },
+  { id: 'spell_assassin_hit', name: 'สัญญาจ้างนักฆ่า (Assassin Contract)', type: 'spell', cost: 750, desc: 'ส่งนักฆ่าลอบโจมตีผู้เล่นอันดับ 1 ชิงเงิน 35% และส่งกลับบ้าน!', icon: '🥷' },
   { id: 'spell_audit', name: 'ตรวจสอบบัญชีหลวง (Royal Audit)', type: 'spell', cost: 550, desc: 'ยึดเงิน 25% จากถุงเงินของผู้เล่นเป้าหมาย', icon: '🧲' },
   { id: 'spell_sanctuary', name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)', type: 'spell', cost: 600, desc: 'ฟื้นฟู HP เต็มเปี่ยม และลบล้างสถานะผิดปกติทั้งหมด', icon: '🕊️' },
   { id: 'spell_recall', name: 'วาร์ปกลับปราสาท (Castle Recall)', type: 'spell', cost: 300, desc: 'ย้ายตำแหน่งกลับสู่ปราสาทหลวงทันที', icon: '🚪' }

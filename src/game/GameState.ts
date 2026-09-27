@@ -8,6 +8,7 @@ import { aiSystem } from './AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { royalDecreeSystem } from './RoyalDecreeSystem';
 import { escapeHtml } from '../util/Html';
+import { weatherSystem } from './WeatherSystem';
 
 export type GamePhase =
   | 'TITLE'
@@ -39,6 +40,11 @@ export class GameState {
   public highlightedNodes: number[] = [];
   public activePreviewPath: number[] = [];
   public gameSpeed = 1;
+
+  // Game Mode & House Rules
+  public gameMode: 'standard' | 'blitz' = 'standard';
+  public blitzDayLimit: number = 20;
+  public allowDarkling: boolean = true;
 
   // Active sub-states
   public activeBattle: BattleEngine | null = null;
@@ -247,11 +253,74 @@ export class GameState {
       return { success: true, message: `🩸 อุปกรณ์ของ ${target.displayName} ขึ้นสนิม! ATK & DEF ลดลง 30% เป็นเวลา 3 เทิร์น` };
     }
 
+    if (spellKey === 'poison_dart' && target) {
+      target.poisonTurns = 4;
+      this.addLog(`☠️ ${caster.displayName} ยิงลูกดอกพิษใส่ ${target.displayName}! (ติดสถานะ Poison 4 เทิร์น)`, 'battle');
+      return { success: true, message: `☠️ ยิงลูกดอกพิษใส่ ${target.displayName}! เสียเลือดทุกช่องที่ก้าวเดิน` };
+    }
+
+    if (spellKey === 'frost_freeze' && target) {
+      target.freezeTurns = 2;
+      this.addLog(`❄️ ${caster.displayName} ร่ายพายุ Frost Freeze แช่แข็ง ${target.displayName}! (ติดสถานะ Freeze 2 เทิร์น ทอยเต๋าได้แค่ 1 แต้ม)`, 'battle');
+      return { success: true, message: `❄️ แช่แข็ง ${target.displayName}! ทอยเต๋าได้แค่ 1 แต้ม` };
+    }
+
+    if (spellKey === 'flash_blind' && target) {
+      target.blindTurns = 3;
+      this.addLog(`👁️ ${caster.displayName} ร่ายเวท Flash Blind สาดแสงจ้าใส่ ${target.displayName}! (ติดสถานะ Blind ตาบอด 3 เทิร์น โจมตีพลาด 40%)`, 'battle');
+      return { success: true, message: `👁️ สาดแสงจ้าใส่ ${target.displayName}! ตาบอด 3 เทิร์น` };
+    }
+
+    if (spellKey === 'assassin_hit' && target) {
+      const stolen = Math.floor(target.gold * 0.35);
+      target.gold -= stolen;
+      caster.gold += stolen;
+      const homeNode = target.homeNodeId !== null ? this.allNodes.find(n => n.id === target.homeNodeId) : null;
+      const respawnNode = homeNode || this.allNodes.find(n => n.id === 0) || this.allNodes[0];
+      target.nodeId = respawnNode.id;
+      target.gridX = respawnNode.gx;
+      target.gridY = respawnNode.gy;
+      target.gridZ = respawnNode.gz;
+      audio.hurt();
+      this.addLog(`🥷 มือสังหารของ ${caster.displayName} ลอบสังหาร ${target.displayName}! ชิงเงิน ${stolen}G และส่งกลับรักษาตัวที่ ${respawnNode.name}!`, 'battle');
+      return { success: true, message: `🥷 สัญญาจ้างนักฆ่าสำเร็จ! ปล้น ${stolen}G และส่ง ${target.displayName} กลับไปรักษาตัว!` };
+    }
+
+    if (spellKey === 'dark_calamity') {
+      const otherTowns = this.allNodes.filter(n => n.townData && n.townData.ownerId !== null && n.townData.ownerId !== caster.id);
+      const affected: string[] = [];
+      for (let i = 0; i < Math.min(2, otherTowns.length); i++) {
+        const picked = otherTowns[Math.floor(Math.random() * otherTowns.length)];
+        if (picked && picked.townData) {
+          picked.townData.ownerId = null;
+          picked.townData.isOccupiedByMonster = true;
+          picked.townData.monsterName = 'Demonic Abomination';
+          picked.townData.monsterHp = 180;
+          picked.townData.monsterMaxHp = 180;
+          picked.townData.monsterAtk = 22;
+          picked.townData.monsterDef = 14;
+          affected.push(picked.name);
+        }
+      }
+      this.addLog(`☄️ จอมมาร ${caster.displayName} ปลดปล่อย Demonic Calamity! ทำลายเมือง [${affected.join(', ') || 'ไม่มีเมืองให้ทำลาย'}] ให้มอนสเตอร์ยึดครอง!`, 'darkling');
+      return { success: true, message: `☄️ ถล่มเมือง ${affected.join(', ') || 'ไม่มีเมือง'} คืนสู่ความมืดมิดสำเร็จ!` };
+    }
+
+    if (spellKey === 'dark_plague') {
+      const rivals = this.players.filter(p => p.id !== caster.id);
+      rivals.forEach(r => {
+        r.poisonTurns = 4;
+        r.curseTurns = 5;
+      });
+      this.addLog(`🌪️ จอมมาร ${caster.displayName} ปลดปล่อย Plague Cloud! คู่แข่งทุกคนติดพิษและคำสาปมรณะ!`, 'darkling');
+      return { success: true, message: `🌪️ หมอกมรณะกลืนวิญญาณแผ่ขยาย! สาปคู่แข่งทุกคนสำเร็จ!` };
+    }
+
     if (spellKey === 'holy_sanctuary') {
       caster.hp = caster.maxHp;
-      caster.rustTurns = 0;
-      this.addLog(`🕊️ ${caster.displayName} ร่ายเวท Holy Sanctuary! ฟื้นฟู HP เต็มและล้างคำสาปทั้งหมด!`, 'level');
-      return { success: true, message: `🕊️ ร่าย Holy Sanctuary! ฟื้นฟู HP เต็มและล้างดีบัฟทั้งหมด` };
+      caster.cleanseAilments();
+      this.addLog(`🕊️ ${caster.displayName} ร่ายเวท Holy Sanctuary! ฟื้นฟู HP เต็มและลบล้างสถานะผิดปกติทั้งหมด!`, 'level');
+      return { success: true, message: `🕊️ ร่าย Holy Sanctuary! ฟื้นฟู HP เต็มและลบล้างดีบัฟทั้งหมด` };
     }
 
     if (spellKey === 'castle_warp') {
@@ -291,6 +360,18 @@ export class GameState {
         totalRoll += bonusStep;
         this.addLog(`👟 ฝีเท้าคล่องตัวสูง! (SPD ${playerSpd}) มอบโบนัสการก้าวเดินเพิ่ม +${bonusStep} ก้าว!`, 'level');
       }
+    }
+
+    if (p.freezeTurns > 0) {
+      totalRoll = 1;
+      this.addLog(`❄️ ร่างกายของ ${p.displayName} ถูกแช่แข็ง (Frozen)! ก้าวเดินได้เพียง 1 ก้าวเท่านั้น!`, 'battle');
+    }
+
+    const hereNode = this.allNodes.find(n => n.id === p.nodeId);
+    const weatherMod = weatherSystem.getMovementDiceModifier(hereNode?.biome || '');
+    if (weatherMod < 0 && totalRoll > 1) {
+      totalRoll = Math.max(1, totalRoll + weatherMod);
+      this.addLog(`❄️ ลมพายุหิมะพัดต้านอย่างรุนแรง! ลดการก้าวเดินลง 1 ก้าว (เหลือ ${totalRoll} ก้าว)`, 'info');
     }
 
     p.activeSpinnerMultiplier = 1;
@@ -449,6 +530,19 @@ export class GameState {
         p.gridY = targetNode.gy;
         p.gridZ = targetNode.gz;
         p.walkFrame = 0;
+
+        // Poison tick per step
+        if (p.poisonTurns > 0) {
+          const stepPoison = Math.max(1, Math.round(p.maxHp * 0.02));
+          p.hp = Math.max(1, p.hp - stepPoison);
+        }
+
+        // Slime Companion: Extra 10G on stepping through own town!
+        if (targetNode.townData && targetNode.townData.ownerId === p.id && p.companion && (p.companion.role === 'slime' || p.companion.spriteKey === 'slime')) {
+          p.gold += 10;
+          p.matchStats.goldEarnedTotal += 10;
+        }
+
         onArrivalCallback(targetNode);
       }
     };
@@ -461,10 +555,36 @@ export class GameState {
     this.checkWinConditions();
     if (this.phase === 'VICTORY') return;
 
+    // Process active player end-of-turn effects
+    const prevP = this.activePlayer;
+    const tickRes = prevP.tickTurn();
+    if (tickRes.poisonDamage) {
+      this.addLog(`☠️ พิษแล่นเข้าสู่หัวใจ! ${prevP.displayName} เสียเลือด ${tickRes.poisonDamage} HP!`, 'battle');
+    }
+    if (tickRes.curseTriggered) {
+      audio.darklingRoar();
+      this.addLog(`💀 คำสาปมรณะ (Doom Curse) ทำงาน! เลือดของ ${prevP.displayName} ลดฮวบเหลือ 1 HP!`, 'darkling');
+    }
+    if (tickRes.hpHealed) {
+      this.addLog(`✨ พลังฟื้นฟูเยียวยา! ${prevP.displayName} ฟื้นฟู HP +${tickRes.hpHealed}!`, 'level');
+    }
+    if (tickRes.mpHealed) {
+      this.addLog(`🔮 ออร่าคู่หูจอมเวท! ${prevP.displayName} ฟื้นฟู MP +${tickRes.mpHealed}!`, 'level');
+    }
+    if (tickRes.companionDeparted) {
+      this.addLog(`👋 สัญญาจ้างของคู่หู ${tickRes.companionDeparted} สิ้นสุดลงแล้ว แยกย้ายกลับสู่กิลด์`, 'info');
+    }
+
     this.activePlayerIdx = (this.activePlayerIdx + 1) % this.players.length;
 
     if (this.activePlayerIdx === 0) {
       this.dayCounter++;
+
+      // Advance dynamic atmospheric weather
+      const weatherChange = weatherSystem.advanceDay(this.dayCounter);
+      if (weatherChange.changed) {
+        this.addLog(`${weatherChange.newWeather.icon} สภาพอากาศเปลี่ยนแปลง: ${weatherChange.newWeather.name} - ${weatherChange.newWeather.desc}`, 'level');
+      }
 
       // Weekly Report Ceremony every 7 days!
       if (this.dayCounter % 7 === 1 && this.dayCounter > 1) {
@@ -483,6 +603,12 @@ export class GameState {
   }
 
   checkWinConditions() {
+    // Blitz Mode: Match concludes when blitzDayLimit is reached (highest net worth wins!)
+    if (this.gameMode === 'blitz' && this.dayCounter >= this.blitzDayLimit) {
+      this.phase = 'VICTORY';
+      return;
+    }
+
     this.players.forEach(p => {
       if (this.winGoal === 'gold' && p.gold >= 3000) {
         this.phase = 'VICTORY';

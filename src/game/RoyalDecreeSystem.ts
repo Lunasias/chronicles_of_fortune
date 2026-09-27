@@ -14,6 +14,14 @@ export interface RoyalDecree {
   bountyRewardGold?: number;
 }
 
+export interface WantedBounty {
+  targetPlayerId: number;
+  targetPlayerName: string;
+  rewardGold: number;
+  reason: string;
+  issuedWeek: number;
+}
+
 export const ROYAL_DECREES: RoyalDecree[] = [
   {
     id: 'ROYAL_BOUNTY',
@@ -111,6 +119,35 @@ export class RoyalDecreeSystem {
     hero.gold += reward;
     audio.fanfare();
     return reward;
+  }
+
+  public activeWantedBounty: WantedBounty | null = null;
+
+  issueWantedBounty(target: Player, rewardGold = 2500, reason = 'กลายร่างเป็น Darkling ผู้ทรยศต่อราชอาณาจักร!'): WantedBounty {
+    this.activeWantedBounty = {
+      targetPlayerId: target.id,
+      targetPlayerName: target.name,
+      rewardGold,
+      reason,
+      issuedWeek: 1
+    };
+    audio.darklingRoar();
+    return this.activeWantedBounty!;
+  }
+
+  claimWantedBounty(hunter: Player, target: Player): number {
+    if (!this.activeWantedBounty || this.activeWantedBounty.targetPlayerId !== target.id) {
+      return 0;
+    }
+    const reward = this.activeWantedBounty.rewardGold;
+    hunter.gold += reward;
+    this.activeWantedBounty = null;
+    audio.fanfare();
+    return reward;
+  }
+
+  clearWantedBounty(): void {
+    this.activeWantedBounty = null;
   }
 }
 

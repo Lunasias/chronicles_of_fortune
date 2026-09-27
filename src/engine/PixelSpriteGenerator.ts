@@ -15,6 +15,8 @@ export interface EquipmentItem {
   luk?: number;
   desc: string;
   icon: string;
+  passive?: 'vampiric' | 'burn' | 'gold_steal' | 'curse_strike' | 'hp_regen' | 'mp_regen' | 'counter_boost';
+  setName?: string;
 }
 
 export type IsoDirection = 'SE' | 'SW' | 'NE' | 'NW' | 'S' | 'N' | 'E' | 'W';

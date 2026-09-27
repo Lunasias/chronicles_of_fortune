@@ -351,6 +351,36 @@ export class BattleUI {
     document.getElementById('battleEnemyHPText')!.innerText = `${curEHP}/${maxEHP}`;
   }
 
+  private isPvPLocal(): boolean {
+    const b = this.game.activeBattle;
+    if (!b) return false;
+    const isAttackerHuman = b.attacker.playerRef ? !b.attacker.playerRef.isAI : b.isPlayerAttacking;
+    const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : false;
+    return Boolean(isAttackerHuman && isDefenderHuman && b.attacker.playerRef && b.defender.playerRef);
+  }
+
+  private showPrivacyShield(title: string, message: string, onReady: () => void) {
+    const shield = document.getElementById('battlePrivacyShield');
+    const roleTitle = document.getElementById('privacyShieldRoleTitle');
+    const playerText = document.getElementById('privacyShieldPlayerText');
+    const readyBtn = document.getElementById('btnPrivacyShieldReady');
+    if (!shield || !roleTitle || !playerText || !readyBtn) {
+      onReady();
+      return;
+    }
+    roleTitle.innerText = title;
+    playerText.innerText = message;
+    shield.classList.remove('hidden');
+
+    const handleReady = () => {
+      audio.click();
+      shield.classList.add('hidden');
+      readyBtn.removeEventListener('click', handleReady);
+      onReady();
+    };
+    readyBtn.addEventListener('click', handleReady);
+  }
+
   private updateCommandMenu() {
     const b = this.game.activeBattle;
     if (!b) return;
@@ -363,9 +393,22 @@ export class BattleUI {
     const isAttackerHuman = b.attacker.playerRef ? !b.attacker.playerRef.isAI : b.isPlayerAttacking;
 
     if (isAttackerHuman) {
-      atkGroup.classList.remove('hidden');
-      defGroup.classList.add('hidden');
-      document.getElementById('battleTurnText')!.innerText = `⚔️ ${b.attacker.name} (ฝ่ายโจมตี): เลือกคำสั่งรุกของคุณ!`;
+      if (this.isPvPLocal()) {
+        atkGroup.classList.add('hidden');
+        defGroup.classList.add('hidden');
+        this.showPrivacyShield(
+          `⚔️ ฝ่ายโจมตี: ${b.attacker.name}`,
+          `โปรดส่งอุปกรณ์ให้ [${b.attacker.name}] เพื่อเลือกคำสั่งต่อสู้ลับ (ป้องกันการแอบมอง)`,
+          () => {
+            atkGroup.classList.remove('hidden');
+            document.getElementById('battleTurnText')!.innerText = `⚔️ ${b.attacker.name} (ฝ่ายโจมตี): เลือกคำสั่งรุกของคุณ!`;
+          }
+        );
+      } else {
+        atkGroup.classList.remove('hidden');
+        defGroup.classList.add('hidden');
+        document.getElementById('battleTurnText')!.innerText = `⚔️ ${b.attacker.name} (ฝ่ายโจมตี): เลือกคำสั่งรุกของคุณ!`;
+      }
     } else {
       // Attacker is AI / Monster: Attacker AI chooses, and if Defender is human, prompt Defender
       atkGroup.classList.add('hidden');
@@ -609,8 +652,21 @@ export class BattleUI {
       const atkGroup = document.getElementById('attackerCommandGroup')!;
       const defGroup = document.getElementById('defenderCommandGroup')!;
       atkGroup.classList.add('hidden');
-      defGroup.classList.remove('hidden');
-      document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+      defGroup.classList.add('hidden');
+
+      if (this.isPvPLocal()) {
+        this.showPrivacyShield(
+          `🛡️ ฝ่ายตั้งรับ: ${b.defender.name}`,
+          `ฝ่ายโจมตีเลือกเสร็จแล้ว! โปรดส่งอุปกรณ์ให้ [${b.defender.name}] เพื่อเลือกการ์ดรับมือ!`,
+          () => {
+            defGroup.classList.remove('hidden');
+            document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+          }
+        );
+      } else {
+        defGroup.classList.remove('hidden');
+        document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+      }
       return;
     }
 
@@ -899,7 +955,10 @@ export class BattleUI {
       const atkFloatX = atkBaseX + targetAtkDX;
       const atkFloatY = atkBaseY + targetAtkDY - 45;
 
-      if (result.isCounterSuccess) {
+      if (result.isMiss) {
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, '💨 MISS! (ตาบอด)', 'normal');
+        audio.miss();
+      } else if (result.isCounterSuccess) {
         combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ PARRY COUNTER!! -${result.damageToAttacker}`, 'counter');
       } else if (result.isStrikeSuccess) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `💥 CRITICAL SMASH!! -${result.damageToDefender}`, 'crit');
@@ -911,6 +970,19 @@ export class BattleUI {
         }
       } else if (result.damageToDefender > 0) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'normal');
+      }
+
+      if (result.vampiricHeal && result.vampiricHeal > 0) {
+        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY - 30, `💖 +${result.vampiricHeal} HP (ดูดเลือด)`, 'heal');
+      }
+      if (result.burnDamage && result.burnDamage > 0) {
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `🔥 BURN -${result.burnDamage}`, 'crit');
+      }
+      if (result.goldStolen && result.goldStolen > 0) {
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `💰 -${result.goldStolen}G (ขโมย)`, 'magic');
+      }
+      if (result.curseInflicted) {
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `💀 CURSED (มรณะ 4T)!`, 'crit');
       }
 
       this.updateUI();

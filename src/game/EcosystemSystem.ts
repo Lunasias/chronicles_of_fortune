@@ -2,7 +2,7 @@ import { RealmId, BoardNode } from './BoardMap';
 
 export type TimeOfDay = 'DAWN' | 'DAY' | 'DUSK' | 'NIGHT';
 
-export type WeatherType = 'sunny' | 'rain' | 'snow' | 'heatwave' | 'miasma';
+export type WeatherType = 'sunny' | 'rain' | 'snow' | 'heatwave' | 'miasma' | 'blood_moon';
 
 export interface WeatherEffect {
   title: string;
@@ -112,6 +112,15 @@ export class EcosystemSystem {
           magicBonus: 4,
           physBonus: 2,
           spdModifier: 0
+        };
+      case 'blood_moon':
+        return {
+          title: 'จันทราสีเลือด',
+          desc: 'มอนสเตอร์คลุ้มคลั่ง พลังโจมตี +6 และโบนัสรางวัลคูณสอง!',
+          icon: '🩸🌑',
+          magicBonus: 6,
+          physBonus: 6,
+          spdModifier: 2
         };
       case 'sunny':
       default:

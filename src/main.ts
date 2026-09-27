@@ -340,6 +340,28 @@ class DokaponApp {
       });
     });
 
+    // Game Mode selection (Standard vs Blitz 20 Days)
+    document.querySelectorAll('.game-mode-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        audio.click();
+        document.querySelectorAll('.game-mode-btn').forEach(b => {
+          b.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold');
+          b.classList.add('text-amber-300');
+        });
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
+        target.classList.remove('text-amber-300');
+        const mode = target.getAttribute('data-mode') as 'standard' | 'blitz';
+        this.game.gameMode = mode;
+      });
+    });
+
+    // House Rules Darkling toggle
+    document.getElementById('checkAllowDarkling')?.addEventListener('change', e => {
+      const checkbox = e.target as HTMLInputElement;
+      this.game.allowDarkling = checkbox.checked;
+    });
+
     // Begin Game
     document.getElementById('btnBeginGame')?.addEventListener('click', () => {
       audio.fanfare();
@@ -876,6 +898,11 @@ class DokaponApp {
 
     this.game.initGame(partyConfig, winGoal);
 
+    const allowDarklingCheck = document.getElementById('checkAllowDarkling') as HTMLInputElement | null;
+    if (allowDarklingCheck) {
+      this.game.allowDarkling = allowDarklingCheck.checked;
+    }
+
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
@@ -1083,6 +1110,15 @@ class DokaponApp {
       const loserPlayer = (winner.playerRef?.id === challenger.id) ? rival : challenger;
       const winnerPlayer = (winner.playerRef?.id === challenger.id) ? challenger : rival;
       winnerPlayer.matchStats.pvpWins++;
+
+      // Check if loser was wanted by the Royal Court!
+      const bounty = royalDecreeSystem.claimWantedBounty(winnerPlayer, loserPlayer);
+      if (bounty > 0) {
+        this.game.addLog(
+          `👑 ค่าหัวหลวงถูกพิชิต! ${winnerPlayer.displayName} สยบผู้ต้องหา ${loserPlayer.displayName} และรับเงินรางวัลนำจับ ${bounty}G!`,
+          'level'
+        );
+      }
 
       // Check if loser surrendered peacefully (HP > 0)
       if (loserPlayer.hp > 0) {
