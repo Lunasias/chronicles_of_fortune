@@ -533,7 +533,8 @@ export class Player {
     pvpWins: 0,
     goldEarnedTotal: 300,
     townsCapturedTotal: 0,
-    pranksGiven: 0
+    pranksGiven: 0,
+    pranksReceived: 0
   };
 
   // Color & Info

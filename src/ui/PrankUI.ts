@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { Player } from '../game/Player';
 import { audio } from '../engine/AudioSynthesizer';
 import { townManager } from '../game/TownManager';
+import { aiSystem } from '../game/AISystem';
 
 export class PrankUI {
   private game: GameState;
@@ -68,6 +69,7 @@ export class PrankUI {
     const p = this.currentWinner || this.game.activePlayer;
     const amount = this.currentVictim.gold;
 
+    aiSystem.recordGrudge(this.currentVictim.id, p.id, 25, 'stole gold');
     this.currentVictim.gold = 0;
     p.gold += amount;
     audio.coin();
@@ -81,6 +83,7 @@ export class PrankUI {
     const p = this.currentWinner || this.game.activePlayer;
     const v = this.currentVictim;
 
+    aiSystem.recordGrudge(v.id, p.id, 30, 'stole equipment');
     if (v.equipment.weapon) {
       const stolen = v.equipment.weapon;
       v.equipment.weapon = null;
@@ -106,6 +109,7 @@ export class PrankUI {
     const p = this.currentWinner || this.game.activePlayer;
     const v = this.currentVictim;
 
+    aiSystem.recordGrudge(v.id, p.id, 40, 'stole town');
     if (v.townDeeds.length > 0) {
       const stolenTownId = v.townDeeds[0];
       const townNode = this.game.allNodes.find(n => n.id === stolenTownId);
@@ -137,8 +141,10 @@ export class PrankUI {
     const rawName = (document.getElementById('inputPrankName') as HTMLInputElement).value.trim();
     const sillyName = (rawName || 'Dummy').slice(0, 10);
 
+    aiSystem.recordGrudge(this.currentVictim.id, p.id, 50, 'graffiti prank');
     this.currentVictim.applyPrank(this.selectedPrankType, sillyName, 14);
     p.matchStats.pranksGiven++;
+    this.currentVictim.matchStats.pranksReceived++;
     audio.fanfare();
     this.game.addLog(`🎨 วาดหน้าสำเร็จ! ${p.displayName} วาดหน้า ${this.currentVictim.name} และเปลี่ยนชื่อเป็น "${sillyName}" เป็นเวลา 2 สัปดาห์!`, 'darkling');
 

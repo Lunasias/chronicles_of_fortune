@@ -25,6 +25,9 @@ import { WonderChestUI } from './ui/WonderChestUI';
 import { InspectUI } from './ui/InspectUI';
 import { HomeUI } from './ui/HomeUI';
 import { FantasyEventUI } from './ui/FantasyEventUI';
+import { CasinoUI } from './ui/CasinoUI';
+import { dungeonSystem } from './game/DungeonSystem';
+import { hallOfFameUI } from './ui/HallOfFameUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { scaleMonster, tierForNode } from './game/BalanceSystem';
 import type { ThreatTier } from './game/BalanceSystem';
@@ -47,6 +50,7 @@ class DokaponApp {
   private inspectUI: InspectUI;
   private homeUI: HomeUI;
   private fantasyEventUI: FantasyEventUI;
+  private casinoUI: CasinoUI;
 
   private isDragging = false;
   private dragStartX = 0;
@@ -83,6 +87,16 @@ class DokaponApp {
 
     this.homeUI = new HomeUI(this.game);
     this.fantasyEventUI = new FantasyEventUI(this.game);
+    this.casinoUI = new CasinoUI(this.game);
+
+    dungeonSystem.ensureDungeonLoaded(this.game);
+
+    document.getElementById('btnTitleHallOfFame')?.addEventListener('click', () => {
+      hallOfFameUI.open();
+    });
+    document.getElementById('btnViewHallOfFameFromVictory')?.addEventListener('click', () => {
+      hallOfFameUI.open();
+    });
 
     this.hud.onInspectPlayerCallback = (pl) => {
       this.inspectUI.openInspect(pl);
@@ -978,6 +992,11 @@ class DokaponApp {
     const p = this.game.activePlayer;
     this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
 
+    // Dynamically transition chiptune BGM according to region/biome
+    if (!p.isDarkling && this.game.phase !== 'BATTLE') {
+      audio.playBiomeBgm(tile.biome || tile.realmId);
+    }
+
     // 1. Check for PvP Collision!
     const rival = this.game.players.find(other => other.id !== p.id && other.nodeId === p.nodeId);
     if (rival) {
@@ -1012,7 +1031,13 @@ class DokaponApp {
         break;
 
       case 'blue':
-        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        if (tile.id === 1006) {
+          dungeonSystem.exitDungeon(p, this.game);
+          hallOfFameUI.unlockTrophy('DUNGEON_CRAWLER');
+          this.advanceTurn();
+        } else {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        }
         break;
 
       case 'red':
@@ -1039,19 +1064,34 @@ class DokaponApp {
         break;
 
       case 'vault':
-        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        if (dungeonSystem.isInDungeon(tile.id)) {
+          const vaultGold = 1500 + Math.floor(Math.random() * 1500);
+          p.gold += vaultGold;
+          p.matchStats.goldEarnedTotal += vaultGold;
+          audio.jackpotFanfare();
+          this.game.addLog(`💰 ${p.displayName} ปลดล็อกหีบมหาสมบัติสุสานหลวง! ได้รับเหรียญทองโบราณ +${vaultGold}G!`, 'gold');
+          this.advanceTurn();
+        } else {
+          this.promptDungeonRift(p, tile);
+        }
         break;
 
       case 'boss':
-        if (!p.companion && Math.random() < 0.50) {
-          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        if (tile.id === 1004) {
+          this.initiateCryptLordBattle(p);
         } else {
-          this.initiateBossBattle();
+          if (!p.companion && Math.random() < 0.50) {
+            this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+          } else {
+            this.initiateBossBattle();
+          }
         }
         break;
 
       case 'tavern':
-        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        this.fantasyEventUI.openEvent(p, tile, () => {
+          this.casinoUI.open(p, () => this.advanceTurn());
+        });
         break;
 
       case 'guild':
@@ -1202,6 +1242,11 @@ class DokaponApp {
       gold = Math.round(gold * 2.2);
       xp = Math.round(xp * 1.8);
       dropChance = 0.75;
+    }
+
+    if (royalDecreeSystem.activeDecree.id === 'ROYAL_FESTIVAL_HUNT') {
+      gold = Math.round(gold * 2);
+      xp = Math.round(xp * 2);
     }
 
     player.gold += gold;
@@ -1597,6 +1642,95 @@ class DokaponApp {
     });
   }
 
+  private promptDungeonRift(player: Player, node: BoardNode) {
+    if (player.isAI) {
+      if (player.hp > player.maxHp * 0.5 && Math.random() < 0.6) {
+        dungeonSystem.enterDungeon(player, this.game);
+        this.advanceTurn();
+      } else {
+        this.fantasyEventUI.openEvent(player, node, () => this.advanceTurn());
+      }
+      return;
+    }
+
+    let riftModal = document.getElementById('dungeonRiftModal');
+    if (!riftModal) {
+      riftModal = document.createElement('div');
+      riftModal.id = 'dungeonRiftModal';
+      riftModal.className = 'fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 sm:p-4 pointer-events-auto select-none';
+      document.body.appendChild(riftModal);
+    }
+
+    riftModal.innerHTML = `
+      <div class="pixel-box-gold max-w-[95vw] sm:max-w-md w-full p-4 sm:p-5 text-center">
+        <div class="text-3xl mb-2 animate-bounce">🌀💀🌀</div>
+        <h3 class="text-sm font-bold text-amber-300 mb-1">รอยแยกมิติมืดโบราณ (Dungeon Rift)</h3>
+        <p class="text-xs text-purple-300 font-semibold mb-2">สุสานโบราณใต้พิภพแห่งฟอร์จูน่า (The Catacombs)</p>
+        <p class="text-[10px] text-slate-300 mb-4 leading-relaxed">
+          หมอกเวทมนตร์พวยพุ่งขึ้นมาจากใต้พื้นพิภพ กลิ่นอายของซากอารยธรรมโบราณและมหาสมบัติที่สาบสูญกำลังเรียกร้องหาผู้กล้า!<br>
+          คำเตือน: อสุรกายใต้พิภพดุร้ายและมีราชันไร้ชีพคอยพิทักษ์บัลลังก์!
+        </p>
+        <div class="flex gap-2 justify-center">
+          <button id="btnEnterDungeonRift" class="pixel-btn pixel-btn-gold px-4 py-2 text-xs font-bold text-slate-950 flex-1">
+            บุกตะลุยสุสาน!
+          </button>
+          <button id="btnSkipDungeonRift" class="pixel-btn px-4 py-2 text-xs text-slate-300 hover:text-white flex-1">
+            สำรวจพื้นผิวต่อ
+          </button>
+        </div>
+      </div>
+    `;
+
+    riftModal.classList.remove('hidden');
+
+    document.getElementById('btnEnterDungeonRift')?.addEventListener('click', () => {
+      audio.click();
+      riftModal?.classList.add('hidden');
+      dungeonSystem.enterDungeon(player, this.game);
+      const startNode = this.game.allNodes.find(n => n.id === 1000);
+      if (startNode) {
+        this.renderer.centerCameraOn(startNode.gx, startNode.gy, startNode.gz);
+      }
+      this.advanceTurn();
+    });
+
+    document.getElementById('btnSkipDungeonRift')?.addEventListener('click', () => {
+      audio.click();
+      riftModal?.classList.add('hidden');
+      this.fantasyEventUI.openEvent(player, node, () => this.advanceTurn());
+    });
+  }
+
+  private initiateCryptLordBattle(player: Player) {
+    const bossCombatant = dungeonSystem.getCryptLordBossCombatant();
+    this.game.addLog(`💀 ราชันไร้ชีพ มัลธาซาร์ ตื่นจากนิทราใต้สุสาน! การต่อสู้ชี้ชะตาดันเจี้ยน!`, 'battle');
+
+    this.battleUI.startBattle(bossCombatant, (winner, loser) => {
+      if (winner.playerRef) {
+        winner.playerRef.matchStats.monstersKilled++;
+        const bonusGold = 1500;
+        const bonusXp = 350;
+        winner.playerRef.gold += bonusGold;
+        winner.playerRef.matchStats.goldEarnedTotal += bonusGold;
+        winner.playerRef.gainXP(bonusXp);
+        hallOfFameUI.unlockTrophy('MONSTER_HUNTER');
+        this.game.addLog(
+          `👑 ${winner.playerRef.displayName} ปราบราชันไร้ชีพ มัลธาซาร์ สำเร็จ! เส้นทางสู่ห้องมหาสมบัติเปิดออก! (+${bonusGold}G, +${bonusXp} XP)`,
+          'level'
+        );
+        audio.levelUpFanfare();
+        this.advanceTurn();
+      } else {
+        if (loser.playerRef) {
+          const lostGold = Math.floor(loser.playerRef.gold * 0.35);
+          loser.playerRef.gold -= lostGold;
+          this.respawnPlayer(loser.playerRef, 'Crypt Lord Malthazar', lostGold);
+        }
+        this.advanceTurn();
+      }
+    });
+  }
+
   private advanceTurn() {
     // 1. Process active Food Buff expiration
     const curP = this.game.activePlayer;
@@ -1925,9 +2059,54 @@ class DokaponApp {
     const modal = document.getElementById('victoryModal')!;
     document.getElementById('victorySubtitle')!.innerText = `${winner.displayName} ยิ่งใหญ่ที่สุด!`;
     const s = winner.matchStats;
+    const netWorth = winner.getNetWorth(this.game.allNodes);
+
+    // Save record to Hall of Fame & check trophies
+    hallOfFameUI.recordVictory(winner, netWorth, feat);
+
+    // Render The Fortuna Gazette Newspaper
+    const gazetteEl = document.getElementById('victoryGazetteContainer');
+    if (gazetteEl) {
+      const losers = this.game.players.filter(pl => pl.id !== winner.id);
+      const loserGossip = losers.map(loser => {
+        if (loser.gold < 100) return `📰 <strong>${escapeHtml(loser.displayName)}</strong>: ถังแตกหมดเนื้อหมดตัว! มีผู้พบเห็นกำลังไปสมัครเป็นเด็กล้างจานที่โรงเตี๊ยม`;
+        if (loser.townsControlled === 0) return `📰 <strong>${escapeHtml(loser.displayName)}</strong>: ไร้ที่ซุกหัวนอน! สูญเสียหัวเมืองทั้งหมดจนต้องกลับไปนอนเต็นท์ริมหาด`;
+        if (loser.matchStats.pranksReceived > 0) return `📰 <strong>${escapeHtml(loser.displayName)}</strong>: อับอายขายหน้า! โดนคู่แข่งกลั่นแกล้งจนหน้าเลอะหมึกยังล้างไม่ออก`;
+        return `📰 <strong>${escapeHtml(loser.displayName)}</strong>: ยอมจำนนต่ออำนาจบารมี และประกาศถวายความจงรักภักดีต่อราชันองค์ใหม่`;
+      }).join('<br>');
+
+      gazetteEl.innerHTML = `
+        <div class="p-3.5 bg-amber-100 text-slate-900 border-2 border-amber-900 text-left">
+          <div class="border-b-2 border-amber-900 pb-1.5 mb-2 text-center">
+            <div class="text-[9px] uppercase tracking-widest text-amber-950 font-bold">★ THE FORTUNA GAZETTE • หนังสือพิมพ์ราชสำนักฉบับพิเศษ ★</div>
+            <h2 class="text-xs sm:text-sm font-black text-slate-950 tracking-tight leading-tight mt-0.5">
+              👑 มหาปาฏิหาริย์! ${escapeHtml(winner.displayName)} ประกาศศักดาครองราชบัลลังก์ฟอร์จูน่า!
+            </h2>
+            <div class="text-[8px] text-amber-900 mt-0.5">ฉบับประจำปีศักราชแห่งริโก้ • ยอดพิมพ์ 1,000,000 ฉบับทั่วแผ่นดิน</div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-slate-800 leading-relaxed mb-2">
+            <div class="border-r sm:border-slate-300 pr-1">
+              <strong class="text-amber-900">【บทสรรเสริญพระเกียรติคุณ】</strong><br>
+              ${escapeHtml(winner.displayName)} จอมยุทธ์ชนชั้น ${escapeHtml(winner.className)} สร้างตำนานสะท้านปฐพีด้วยการ ${escapeHtml(feat)} กวาดมูลค่าทรัพย์สินสุทธิสูงถึง <strong>${netWorth.toLocaleString()}G</strong> พร้อมทั้งปกครองอาณาเขตกว่า <strong>${winner.townsControlled} หัวเมือง</strong>!
+            </div>
+            <div>
+              <strong class="text-amber-900">【คอลัมน์ซุบซิบชะตากรรมคู่แข่ง】</strong><br>
+              ${loserGossip || 'ไม่มีคู่แข่งรอดชีวิตมาให้สัมภาษณ์'}
+            </div>
+          </div>
+
+          <div class="pt-1.5 border-t border-amber-900/40 flex justify-between items-center text-[8px] text-amber-950">
+            <span>👑 ประทับตราครั่งหลวงโดย: กษัตริย์ริโก้ (King Rico)</span>
+            <span class="font-bold text-red-700 border border-red-700 px-1 py-0.5">VERIFIED SOVEREIGN</span>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('victoryStatsSummary')!.innerHTML = `
       <div><strong>ผลงานแห่งชัยชนะ:</strong> ${feat}</div>
-      <div><strong>มูลค่าสุทธิสุดท้าย:</strong> ${winner.getNetWorth(this.game.allNodes)} Gold</div>
+      <div><strong>มูลค่าสุทธิสุดท้าย:</strong> ${netWorth} Gold</div>
       <div><strong>เมืองที่ปกครอง:</strong> ${winner.townsControlled} Territories</div>
       <div><strong>เลเวลวีรบุรุษ:</strong> Level ${winner.level} (${winner.className})</div>
       <div class="mt-2 pt-2 border-t border-slate-700 text-amber-300 font-bold">🏛️ สถิติตลอดแมตช์ (Match Statistics):</div>

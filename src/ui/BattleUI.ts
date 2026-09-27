@@ -297,6 +297,7 @@ export class BattleUI {
     } else {
       audio.playBgm('battle');
     }
+    audio.voiceFight();
 
     document.getElementById('battleScreen')?.classList.remove('hidden');
     document.getElementById('battleScoutModal')?.classList.add('hidden');
@@ -849,12 +850,25 @@ export class BattleUI {
 
     // Phase 2: Impact & Combat Resolution (after dash completes at 340ms)
     setTimeout(() => {
+      if (b.attacker.playerRef) aiSystem.recordMove(b.attacker.playerRef.id, atkAction);
+      if (b.defender.playerRef) aiSystem.recordMove(b.defender.playerRef.id, defAction);
+
       const result = b.resolveRound(atkAction, defAction);
       document.getElementById('battleNarration')!.innerText = result.narration;
+
+      if (b.defender.playerRef && b.attacker.playerRef && result.damageToDefender > 25) {
+        aiSystem.recordGrudge(b.defender.playerRef.id, b.attacker.playerRef.id, 10, 'heavy damage');
+      }
 
       // Micro-zoom punch
       this.cutscene.targetZoom = 1.14;
       this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'attack';
+
+      if (result.isGiveUp) {
+        audio.voiceSurrender();
+      } else if (result.isStrikeSuccess || result.isCritical) {
+        audio.voiceCritical();
+      }
 
       if (result.isCounterSuccess) {
         // Counter parry successful!

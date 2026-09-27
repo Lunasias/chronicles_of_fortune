@@ -1532,14 +1532,25 @@
 
   <!-- VICTORY RECAP MODAL (z-40) -->
   <div id="victoryModal" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-3 sm:p-4 pointer-events-auto">
-    <div class="pixel-box-gold max-w-[95vw] sm:max-w-md w-full p-4 sm:p-6 text-center max-h-[90vh] overflow-y-auto">
+    <div class="pixel-box-gold max-w-[95vw] sm:max-w-xl w-full p-4 sm:p-6 text-center max-h-[92vh] overflow-y-auto">
       <div class="text-4xl mb-2">👑🏆👑</div>
       <h1 class="text-base sm:text-lg text-amber-300 font-bold mb-1 tracking-widest">จอมราชันแห่งตำนานโชคชะตา!</h1>
-      <p id="victorySubtitle" class="text-xs text-emerald-400 mb-4 font-bold">ผู้เล่น 1 ครองบัลลังก์!</p>
+      <p id="victorySubtitle" class="text-xs text-emerald-400 mb-3 font-bold">ผู้เล่น 1 ครองบัลลังก์!</p>
+
+      <!-- THE FORTUNA GAZETTE NEWSPAPER -->
+      <div id="victoryGazetteContainer" class="mb-4"></div>
+
       <div id="victoryStatsSummary" class="pixel-box p-3 bg-slate-900 border-slate-800 text-xs text-left mb-4 space-y-1.5 text-slate-300"></div>
-      <button id="btnPlayAgain" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
-        เล่นอีกครั้ง
-      </button>
+
+      <div class="flex gap-2 justify-center">
+        <button id="btnViewHallOfFameFromVictory" class="pixel-btn px-4 py-2.5 text-xs font-bold text-amber-300 hover:text-white flex items-center gap-1.5">
+          <span>🏛️</span>
+          <span>หอเกียรติยศ</span>
+        </button>
+        <button id="btnPlayAgain" class="pixel-btn pixel-btn-gold px-6 py-2.5 text-xs font-bold text-slate-950 tracking-wider">
+          เล่นอีกครั้ง
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1652,6 +1663,10 @@
           <span>เล่นต่อ (Load Game)</span>
         </span>
         <span id="titleLoadGameMeta" class="text-[9px] text-amber-300 font-normal"></span>
+      </button>
+      <button id="btnTitleHallOfFame" class="pixel-btn py-2 text-xs text-amber-300 hover:text-white flex items-center justify-center gap-1.5 font-bold">
+        <span>🏛️</span>
+        <span>หอเกียรติยศ (Hall of Fame)</span>
       </button>
       <button id="btnHowToPlay" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
         กฎกติกา

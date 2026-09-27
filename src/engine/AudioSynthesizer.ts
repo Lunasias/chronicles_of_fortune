@@ -1,4 +1,4 @@
-export type BgmTrack = 'overworld' | 'battle' | 'boss' | 'darkling' | 'casino' | 'none';
+export type BgmTrack = 'overworld' | 'battle' | 'boss' | 'darkling' | 'casino' | 'frostpeak' | 'abyss' | 'sunfire' | 'none';
 
 export class AudioSynthesizer {
   private ctx: AudioContext | null = null;
@@ -77,10 +77,29 @@ export class AudioSynthesizer {
     if (track === 'boss') tempoMs = 190;
     if (track === 'darkling') tempoMs = 210;
     if (track === 'casino') tempoMs = 135;
+    if (track === 'frostpeak') tempoMs = 155;
+    if (track === 'abyss') tempoMs = 195;
+    if (track === 'sunfire') tempoMs = 145;
 
     this.bgmTimer = window.setInterval(() => {
       this.tickBgmSequencer(track);
     }, tempoMs);
+  }
+
+  playBiomeBgm(biome: string) {
+    if (this.currentTrack === 'battle' || this.currentTrack === 'boss' || this.currentTrack === 'darkling') {
+      return;
+    }
+    const b = (biome || '').toLowerCase();
+    if (b.includes('snow') || b.includes('frost') || b.includes('glacial')) {
+      this.playBgm('frostpeak');
+    } else if (b.includes('abyss') || b.includes('nether') || b.includes('void')) {
+      this.playBgm('abyss');
+    } else if (b.includes('desert') || b.includes('volcano') || b.includes('sunfire') || b.includes('dune')) {
+      this.playBgm('sunfire');
+    } else {
+      this.playBgm('overworld');
+    }
   }
 
   stopBgm() {
@@ -211,6 +230,66 @@ export class AudioSynthesizer {
       if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'triangle', 0.12, 0.18);
       const leadFreq = leadSeq[step];
       if (leadFreq > 0) this.playSynthedBgmNote(leadFreq, 'square', 0.10, 0.14);
+      if (step % 4 === 0) this.playChiptuneKick();
+      if (step % 4 === 2) this.playChiptuneSnare();
+    } else if (track === 'frostpeak') {
+      // Sparkling Crystalline Snow Chimes (High octave arpeggios)
+      const bassSeq = [
+        65.4, 0, 0, 65.4, 87.3, 0, 0, 87.3,
+        98.0, 0, 0, 98.0, 73.4, 0, 0, 73.4,
+        65.4, 0, 0, 65.4, 87.3, 0, 0, 87.3,
+        98.0, 0, 110.0, 0, 130.8, 0, 98.0, 0
+      ];
+      const bellSeq = [
+        523.3, 659.3, 784.0, 1046.5, 659.3, 784.0, 1046.5, 1318.5,
+        784.0, 987.8, 1174.7, 1568.0, 587.3, 784.0, 987.8, 1174.7,
+        523.3, 659.3, 784.0, 1046.5, 659.3, 784.0, 1046.5, 1318.5,
+        987.8, 1174.7, 1318.5, 1568.0, 1318.5, 1046.5, 784.0, 0
+      ];
+      const bassFreq = bassSeq[step];
+      if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'sine', 0.20, 0.16);
+      const bellFreq = bellSeq[step];
+      if (bellFreq > 0) this.playSynthedBgmNote(bellFreq, 'sine', 0.08, 0.10);
+      if (step % 8 === 0) this.playChiptuneKick();
+
+    } else if (track === 'abyss') {
+      // Subterranean dread / dark descending pulse
+      const bassSeq = [
+        36.7, 36.7, 0, 36.7, 34.6, 0, 32.7, 0,
+        36.7, 36.7, 0, 36.7, 43.7, 0, 38.9, 0,
+        36.7, 36.7, 0, 36.7, 34.6, 0, 32.7, 0,
+        27.5, 0, 30.9, 0, 34.6, 0, 36.7, 0
+      ];
+      const droneSeq = [
+        110.0, 0, 103.8, 0, 98.0, 0, 92.5, 0,
+        110.0, 0, 116.5, 0, 123.5, 0, 110.0, 0,
+        146.8, 0, 138.6, 0, 130.8, 0, 123.5, 0,
+        98.0, 0, 103.8, 0, 110.0, 0, 73.4, 0
+      ];
+      const bassFreq = bassSeq[step];
+      if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'sawtooth', 0.22, 0.24);
+      const droneFreq = droneSeq[step];
+      if (droneFreq > 0) this.playSynthedBgmNote(droneFreq, 'triangle', 0.25, 0.14);
+      if (step % 8 === 4) this.playChiptuneSnare();
+
+    } else if (track === 'sunfire') {
+      // Fast rhythmic desert tempo
+      const bassSeq = [
+        73.4, 0, 73.4, 87.3, 0, 73.4, 98.0, 0,
+        73.4, 0, 73.4, 110.0, 0, 98.0, 87.3, 0,
+        73.4, 0, 73.4, 87.3, 0, 73.4, 98.0, 0,
+        65.4, 73.4, 87.3, 98.0, 110.0, 98.0, 87.3, 73.4
+      ];
+      const leadSeq = [
+        293.7, 0, 311.1, 0, 369.9, 0, 392.0, 0,
+        440.0, 0, 392.0, 0, 369.9, 311.1, 293.7, 0,
+        293.7, 0, 369.9, 0, 440.0, 0, 466.2, 0,
+        440.0, 392.0, 369.9, 311.1, 293.7, 0, 220.0, 0
+      ];
+      const bassFreq = bassSeq[step];
+      if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'square', 0.12, 0.16);
+      const leadFreq = leadSeq[step];
+      if (leadFreq > 0) this.playSynthedBgmNote(leadFreq, 'sawtooth', 0.10, 0.12);
       if (step % 4 === 0) this.playChiptuneKick();
       if (step % 4 === 2) this.playChiptuneSnare();
     }
@@ -461,6 +540,46 @@ export class AudioSynthesizer {
     notes.forEach((freq, idx) => {
       setTimeout(() => this.playTone(freq, 'triangle', 0.22, 0.25), idx * 90);
     });
+  }
+
+  // =========================================================================
+  // RETRO SPEECH SYNTHESIS ENGINE (Robotic Formant Vocals)
+  // =========================================================================
+  voiceFight() {
+    if (!this.enabled) return;
+    this.init();
+    // "FIGHT!" formant burst: rising transient + filtered noise burst
+    this.playTone(340, 'sawtooth', 0.10, 0.35);
+    setTimeout(() => this.playTone(520, 'square', 0.22, 0.40), 60);
+    setTimeout(() => this.playChiptuneSnare(), 100);
+  }
+
+  voiceCritical() {
+    if (!this.enabled) return;
+    this.init();
+    // "CRITICAL!" dual octave laser chime
+    this.playTone(440, 'square', 0.08, 0.35);
+    setTimeout(() => this.playTone(880, 'square', 0.12, 0.38), 60);
+    setTimeout(() => this.playTone(1760, 'sawtooth', 0.20, 0.42), 120);
+  }
+
+  voiceSurrender() {
+    if (!this.enabled) return;
+    this.init();
+    // "SURRENDER!" descending wobble
+    const freqs = [620, 540, 460, 380, 260];
+    freqs.forEach((f, i) => {
+      setTimeout(() => this.playTone(f, 'sawtooth', 0.12, 0.25), i * 50);
+    });
+  }
+
+  voiceBankrupt() {
+    if (!this.enabled) return;
+    this.init();
+    // "BANKRUPT!" deep thud crash
+    this.playTone(180, 'sawtooth', 0.15, 0.40);
+    setTimeout(() => this.playTone(95, 'sawtooth', 0.35, 0.45), 80);
+    setTimeout(() => this.playChiptuneKick(), 40);
   }
 }
 

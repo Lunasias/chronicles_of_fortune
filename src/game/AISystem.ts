@@ -2,7 +2,65 @@ import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { AttackerAction, DefenderAction } from './BattleEngine';
 
+export interface CombatMoveHistory {
+  [key: string]: number;
+  attack: number;
+  strike: number;
+  magic: number;
+  skill: number;
+  defend: number;
+  counter: number;
+  magic_guard: number;
+  give_up: number;
+}
+
 export class AISystem {
+  // Grudge score: botPlayerId -> victimId -> score (0 - 100+)
+  public grudgeMatrix: Record<number, Record<number, number>> = {};
+  // Player combat history: playerId -> move counts
+  public moveHistory: Record<number, CombatMoveHistory> = {};
+
+  recordGrudge(botId: number, targetId: number, amount: number, reason = ''): void {
+    if (botId === targetId) return;
+    if (!this.grudgeMatrix[botId]) this.grudgeMatrix[botId] = {};
+    this.grudgeMatrix[botId][targetId] = (this.grudgeMatrix[botId][targetId] || 0) + amount;
+  }
+
+  getGrudge(botId: number, targetId: number): number {
+    return this.grudgeMatrix[botId]?.[targetId] || 0;
+  }
+
+  recordMove(playerId: number, move: string): void {
+    if (!this.moveHistory[playerId]) {
+      this.moveHistory[playerId] = { attack: 0, strike: 0, magic: 0, skill: 0, defend: 0, counter: 0, magic_guard: 0, give_up: 0 };
+    }
+    const hist = this.moveHistory[playerId] as Record<string, number>;
+    if (hist[move] !== undefined) hist[move]++;
+  }
+
+  getMostFrequentMove(playerId: number, category: 'attacker' | 'defender'): string | null {
+    const hist = this.moveHistory[playerId];
+    if (!hist) return null;
+    if (category === 'attacker') {
+      const moves = [
+        { move: 'attack', count: hist.attack },
+        { move: 'strike', count: hist.strike },
+        { move: 'magic', count: hist.magic },
+        { move: 'skill', count: hist.skill }
+      ];
+      moves.sort((a, b) => b.count - a.count);
+      return moves[0].count >= 2 ? moves[0].move : null;
+    } else {
+      const moves = [
+        { move: 'defend', count: hist.defend },
+        { move: 'counter', count: hist.counter },
+        { move: 'magic_guard', count: hist.magic_guard }
+      ];
+      moves.sort((a, b) => b.count - a.count);
+      return moves[0].count >= 2 ? moves[0].move : null;
+    }
+  }
+
   // Select best route when choosing at an intersection
   chooseRoute(candidateNodeIds: number[], aiPlayer: Player, allNodes: BoardNode[], allPlayers: Player[]): number {
     if (candidateNodeIds.length === 1) return candidateNodeIds[0];
@@ -54,21 +112,22 @@ export class AISystem {
         score += aiPlayer.isDarkling ? 0 : (personality === 'hunter' ? 50 : 30);
       }
 
-      // Check for rival on tile (PvP opportunity!)
+      // Check for rival on tile (PvP opportunity & Grudge Revenge!)
       const rivalOnNode = allPlayers.find(p => p.id !== aiPlayer.id && p.nodeId === id);
       if (rivalOnNode) {
+        const grudge = this.getGrudge(aiPlayer.id, rivalOnNode.id);
         if (aiPlayer.isDarkling) {
-          score += 180;
+          score += 180 + grudge;
         } else if (personality === 'hunter') {
-          score += 130; // PK Hunter loves seeking duels!
+          score += 130 + grudge * 1.5; // PK Hunter loves seeking duels and revenge!
         } else if (personality === 'tactician') {
-          score += aiPlayer.hp > rivalOnNode.hp + 25 ? 100 : -20; // Smart risk assessment
+          score += aiPlayer.hp > rivalOnNode.hp + 25 ? (100 + grudge) : -20; // Smart risk assessment
         } else if (personality === 'economist') {
-          score += aiPlayer.hp > rivalOnNode.hp + 40 ? 50 : -30; // Avoids fighting unless guaranteed win
+          score += aiPlayer.hp > rivalOnNode.hp + 40 ? (50 + grudge) : -30;
         } else if (aiPlayer.hp > rivalOnNode.hp + 20) {
-          score += 90; // Ambush weakened rival!
+          score += 90 + grudge; // Ambush weakened rival!
         } else {
-          score += 45; // Dokapon duel!
+          score += 45 + grudge * 0.8;
         }
       }
 
@@ -84,10 +143,33 @@ export class AISystem {
     return bestId;
   }
 
-  // Combat Attacker Decision
-  chooseAttackerAction(ai: Player, opponent: { hp: number; maxHp: number; def: number; mag: number }): AttackerAction {
+  // Combat Attacker Decision with Psychological Mind-Reading
+  chooseAttackerAction(
+    ai: Player,
+    opponent: { hp: number; maxHp: number; def: number; mag: number; playerRef?: Player }
+  ): AttackerAction {
     const roll = Math.random();
     const personality = ai.aiPersonality || 'balanced';
+    const opponentId = opponent.playerRef?.id;
+
+    // Mind-reading: if opponent frequently Counters, avoid Strike!
+    if (opponentId !== undefined) {
+      const frequentDef = this.getMostFrequentMove(opponentId, 'defender');
+      if (frequentDef === 'counter') {
+        // Punish counter with regular attack or magic!
+        if (ai.mp >= 14 && ai.mag > 10 && roll < 0.5) return 'magic';
+        return 'attack';
+      }
+      if (frequentDef === 'defend') {
+        // Punish defend with devastating Strike!
+        if (roll < 0.70) return 'strike';
+      }
+      if (frequentDef === 'magic_guard') {
+        // Punish magic guard with strike or attack!
+        if (roll < 0.45) return 'strike';
+        return 'attack';
+      }
+    }
 
     // PK Hunter is hyper-aggressive with Strike and Skills
     if (personality === 'hunter') {
@@ -120,10 +202,25 @@ export class AISystem {
     return 'attack';
   }
 
-  // Combat Defender Decision
-  chooseDefenderAction(ai: Player, attacker: { atk: number; mag: number; classKey?: string }): DefenderAction {
+  // Combat Defender Decision with Psychological Reading
+  chooseDefenderAction(ai: Player, attacker: { atk: number; mag: number; classKey?: string; playerRef?: Player }): DefenderAction {
     const roll = Math.random();
     const personality = ai.aiPersonality || 'balanced';
+    const attackerId = attacker.playerRef?.id;
+
+    // Mind-reading: if attacker has a clear habit, exploit it!
+    if (attackerId !== undefined) {
+      const frequentAtk = this.getMostFrequentMove(attackerId, 'attacker');
+      if (frequentAtk === 'strike' && roll < 0.75) {
+        return 'counter';
+      }
+      if (frequentAtk === 'magic' && roll < 0.75) {
+        return 'magic_guard';
+      }
+      if (frequentAtk === 'attack' && roll < 0.70) {
+        return 'defend';
+      }
+    }
 
     // If low HP, evaluate surrender to avoid dying or defend
     if (ai.hp < (personality === 'economist' ? 25 : 15) && roll < 0.3) {
@@ -189,6 +286,28 @@ export class AISystem {
       return 'gold';
     }
     return 'prank';
+  }
+
+  // Choose revenge/prime target for offensive field spells based on grudge and threat
+  chooseFieldSpellTarget(ai: Player, opponents: Player[]): Player | null {
+    if (opponents.length === 0) return null;
+    let highestScore = -999;
+    let bestTarget = opponents[0];
+
+    opponents.forEach(op => {
+      const grudge = this.getGrudge(ai.id, op.id);
+      let score = grudge * 2.5;
+      if (op.gold >= 300) score += 30;
+      if (op.townsControlled >= 2) score += 40;
+      if (op.isDarkling) score += 80;
+
+      if (score > highestScore) {
+        highestScore = score;
+        bestTarget = op;
+      }
+    });
+
+    return bestTarget;
   }
 }
 
