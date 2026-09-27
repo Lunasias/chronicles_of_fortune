@@ -38,6 +38,7 @@ export class GameState {
   public remainingMoves = 0;
   public highlightedNodes: number[] = [];
   public activePreviewPath: number[] = [];
+  public gameSpeed = 1;
 
   // Active sub-states
   public activeBattle: BattleEngine | null = null;
@@ -428,7 +429,7 @@ export class GameState {
     const startGY = p.gridY;
     const startGZ = p.gridZ;
     const startTime = Date.now();
-    const duration = 180;
+    const duration = Math.max(45, Math.round(180 / this.gameSpeed));
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -437,7 +438,7 @@ export class GameState {
       p.gridX = startGX + (targetNode.gx - startGX) * t;
       p.gridY = startGY + (targetNode.gy - startGY) * t;
       p.gridZ = startGZ + (targetNode.gz - startGZ) * t;
-      p.walkFrame = (Math.floor(elapsed / 30) % 6) + 1; // 6-frame run
+      p.walkFrame = (Math.floor(elapsed / Math.max(10, Math.round(30 / this.gameSpeed))) % 6) + 1; // 6-frame run
 
       onStepCallback();
 

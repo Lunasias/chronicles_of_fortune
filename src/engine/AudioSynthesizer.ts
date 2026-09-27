@@ -1,4 +1,4 @@
-export type BgmTrack = 'overworld' | 'battle' | 'boss' | 'none';
+export type BgmTrack = 'overworld' | 'battle' | 'boss' | 'darkling' | 'casino' | 'none';
 
 export class AudioSynthesizer {
   private ctx: AudioContext | null = null;
@@ -75,6 +75,8 @@ export class AudioSynthesizer {
     let tempoMs = 170;
     if (track === 'battle') tempoMs = 125;
     if (track === 'boss') tempoMs = 190;
+    if (track === 'darkling') tempoMs = 210;
+    if (track === 'casino') tempoMs = 135;
 
     this.bgmTimer = window.setInterval(() => {
       this.tickBgmSequencer(track);
@@ -171,6 +173,46 @@ export class AudioSynthesizer {
 
       if (step % 8 === 0) this.playChiptuneKick();
       if (step % 8 === 4) this.playChiptuneSnare();
+    } else if (track === 'darkling') {
+      // Ominous Phrygian Dark Overlord March
+      const bassSeq = [
+        36.7, 0, 36.7, 38.9, 36.7, 0, 32.7, 0,
+        36.7, 0, 36.7, 38.9, 43.7, 0, 41.2, 0,
+        36.7, 0, 36.7, 38.9, 36.7, 0, 32.7, 0,
+        27.5, 0, 29.1, 0, 32.7, 0, 36.7, 0
+      ];
+      const leadSeq = [
+        146.8, 0, 155.6, 174.6, 155.6, 0, 138.6, 0,
+        146.8, 0, 155.6, 174.6, 207.7, 0, 196.0, 0,
+        146.8, 0, 155.6, 174.6, 155.6, 0, 138.6, 0,
+        110.0, 0, 116.5, 0, 130.8, 0, 146.8, 0
+      ];
+      const bassFreq = bassSeq[step];
+      if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'sawtooth', 0.22, 0.28);
+      const leadFreq = leadSeq[step];
+      if (leadFreq > 0) this.playSynthedBgmNote(leadFreq, 'sawtooth', 0.16, 0.20);
+      if (step % 8 === 0) this.playChiptuneKick();
+      if (step % 8 === 4) this.playChiptuneSnare();
+    } else if (track === 'casino') {
+      // Upbeat swing jazz casino chiptune
+      const bassSeq = [
+        65.4, 0, 82.4, 0, 98.0, 0, 82.4, 0,
+        65.4, 0, 82.4, 0, 110.0, 0, 98.0, 0,
+        73.4, 0, 92.5, 0, 110.0, 0, 92.5, 0,
+        65.4, 0, 98.0, 0, 130.8, 0, 98.0, 0
+      ];
+      const leadSeq = [
+        261.6, 0, 329.6, 0, 392.0, 523.3, 0, 392.0,
+        261.6, 0, 329.6, 0, 440.0, 587.3, 0, 440.0,
+        293.7, 0, 369.9, 0, 440.0, 587.3, 0, 440.0,
+        261.6, 0, 392.0, 0, 523.3, 659.3, 784.0, 0
+      ];
+      const bassFreq = bassSeq[step];
+      if (bassFreq > 0) this.playSynthedBgmNote(bassFreq, 'triangle', 0.12, 0.18);
+      const leadFreq = leadSeq[step];
+      if (leadFreq > 0) this.playSynthedBgmNote(leadFreq, 'square', 0.10, 0.14);
+      if (step % 4 === 0) this.playChiptuneKick();
+      if (step % 4 === 2) this.playChiptuneSnare();
     }
   }
 
@@ -383,6 +425,36 @@ export class AudioSynthesizer {
     this.playTone(880, 'sine', 0.12, 0.15);
     setTimeout(() => this.playTone(1320, 'sine', 0.18, 0.18), 70);
     setTimeout(() => this.playTone(1760, 'sine', 0.24, 0.16), 140);
+  }
+
+  levelUpFanfare() {
+    // Joyful ascending 8-bit scale
+    const seq = [261.6, 329.6, 392.0, 523.3, 659.3, 784.0, 1046.5];
+    seq.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'square', 0.14, 0.20), idx * 75);
+    });
+  }
+
+  jackpotFanfare() {
+    // Cascading coins leading into radiant victory chord
+    const coins = [1046.5, 1318.5, 1568.0, 2093.0, 1568.0, 2093.0, 2637.0];
+    coins.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.10, 0.22), idx * 60);
+    });
+    setTimeout(() => {
+      this.playTone(523.25, 'square', 0.4, 0.25);
+      this.playTone(659.25, 'square', 0.4, 0.25);
+      this.playTone(783.99, 'square', 0.4, 0.25);
+      this.playTone(1046.5, 'square', 0.4, 0.25);
+    }, 450);
+  }
+
+  classPromoteJingle() {
+    // Majestic rising fanfare for Tier 2 promotion
+    const notes = [293.7, 369.99, 440.0, 587.33, 739.99, 880.0];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.22, 0.25), idx * 90);
+    });
   }
 }
 

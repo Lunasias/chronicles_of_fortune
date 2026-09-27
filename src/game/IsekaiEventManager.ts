@@ -352,6 +352,113 @@ export class IsekaiEventManager {
       };
     }
   }
+
+  // Guild Fortune Casino Mini-Game
+  public playCasino(player: Player, bet = 50): {
+    outcome: 'jackpot' | 'win_gold' | 'win_spell' | 'win_buff' | 'lose' | 'prank';
+    title: string;
+    message: string;
+    goldChange: number;
+    icon: string;
+  } {
+    if (player.gold < bet) {
+      return {
+        outcome: 'lose',
+        title: 'ทองไม่เพียงพอ',
+        message: `เจ้ามีทองไม่พอสำหรับเดิมพัน (${bet}G)!`,
+        goldChange: 0,
+        icon: '⚠️'
+      };
+    }
+
+    player.gold -= bet;
+    const roll = Math.random();
+
+    if (roll < 0.12) {
+      // 12% Jackpot: 6x bet!
+      const prize = bet * 6;
+      player.gold += prize;
+      player.matchStats.goldEarnedTotal += prize;
+      audio.jackpotFanfare();
+      return {
+        outcome: 'jackpot',
+        title: '💥 มหาแจ็กพอตแตกกระจาย! 💥',
+        message: `ดวงมหาเศรษฐีจุติ! วงล้อหยุดที่ช่องแจ็กพอตราชา รับรางวัลมหาศาล +${prize}G!`,
+        goldChange: prize - bet,
+        icon: '👑'
+      };
+    } else if (roll < 0.40) {
+      // 28% Double Gold: 2x bet
+      const prize = bet * 2;
+      player.gold += prize;
+      player.matchStats.goldEarnedTotal += prize;
+      audio.coin();
+      return {
+        outcome: 'win_gold',
+        title: '🎉 ชนะรางวัลเหรียญทอง!',
+        message: `วงล้อหยุดที่ถุงทองคำ รับเงินรางวัล 2 เท่า +${prize}G!`,
+        goldChange: prize - bet,
+        icon: '💰'
+      };
+    } else if (roll < 0.60) {
+      // 20% Magic Spell
+      const spells = ['zap', 'swap', 'holy_sanctuary', 'tax_audit', 'curse_rust'];
+      const wonSpell = spells[Math.floor(Math.random() * spells.length)];
+      if (!player.fieldSpells.includes(wonSpell)) {
+        player.fieldSpells.push(wonSpell);
+      }
+      audio.chestOpen();
+      return {
+        outcome: 'win_spell',
+        title: '✨ ได้รับคัมภีร์เวทมนตร์!',
+        message: `วงล้อหยุดที่คัมภีร์เวทมนตร์โบราณ! ได้รับคาถา ${wonSpell.toUpperCase()} เข้าสู่คลังเวท!`,
+        goldChange: -bet,
+        icon: '📜'
+      };
+    } else if (roll < 0.76) {
+      // 16% Food Buff
+      player.foodBuff = {
+        name: 'สเต๊กนำโชคกาสิโน',
+        icon: '🥩',
+        turnsRemaining: 3,
+        atkBoost: 4,
+        lukBoost: 6
+      };
+      audio.levelUpFanfare();
+      return {
+        outcome: 'win_buff',
+        title: '🍖 รางวัลอาหารนำโชค!',
+        message: `ได้รับสเต๊กนำโชคกาสิโนกลิ่นหอมกรุ่น! (+4 ATK, +6 LUK นาน 3 เทิร์น)!`,
+        goldChange: -bet,
+        icon: '🍖'
+      };
+    } else if (roll < 0.90) {
+      // 14% Lose
+      audio.defeat();
+      return {
+        outcome: 'lose',
+        title: '💀 แต้มบอด! เสียเดิมพัน',
+        message: `วงล้อหยุดที่กระดูกหัวกะโหลก! เจ้ามือหัวเราะร่าและริบเงินเดิมพัน ${bet}G ของคุณไป!`,
+        goldChange: -bet,
+        icon: '💀'
+      };
+    } else {
+      // 10% Prank smoke bomb
+      player.prank = {
+        hasGraffiti: true,
+        turnsRemaining: 3,
+        sillyName: 'ผีพนันหน้าเปื้อน'
+      };
+      audio.hurt();
+      return {
+        outcome: 'prank',
+        title: '🤪 ระเบิดสีตลกโป๊งชึ่ง!',
+        message: `วงล้อหมุนแรงจนกลไกดีดระเบิดเขม่าควันใส่หน้า! ได้รับฉายา "ผีพนันหน้าเปื้อน" นาน 3 เทิร์น!`,
+        goldChange: -bet,
+        icon: '💣'
+      };
+    }
+  }
 }
 
 export const isekaiEventManager = new IsekaiEventManager();

@@ -651,9 +651,42 @@ class DokaponApp {
       document.getElementById('gameEventFeedWindow')?.classList.toggle('hidden');
     });
 
+    // Game Speed Toggle Button
+    document.getElementById('btnGameSpeed')?.addEventListener('click', () => {
+      audio.click();
+      const speeds = [1, 1.5, 2, 3];
+      const curIdx = speeds.indexOf(this.game.gameSpeed);
+      const nextSpeed = speeds[(curIdx + 1) % speeds.length];
+      this.game.gameSpeed = nextSpeed;
+      const speedText = document.getElementById('btnGameSpeedText');
+      if (speedText) speedText.innerText = `${nextSpeed}x`;
+      this.game.addLog(`⚡ ปรับความเร็วเกม: ${nextSpeed}x`, 'level');
+    });
+
+    const updateSlotDisplay = () => {
+      const slot = this.getSelectedSaveSlot();
+      const meta = SaveManager.getSaveMetadata(slot);
+      const statusEl = document.getElementById('settingsSaveStatusText');
+      if (statusEl) {
+        if (meta) {
+          statusEl.innerText = `ช่อง ${slot}: ${meta.activeHeroName} (Lv.${meta.activeHeroLevel}) • ${meta.dateStr}`;
+          statusEl.style.color = '#38bdf8';
+        } else {
+          statusEl.innerText = `ช่อง ${slot}: ยังไม่มีข้อมูลบันทึก`;
+          statusEl.style.color = '#94a3b8';
+        }
+      }
+    };
+
+    document.getElementById('selectSaveSlot')?.addEventListener('change', () => {
+      audio.click();
+      updateSlotDisplay();
+    });
+
     // Settings & Rules
     document.getElementById('btnSettings')?.addEventListener('click', () => {
       audio.click();
+      updateSlotDisplay();
       document.getElementById('settingsModal')?.classList.remove('hidden');
     });
     document.getElementById('btnHowToPlay')?.addEventListener('click', () => {
@@ -1049,12 +1082,14 @@ class DokaponApp {
     this.battleUI.startBattle(rivalCombatant, (winner, loser) => {
       const loserPlayer = (winner.playerRef?.id === challenger.id) ? rival : challenger;
       const winnerPlayer = (winner.playerRef?.id === challenger.id) ? challenger : rival;
+      winnerPlayer.matchStats.pvpWins++;
 
       // Check if loser surrendered peacefully (HP > 0)
       if (loserPlayer.hp > 0) {
         const tributeGold = Math.floor(loserPlayer.gold * 0.30);
         loserPlayer.gold -= tributeGold;
         winnerPlayer.gold += tributeGold;
+        winnerPlayer.matchStats.goldEarnedTotal += tributeGold;
         this.game.addLog(`🏳️ ยอมจำนนอย่างมีเกียรติ! ${loserPlayer.displayName} มอบเงินบรรณาการ ${tributeGold}G ให้แก่ ${winnerPlayer.displayName} ยุติศึกโดยไม่ต้องเข้าโรงพยาบาล!`, 'battle');
         this.advanceTurn();
         return;
@@ -1134,7 +1169,15 @@ class DokaponApp {
     }
 
     player.gold += gold;
-    player.gainXP(xp);
+    player.matchStats.goldEarnedTotal += gold;
+    player.matchStats.monstersKilled++;
+    const leveledUp = player.gainXP(xp);
+    if (leveledUp) {
+      audio.levelUpFanfare();
+      if (player.canPromote()) {
+        this.game.addLog(`✨ ${player.name} สามารถเปลี่ยนคลาสระดับสูง (Tier 2) ได้แล้วที่หน้าต่างสถานะ!`, 'level');
+      }
+    }
 
     let droppedItem: EquipmentItem | undefined = undefined;
     if (Math.random() < dropChance && SHOP_CATALOG.length > 0) {
@@ -1277,6 +1320,7 @@ class DokaponApp {
 
     this.battleUI.startBattle(guardCombatant, (winner, loser) => {
       if (winner.playerRef) {
+        winner.playerRef.matchStats.monstersKilled++;
         const previousOwner = this.game.players.find(p => p.id === townNode.townData?.ownerId) || null;
         townManager.transferTownOwnership(townNode, winner.playerRef, previousOwner);
         this.game.addLog(`🏴‍☠️ ยึดเมืองสำเร็จ! ${winner.playerRef.displayName} ทำลายกองกำลังป้อมปราการและยึด ${townNode.name}!`, 'battle');
@@ -1405,7 +1449,15 @@ class DokaponApp {
     this.battleUI.startBattle(krakenCombatant, (winner, loser) => {
       if (winner.playerRef) {
         winner.playerRef.gold += 120;
-        winner.playerRef.gainXP(80);
+        winner.playerRef.matchStats.goldEarnedTotal += 120;
+        winner.playerRef.matchStats.monstersKilled++;
+        const leveledUp = winner.playerRef.gainXP(80);
+        if (leveledUp) {
+          audio.levelUpFanfare();
+          if (winner.playerRef.canPromote()) {
+            this.game.addLog(`✨ ${winner.playerRef.name} สามารถเปลี่ยนคลาสระดับสูง (Tier 2) ได้แล้วที่หน้าต่างสถานะ!`, 'level');
+          }
+        }
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${monsterName} (+120G, +80 EXP)!`);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, monsterName);
@@ -1439,7 +1491,15 @@ class DokaponApp {
       if (winner.playerRef) {
         const stolenGold = 160 + Math.floor(Math.random() * 80);
         winner.playerRef.gold += stolenGold;
-        winner.playerRef.gainXP(90);
+        winner.playerRef.matchStats.goldEarnedTotal += stolenGold;
+        winner.playerRef.matchStats.monstersKilled++;
+        const leveledUp = winner.playerRef.gainXP(90);
+        if (leveledUp) {
+          audio.levelUpFanfare();
+          if (winner.playerRef.canPromote()) {
+            this.game.addLog(`✨ ${winner.playerRef.name} สามารถเปลี่ยนคลาสระดับสูง (Tier 2) ได้แล้วที่หน้าต่างสถานะ!`, 'level');
+          }
+        }
         isekaiEventManager.onGameAction(winner.playerRef, 'monster');
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น Bandit Chief Garak และยึด ${stolenGold}G (+90 EXP)!`);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Bandit Chief Garak');
@@ -1480,6 +1540,7 @@ class DokaponApp {
     this.battleUI.startBattle(bossCombatant, (winner, loser) => {
       if (winner.playerRef) {
         this.bossCurrentHp = 0;
+        winner.playerRef.matchStats.monstersKilled++;
         isekaiEventManager.onGameAction(winner.playerRef, 'boss');
         this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารเจ้าหญิงมังกรเพลิงบรรพกาล! ความรุ่งโรจน์นิรันดร์!`, 'level');
         this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Dragon Princess Ignis');
@@ -1609,16 +1670,25 @@ class DokaponApp {
     this.saveGameProgress(false);
   }
 
+  private getSelectedSaveSlot(): number {
+    const sel = document.getElementById('selectSaveSlot') as HTMLSelectElement | null;
+    return sel ? parseInt(sel.value, 10) || 1 : 1;
+  }
+
   private updateTitleSaveStatus() {
-    const meta = SaveManager.getSaveMetadata();
+    const metas = SaveManager.getSlotMetas();
     const btnLoad = document.getElementById('btnTitleLoadGame') as HTMLButtonElement | null;
     const metaEl = document.getElementById('titleLoadGameMeta');
     if (!btnLoad) return;
-    if (meta) {
+
+    const slot1Meta = SaveManager.getSaveMetadata(1);
+    const activeEntry = slot1Meta ? { slot: 1, meta: slot1Meta } : metas.find(s => s.meta !== null);
+
+    if (activeEntry && activeEntry.meta) {
       btnLoad.classList.remove('opacity-50', 'cursor-not-allowed');
       btnLoad.classList.add('hover:border-amber-400');
       if (metaEl) {
-        metaEl.innerText = `${meta.activeHeroName} (${meta.activeHeroClass} Lv.${meta.activeHeroLevel}) • วันที่ ${meta.day} สัปดาห์ ${meta.week}`;
+        metaEl.innerText = `[ช่อง ${activeEntry.slot}] ${activeEntry.meta.activeHeroName} (${activeEntry.meta.activeHeroClass} Lv.${activeEntry.meta.activeHeroLevel}) • วันที่ ${activeEntry.meta.day} สัปดาห์ ${activeEntry.meta.week}`;
       }
     } else {
       btnLoad.classList.add('opacity-50');
@@ -1630,36 +1700,47 @@ class DokaponApp {
 
   private saveGameProgress(showToast = true) {
     if (this.game.players.length === 0 || this.game.phase === 'TITLE') return;
+    const slot = this.getSelectedSaveSlot();
     const success = SaveManager.save(this.game, {
       currentHp: this.bossCurrentHp,
       maxHp: this.bossMaxHp
-    });
+    }, slot);
     const statusEl = document.getElementById('settingsSaveStatusText');
     if (success) {
       if (showToast) {
         audio.coin();
-        this.game.addLog(`💾 บันทึกความคืบหน้าสำเร็จ! (วันที่ ${this.game.dayCounter}, สัปดาห์ที่ ${this.game.weekCounter})`, 'level');
+        this.game.addLog(`💾 บันทึกความคืบหน้าช่อง ${slot} สำเร็จ! (วันที่ ${this.game.dayCounter}, สัปดาห์ที่ ${this.game.weekCounter})`, 'level');
       }
       if (statusEl) {
-        statusEl.innerText = `✅ บันทึกสำเร็จล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+        statusEl.innerText = `✅ [ช่อง ${slot}] บันทึกสำเร็จล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
         statusEl.style.color = '#34d399';
       }
       this.updateTitleSaveStatus();
     } else {
       if (statusEl) {
-        statusEl.innerText = '❌ เกิดข้อผิดพลาดในการบันทึก';
+        statusEl.innerText = `❌ เกิดข้อผิดพลาดในการบันทึกช่อง ${slot}`;
         statusEl.style.color = '#f87171';
       }
     }
   }
 
-  private loadGameProgress() {
-    if (!SaveManager.hasSave()) {
+  private loadGameProgress(requestedSlot?: number) {
+    let slot = requestedSlot ?? this.getSelectedSaveSlot();
+    if (!SaveManager.hasSave(slot) && requestedSlot === undefined) {
+      const firstAvailable = [1, 2, 3].find(s => SaveManager.hasSave(s));
+      if (firstAvailable) {
+        slot = firstAvailable;
+        const sel = document.getElementById('selectSaveSlot') as HTMLSelectElement | null;
+        if (sel) sel.value = `${slot}`;
+      }
+    }
+
+    if (!SaveManager.hasSave(slot)) {
       audio.hurt();
-      alert('ยังไม่มีข้อมูลบันทึกความคืบหน้า');
+      alert(`ยังไม่มีข้อมูลบันทึกความคืบหน้าในช่อง ${slot}`);
       return;
     }
-    const res = SaveManager.load(this.game);
+    const res = SaveManager.load(this.game, slot);
     if (res.success) {
       if (res.bossState) {
         this.bossCurrentHp = res.bossState.currentHp;
@@ -1682,16 +1763,17 @@ class DokaponApp {
   }
 
   private resetSavedGame() {
-    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเซฟเกมทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
-      SaveManager.clear();
+    const slot = this.getSelectedSaveSlot();
+    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเซฟเกมในช่องที่ ${slot}? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
+      SaveManager.clear(slot);
       audio.hurt();
       const statusEl = document.getElementById('settingsSaveStatusText');
       if (statusEl) {
-        statusEl.innerText = '🗑️ ลบข้อมูลเซฟเรียบร้อยแล้ว';
+        statusEl.innerText = `🗑️ ลบข้อมูลเซฟช่อง ${slot} เรียบร้อยแล้ว`;
         statusEl.style.color = '#cbd5e1';
       }
       this.updateTitleSaveStatus();
-      this.game.addLog('🗑️ ลบข้อมูลเซฟเกมเรียบร้อยแล้ว', 'info');
+      this.game.addLog(`🗑️ ลบข้อมูลเซฟเกมช่อง ${slot} เรียบร้อยแล้ว`, 'info');
     }
   }
 
@@ -1806,11 +1888,20 @@ class DokaponApp {
     audio.fanfare();
     const modal = document.getElementById('victoryModal')!;
     document.getElementById('victorySubtitle')!.innerText = `${winner.displayName} ยิ่งใหญ่ที่สุด!`;
+    const s = winner.matchStats;
     document.getElementById('victoryStatsSummary')!.innerHTML = `
       <div><strong>ผลงานแห่งชัยชนะ:</strong> ${feat}</div>
       <div><strong>มูลค่าสุทธิสุดท้าย:</strong> ${winner.getNetWorth(this.game.allNodes)} Gold</div>
       <div><strong>เมืองที่ปกครอง:</strong> ${winner.townsControlled} Territories</div>
       <div><strong>เลเวลวีรบุรุษ:</strong> Level ${winner.level} (${winner.className})</div>
+      <div class="mt-2 pt-2 border-t border-slate-700 text-amber-300 font-bold">🏛️ สถิติตลอดแมตช์ (Match Statistics):</div>
+      <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-300 mt-1">
+        <div>⚔️ สัตว์ประหลาดที่กำจัด: <span class="text-white font-bold">${s.monstersKilled}</span></div>
+        <div>🏆 ชนะการดวล PvP: <span class="text-white font-bold">${s.pvpWins}</span></div>
+        <div>💰 ทองที่หาได้ทั้งหมด: <span class="text-white font-bold">${s.goldEarnedTotal}G</span></div>
+        <div>🏰 ยึดครองเมืองสะสม: <span class="text-white font-bold">${s.townsCapturedTotal}</span></div>
+        <div>🎭 แกล้งผู้เล่นอื่น: <span class="text-white font-bold">${s.pranksGiven} ครั้ง</span></div>
+      </div>
     `;
     modal.classList.remove('hidden');
   }

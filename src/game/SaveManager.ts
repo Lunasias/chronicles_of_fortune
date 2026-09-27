@@ -57,9 +57,12 @@ export interface SerializedPlayer {
   color: string;
   className: string;
   avatar: string;
-  skillName: string;
   homeNodeId: number | null;
   companion: any;
+  originalClassKey?: string;
+  isPromoted?: boolean;
+  aiPersonality?: string;
+  matchStats?: any;
 }
 
 export interface SaveGameData {
@@ -98,9 +101,28 @@ function numOr(value: unknown, fallback: number): number {
 const DEFAULT_EQUIPMENT = { weapon: null, shield: null, armor: null, accessory: null };
 
 export class SaveManager {
-  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }): boolean {
+  private static getStorageKeys(slot: number = 1): { saveKey: string; metaKey: string } {
+    if (slot <= 1) {
+      return { saveKey: STORAGE_KEY, metaKey: META_KEY };
+    }
+    return { saveKey: `${STORAGE_KEY}_slot_${slot}`, metaKey: `${META_KEY}_slot_${slot}` };
+  }
+
+
+  public static getSlotMetas(): Array<{ slot: number; meta: SaveMetadata | null }> {
+    return [1, 2, 3].map(slot => ({ slot, meta: this.getSaveMetadata(slot) }));
+  }
+
+  public static clearSave(slot: number = 1) {
+    const { saveKey, metaKey } = this.getStorageKeys(slot);
+    localStorage.removeItem(saveKey);
+    localStorage.removeItem(metaKey);
+  }
+
+  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
     try {
       if (!game || game.players.length === 0) return false;
+      const { saveKey, metaKey } = this.getStorageKeys(slot);
       const now = new Date();
       const dateStr = now.toLocaleDateString('th-TH', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -138,7 +160,11 @@ export class SaveManager {
           prank: JSON.parse(JSON.stringify(p.prank)),
           color: p.color, className: p.className, avatar: p.avatar, skillName: p.skillName,
           homeNodeId: p.homeNodeId,
-          companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null
+          companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null,
+          originalClassKey: p.originalClassKey,
+          isPromoted: p.isPromoted,
+          aiPersonality: p.aiPersonality,
+          matchStats: JSON.parse(JSON.stringify(p.matchStats))
         };
       });
 
@@ -174,8 +200,8 @@ export class SaveManager {
         totalPlayers: game.players.length
       };
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-      localStorage.setItem(META_KEY, JSON.stringify(meta));
+      localStorage.setItem(saveKey, JSON.stringify(saveData));
+      localStorage.setItem(metaKey, JSON.stringify(meta));
       return true;
     } catch (err) {
       console.error('Failed to save game:', err);
@@ -183,10 +209,11 @@ export class SaveManager {
     }
   }
 
-  public static load(game: GameState): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
+  public static load(game: GameState, slot: number = 1): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { success: false, error: 'ไม่พบข้อมูลบันทึกในเครื่องนี้' };
+      const { saveKey } = this.getStorageKeys(slot);
+      const raw = localStorage.getItem(saveKey);
+      if (!raw) return { success: false, error: `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
 
       let data: SaveGameData;
       try {
@@ -258,9 +285,18 @@ export class SaveManager {
         p.color = sp.color || p.color;
         p.className = sp.className || p.className;
         p.avatar = sp.avatar || p.avatar;
-        p.skillName = sp.skillName || p.skillName;
         p.homeNodeId = nodesById.has(numOr(sp.homeNodeId, -1)) ? numOr(sp.homeNodeId, -1) : null;
         p.companion = sp.companion ?? null;
+        p.originalClassKey = sp.originalClassKey || sp.classKey || 'warrior';
+        p.isPromoted = Boolean(sp.isPromoted);
+        p.aiPersonality = (sp.aiPersonality as any) || 'balanced';
+        p.matchStats = sp.matchStats || {
+          monstersKilled: 0,
+          pvpWins: 0,
+          goldEarnedTotal: p.gold,
+          townsCapturedTotal: p.townsControlled,
+          pranksGiven: 0
+        };
         return p;
       });
 
@@ -309,17 +345,19 @@ export class SaveManager {
     }
   }
 
-  public static hasSave(): boolean {
+  public static hasSave(slot: number = 1): boolean {
     try {
-      return !!localStorage.getItem(STORAGE_KEY);
+      const { metaKey } = this.getStorageKeys(slot);
+      return !!localStorage.getItem(metaKey);
     } catch {
       return false;
     }
   }
 
-  public static getSaveMetadata(): SaveMetadata | null {
+  public static getSaveMetadata(slot: number = 1): SaveMetadata | null {
     try {
-      const raw = localStorage.getItem(META_KEY);
+      const { metaKey } = this.getStorageKeys(slot);
+      const raw = localStorage.getItem(metaKey);
       if (!raw) return null;
       const meta = JSON.parse(raw) as SaveMetadata;
       if (!meta || typeof meta !== 'object') return null;
@@ -339,10 +377,11 @@ export class SaveManager {
     }
   }
 
-  public static clear(): void {
+  public static clear(slot: number = 1): void {
     try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(META_KEY);
+      const { saveKey, metaKey } = this.getStorageKeys(slot);
+      localStorage.removeItem(saveKey);
+      localStorage.removeItem(metaKey);
     } catch (err) {
       console.error('Failed to clear savegame:', err);
     }

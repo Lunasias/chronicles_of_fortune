@@ -89,11 +89,63 @@ export class IsekaiEventUI {
       };
     }
 
+    // Casino Toggle & Spin Buttons
+    const btnCasinoToggle = document.getElementById('btnTavernCasino');
+    const casinoSection = document.getElementById('tavernCasinoSection');
+    const wheelDisplay = document.getElementById('casinoWheelDisplay');
+    const btnSpin = document.getElementById('btnSpinCasino');
+
+    if (btnCasinoToggle && casinoSection) {
+      btnCasinoToggle.onclick = () => {
+        audio.click();
+        const isHidden = casinoSection.classList.toggle('hidden');
+        if (!isHidden) {
+          audio.playBgm('casino');
+        } else {
+          audio.playBgm('overworld');
+        }
+      };
+    }
+
+    if (btnSpin && wheelDisplay) {
+      btnSpin.onclick = () => {
+        if (player.gold < 50) {
+          audio.hurt();
+          wheelDisplay.innerText = '⚠️ ทองไม่พอเดิมพัน (ต้องการ 50G)!';
+          return;
+        }
+
+        btnSpin.setAttribute('disabled', 'true');
+        audio.click();
+        wheelDisplay.innerText = '🌀 กำลังหมุนวงล้อเสี่ยงโชค...';
+
+        setTimeout(() => {
+          btnSpin.removeAttribute('disabled');
+          const res = isekaiEventManager.playCasino(player, 50);
+          wheelDisplay.innerHTML = `<span class="text-xl">${res.icon}</span> <span>${res.title}</span>`;
+          this.showTavernNotice(`${res.icon} ${res.title}: ${res.message}`);
+          if (titleEl) titleEl.innerText = `${player.gold}G`;
+          this.game.addLog(`🎰 [กาสิโน] ${res.title} - ${res.message}`, res.outcome === 'jackpot' ? 'level' : res.outcome === 'win_gold' ? 'gold' : 'battle');
+          if (res.outcome === 'jackpot') {
+            audio.jackpotFanfare();
+          } else if (res.outcome === 'win_gold' || res.outcome === 'win_spell' || res.outcome === 'win_buff') {
+            audio.coin();
+          } else {
+            audio.hurt();
+          }
+        }, 500);
+      };
+    }
+
     // Leave Button
     const btnLeave = document.getElementById('btnCloseTavern');
     if (btnLeave) {
       btnLeave.onclick = () => {
         audio.click();
+        if (casinoSection && !casinoSection.classList.contains('hidden')) {
+          casinoSection.classList.add('hidden');
+          audio.playBgm('overworld');
+        }
         modal.classList.add('hidden');
         onLeave();
       };

@@ -95,6 +95,130 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
   }
 };
 
+export interface JobPromotionData {
+  tier2Key: string;
+  name: string;
+  avatar: string;
+  color: string;
+  desc: string;
+  statBonus: { hp: number; mp: number; atk: number; def: number; mag: number; spd: number; luk: number };
+  skillName: string;
+  skillCost: number;
+  skillDesc: string;
+}
+
+export const JOB_PROMOTIONS: Record<string, JobPromotionData[]> = {
+  warrior: [
+    {
+      tier2Key: 'paladin',
+      name: 'พาลาดินศักดิ์สิทธิ์ (Paladin)',
+      avatar: '🛡️✨',
+      color: '#f59e0b',
+      desc: 'อัศวินผู้ได้รับพรอันศักดิ์สิทธิ์ มีพลังป้องกันและเลือดมหาศาล',
+      statBonus: { hp: 50, mp: 20, atk: 4, def: 8, mag: 4, spd: 2, luk: 4 },
+      skillName: 'หัตถ์ศักดิ์สิทธิ์คุ้มครองพิภพ (Divine Aegis)',
+      skillCost: 14,
+      skillDesc: 'กางบาเรียศักดิ์สิทธิ์ ลดทอนดาเมจที่ได้รับและฟื้นฟูพลังชีวิตอย่างต่อเนื่อง'
+    },
+    {
+      tier2Key: 'berserker',
+      name: 'เบอร์เซิร์กเกอร์ (Berserker)',
+      avatar: '🪓🩸',
+      color: '#dc2626',
+      desc: 'นักรบผู้บ้าคลั่ง ยิ่งเจ็บปวดยิ่งทวีพลังโจมตีอย่างรุนแรง',
+      statBonus: { hp: 35, mp: 10, atk: 12, def: 2, mag: 0, spd: 6, luk: 2 },
+      skillName: 'คลั่งโลหิตผ่าสวรรค์ (Blood Frenzy)',
+      skillCost: 15,
+      skillDesc: 'สละ 15% HP เพื่อฟาดฟันศัตรูด้วยพลังทำลายล้าง 250% ของ ATK'
+    }
+  ],
+  magician: [
+    {
+      tier2Key: 'archmage',
+      name: 'มหาจอมเวท (Archmage)',
+      avatar: '🔮🌟',
+      color: '#c084fc',
+      desc: 'ปรมาจารย์แห่งศาสตร์เวทมนตร์ ปลดปล่อยมหาเวทธาตุทำลายล้าง',
+      statBonus: { hp: 20, mp: 60, atk: 2, def: 3, mag: 14, spd: 4, luk: 4 },
+      skillName: 'มหาอุกกาบาตสิ้นพิภพ (Apocalypse Meteor)',
+      skillCost: 24,
+      skillDesc: 'เรียกฝนดาวตกมหาเวทเผาผลาญศัตรู สร้างดาเมจมหาศาลและลดเกราะศัตรู'
+    },
+    {
+      tier2Key: 'necromancer',
+      name: 'เนโครแมนเซอร์ (Necromancer)',
+      avatar: '💀🕯️',
+      color: '#059669',
+      desc: 'ผู้อัญเชิญวิญญาณแห่งความตาย ควบคุมคำสาปและพลังดูดกลืนชีวิต',
+      statBonus: { hp: 30, mp: 40, atk: 4, def: 5, mag: 10, spd: 3, luk: 8 },
+      skillName: 'กองทัพวิญญาณกระดูกคืนชีพ (Army of the Damned)',
+      skillCost: 20,
+      skillDesc: 'สาปแช่งและดูดกลืน HP ของศัตรู 30% มาฟื้นฟูตนเอง'
+    }
+  ],
+  thief: [
+    {
+      tier2Key: 'ninja',
+      name: 'นินจาเงาสังหาร (Ninja)',
+      avatar: '🥷🌀',
+      color: '#14b8a6',
+      desc: 'นักรบแห่งเงามืด ว่องไวไร้ร่องรอยและหลบหลีกยอดเยี่ยม',
+      statBonus: { hp: 25, mp: 25, atk: 7, def: 4, mag: 4, spd: 12, luk: 8 },
+      skillName: 'ดาวกระจายสังหารไร้เงา (Shadow Shuriken)',
+      skillCost: 16,
+      skillDesc: 'ขว้างดาวกระจายอาบยาพิษ 6 ดอกติดคริติคอลสูงและทำให้ศัตรูติดพิษ'
+    },
+    {
+      tier2Key: 'assassin',
+      name: 'นักฆ่าไร้ร่องรอย (Assassin)',
+      avatar: '🗡️☠️',
+      color: '#e11d48',
+      desc: 'เพชฌฆาตผู้เชี่ยวชาญการโจมตีจุดตาย ปลิดชีพเป้าหมายในพริบตา',
+      statBonus: { hp: 20, mp: 20, atk: 11, def: 3, mag: 2, spd: 9, luk: 11 },
+      skillName: 'มรณภาพในพริบตา (Death Mark)',
+      skillCost: 18,
+      skillDesc: 'เล็งจุดตายศัตรู มีโอกาสสูงมากที่จะเกิดคริติคอล 3 เท่าและปล้นทอง 20%'
+    }
+  ],
+  cleric: [
+    {
+      tier2Key: 'high_priest',
+      name: 'มหาสมณะ (High Priest)',
+      avatar: '⛪✨',
+      color: '#fbbf24',
+      desc: 'ผู้รับใช้สวรรค์สูงสุด พลังรักษาอันศักดิ์สิทธิ์และเกราะเทวา',
+      statBonus: { hp: 35, mp: 50, atk: 3, def: 8, mag: 10, spd: 3, luk: 6 },
+      skillName: 'แสงทิพย์ชำระบาปสากล (Universal Radiance)',
+      skillCost: 20,
+      skillDesc: 'ปลดปล่อยแสงศักดิ์สิทธิ์ ฟื้นฟู HP เต็มและสร้างดาเมจแสงใส่ศัตรู'
+    },
+    {
+      tier2Key: 'saint',
+      name: 'นักบุญหญิง (Saintess)',
+      avatar: '🕊️💖',
+      color: '#f472b6',
+      desc: 'สตรีผู้เปี่ยมด้วยความเมตตาและโชคชะตาแห่งปาฏิหาริย์',
+      statBonus: { hp: 40, mp: 45, atk: 4, def: 6, mag: 8, spd: 4, luk: 12 },
+      skillName: 'พรสวรรค์ปกปักชะตากรรม (Miracle Grace)',
+      skillCost: 18,
+      skillDesc: 'มอบพรปาฏิหาริย์ ฟื้นฟู HP/MP 50% และเพิ่มโอกาสหลบหลีกสูงสุด'
+    }
+  ],
+  spellblade: [
+    {
+      tier2Key: 'rune_master',
+      name: 'ปรมาจารย์อักขระมนตรา (Rune Master)',
+      avatar: '⚔️🔮',
+      color: '#f43f5e',
+      desc: 'ผู้ผสานดาบและเวทมนตร์เข้าสู่อักขระรูนโบราณ ทรงพลังทั้งกายภาพและเวท',
+      statBonus: { hp: 40, mp: 40, atk: 9, def: 6, mag: 9, spd: 7, luk: 6 },
+      skillName: 'ระบำดาบสิบมนตรา (Ten-Rune Blade Dance)',
+      skillCost: 20,
+      skillDesc: 'ร่ายอักขระรูนดาบ 10 เล่มพุ่งฟันกวาดล้างทั้งทางกายภาพและเวทมนตร์'
+    }
+  ]
+};
+
 export interface FieldSpellData {
   id: string;
   name: string;
@@ -313,6 +437,20 @@ export class Player {
   public homeNodeId: number | null = null;
   public companion: CompanionData | null = null;
 
+  // Tier 2 Job Promotion & AI Personality
+  public originalClassKey: string;
+  public isPromoted: boolean = false;
+  public aiPersonality: 'balanced' | 'economist' | 'hunter' | 'tactician' = 'balanced';
+
+  // Match Summary & Hall of Fame Statistics
+  public matchStats = {
+    monstersKilled: 0,
+    pvpWins: 0,
+    goldEarnedTotal: 300,
+    townsCapturedTotal: 0,
+    pranksGiven: 0
+  };
+
   // Color & Info
   public color: string;
   public className: string;
@@ -323,8 +461,14 @@ export class Player {
     this.id = id;
     this.name = name;
     this.classKey = classKey;
+    this.originalClassKey = classKey;
     this.isAI = isAI;
     this.skinVariant = skinVariant;
+
+    if (isAI) {
+      const personalities: Array<'balanced' | 'economist' | 'hunter' | 'tactician'> = ['balanced', 'economist', 'hunter', 'tactician'];
+      this.aiPersonality = personalities[id % personalities.length];
+    }
 
     const base = HERO_CLASSES[classKey] || HERO_CLASSES['warrior'];
     this.className = base.name;
@@ -443,7 +587,54 @@ export class Player {
     this.def += defGain;
     this.mag += magGain;
 
+    // AI automatically promotes upon reaching Level 10
+    if (this.isAI && this.canPromote()) {
+      const available = this.getAvailablePromotions();
+      if (available.length > 0) {
+        // Choose based on personality
+        const choice = (this.aiPersonality === 'hunter' || this.aiPersonality === 'economist') && available.length > 1
+          ? available[1].tier2Key
+          : available[0].tier2Key;
+        this.promote(choice);
+      }
+    }
+
     return { hpGain, mpGain, atkGain, defGain, magGain };
+  }
+
+  canPromote(): boolean {
+    return this.level >= 10 && !this.isPromoted && !this.isDarkling;
+  }
+
+  getAvailablePromotions(): JobPromotionData[] {
+    const baseKey = this.originalClassKey || this.classKey;
+    return JOB_PROMOTIONS[baseKey] || [];
+  }
+
+  promote(tier2Key: string): boolean {
+    const promos = this.getAvailablePromotions();
+    const target = promos.find(p => p.tier2Key === tier2Key);
+    if (!target) return false;
+
+    this.isPromoted = true;
+    this.classKey = target.tier2Key;
+    this.className = target.name;
+    this.avatar = target.avatar;
+    this.color = target.color;
+    this.skillName = target.skillName;
+
+    // Apply permanent promotion stat bonuses
+    this.maxHp += target.statBonus.hp;
+    this.hp = this.maxHp;
+    this.maxMp += target.statBonus.mp;
+    this.mp = this.maxMp;
+    this.atk += target.statBonus.atk;
+    this.def += target.statBonus.def;
+    this.mag += target.statBonus.mag;
+    this.spd += target.statBonus.spd;
+    this.luk += target.statBonus.luk;
+
+    return true;
   }
 
   // Transform to The Darkling!

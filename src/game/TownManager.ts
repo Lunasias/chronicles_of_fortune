@@ -14,7 +14,6 @@ export class TownManager {
       player.townDeeds.push(townNode.id);
     }
     player.townsControlled = player.townDeeds.length;
-
     const goldReward = 150 + townNode.townData.level * 50;
     const xpReward = 80 + townNode.townData.level * 30;
 
@@ -22,6 +21,9 @@ export class TownManager {
     if (royalDecreeSystem.isBountyTown(townNode.id)) {
       bountyReward = royalDecreeSystem.claimBounty(player);
     }
+
+    player.matchStats.townsCapturedTotal++;
+    player.matchStats.goldEarnedTotal += (goldReward + bountyReward);
 
     player.gold += goldReward;
     player.gainXP(xpReward);

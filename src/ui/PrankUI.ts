@@ -138,6 +138,7 @@ export class PrankUI {
     const sillyName = (rawName || 'Dummy').slice(0, 10);
 
     this.currentVictim.applyPrank(this.selectedPrankType, sillyName, 14);
+    p.matchStats.pranksGiven++;
     audio.fanfare();
     this.game.addLog(`🎨 วาดหน้าสำเร็จ! ${p.displayName} วาดหน้า ${this.currentVictim.name} และเปลี่ยนชื่อเป็น "${sillyName}" เป็นเวลา 2 สัปดาห์!`, 'darkling');
 

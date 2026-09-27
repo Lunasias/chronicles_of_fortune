@@ -6,10 +6,19 @@ import { EquipmentItem, IsoDirection, CharacterAnimState, PrankState } from './P
 
 const CLASS_ASSET_FOLDERS: Record<string, string> = {
   warrior: 'A_female_warrior_knight',
+  paladin: 'A_female_warrior_knight',
+  berserker: 'A_female_warrior_knight',
   spellblade: 'A_female_magic_swordsman_with',
+  rune_master: 'A_female_magic_swordsman_with',
   magician: 'A_fair-skinned_sorceress_with_long',
+  archmage: 'A_fair-skinned_sorceress_with_long',
+  necromancer: 'A_fair-skinned_sorceress_with_long',
   thief: 'A_fair-skinned_female_assassin_wearing',
+  ninja: 'A_fair-skinned_female_assassin_wearing',
+  assassin: 'A_fair-skinned_female_assassin_wearing',
   cleric: 'A_young_priestess_with_blonde',
+  high_priest: 'A_young_priestess_with_blonde',
+  saint: 'A_young_priestess_with_blonde',
   ranger: 'A_fair-skinned_female_assassin_wearing'
 };
 

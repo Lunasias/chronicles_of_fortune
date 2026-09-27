@@ -42,6 +42,7 @@ export class DarklingSystem {
     // Transform into The Darkling
     darklingPlayer.becomeDarkling();
     audio.darklingRoar();
+    audio.playBgm('darkling');
   }
 
   // Calamity 1: Summon Monsters to re-occupy opponents' towns

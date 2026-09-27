@@ -703,6 +703,12 @@
         <span class="hidden sm:inline">โฟกัส</span>
       </button>
 
+      <!-- Game Speed (Turbo) Toggle Button -->
+      <button id="btnGameSpeed" class="pixel-btn px-2 sm:px-3 py-1.5 sm:py-2 text-xs text-amber-300 font-bold flex items-center gap-1 sm:gap-1.5 touch-manipulation min-h-[36px] sm:min-h-[40px]" title="ปรับความเร็วเกม">
+        <span>⚡</span>
+        <span id="btnGameSpeedText">1x</span>
+      </button>
+
       <!-- Full Continent Map Viewer Button -->
       <button id="btnWorldMap" class="pixel-btn px-2 sm:px-3 py-1.5 sm:py-2 text-xs text-amber-300 flex items-center gap-1 sm:gap-1.5 touch-manipulation min-h-[36px] sm:min-h-[40px]" title="ดูแผนที่ทวีป">
         <span>🗺️</span>
@@ -1006,21 +1012,43 @@
         <span id="tavernPlayerGold" class="text-xs font-bold text-amber-400">300G</span>
       </div>
 
-      <!-- Actions: Rest at Inn, Hear Rumors -->
-      <div class="grid grid-cols-2 gap-2">
-        <button id="btnTavernRestInn" class="pixel-btn pixel-btn-green p-2.5 flex items-center justify-center gap-2 text-xs">
+      <!-- Actions: Rest at Inn, Hear Rumors, Casino -->
+      <div class="grid grid-cols-3 gap-2">
+        <button id="btnTavernRestInn" class="pixel-btn pixel-btn-green p-2 flex items-center justify-center gap-1.5 text-xs">
           <span>🛌</span>
           <div class="text-left">
-            <div class="font-bold">พักที่โรงแรม</div>
-            <div class="text-[9px] text-emerald-200">ฟื้นฟู HP/MP, รักษาสถานะ (25G)</div>
+            <div class="font-bold">พักโรงแรม</div>
+            <div class="text-[9px] text-emerald-200">25G</div>
           </div>
         </button>
-        <button id="btnTavernListenRumors" class="pixel-btn pixel-btn-blue p-2.5 flex items-center justify-center gap-2 text-xs">
+        <button id="btnTavernListenRumors" class="pixel-btn pixel-btn-blue p-2 flex items-center justify-center gap-1.5 text-xs">
           <span>💬</span>
           <div class="text-left">
             <div class="font-bold">ฟังข่าวลือ</div>
-            <div class="text-[9px] text-sky-200">ซุบซิบและตำนาน (ฟรี)</div>
+            <div class="text-[9px] text-sky-200">ฟรี</div>
           </div>
+        </button>
+        <button id="btnTavernCasino" class="pixel-btn pixel-btn-gold p-2 flex items-center justify-center gap-1.5 text-xs">
+          <span>🎰</span>
+          <div class="text-left">
+            <div class="font-bold">กาสิโน</div>
+            <div class="text-[9px] text-amber-950 font-bold">50G</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Casino Mini-Game Section -->
+      <div id="tavernCasinoSection" class="hidden pixel-box p-3 bg-slate-950 border-amber-500 flex flex-col items-center gap-2">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-bold text-amber-300">🎰 วงล้อเสี่ยงโชคกิลด์ (50G ต่อรอบ)</span>
+          <span class="text-[9px] text-amber-400">แจ็กพอต 6 เท่า!</span>
+        </div>
+        <div id="casinoWheelDisplay" class="pixel-well w-full p-2.5 text-center text-sm font-bold text-amber-200 min-h-[44px] flex items-center justify-center">
+          🎲 กดปุ่มเพื่อหมุนวงล้อเสี่ยงโชค!
+        </div>
+        <button id="btnSpinCasino" class="pixel-btn pixel-btn-gold px-4 py-2 text-xs font-bold text-slate-950 w-full flex items-center justify-center gap-1.5">
+          <span>🌀</span>
+          <span>หมุนวงล้อเสี่ยงโชค (50G)</span>
         </button>
       </div>
 
@@ -1532,9 +1560,19 @@
             <input type="checkbox" id="checkShake" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
           </div>
           <div class="pt-2 border-t border-slate-800">
-            <div class="text-[10px] text-amber-400 font-bold mb-1.5 flex items-center gap-1">
-              <span>💾</span>
-              <span>ระบบบันทึกความคืบหน้า (Save System)</span>
+            <div class="text-[10px] text-amber-400 font-bold mb-1.5 flex items-center justify-between">
+              <span class="flex items-center gap-1">
+                <span>💾</span>
+                <span>ระบบบันทึกความคืบหน้า (Save System)</span>
+              </span>
+              <div class="flex items-center gap-1 text-[9px] text-slate-300">
+                <span>ช่อง:</span>
+                <select id="selectSaveSlot" class="bg-slate-950 border border-slate-700 text-amber-300 px-1 py-0.5 outline-none font-bold">
+                  <option value="1">ช่อง 1</option>
+                  <option value="2">ช่อง 2</option>
+                  <option value="3">ช่อง 3</option>
+                </select>
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <button id="btnSettingsSave" class="pixel-btn pixel-btn-gold py-1.5 text-[11px] font-bold text-slate-950 flex items-center justify-center gap-1">

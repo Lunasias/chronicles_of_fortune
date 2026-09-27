@@ -26,18 +26,20 @@ const DIR_NAME_MAP: Record<IsoDirection, string> = {
 export class CustomIsometricMonsterRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private monsterImageStore = new Map<string, HTMLImageElement>();
-  private loadedCount = 0;
-  private totalToLoad = 0;
+  private loadedArchetypes = new Set<string>();
+  private loadingArchetypes = new Set<string>();
   private failedCount = 0;
-  private readyNotified = false;
   private currentDir: IsoDirection = 'SW';
   private isBack: boolean = false;
 
   constructor() {
-    this.preloadMonsterImages();
+    this.preloadPortraits();
   }
 
-  private preloadMonsterImages() {
+  /**
+   * Preload lightweight portraits for initial UI/modals without flooding network with 1300+ frames.
+   */
+  private preloadPortraits() {
     const archetypes = [
       'slime_princess', 'goblin_girl', 'beast_maiden', 'dark_knightress',
       'dragon_princess_ignis', 'sakura_kitsune', 'skeletal_maid', 'yeti_maiden',
@@ -45,78 +47,80 @@ export class CustomIsometricMonsterRenderer {
       'kraken_maiden', 'sphinx_queen', 'dryad_nymph', 'arachne_weaver',
       'vampire_countess', 'ghost_maiden'
     ];
-    const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
-
-    // 1 portrait + (1 idle + 4 run + 4 attack) frames for each of the 8 directions.
-    this.totalToLoad = archetypes.length * (1 + directions.length * 9);
 
     for (const arch of archetypes) {
-      // 1. Portrait Preview
       const img = new Image();
       img.src = `/assets/monsters/${arch}.png`;
-      img.onload = () => this.markAssetLoaded();
-      img.onerror = () => this.markAssetFailed(`/assets/monsters/${arch}.png`);
+      img.onerror = () => {
+        this.failedCount++;
+      };
       this.monsterImageStore.set(arch, img);
-
-      // 2. Preload 8-Directional Idle and Attack Frames referencing the spellblade model
-      for (const dir of directions) {
-        const dirName = DIR_NAME_MAP[dir];
-
-        // Idle frame
-        const idleSrc = `/assets/monsters/${arch}/Idle/rotations/${dirName}.png`;
-        const idleImg = new Image();
-        idleImg.src = idleSrc;
-        idleImg.onload = () => this.markAssetLoaded();
-        idleImg.onerror = () => this.markAssetFailed(idleSrc);
-        this.monsterImageStore.set(`${arch}_idle_${dir}`, idleImg);
-
-        // 4 Run frames per direction (32 Run frames per monster)
-        for (let f = 0; f < 4; f++) {
-          const runSrc = `/assets/monsters/${arch}/Run/rotations/${dirName}_${f}.png`;
-          const runImg = new Image();
-          runImg.src = runSrc;
-          runImg.onload = () => this.markAssetLoaded();
-          runImg.onerror = () => this.markAssetFailed(runSrc);
-          this.monsterImageStore.set(`${arch}_run_${dir}_${f}`, runImg);
-        }
-
-        // 4 Attack frames per direction (32 Attack frames per monster)
-        for (let f = 0; f < 4; f++) {
-          const atkSrc = `/assets/monsters/${arch}/Attack/rotations/${dirName}_${f}.png`;
-          const atkImg = new Image();
-          atkImg.src = atkSrc;
-          atkImg.onload = () => this.markAssetLoaded();
-          atkImg.onerror = () => this.markAssetFailed(atkSrc);
-          this.monsterImageStore.set(`${arch}_attack_${dir}_${f}`, atkImg);
-        }
-      }
     }
   }
 
   /**
-   * Counts a settled sprite request and notifies once when every monster sheet is in.
-   *
-   * Previously each of the 1,314 images cleared the sprite cache and dispatched
-   * `monster-assets-loaded` individually. No listener ever subscribed to that event, so
-   * the whole burst was pure main-thread overhead that also discarded cached sprites
-   * while the board was trying to render.
+   * Loads high-res 8-directional idle, run, and attack frames on-demand for an active archetype.
    */
-  private markAssetLoaded() {
-    this.loadedCount++;
-    if (this.loadedCount < this.totalToLoad || this.readyNotified) return;
+  public ensureArchetypeLoaded(arch: string) {
+    if (this.loadedArchetypes.has(arch) || this.loadingArchetypes.has(arch)) return;
+    this.loadingArchetypes.add(arch);
 
-    this.readyNotified = true;
-    this.cache.clear();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('monster-assets-loaded'));
+    const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
+    const totalFrames = directions.length * 9; // 1 idle + 4 run + 4 attack per dir = 72 frames
+    let loadedOrFailed = 0;
+
+    const checkDone = () => {
+      loadedOrFailed++;
+      if (loadedOrFailed >= totalFrames) {
+        this.loadedArchetypes.add(arch);
+        this.loadingArchetypes.delete(arch);
+        this.cache.clear();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('monster-assets-loaded', { detail: { archetype: arch } }));
+        }
+      }
+    };
+
+    for (const dir of directions) {
+      const dirName = DIR_NAME_MAP[dir];
+
+      // Idle frame
+      const idleSrc = `/assets/monsters/${arch}/Idle/rotations/${dirName}.png`;
+      const idleImg = new Image();
+      idleImg.src = idleSrc;
+      idleImg.onload = checkDone;
+      idleImg.onerror = () => {
+        this.failedCount++;
+        checkDone();
+      };
+      this.monsterImageStore.set(`${arch}_idle_${dir}`, idleImg);
+
+      // 4 Run frames per direction
+      for (let f = 0; f < 4; f++) {
+        const runSrc = `/assets/monsters/${arch}/Run/rotations/${dirName}_${f}.png`;
+        const runImg = new Image();
+        runImg.src = runSrc;
+        runImg.onload = checkDone;
+        runImg.onerror = () => {
+          this.failedCount++;
+          checkDone();
+        };
+        this.monsterImageStore.set(`${arch}_run_${dir}_${f}`, runImg);
+      }
+
+      // 4 Attack frames per direction
+      for (let f = 0; f < 4; f++) {
+        const atkSrc = `/assets/monsters/${arch}/Attack/rotations/${dirName}_${f}.png`;
+        const atkImg = new Image();
+        atkImg.src = atkSrc;
+        atkImg.onload = checkDone;
+        atkImg.onerror = () => {
+          this.failedCount++;
+          checkDone();
+        };
+        this.monsterImageStore.set(`${arch}_attack_${dir}_${f}`, atkImg);
+      }
     }
-  }
-
-  private markAssetFailed(src: string) {
-    this.failedCount++;
-    console.warn(`[MonsterRenderer] Failed to load sprite: ${src}`);
-    // Still count it so one missing file cannot stall the ready notification.
-    this.markAssetLoaded();
   }
 
   public getMonsterArchetypeKey(mName: string): string {
@@ -224,6 +228,7 @@ export class CustomIsometricMonsterRenderer {
 
     // Route to fresh 8-directional animated Monster Model referencing spellblade model
     const archKey = this.getMonsterArchetypeKey(mName);
+    this.ensureArchetypeLoaded(archKey);
     let mobImg: HTMLImageElement | undefined;
 
     if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {

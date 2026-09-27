@@ -183,6 +183,45 @@ export class InspectUI {
           </div>
         </div>
 
+        ${player.canPromote() ? `
+          <div class="pixel-box-gold p-3 mb-3 border-2 border-amber-400 bg-amber-950/70 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <span>⭐</span> <span>พร้อมเลื่อนขั้นอาชีพขั้นสูง (Tier 2)!</span>
+              </div>
+              <div class="text-[10px] text-amber-200">ปลดล็อกพลังใหม่และสเตตัสถาวรระดับตำนาน</div>
+            </div>
+            <button id="btnOpenPromotionModal" class="pixel-btn pixel-btn-gold px-3 py-1.5 text-xs font-bold text-slate-950 flex items-center gap-1">
+              <span>เลื่อนขั้น</span> <span>➔</span>
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- Match Summary Statistics -->
+        <div class="bg-slate-950/80 border border-slate-800 p-2.5 mb-3">
+          <div class="text-[10px] text-amber-300 font-bold mb-1.5 flex items-center gap-1">
+            <span>📊</span> <span>สถิติการผจญภัยในรอบนี้ (Match Statistics)</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+            <div class="bg-slate-900/90 p-1.5 border border-slate-800">
+              <div class="text-slate-400 text-[9px]">ปราบมอนสเตอร์</div>
+              <div class="text-xs font-bold text-amber-300 mt-0.5">${player.matchStats.monstersKilled}</div>
+            </div>
+            <div class="bg-slate-900/90 p-1.5 border border-slate-800">
+              <div class="text-slate-400 text-[9px]">ชนะประลอง PvP</div>
+              <div class="text-xs font-bold text-rose-300 mt-0.5">${player.matchStats.pvpWins}</div>
+            </div>
+            <div class="bg-slate-900/90 p-1.5 border border-slate-800">
+              <div class="text-slate-400 text-[9px]">ยึดครองเมือง</div>
+              <div class="text-xs font-bold text-emerald-300 mt-0.5">${player.matchStats.townsCapturedTotal}</div>
+            </div>
+            <div class="bg-slate-900/90 p-1.5 border border-slate-800">
+              <div class="text-slate-400 text-[9px]">แกล้งสำเร็จ</div>
+              <div class="text-xs font-bold text-purple-300 mt-0.5">${player.matchStats.pranksGiven}</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Equipment & Assets -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 text-xs">
           <!-- Equipment -->
@@ -247,6 +286,73 @@ export class InspectUI {
     document.getElementById('btnCloseInspectModal')?.addEventListener('click', () => {
       audio.click();
       this.inspectModal.classList.add('hidden');
+    });
+
+    document.getElementById('btnOpenPromotionModal')?.addEventListener('click', () => {
+      audio.click();
+      this.openPromotionModal(player);
+    });
+  }
+
+  private openPromotionModal(player: Player) {
+    const promos = player.getAvailablePromotions();
+    if (promos.length === 0) return;
+
+    const promoHtml = promos.map(p => `
+      <div class="pixel-box p-3 bg-slate-950 border-amber-500/60 flex flex-col gap-2 hover:border-amber-400">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${p.avatar}</span>
+            <div>
+              <div class="font-bold text-amber-300 text-xs">${p.name}</div>
+              <div class="text-[10px] text-slate-300">${p.desc}</div>
+            </div>
+          </div>
+        </div>
+        <div class="text-[10px] text-emerald-300 bg-emerald-950/40 p-1.5 border border-emerald-800/40">
+          <strong>โบนัสสเตตัส:</strong> +${p.statBonus.hp} HP, +${p.statBonus.mp} MP, +${p.statBonus.atk} ATK, +${p.statBonus.def} DEF, +${p.statBonus.mag} MAG, +${p.statBonus.spd} SPD, +${p.statBonus.luk} LUK
+        </div>
+        <div class="text-[10px] text-sky-200 bg-sky-950/40 p-1.5 border border-sky-800/40">
+          <strong>สกิลใหม่:</strong> ${p.skillName} (${p.skillCost} MP) - ${p.skillDesc}
+        </div>
+        <button data-tier2="${p.tier2Key}" class="btn-confirm-promote pixel-btn pixel-btn-gold py-1.5 text-xs font-bold text-slate-950 mt-1">
+          เลือกเลื่อนขั้นเป็น ${p.name}
+        </button>
+      </div>
+    `).join('');
+
+    this.inspectModal.innerHTML = `
+      <div class="pixel-box-gold max-w-lg w-full p-5 relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b-2 border-amber-600/40 pb-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">⭐</span>
+            <div>
+              <h2 class="text-sm font-bold text-amber-300">พิธีเลื่อนขั้นอาชีพ (Tier 2 Promotion)</h2>
+              <p class="text-[10px] text-slate-300">เลือกเส้นทางแห่งวีรบุรุษขั้นสูงเพื่อรับพลังใหม่</p>
+            </div>
+          </div>
+          <button id="btnCancelPromotion" class="pixel-btn px-2.5 py-1 text-xs text-slate-300">✖ ยกเลิก</button>
+        </div>
+        <div class="flex flex-col gap-3">
+          ${promoHtml}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btnCancelPromotion')?.addEventListener('click', () => {
+      audio.click();
+      this.renderInspectModal(player);
+    });
+
+    this.inspectModal.querySelectorAll('.btn-confirm-promote').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const key = (e.currentTarget as HTMLElement).getAttribute('data-tier2')!;
+        if (player.promote(key)) {
+          audio.classPromoteJingle();
+          this.game.addLog(`🌟 ปาฏิหาริย์แห่งเกียรติยศ! ${player.name} ได้เลื่อนขั้นเป็น "${player.className}" แล้ว!`, 'level');
+          this.renderInspectModal(player);
+        }
+      });
     });
   }
 
