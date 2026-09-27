@@ -194,6 +194,7 @@ export class BattleUI {
     document.getElementById('btnCmdStrike')?.addEventListener('click', () => this.handleAttackerInput('strike'));
     document.getElementById('btnCmdMagic')?.addEventListener('click', () => this.handleAttackerInput('magic'));
     document.getElementById('btnCmdSkill')?.addEventListener('click', () => this.handleAttackerInput('skill'));
+    document.getElementById('btnCmdBurst')?.addEventListener('click', () => this.handleAttackerInput('burst'));
 
     // Defender cards
     document.getElementById('btnCmdDefend')?.addEventListener('click', () => this.handleDefenderInput('defend'));
@@ -339,6 +340,14 @@ export class BattleUI {
     document.getElementById('battlePlayerMP')!.style.width = `${pMpPct}%`;
     document.getElementById('battlePlayerMPText')!.innerText = `${curPMP}/${maxPMP}`;
 
+    // Burst gauge bar update
+    const burstEl = document.getElementById('battlePlayerBurst');
+    const burstTextEl = document.getElementById('battlePlayerBurstText');
+    const pRef = pCombatant.playerRef || this.game.activePlayer;
+    const burstVal = Math.min(100, Math.max(0, pRef?.burstGauge || 0));
+    if (burstEl) burstEl.style.width = `${burstVal}%`;
+    if (burstTextEl) burstTextEl.innerText = `BURST: ${burstVal}%`;
+
     document.getElementById('battleEnemyName')!.innerText = eCombatant.name;
     document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
     document.getElementById('battleEnemyRoleBadge')!.className = !isPAtk
@@ -450,6 +459,16 @@ export class BattleUI {
       } else {
         skillBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
         skillLbl.innerText = (p.skillName || 'SKILL').toUpperCase();
+      }
+    }
+
+    // Update EX Burst Button visibility and state
+    const burstBtn = document.getElementById('btnCmdBurst');
+    if (burstBtn) {
+      if ((p.burstGauge || 0) >= 100) {
+        burstBtn.classList.remove('hidden');
+      } else {
+        burstBtn.classList.add('hidden');
       }
     }
 
@@ -757,7 +776,11 @@ export class BattleUI {
     let actionSub = '';
     let bannerColor = '#f59e0b';
 
-    if (atkAction === 'strike') {
+    if (atkAction === 'burst') {
+      actionTitle = '🔥💥 LIMIT BREAK: EX BURST! 💥🔥';
+      actionSub = `${b.attacker.name} ปลดปล่อยมหาพลังสะเทือนฟ้าดิน!`;
+      bannerColor = '#f59e0b';
+    } else if (atkAction === 'strike') {
       actionTitle = '⚡ ชาร์จฟันทะลวงเกราะ! ⚡';
       actionSub = `${b.attacker.name} ชาร์จพลังทำลายล้างทะลวงการป้องกัน!`;
       bannerColor = '#ef4444';
@@ -803,7 +826,7 @@ export class BattleUI {
     } else if (atkAction === 'magic') {
       targetAtkDX = fullDX * 0.22;
       targetAtkDY = fullDY * 0.22;
-    } else if (atkAction === 'strike') {
+    } else if (atkAction === 'strike' || atkAction === 'burst') {
       // Heavy plunge strike leaping down from the North
       const margin = isPAtk ? 50 : -50;
       targetAtkDX = fullDX - margin;
@@ -821,14 +844,17 @@ export class BattleUI {
     }
 
     // Set dash animation pose
-    this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
+    this.attackerAnim = (atkAction === 'strike' || atkAction === 'burst') ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
     this.defenderAnim = defAction === 'counter' ? 'counter' : 'idle';
 
     // Start Phase 1: Dash forward across the arena! (340ms)
     this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
     // Trigger Anime Speed Lines for rapid dash movement!
-    if (atkAction === 'strike' || isCounterStrikeClash) {
+    if (atkAction === 'burst') {
+      combatVFX.triggerSpeedLines('rgba(245, 158, 11, 0.95)', 36);
+      combatVFX.triggerScreenShake(26);
+    } else if (atkAction === 'strike' || isCounterStrikeClash) {
       combatVFX.triggerSpeedLines('rgba(239, 68, 68, 0.75)', 24);
     } else if (atkAction === 'magic') {
       combatVFX.triggerSpeedLines('rgba(168, 85, 247, 0.75)', 22);

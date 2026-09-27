@@ -282,40 +282,114 @@ export class IsekaiEventUI {
       return;
     }
 
-    document.getElementById('fishingPromptState')?.classList.remove('hidden');
-    document.getElementById('fishingResultState')?.classList.add('hidden');
-
+    const promptState = document.getElementById('fishingPromptState');
+    const reelState = document.getElementById('fishingReelState');
+    const resState = document.getElementById('fishingResultState');
+    const needleEl = document.getElementById('fishingNeedle');
     const btnCast = document.getElementById('btnCastRod');
+    const btnReel = document.getElementById('btnReelRod');
+
+    promptState?.classList.remove('hidden');
+    reelState?.classList.add('hidden');
+    resState?.classList.add('hidden');
+
+    let animFrame: number | null = null;
+    let needlePos = 0;
+    let needleDir = 1;
+    let isReeling = false;
+
+    const stopNeedleLoop = () => {
+      if (animFrame !== null) {
+        cancelAnimationFrame(animFrame);
+        animFrame = null;
+      }
+      window.removeEventListener('keydown', handleKey);
+    };
+
+    const handleReelAction = () => {
+      if (isReeling) return;
+      isReeling = true;
+      stopNeedleLoop();
+
+      // Sweet Spot is 42% - 58%, Good Zone is 28% - 72%
+      let accuracy: 'perfect' | 'great' | 'miss' = 'miss';
+      if (needlePos >= 40 && needlePos <= 60) {
+        accuracy = 'perfect';
+        audio.jackpotFanfare();
+      } else if (needlePos >= 25 && needlePos <= 75) {
+        accuracy = 'great';
+        audio.levelUp();
+      } else {
+        accuracy = 'miss';
+        audio.hurt();
+      }
+
+      const result = isekaiEventManager.executeFishing(player, accuracy);
+
+      reelState?.classList.add('hidden');
+      if (resState) {
+        resState.classList.remove('hidden');
+        document.getElementById('fishingCatchIcon')!.innerText = result.icon;
+        document.getElementById('fishingCatchTitle')!.innerText = result.title;
+        document.getElementById('fishingCatchDesc')!.innerText = result.desc;
+      }
+
+      this.game.addLog(`🎣 FISHING: ${result.title} (${result.desc})`, result.type === 'combat' ? 'battle' : 'gold');
+
+      const btnContinue = document.getElementById('btnFishingContinue')!;
+      btnContinue.onclick = () => {
+        audio.click();
+        modal.classList.add('hidden');
+        if (result.type === 'combat' && result.monsterName) {
+          onCombat(result.monsterName);
+        } else {
+          onFinished();
+        }
+      };
+    };
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !reelState?.classList.contains('hidden')) {
+        e.preventDefault();
+        handleReelAction();
+      }
+    };
+
     if (btnCast) {
       btnCast.onclick = () => {
         audio.step();
-        btnCast.setAttribute('disabled', 'true');
+        promptState?.classList.add('hidden');
+        reelState?.classList.remove('hidden');
+        needlePos = 5;
+        needleDir = 1.6;
+        isReeling = false;
 
-        setTimeout(() => {
-          btnCast.removeAttribute('disabled');
-          const result = isekaiEventManager.executeFishing(player);
+        window.addEventListener('keydown', handleKey);
 
-          document.getElementById('fishingPromptState')?.classList.add('hidden');
-          const resState = document.getElementById('fishingResultState')!;
-          resState.classList.remove('hidden');
+        const animateGauge = () => {
+          needlePos += needleDir;
+          if (needlePos >= 96) {
+            needlePos = 96;
+            needleDir = -Math.abs(needleDir);
+          } else if (needlePos <= 4) {
+            needlePos = 4;
+            needleDir = Math.abs(needleDir);
+          }
 
-          document.getElementById('fishingCatchIcon')!.innerText = result.icon;
-          document.getElementById('fishingCatchTitle')!.innerText = result.title;
-          document.getElementById('fishingCatchDesc')!.innerText = result.desc;
+          if (needleEl) {
+            needleEl.style.left = `${needlePos}%`;
+          }
 
-          this.game.addLog(`🎣 FISHING: ${result.title} (${result.desc})`, result.type === 'combat' ? 'battle' : 'gold');
+          if (!isReeling) {
+            animFrame = requestAnimationFrame(animateGauge);
+          }
+        };
 
-          const btnContinue = document.getElementById('btnFishingContinue')!;
-          btnContinue.onclick = () => {
-            audio.click();
-            modal.classList.add('hidden');
-            if (result.type === 'combat' && result.monsterName) {
-              onCombat(result.monsterName);
-            } else {
-              onFinished();
-            }
-          };
-        }, 800);
+        animFrame = requestAnimationFrame(animateGauge);
+
+        if (btnReel) {
+          btnReel.onclick = () => handleReelAction();
+        }
       };
     }
 
@@ -326,9 +400,12 @@ export class IsekaiEventUI {
       setTimeout(() => {
         btnCast?.click();
         setTimeout(() => {
-          document.getElementById('btnFishingContinue')?.click();
-        }, 1600);
-      }, 600);
+          handleReelAction();
+          setTimeout(() => {
+            document.getElementById('btnFishingContinue')?.click();
+          }, 1400);
+        }, 850);
+      }, 500);
     }
   }
 

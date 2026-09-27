@@ -365,6 +365,12 @@ export class GameState {
     if (p.freezeTurns > 0) {
       totalRoll = 1;
       this.addLog(`❄️ ร่างกายของ ${p.displayName} ถูกแช่แข็ง (Frozen)! ก้าวเดินได้เพียง 1 ก้าวเท่านั้น!`, 'battle');
+    } else if (p.polymorphTurns > 0) {
+      totalRoll = 1;
+      this.addLog(`🐷 ${p.displayName} อยู่ในร่าง${p.polymorphType === 'mole' ? 'ตัวตุ่น' : 'หมู'}! ก้าวเดินต้วมเตี้ยมได้เพียง 1 ก้าวเท่านั้น!`, 'darkling');
+    } else if (p.relics.includes('windstrider_horseshoe') && totalRoll < 3) {
+      totalRoll = 3;
+      this.addLog(`🐎💨 เกือกม้าวายุทำงาน! ปรับแต้มลูกเต๋าขั้นต่ำเป็น 3 ก้าว!`, 'info');
     }
 
     const hereNode = this.allNodes.find(n => n.id === p.nodeId);

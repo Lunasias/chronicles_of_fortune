@@ -21,6 +21,18 @@ export class CasinoUI {
   private rouletteChosenColor: 'red' | 'blue' | 'gold' | 'skull' = 'red';
   private rouletteSpinning = false;
 
+  // Colosseum Game State
+  private colosseumBet = 100;
+  private selectedFighter = 0;
+  private colosseumBattling = false;
+
+  private fighters = [
+    { name: '🔥 ไพโรสไลม์', odds: 2.5, weight: 40 },
+    { name: '💀 อัศวินโครงกระดูก', odds: 3.5, weight: 28 },
+    { name: '🐺 หมาป่าเหมันต์', odds: 5.0, weight: 20 },
+    { name: '👑 ก็อบลินจอมทัพ', odds: 8.0, weight: 12 },
+  ];
+
   constructor(game: GameState) {
     this.game = game;
 
@@ -85,15 +97,16 @@ export class CasinoUI {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs text-amber-400 font-bold bg-slate-950 px-2 py-1 border border-amber-600/50">
+            <span id="casinoPlayerGoldText" class="text-xs text-amber-400 font-bold bg-slate-950 px-2 py-1 border border-amber-600/50">
               🪙 ${p.gold}G
             </span>
             <button id="btnCloseCasino" class="pixel-btn pixel-btn-red px-2.5 py-1 text-xs font-bold">✖ ออก</button>
           </div>
+        </div>
         <!-- Festival Banner -->
         ${
           royalDecreeSystem.activeDecree.id === 'ROYAL_CASINO_FESTIVAL'
-            ? `<div class="mb-3 px-3 py-1.5 rounded bg-pink-950/80 border border-pink-500/50 text-pink-300 text-xs flex items-center justify-between animate-pulse">
+            ? `<div class="mb-3 px-3 py-1.5 bg-pink-950/80 border border-pink-500/50 text-pink-300 text-xs flex items-center justify-between animate-pulse">
                 <span>🎪 เทศกาลคาสิโนราชสำนักทำงานอยู่! เงินรางวัล +50%!</span>
                 <span class="font-bold text-yellow-300">✨ x1.5 WIN</span>
               </div>`
@@ -101,12 +114,15 @@ export class CasinoUI {
         }
 
         <!-- Tab Switcher -->
-        <div class="flex gap-2 mb-3">
-          <button id="tabCasinoHighLow" class="pixel-btn pixel-btn-gold px-3 py-1.5 text-xs font-bold flex-1">
-            🃏 ไฮ-โลการ์ดโชคชะตา (High-Low)
+        <div class="flex gap-1.5 sm:gap-2 mb-3">
+          <button id="tabCasinoHighLow" class="pixel-btn pixel-btn-gold px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold flex-1">
+            🃏 ไฮ-โลการ์ด
           </button>
-          <button id="tabCasinoRoulette" class="pixel-btn px-3 py-1.5 text-xs text-slate-300 flex-1">
-            🎡 วงล้อดวงดาวริโก้ (Roulette)
+          <button id="tabCasinoRoulette" class="pixel-btn px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-slate-300 flex-1">
+            🎡 วงล้อดวงดาว
+          </button>
+          <button id="tabCasinoColosseum" class="pixel-btn px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-slate-300 flex-1">
+            ⚔️ โคลอสเซียม
           </button>
         </div>
 
@@ -188,6 +204,61 @@ export class CasinoUI {
             </button>
           </div>
         </div>
+
+        <!-- GAME 3: MONSTER COLOSSEUM -->
+        <div id="casinoColosseumPanel" class="hidden flex flex-col gap-3">
+          <div class="bg-slate-950/90 border border-slate-800 p-3 text-center">
+            <div class="text-[10px] text-amber-300 uppercase tracking-widest mb-1">สนามประลองอสูรกลาดิเอเตอร์</div>
+            <div id="colosseumArenaArena" class="p-3 bg-slate-900 border border-amber-600/40 my-2 text-xs min-h-[5rem] flex items-center justify-center font-bold text-amber-200">
+              เลือกมอนสเตอร์นักสู้ที่ท่านเชื่อมั่น แล้วเริ่มการประลอง!
+            </div>
+          </div>
+
+          <!-- Gladiator Selection Cards -->
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button class="colosseum-choice-btn pixel-btn pixel-btn-red p-2 flex flex-col text-left font-bold" data-fighter="0">
+              <div class="flex justify-between">
+                <span>🔥 ไพโรสไลม์</span>
+                <span class="text-yellow-300">x2.5</span>
+              </div>
+              <span class="text-[9px] text-rose-200">HP 120 / ATK 35 • สายถึกสมดุล</span>
+            </button>
+            <button class="colosseum-choice-btn pixel-btn p-2 flex flex-col text-left font-bold text-slate-300" data-fighter="1">
+              <div class="flex justify-between">
+                <span>💀 อัศวินโครงกระดูก</span>
+                <span class="text-yellow-300">x3.5</span>
+              </div>
+              <span class="text-[9px] text-slate-400">HP 100 / ATK 45 • ดาบกระดูก</span>
+            </button>
+            <button class="colosseum-choice-btn pixel-btn p-2 flex flex-col text-left font-bold text-slate-300" data-fighter="2">
+              <div class="flex justify-between">
+                <span>🐺 หมาป่าเหมันต์</span>
+                <span class="text-yellow-300">x5.0</span>
+              </div>
+              <span class="text-[9px] text-slate-400">HP 80 / ATK 60 • ว่องไวสังหาร</span>
+            </button>
+            <button class="colosseum-choice-btn pixel-btn p-2 flex flex-col text-left font-bold text-slate-300" data-fighter="3">
+              <div class="flex justify-between">
+                <span>👑 ก็อบลินจอมทัพ</span>
+                <span class="text-yellow-300">x8.0</span>
+              </div>
+              <span class="text-[9px] text-slate-400">HP 60 / ATK 85 • บ้าคลั่งตัวคูณสูง!</span>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-900 p-2.5 border border-slate-800 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400">เดิมพัน:</span>
+              <button class="c-bet-btn pixel-btn px-2 py-0.5 text-[10px]" data-bet="50">50G</button>
+              <button class="c-bet-btn pixel-btn pixel-btn-gold px-2 py-0.5 text-[10px] text-slate-950 font-bold" data-bet="100">100G</button>
+              <button class="c-bet-btn pixel-btn px-2 py-0.5 text-[10px]" data-bet="250">250G</button>
+            </div>
+            <button id="btnStartColosseum" class="pixel-btn pixel-btn-gold px-4 py-2 text-xs font-bold text-slate-950">
+              ⚔️ เริ่มเดิมพันประลอง!
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
     `;
 
@@ -214,27 +285,36 @@ export class CasinoUI {
     // Tab buttons
     const tabHl = document.getElementById('tabCasinoHighLow');
     const tabR = document.getElementById('tabCasinoRoulette');
+    const tabCol = document.getElementById('tabCasinoColosseum');
     const panelHl = document.getElementById('casinoHighLowPanel');
     const panelR = document.getElementById('casinoRoulettePanel');
+    const panelCol = document.getElementById('casinoColosseumPanel');
+
+    const activateTab = (activeBtn: HTMLElement | null, activePanel: HTMLElement | null) => {
+      [tabHl, tabR, tabCol].forEach(b => {
+        b?.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold');
+        b?.classList.add('text-slate-300');
+      });
+      [panelHl, panelR, panelCol].forEach(pan => pan?.classList.add('hidden'));
+
+      activeBtn?.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
+      activeBtn?.classList.remove('text-slate-300');
+      activePanel?.classList.remove('hidden');
+    };
 
     tabHl?.addEventListener('click', () => {
       audio.click();
-      tabHl.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
-      tabHl.classList.remove('text-slate-300');
-      tabR?.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold');
-      tabR?.classList.add('text-slate-300');
-      panelHl?.classList.remove('hidden');
-      panelR?.classList.add('hidden');
+      activateTab(tabHl, panelHl);
     });
 
     tabR?.addEventListener('click', () => {
       audio.click();
-      tabR.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
-      tabR.classList.remove('text-slate-300');
-      tabHl?.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold');
-      tabHl?.classList.add('text-slate-300');
-      panelR?.classList.remove('hidden');
-      panelHl?.classList.add('hidden');
+      activateTab(tabR, panelR);
+    });
+
+    tabCol?.addEventListener('click', () => {
+      audio.click();
+      activateTab(tabCol, panelCol);
     });
 
     // High-low bet buttons
@@ -281,6 +361,37 @@ export class CasinoUI {
 
     // Roulette spin
     document.getElementById('btnSpinRoulette')?.addEventListener('click', () => this.handleSpinRoulette());
+
+    // Colosseum fighter selection
+    document.querySelectorAll('.colosseum-choice-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        if (this.colosseumBattling) return;
+        audio.click();
+        document.querySelectorAll('.colosseum-choice-btn').forEach(b => {
+          b.classList.remove('pixel-btn-red');
+          b.classList.add('text-slate-300');
+        });
+        const t = e.currentTarget as HTMLElement;
+        t.classList.remove('text-slate-300');
+        t.classList.add('pixel-btn-red');
+        this.selectedFighter = parseInt(t.dataset.fighter || '0', 10);
+      });
+    });
+
+    // Colosseum bet buttons
+    document.querySelectorAll('.c-bet-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        if (this.colosseumBattling) return;
+        audio.click();
+        document.querySelectorAll('.c-bet-btn').forEach(b => b.classList.remove('pixel-btn-gold', 'text-slate-950', 'font-bold'));
+        const t = e.currentTarget as HTMLElement;
+        t.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
+        this.colosseumBet = parseInt(t.dataset.bet || '100', 10);
+      });
+    });
+
+    // Colosseum start brawl
+    document.getElementById('btnStartColosseum')?.addEventListener('click', () => this.handleStartColosseum());
   }
 
   private handleHighLowGuess(guessHigher: boolean) {
@@ -416,5 +527,102 @@ export class CasinoUI {
         }
       }
     }, 90);
+  }
+
+  private updateGoldDisplay() {
+    if (!this.currentPlayer) return;
+    const goldEl = document.getElementById('casinoPlayerGoldText');
+    if (goldEl) goldEl.innerText = `🪙 ${this.currentPlayer.gold}G`;
+  }
+
+  private handleStartColosseum() {
+    const p = this.currentPlayer;
+    if (!p || this.colosseumBattling) return;
+
+    if (p.gold < this.colosseumBet) {
+      audio.hurt();
+      const arenaEl = document.getElementById('colosseumArenaArena');
+      if (arenaEl) arenaEl.innerHTML = '<span class="text-rose-400">❌ เหรียญทองไม่เพียงพอสำหรับการเดิมพันสังเวียนนี้!</span>';
+      return;
+    }
+
+    p.gold -= this.colosseumBet;
+    this.updateGoldDisplay();
+    this.colosseumBattling = true;
+    audio.anvilStrike();
+
+    const startBtn = document.getElementById('btnStartColosseum') as HTMLButtonElement | null;
+    if (startBtn) startBtn.disabled = true;
+
+    const arenaEl = document.getElementById('colosseumArenaArena');
+    const chosen = this.fighters[this.selectedFighter];
+    if (arenaEl) {
+      arenaEl.innerHTML = `<span class="animate-pulse text-amber-300">⚔️ เปิดสังเวียนมรณะ! คุณเดิมพันฝั่ง [${chosen.name}] (${chosen.odds}x)...</span>`;
+    }
+
+    // Determine winner based on weights
+    const totalWeight = this.fighters.reduce((acc, f) => acc + f.weight, 0);
+    const rand = Math.random() * totalWeight;
+    let accumulated = 0;
+    let winnerIndex = 0;
+    for (let i = 0; i < this.fighters.length; i++) {
+      accumulated += this.fighters[i].weight;
+      if (rand <= accumulated) {
+        winnerIndex = i;
+        break;
+      }
+    }
+
+    const winner = this.fighters[winnerIndex];
+
+    // 3-round simulated brawl
+    setTimeout(() => {
+      audio.anvilStrike();
+      if (arenaEl) {
+        arenaEl.innerHTML = `<div class="text-rose-300">💥 ยกที่ 1: หมาป่าเหมันต์ กระโจนกัด ไพโรสไลม์! ก็อบลินจอมทัพ ฟาดค้อนสนั่น!</div>`;
+      }
+
+      setTimeout(() => {
+        audio.anvilStrike();
+        if (arenaEl) {
+          arenaEl.innerHTML = `<div class="text-yellow-300">⚡ ยกที่ 2: อัศวินโครงกระดูก ใช้เพลงดาบวิญญาณปะทะฝูงอสูรอย่างดุเดือด!</div>`;
+        }
+
+        setTimeout(() => {
+          this.colosseumBattling = false;
+          if (startBtn) startBtn.disabled = false;
+
+          const isWin = winnerIndex === this.selectedFighter;
+          if (isWin) {
+            const festivalMult = royalDecreeSystem.activeDecree.id === 'ROYAL_CASINO_FESTIVAL' ? 1.5 : 1.0;
+            const payout = Math.round(this.colosseumBet * winner.odds * festivalMult);
+            p.gold += payout;
+            p.matchStats.goldEarnedTotal += payout;
+            this.updateGoldDisplay();
+            audio.jackpotFanfare();
+            const festTag = festivalMult > 1 ? ' [โบนัสเทศกาล +50%!]' : '';
+            if (arenaEl) {
+              arenaEl.innerHTML = `
+                <div class="text-emerald-400 flex flex-col gap-1">
+                  <span>🏆 ผู้ชนะคือ: <strong class="text-yellow-300">${winner.name}</strong>!</span>
+                  <span>🎉 สายตาเฉียบคม! ท่านได้รับเงินเดิมพัน x${winner.odds} (+${payout}G)${festTag}!</span>
+                </div>
+              `;
+            }
+            this.game.addLog(`🏟️ โคลอสเซียมริโก้! ${p.displayName} เดิมพัน ${winner.name} ชนะเลิศ รับเงินรางวัล +${payout}G!${festTag}`, 'level');
+          } else {
+            audio.hurt();
+            if (arenaEl) {
+              arenaEl.innerHTML = `
+                <div class="text-rose-400 flex flex-col gap-1">
+                  <span>🏆 ผู้ชนะคือ: <strong class="text-yellow-300">${winner.name}</strong>!</span>
+                  <span>💀 เสียใจด้วย! นักสู้ของคุณพ่ายแพ้ในศึกนี้ เจ้ามือริบเงิน ${this.colosseumBet}G!</span>
+                </div>
+              `;
+            }
+          }
+        }, 1200);
+      }, 1100);
+    }, 1000);
   }
 }

@@ -67,6 +67,15 @@ export interface SerializedPlayer {
   isPromoted?: boolean;
   aiPersonality?: string;
   matchStats?: any;
+  burstGauge?: number;
+  relics?: string[];
+  weaponUpgradeLevel?: number;
+  weaponRune?: 'fire' | 'ice' | 'thunder' | 'poison' | null;
+  polymorphTurns?: number;
+  polymorphType?: 'pig' | 'mole' | null;
+  mockeryTitle?: string;
+  cursedBoxTurns?: number;
+  darklingSpecialization?: 'destroyer' | 'reaper' | 'tormentor' | null;
 }
 
 export interface SaveGameData {
@@ -173,7 +182,16 @@ export class SaveManager {
           originalClassKey: p.originalClassKey,
           isPromoted: p.isPromoted,
           aiPersonality: p.aiPersonality,
-          matchStats: JSON.parse(JSON.stringify(p.matchStats))
+          matchStats: JSON.parse(JSON.stringify(p.matchStats)),
+          burstGauge: p.burstGauge,
+          relics: [...p.relics],
+          weaponUpgradeLevel: p.weaponUpgradeLevel,
+          weaponRune: p.weaponRune,
+          polymorphTurns: p.polymorphTurns,
+          polymorphType: p.polymorphType,
+          mockeryTitle: p.mockeryTitle,
+          cursedBoxTurns: p.cursedBoxTurns,
+          darklingSpecialization: p.darklingSpecialization
         };
       });
 
@@ -310,6 +328,15 @@ export class SaveManager {
           townsCapturedTotal: p.townsControlled,
           pranksGiven: 0
         };
+        p.burstGauge = Math.max(0, Math.min(100, numOr(sp.burstGauge, 0)));
+        p.relics = Array.isArray(sp.relics) ? [...sp.relics] : [];
+        p.weaponUpgradeLevel = Math.max(0, Math.min(9, numOr(sp.weaponUpgradeLevel, 0)));
+        p.weaponRune = sp.weaponRune || null;
+        p.polymorphTurns = Math.max(0, numOr(sp.polymorphTurns, 0));
+        p.polymorphType = sp.polymorphType || null;
+        p.mockeryTitle = sp.mockeryTitle || '';
+        p.cursedBoxTurns = Math.max(0, numOr(sp.cursedBoxTurns, 0));
+        p.darklingSpecialization = sp.darklingSpecialization || null;
         return p;
       });
 

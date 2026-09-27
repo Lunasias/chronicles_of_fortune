@@ -24,7 +24,7 @@ export class DarklingSystem {
   }
 
   // Execute the Demonic Pact with Overlord Rico
-  acceptPact(darklingPlayer: Player, allNodes: BoardNode[]) {
+  acceptPact(darklingPlayer: Player, allNodes: BoardNode[], spec: 'destroyer' | 'reaper' | 'tormentor' = 'destroyer') {
     // Sacrifice everything
     darklingPlayer.gold = 0;
     darklingPlayer.inventory = [];
@@ -40,21 +40,68 @@ export class DarklingSystem {
     darklingPlayer.townDeeds = [];
     darklingPlayer.townsControlled = 0;
 
+    // Set specialization
+    darklingPlayer.darklingSpecialization = spec;
+
     // Transform into The Darkling
     darklingPlayer.becomeDarkling();
 
-    // Grant apocalyptic Darkling spells
-    darklingPlayer.fieldSpells = ['dark_calamity', 'dark_plague', 'swap'];
+    // Grant apocalyptic Darkling spells according to specialization
+    if (spec === 'reaper') {
+      darklingPlayer.fieldSpells = ['dark_calamity', 'swap', 'assassin_hit'];
+      darklingPlayer.atk += 15;
+    } else if (spec === 'tormentor') {
+      darklingPlayer.fieldSpells = ['dark_plague', 'curse_rust', 'poison_dart'];
+      darklingPlayer.mag += 15;
+    } else {
+      darklingPlayer.fieldSpells = ['dark_calamity', 'dark_plague', 'swap'];
+      darklingPlayer.maxHp += 100;
+      darklingPlayer.hp += 100;
+    }
 
     // Issue Royal Wanted Bounty for Darkling hunter rewards
     royalDecreeSystem.issueWantedBounty(
       darklingPlayer,
-      3000,
-      'กลายร่างเป็น Darkling ผู้ทำลายล้างอาณาจักร! สังหารเพื่อรับค่าหัวหลวง!'
+      3500,
+      `กลายร่างเป็น Darkling (${spec.toUpperCase()}) ผู้ทำลายล้างอาณาจักร! สังหารเพื่อรับค่าหัวหลวง!`
     );
 
     audio.darklingRoar();
     audio.playBgm('darkling');
+  }
+
+  // Holy Exorcism at Church: donate gold to cleanse Darkling
+  performExorcism(sponsorPlayer: Player, darklingPlayer: Player): { success: boolean; turnsReduced: number; message: string } {
+    if (!darklingPlayer.isDarkling || darklingPlayer.darklingTurnsLeft <= 0) {
+      return { success: false, turnsReduced: 0, message: 'ไม่มีจอมมาร Darkling ในอาณาจักรขณะนี้!' };
+    }
+
+    const cost = 250;
+    if (sponsorPlayer.gold < cost) {
+      return { success: false, turnsReduced: 0, message: `ต้องการเงินบริจาค ${cost}G เพื่อทำพิธีกรรมศักดิ์สิทธิ์!` };
+    }
+
+    sponsorPlayer.gold -= cost;
+    const reduced = Math.min(2, darklingPlayer.darklingTurnsLeft);
+    darklingPlayer.darklingTurnsLeft -= reduced;
+
+    audio.relicChime();
+
+    if (darklingPlayer.darklingTurnsLeft <= 0) {
+      darklingPlayer.revertDarkling();
+      audio.jackpotFanfare();
+      return {
+        success: true,
+        turnsReduced: reduced,
+        message: `🕊️ มหาปาฏิหาริย์แห่งแสง! พิธีขับไล่ของ ${sponsorPlayer.displayName} ชำระล้างจิตมารสำเร็จ! ${darklingPlayer.name} คืนร่างสู่ปกติแล้ว!`
+      };
+    }
+
+    return {
+      success: true,
+      turnsReduced: reduced,
+      message: `✨ พิธีกรรมศักดิ์สิทธิ์สัมฤทธิผล! พลังมารของ ${darklingPlayer.name} ลดทอนลง ${reduced} เทิร์น! (เหลืออีก ${darklingPlayer.darklingTurnsLeft} เทิร์น)`
+    };
   }
 
   // Calamity 1: Summon Monsters to re-occupy opponents' towns

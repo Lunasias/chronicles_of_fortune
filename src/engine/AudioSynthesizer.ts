@@ -581,6 +581,73 @@ export class AudioSynthesizer {
     setTimeout(() => this.playTone(95, 'sawtooth', 0.35, 0.45), 80);
     setTimeout(() => this.playChiptuneKick(), 40);
   }
+
+  limitBreak() {
+    if (!this.enabled) return;
+    this.init();
+    // Epic rising dual-saw power chord + laser shimmer
+    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sawtooth', 0.18, 0.35), idx * 50);
+    });
+    setTimeout(() => {
+      this.playTone(1046.5, 'square', 0.45, 0.4);
+      this.playTone(1318.5, 'square', 0.45, 0.4);
+      this.playTone(1567.98, 'square', 0.45, 0.4);
+    }, 380);
+  }
+
+  polymorphOink() {
+    if (!this.enabled) return;
+    this.init();
+    // Funny retro pig oink / wobble pitch bend
+    this.playTone(320, 'sawtooth', 0.08, 0.35);
+    setTimeout(() => this.playTone(280, 'triangle', 0.12, 0.4), 70);
+    setTimeout(() => this.playTone(360, 'sawtooth', 0.10, 0.35), 180);
+    setTimeout(() => this.playTone(220, 'triangle', 0.16, 0.3), 260);
+  }
+
+  anvilStrike() {
+    if (!this.enabled) return;
+    this.init();
+    // Sharp high metal clink + resonant ring
+    this.playTone(1850, 'square', 0.06, 0.38);
+    this.playTone(925, 'triangle', 0.25, 0.32);
+    setTimeout(() => this.playTone(440, 'sine', 0.35, 0.20), 40);
+  }
+
+  reelSplash() {
+    if (!this.enabled) return;
+    this.init();
+    // Splash noise burst + ascending joyful catch melody
+    this.playChiptuneSnare();
+    [587.33, 739.99, 880.0, 1174.66].forEach((f, i) => {
+      setTimeout(() => this.playTone(f, 'sine', 0.12, 0.25), 100 + i * 70);
+    });
+  }
+
+  relicChime() {
+    if (!this.enabled) return;
+    this.init();
+    // Mystical sparkling chime
+    [783.99, 987.77, 1174.66, 1567.98].forEach((f, i) => {
+      setTimeout(() => this.playTone(f, 'triangle', 0.18, 0.3), i * 80);
+    });
+  }
+
+  curseExplosion() {
+    if (!this.enabled) return;
+    this.init();
+    // Ticking fuse followed by deep bass detonator
+    this.playTone(880, 'square', 0.03, 0.3);
+    setTimeout(() => this.playTone(880, 'square', 0.03, 0.3), 120);
+    setTimeout(() => this.playTone(880, 'square', 0.03, 0.3), 240);
+    setTimeout(() => {
+      this.playChiptuneKick();
+      this.playTone(90, 'sawtooth', 0.4, 0.5);
+    }, 360);
+  }
 }
 
 export const audio = new AudioSynthesizer();
+

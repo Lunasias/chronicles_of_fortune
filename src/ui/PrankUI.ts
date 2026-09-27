@@ -20,6 +20,8 @@ export class PrankUI {
     document.getElementById('btnSpoilsGold')?.addEventListener('click', () => this.handleStealGold());
     document.getElementById('btnSpoilsEquip')?.addEventListener('click', () => this.handleStealEquip());
     document.getElementById('btnSpoilsTown')?.addEventListener('click', () => this.handleStealTown());
+    document.getElementById('btnSpoilsPolymorph')?.addEventListener('click', () => this.handlePolymorph());
+    document.getElementById('btnSpoilsCursedBox')?.addEventListener('click', () => this.handleCursedBox());
     document.getElementById('btnSpoilsPrank')?.addEventListener('click', () => this.handleOpenPrankSubmenu());
 
     // Prank buttons
@@ -123,6 +125,42 @@ export class PrankUI {
       v.gold -= taken;
       p.gold += taken;
     }
+
+    this.close();
+  }
+
+  private handlePolymorph() {
+    if (!this.currentVictim) return;
+    const p = this.currentWinner || this.game.activePlayer;
+    const v = this.currentVictim;
+
+    const pType = Math.random() > 0.5 ? 'pig' : 'mole';
+    v.polymorphTurns = 3;
+    v.polymorphType = pType;
+
+    aiSystem.recordGrudge(v.id, p.id, 60, 'polymorphed');
+    audio.polymorphOink();
+    this.game.addLog(
+      `🐷 มหาคำสาปกลายร่าง! ${p.displayName} ร่ายมนตร์สาป ${v.name} ให้กลายเป็น${pType === 'pig' ? 'หมูอ้วน' : 'ตัวตุ่น'} 3 เทิร์น! (ทอยเต๋าได้ 1 แต้มและสเตตัสเหลือ 1!)`,
+      'darkling'
+    );
+
+    this.close();
+  }
+
+  private handleCursedBox() {
+    if (!this.currentVictim) return;
+    const p = this.currentWinner || this.game.activePlayer;
+    const v = this.currentVictim;
+
+    v.cursedBoxTurns = 2;
+
+    aiSystem.recordGrudge(v.id, p.id, 45, 'cursed box');
+    audio.curseExplosion();
+    this.game.addLog(
+      `📦💥 พัสดุระเบิดเวลา! ${p.displayName} ยัดกล่องระเบิดต้องสาปลงในกระเป๋าของ ${v.name}! กล่องจะระเบิดภายใน 2 เทิร์น!`,
+      'battle'
+    );
 
     this.close();
   }

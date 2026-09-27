@@ -769,6 +769,11 @@
             <div id="battlePlayerMP" class="pixel-bar-fill bg-blue-600 h-full" style="width: 100%"></div>
             <span id="battlePlayerMPText" class="absolute inset-0 text-[7px] sm:text-[8px] text-white flex items-center justify-center font-bold">30/30</span>
           </div>
+          <!-- EX Burst Limit Gauge Bar -->
+          <div class="pixel-bar w-full h-1.5 sm:h-2 overflow-hidden relative mt-1">
+            <div id="battlePlayerBurst" class="pixel-bar-fill bg-amber-500 h-full" style="width: 0%"></div>
+            <span id="battlePlayerBurstText" class="absolute inset-0 text-[6px] sm:text-[7px] text-amber-100 flex items-center justify-center font-bold">BURST: 0%</span>
+          </div>
         </div>
 
         <!-- Center Tactical Scout Button -->
@@ -861,8 +866,8 @@
     <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
     <div class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col md:flex-row gap-2 sm:gap-3 border-t-2 border-slate-800 overflow-y-auto">
       
-      <!-- Attacker 4-Choice Cards + Companion Summon -->
-      <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 flex-1">
+      <!-- Attacker 4-Choice Cards + Companion Summon + EX Burst -->
+      <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 sm:gap-2 flex-1">
         <!-- Attack -->
         <button id="btnCmdAttack" class="command-card pixel-btn-red p-1.5 sm:p-2 flex flex-col items-center justify-center text-white min-h-[50px] sm:min-h-[64px] touch-manipulation">
           <span class="text-lg sm:text-xl mb-0.5">⚔️</span>
@@ -886,6 +891,12 @@
           <span class="text-lg sm:text-xl mb-0.5">🌟</span>
           <span class="text-[11px] sm:text-xs font-bold truncate max-w-full" id="battleSkillLabel">ท่าไม้ตาย</span>
           <span class="text-[8px] opacity-80 text-purple-200">เฉพาะอาชีพ</span>
+        </button>
+        <!-- EX Burst Limit Break -->
+        <button id="btnCmdBurst" class="hidden command-card pixel-btn-gold p-1.5 sm:p-2 flex flex-col items-center justify-center text-slate-950 border-2 border-amber-300 min-h-[50px] sm:min-h-[64px] touch-manipulation">
+          <span class="text-lg sm:text-xl mb-0.5 animate-bounce">🔥💥</span>
+          <span class="text-[11px] sm:text-xs font-bold" id="battleBurstLabel">EX BURST</span>
+          <span class="text-[8px] text-amber-950 font-bold">ไม้ตายสูงสุด!</span>
         </button>
         <!-- Companion Summon Assistant -->
         <button id="btnCmdSummonCompanion" class="hidden command-card pixel-btn-pink p-1.5 sm:p-2 flex flex-col items-center justify-center text-white border-2 border-pink-400 min-h-[50px] sm:min-h-[64px] touch-manipulation">
@@ -967,7 +978,7 @@
         คุณเอาชนะ Jax! เลือกรางวัลสงครามหรือแก้แค้นอย่างอัปยศ:
       </p>
 
-      <div class="grid grid-cols-2 gap-2 mb-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <button id="btnSpoilsGold" class="pixel-btn pixel-btn-gold p-2 text-xs flex flex-col items-center">
           <span class="text-lg">💰</span>
           <span class="font-bold">ปล้นทอง</span>
@@ -983,10 +994,20 @@
           <span class="font-bold">ยึดโฉนดเมือง</span>
           <span class="text-[9px] text-emerald-200">ยึดดินแดน 1 แห่ง</span>
         </button>
+        <button id="btnSpoilsPolymorph" class="pixel-btn pixel-btn-pink p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">🐷✨</span>
+          <span class="font-bold">สาปกลายร่าง</span>
+          <span class="text-[9px] text-pink-200">เป็นหมู 3 เทิร์น (เดิน 1 ก้าว)</span>
+        </button>
+        <button id="btnSpoilsCursedBox" class="pixel-btn pixel-btn-red p-2 text-xs flex flex-col items-center">
+          <span class="text-lg">📦💥</span>
+          <span class="font-bold">พัสดุระเบิดเวลา</span>
+          <span class="text-[9px] text-rose-200">ระเบิดใน 2 เทิร์น</span>
+        </button>
         <button id="btnSpoilsPrank" class="pixel-btn pixel-btn-purple p-2 text-xs flex flex-col items-center">
           <span class="text-lg">🎨🤪</span>
-          <span class="font-bold">แกล้งและอัปยศ</span>
-          <span class="text-[9px] text-purple-200">วาดกราฟฟิตี้ / เปลี่ยนชื่อ!</span>
+          <span class="font-bold">ขีดเขียนใบหน้า</span>
+          <span class="text-[9px] text-purple-200">วาดกราฟฟิตี้ / เปลี่ยนชื่อ</span>
         </button>
       </div>
 
@@ -1137,6 +1158,27 @@
         <button id="btnCastRod" class="pixel-btn pixel-btn-blue px-6 py-2.5 text-sm font-bold flex items-center gap-2">
           <span>🎣</span>
           <span>ทอดเบ็ด!</span>
+        </button>
+      </div>
+
+      <!-- Timing Reel State: Interactive Bar -->
+      <div id="fishingReelState" class="hidden flex flex-col items-center gap-3 my-2">
+        <p class="text-xs text-amber-200 font-bold animate-pulse">
+          🎯 ปลาติดเบ็ดแล้ว! กด "วัดคันเบ็ด" หรือ [Space] เมื่อเข็มชี้ตรงจุดเขียว!
+        </p>
+        <!-- The Gauge Container -->
+        <div class="relative w-64 h-8 bg-slate-950 border-2 border-amber-600/70 overflow-hidden flex items-center">
+          <!-- Good Zone (Yellow) -->
+          <div id="fishingGoodZone" class="absolute h-full bg-amber-500/40 border-x border-amber-400/50" style="left: 28%; width: 44%;"></div>
+          <!-- Sweet Spot Zone (Green) -->
+          <div id="fishingSweetSpot" class="absolute h-full bg-emerald-500/80 border-x-2 border-emerald-300 flex items-center justify-center text-[10px] font-bold text-slate-950" style="left: 42%; width: 16%;">
+            PERFECT
+          </div>
+          <!-- Moving Indicator -->
+          <div id="fishingNeedle" class="absolute top-0 bottom-0 w-2.5 bg-rose-500 border border-white" style="left: 0%;"></div>
+        </div>
+        <button id="btnReelRod" class="pixel-btn pixel-btn-gold px-8 py-2 text-sm font-bold text-slate-950">
+          ⚡ วัดคันเบ็ด! (REEL!)
         </button>
       </div>
 
@@ -1420,6 +1462,9 @@
         </button>
         <button id="btnShopTabSell" class="pixel-btn px-3.5 py-1 text-xs text-slate-300">
           ขายของ
+        </button>
+        <button id="btnShopTabForge" class="pixel-btn pixel-btn-red px-3.5 py-1 text-xs font-bold text-white">
+          🔨 ตีบวก & รูน
         </button>
       </div>
 

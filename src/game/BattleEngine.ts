@@ -1,7 +1,7 @@
 import { Player } from './Player';
 import { audio } from '../engine/AudioSynthesizer';
 
-export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill';
+export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill' | 'burst';
 export type DefenderAction = 'defend' | 'counter' | 'magic_guard' | 'give_up';
 
 export interface Combatant {
@@ -20,6 +20,9 @@ export interface Combatant {
   playerRef?: Player;
   classKey?: string;
   skillName?: string;
+  hasResurrected?: boolean;
+  barrierHp?: number;
+  isShocked?: boolean;
 }
 
 export interface RoundResult {
@@ -40,6 +43,8 @@ export interface RoundResult {
   burnDamage?: number;
   goldStolen?: number;
   curseInflicted?: boolean;
+  isBurst?: boolean;
+  statusInflicted?: string;
 }
 
 
@@ -565,6 +570,39 @@ export class BattleEngine {
       };
     }
 
+    // 6.5 Resolve EX Burst Limit Break
+    if (atkAction === 'burst') {
+      audio.limitBreak();
+      const rawBurst = Math.round(a.atk * 3.4 + a.mag * 2.2 + 25);
+      let burstDmg = rawBurst;
+      if (defAction === 'defend') {
+        burstDmg = Math.round(burstDmg * 0.75); // 75% penetrates defend
+      }
+      damageToDefender = burstDmg;
+      d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+      narration = `🔥💥 ปลดปล่อยพลังขีดสุด (LIMIT BREAK EX)! ${a.name} ปลดปล่อยมหาพลังสะเทือนฟ้าดิน ทะลวงการป้องกัน สร้างความเสียหายมหาศาล ${damageToDefender} ดาเมจ! 💥 คริติคอลสูงสุด!`;
+
+      if (d.hp <= 0 && d.playerRef && d.playerRef.relics.includes('phoenix_amulet') && !d.hasResurrected) {
+        d.hasResurrected = true;
+        d.hp = Math.round(d.maxHp * 0.5);
+        narration += ' 🔥🪶 มหาปาฏิหาริย์วิหคเพลิง (Phoenix Amulet)! คืนชีพทันทีด้วย 50% HP!';
+      }
+
+      return {
+        attackerAction: atkAction,
+        defenderAction: defAction,
+        damageToDefender,
+        damageToAttacker: 0,
+        isCounterSuccess,
+        isStrikeSuccess,
+        isMagicBlocked,
+        isGiveUp,
+        isCritical: true,
+        isBurst: true,
+        narration
+      };
+    }
+
     // 7. Resolve Attack
     // Speed Evasion Check (Faster defender can dodge standard attack if not defending)
     if (defAction !== 'defend' && defAction !== 'counter' && (d.spd || 5) > (a.spd || 5)) {
@@ -687,6 +725,29 @@ export class BattleEngine {
       }
     }
 
+    // Elemental Weapon Runes (Fire, Ice, Thunder, Poison)
+    if (a.playerRef && a.playerRef.weaponRune && result.damageToDefender > 0) {
+      const rune = a.playerRef.weaponRune;
+      if (rune === 'fire' && Math.random() < 0.50) {
+        const burnDmg = Math.max(8, Math.round(d.maxHp * 0.08));
+        d.hp = Math.max(0, d.hp - burnDmg);
+        result.damageToDefender += burnDmg;
+        result.burnDamage = burnDmg;
+        result.narration += ` 🔥 [รูนเพลิงลุกไหม้ +${burnDmg}]`;
+      } else if (rune === 'ice' && Math.random() < 0.45) {
+        result.statusInflicted = 'freeze';
+        result.narration += ` ❄️ [รูนเหมันต์แช่แข็ง!]`;
+      } else if (rune === 'thunder' && Math.random() < 0.40) {
+        result.statusInflicted = 'shock';
+        d.isShocked = true;
+        result.narration += ` ⚡ [รูนสายฟ้าช็อตอัมพาต!]`;
+      } else if (rune === 'poison' && Math.random() < 0.50) {
+        result.statusInflicted = 'poison';
+        if (d.playerRef) d.playerRef.poisonTurns = 3;
+        result.narration += ` ☠️ [รูนพิษแล่นเข้าสู่ร่าง!]`;
+      }
+    }
+
     // Counter boost shield passive on defender
     if (d.playerRef && result.isCounterSuccess && result.damageToAttacker > 0) {
       const passives = d.playerRef.getActivePassives();
@@ -696,6 +757,34 @@ export class BattleEngine {
         a.hp = Math.max(0, a.hp - extraCounter);
         result.narration += ` 🪞 [โล่สะท้อน +${extraCounter}]`;
       }
+    }
+
+    // Aegis Crest Relic: absorb initial damage
+    if (d.playerRef && d.playerRef.relics.includes('aegis_crest') && result.damageToDefender > 0 && d.barrierHp === undefined) {
+      d.barrierHp = 25;
+      const absorbed = Math.min(result.damageToDefender, 25);
+      result.damageToDefender -= absorbed;
+      d.hp = Math.min(d.maxHp, d.hp + absorbed);
+      result.narration += ` 🛡️✨ [เกราะอีจิสดูดซับ ${absorbed} ดาเมจ]`;
+    }
+
+    // Phoenix Amulet Relic: Resurrection check for defender
+    if (d.hp <= 0 && d.playerRef && d.playerRef.relics.includes('phoenix_amulet') && !d.hasResurrected) {
+      d.hasResurrected = true;
+      d.hp = Math.round(d.maxHp * 0.5);
+      result.narration += ` 🔥🪶 [ปาฏิหาริย์วิหคเพลิง คืนชีพ 50% HP!]`;
+    }
+
+    // Accrue EX Burst Gauge (+15 for attacker, +25 for defender taking damage)
+    if (a.playerRef) {
+      if (result.isBurst) {
+        a.playerRef.burstGauge = 0;
+      } else {
+        a.playerRef.burstGauge = Math.min(100, a.playerRef.burstGauge + 15);
+      }
+    }
+    if (d.playerRef && result.damageToDefender > 0) {
+      d.playerRef.burstGauge = Math.min(100, d.playerRef.burstGauge + 25);
     }
 
     return result;

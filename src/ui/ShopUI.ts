@@ -85,6 +85,10 @@ export class ShopUI {
       audio.click();
       this.renderList('sell');
     });
+    document.getElementById('btnShopTabForge')?.addEventListener('click', () => {
+      audio.click();
+      this.renderList('forge');
+    });
   }
 
   open(type: string, onLeave: () => void) {
@@ -126,11 +130,21 @@ export class ShopUI {
     }
   }
 
-  private renderList(mode: 'buy' | 'sell') {
+  private renderList(mode: 'buy' | 'sell' | 'forge') {
     const p = this.game.activePlayer;
     document.getElementById('shopPlayerGold')!.innerText = `${p.gold}G`;
     const container = document.getElementById('shopItemList')!;
     container.innerHTML = '';
+
+    // Tab button visual styles
+    const tabBuy = document.getElementById('btnShopTabBuy');
+    const tabSell = document.getElementById('btnShopTabSell');
+    const tabForge = document.getElementById('btnShopTabForge');
+    if (tabBuy && tabSell && tabForge) {
+      tabBuy.className = mode === 'buy' ? 'pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
+      tabSell.className = mode === 'sell' ? 'pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
+      tabForge.className = mode === 'forge' ? 'pixel-btn pixel-btn-red px-3.5 py-1 text-xs font-bold text-white' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
+    }
 
     if (mode === 'buy') {
       let filtered = SHOP_CATALOG;
@@ -177,7 +191,7 @@ export class ShopUI {
 
         container.appendChild(row);
       });
-    } else {
+    } else if (mode === 'sell') {
       // Sell
       if (p.inventory.length === 0) {
         container.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">กระเป๋าสัมภาระของคุณว่างเปล่า</div>`;
@@ -211,6 +225,105 @@ export class ShopUI {
 
         container.appendChild(row);
       });
+    } else if (mode === 'forge') {
+      // Forge & Enchant
+      const wpn = p.equipment.weapon;
+      const wpnName = wpn ? wpn.name : 'หมัดเปล่า (Bare Fists)';
+      const forgeCost = 250 * (p.weaponUpgradeLevel + 1);
+      const isMaxForge = p.weaponUpgradeLevel >= 9;
+
+      const runeLabels: Record<string, { name: string; icon: string; desc: string }> = {
+        fire: { name: 'เพลิงกัลป์', icon: '🔥', desc: 'เผาผลาญศัตรู (Burn DOT)' },
+        ice: { name: 'เหมันต์นิรันดร์', icon: '❄️', desc: 'ขัดขวางท่าเคาน์เตอร์ (Freeze)' },
+        thunder: { name: 'สายฟ้าสวรรค์', icon: '⚡', desc: 'ช็อตอัมพาต (Shock Paralysis)' },
+        poison: { name: 'พิษมรณะ', icon: '☠️', desc: 'กัดกร่อนต่อเนื่อง (Poison DOT)' }
+      };
+
+      const forgeBox = document.createElement('div');
+      forgeBox.className = 'pixel-box p-3 bg-slate-900 border-amber-600/50 flex flex-col gap-3';
+      forgeBox.innerHTML = `
+        <div class="border-b border-slate-800 pb-2 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${wpn?.icon || '👊'}</span>
+            <div>
+              <div class="text-xs font-bold text-amber-300">${wpnName} <span class="text-rose-400 font-bold">+${p.weaponUpgradeLevel}</span></div>
+              <div class="text-[9px] text-slate-400">โบนัสจากการตีบวก: +${p.weaponUpgradeLevel * 3} ATK, +${p.weaponUpgradeLevel} SPD</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-slate-400">รูนปัจจุบัน:</div>
+            <div class="text-xs font-bold text-cyan-300">${p.weaponRune ? `${runeLabels[p.weaponRune]?.icon} ${runeLabels[p.weaponRune]?.name}` : 'ยังไม่ได้สลัก'}</div>
+          </div>
+        </div>
+
+        <!-- Reinforce Button -->
+        <div class="flex items-center justify-between bg-slate-950 p-2.5 border border-slate-800">
+          <div>
+            <div class="text-xs font-bold text-white">ตีบวกเพิ่มความแกร่ง (+1)</div>
+            <div class="text-[9px] text-slate-400">${isMaxForge ? 'ถึงระดับสูงสุดแล้ว (+9)' : `เพิ่ม +3 ATK และ +1 SPD (ค่าบริการ ${forgeCost}G)`}</div>
+          </div>
+          <button id="btnDoForge" class="pixel-btn ${isMaxForge ? 'opacity-50 cursor-not-allowed' : 'pixel-btn-gold'} px-3 py-1 text-xs font-bold text-slate-950" ${isMaxForge ? 'disabled' : ''}>
+            ${isMaxForge ? 'MAX (+9)' : `ตีบวก (${forgeCost}G)`}
+          </button>
+        </div>
+
+        <!-- Rune Enchantment Section -->
+        <div>
+          <div class="text-xs font-bold text-amber-300 mb-1.5">🔮 สลักอักขระรูนธาตุ (Enchantment: 450G)</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnRuneFire" class="pixel-btn pixel-btn-red p-2 text-left flex flex-col text-white">
+              <span class="text-xs font-bold">🔥 รูนเพลิง (Fire)</span>
+              <span class="text-[9px] text-rose-200">เผาไหม้เสียเลือดทุกเทิร์น</span>
+            </button>
+            <button id="btnRuneIce" class="pixel-btn pixel-btn-blue p-2 text-left flex flex-col text-white">
+              <span class="text-xs font-bold">❄️ รูนเหมันต์ (Ice)</span>
+              <span class="text-[9px] text-cyan-200">แช่แข็ง ขัดขวางท่าสวนกลับ</span>
+            </button>
+            <button id="btnRuneThunder" class="pixel-btn pixel-btn-gold p-2 text-left flex flex-col text-slate-950">
+              <span class="text-xs font-bold">⚡ รูนสายฟ้า (Thunder)</span>
+              <span class="text-[9px] text-amber-950">โอกาสช็อตทำให้ศัตรูเสียเทิร์น</span>
+            </button>
+            <button id="btnRunePoison" class="pixel-btn pixel-btn-green p-2 text-left flex flex-col text-white">
+              <span class="text-xs font-bold">☠️ รูนพิษ (Poison)</span>
+              <span class="text-[9px] text-emerald-200">ติดพิษลดเลือดรวดเร็ว</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      forgeBox.querySelector('#btnDoForge')?.addEventListener('click', () => {
+        if (p.weaponUpgradeLevel >= 9) return;
+        if (p.gold < forgeCost) {
+          this.game.addLog(`ช่างตีเหล็ก: "เจ้ามีทองไม่พอตีบวก! ต้องการ ${forgeCost}G"`);
+          return;
+        }
+        p.gold -= forgeCost;
+        p.weaponUpgradeLevel++;
+        audio.anvilStrike();
+        this.game.addLog(`🔨 ไอรอนฟอร์จ: ${p.displayName} ตีบวก ${wpnName} เป็นระดับ +${p.weaponUpgradeLevel} สำเร็จ! (+3 ATK, +1 SPD)`, 'level');
+        this.renderList('forge');
+      });
+
+      const applyRune = (rune: 'fire' | 'ice' | 'thunder' | 'poison', runeName: string) => {
+        const cost = 450;
+        if (p.gold < cost) {
+          this.game.addLog(`จอมอาคม: "เจ้ามีทองไม่พอสลักรูน! ต้องการ ${cost}G"`);
+          return;
+        }
+        p.gold -= cost;
+        p.weaponRune = rune;
+        audio.anvilStrike();
+        audio.relicChime();
+        this.game.addLog(`✨ สลักรูนสำเร็จ! อาวุธของ ${p.displayName} อาบพลัง [${runeName}] พร้อมแผดเผาศัตรูในสนามรบ!`, 'level');
+        this.renderList('forge');
+      };
+
+      forgeBox.querySelector('#btnRuneFire')?.addEventListener('click', () => applyRune('fire', 'เพลิงกัลป์'));
+      forgeBox.querySelector('#btnRuneIce')?.addEventListener('click', () => applyRune('ice', 'เหมันต์นิรันดร์'));
+      forgeBox.querySelector('#btnRuneThunder')?.addEventListener('click', () => applyRune('thunder', 'สายฟ้าสวรรค์'));
+      forgeBox.querySelector('#btnRunePoison')?.addEventListener('click', () => applyRune('poison', 'พิษมรณะ'));
+
+      container.appendChild(forgeBox);
     }
   }
 

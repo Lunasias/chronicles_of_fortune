@@ -3,6 +3,7 @@ import { Player } from '../game/Player';
 import { BoardNode } from '../game/BoardMap';
 import { fantasyEventManager, FantasyEventData } from '../game/FantasyEventManager';
 import { audio } from '../engine/AudioSynthesizer';
+import { darklingSystem } from '../game/DarklingSystem';
 
 export class FantasyEventUI {
   private game: GameState;
@@ -18,7 +19,43 @@ export class FantasyEventUI {
       return;
     }
 
+    // Church cleansing
+    if (node.type === 'church') {
+      if (player.polymorphTurns > 0) {
+        player.polymorphTurns = 0;
+        player.polymorphType = null;
+        audio.relicChime();
+        this.game.addLog(`⛪ แสงศักดิ์สิทธิ์แห่งวิหารได้ลบล้างมนตร์แปลงกาย! ${player.displayName} กลับคืนสู่ร่างเดิม!`, 'level');
+      }
+      if (player.cursedBoxTurns > 0) {
+        player.cursedBoxTurns = 0;
+        audio.relicChime();
+        this.game.addLog(`⛪ น้ำมนต์ศักดิ์สิทธิ์ได้ปลดระเบิดกล่องพัสดุต้องสาปของ ${player.displayName} ปลอดภัยแล้ว!`, 'level');
+      }
+    }
+
     const event = fantasyEventManager.getRandomEvent(node);
+
+    // If Church and a rival is Darkling, offer Holy Exorcism
+    if (node.type === 'church') {
+      const rivalDarkling = this.game.players.find(p => p.isDarkling && p.id !== player.id);
+      if (rivalDarkling) {
+        event.choices.unshift({
+          text: `✝️ จัดพิธีขับไล่ความมืด (Holy Exorcism - 250G)`,
+          subtext: `บริจาคเงิน 250G เพื่อสวดปัดเป่าพลังมืดของ Darkling (${rivalDarkling.displayName}) ลดระยะเวลาลง 2 เทิร์น!`,
+          icon: '✝️',
+          resolve: (p) => {
+            const res = darklingSystem.performExorcism(p, rivalDarkling);
+            return {
+              outcomeTitle: res.success ? 'พิธีขับไล่ความมืดสำเร็จผล!' : 'ไม่สามารถประกอบพิธีได้',
+              outcomeText: res.message,
+              icon: '🕊️',
+              soundType: res.success ? 'fanfare' : 'magic'
+            };
+          }
+        });
+      }
+    }
 
     // Setup modal header
     const titleEl = document.getElementById('feModalTitle');

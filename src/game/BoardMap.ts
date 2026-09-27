@@ -48,6 +48,7 @@ export interface TownData {
   monsterMaxHp?: number;
   monsterAtk: number;
   monsterDef: number;
+  specialization?: 'trade_port' | 'fortress' | 'mining' | null;
 }
 
 export interface HomeData {

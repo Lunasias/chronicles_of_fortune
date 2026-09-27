@@ -2,6 +2,7 @@ import { BoardNode } from './BoardMap';
 import { Player } from './Player';
 import { audio } from '../engine/AudioSynthesizer';
 import { royalDecreeSystem } from './RoyalDecreeSystem';
+import { worldCalamitySystem } from './WorldCalamitySystem';
 
 export class TownManager {
   // Liberate town after defeating the monster
@@ -20,6 +21,12 @@ export class TownManager {
     let bountyReward = 0;
     if (royalDecreeSystem.isBountyTown(townNode.id)) {
       bountyReward = royalDecreeSystem.claimBounty(player);
+    }
+
+    if (worldCalamitySystem.activeCalamity && worldCalamitySystem.activeCalamity.affectedTownNames.includes(townNode.name)) {
+      const calBounty = worldCalamitySystem.activeCalamity.bountyReward;
+      bountyReward += calBounty;
+      worldCalamitySystem.activeCalamity = null;
     }
 
     player.matchStats.townsCapturedTotal++;
@@ -77,11 +84,26 @@ export class TownManager {
   }
 
   // Calculate toll when rival visits an owned town
-  calculateToll(townNode: BoardNode): number {
+  calculateToll(townNode: BoardNode, visitor?: Player): number {
     if (!townNode.townData || !townNode.townData.ownerId) return 0;
     const decreeMult = royalDecreeSystem.activeDecree.id === 'ECONOMIC_BOOM' ? 2 : 1;
     const tierMult = townNode.townData.level >= 3 ? 2.0 : 1.0;
-    return Math.floor((30 + townNode.townData.level * 25) * decreeMult * tierMult);
+    const specMult = townNode.townData.specialization === 'trade_port' ? 1.5 : 1.0;
+    let toll = Math.floor((30 + townNode.townData.level * 25) * decreeMult * tierMult * specMult);
+    if (visitor && visitor.relics.includes('thief_band')) {
+      toll = Math.floor(toll * 0.5);
+    }
+    return toll;
+  }
+
+  // Set Town Specialization (Trading Port, Fortress, Mining Town)
+  setSpecialization(townNode: BoardNode, player: Player, spec: 'trade_port' | 'fortress' | 'mining'): boolean {
+    if (!townNode.townData || townNode.townData.ownerId !== player.id || townNode.townData.level < 3) {
+      return false;
+    }
+    townNode.townData.specialization = spec;
+    audio.levelUp();
+    return true;
   }
 
   // Hostile takeover: rival claims ownership of an existing player's town
@@ -109,9 +131,18 @@ export class TownManager {
       const node = allNodes.find(n => n.id === tId);
       if (node && node.townData && !node.townData.isOccupiedByMonster) {
         const tierMult = node.townData.level >= 3 ? 2.0 : node.townData.level >= 2 ? 1.5 : 1.0;
-        totalTax += Math.floor(node.townData.taxYield * decreeMult * tierMult);
+        let tax = Math.floor(node.townData.taxYield * decreeMult * tierMult);
+        if (node.townData.specialization === 'trade_port') tax = Math.floor(tax * 1.5);
+        if (node.townData.specialization === 'mining') tax += 100;
+        totalTax += tax;
       }
     });
+
+    // Banker's Ledger relic: 5% passive gold interest
+    if (player.relics.includes('banker_ledger') && player.gold > 0) {
+      const interest = Math.floor(player.gold * 0.05);
+      totalTax += interest;
+    }
 
     if (totalTax > 0) {
       player.gold += totalTax;

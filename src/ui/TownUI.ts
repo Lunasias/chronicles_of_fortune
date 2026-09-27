@@ -38,8 +38,10 @@ export class TownUI {
     const p = this.game.activePlayer;
 
     const townLvl = townNode.townData?.level || 1;
+    const spec = townNode.townData?.specialization;
+    const specTag = spec === 'trade_port' ? ' [⚓ ท่าเรือการค้า]' : spec === 'fortress' ? ' [🛡️ ป้อมปราการเหล็ก]' : spec === 'mining' ? ' [⛏️ เหมืองอัญมณี]' : '';
     const tierTitle = townLvl >= 3 ? '🏰 มหานครป้อมปราการ' : townLvl >= 2 ? '🛡️ เมืองป้อมปราการ' : '🏘️ หมู่บ้านชนบท';
-    document.getElementById('townName')!.innerText = townNode.name;
+    document.getElementById('townName')!.innerText = `${townNode.name}${specTag}`;
     document.getElementById('townBiome')!.innerText = `แคว้น${townNode.biome.toUpperCase()} • ${tierTitle} (เลเวล ${townLvl})`;
 
     const ownerId = townNode.townData?.ownerId;
@@ -54,10 +56,10 @@ export class TownUI {
 
       // If rival owned, collect toll automatically upon entering
       if (owner.id !== p.id) {
-        const toll = townManager.calculateToll(townNode);
+        const toll = townManager.calculateToll(townNode, p);
         p.gold = Math.max(0, p.gold - toll);
         owner.gold += toll;
-        this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!`, 'gold');
+        this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!${p.relics.includes('thief_band') ? ' (💍 แหวนหัวขโมยลดค่าผ่านทาง 50%!)' : ''}`, 'gold');
         audio.coin();
       }
     } else {

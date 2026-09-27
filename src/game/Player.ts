@@ -468,8 +468,10 @@ export class Player {
   public blindTurns: number = 0;
   public curseTurns: number = 0;
 
-  public getStatusAilments(): Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse'; name: string; icon: string; turns: number }> {
-    const list: Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse'; name: string; icon: string; turns: number }> = [];
+  public getStatusAilments(): Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box'; name: string; icon: string; turns: number }> {
+    const list: Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box'; name: string; icon: string; turns: number }> = [];
+    if (this.polymorphTurns > 0) list.push({ type: 'polymorph', name: `สาปกลายร่าง (${this.polymorphType === 'mole' ? 'ตัวตุ่น' : 'หมู'})`, icon: this.polymorphType === 'mole' ? '🦔' : '🐷', turns: this.polymorphTurns });
+    if (this.cursedBoxTurns > 0) list.push({ type: 'cursed_box', name: 'กล่องระเบิดต้องสาป (Ticking Box)', icon: '📦💥', turns: this.cursedBoxTurns });
     if (this.rustTurns > 0) list.push({ type: 'rust', name: 'สนิมกัดกร่อน (Rust)', icon: '🛡️', turns: this.rustTurns });
     if (this.poisonTurns > 0) list.push({ type: 'poison', name: 'พิษร้ายแรง (Poison)', icon: '☠️', turns: this.poisonTurns });
     if (this.freezeTurns > 0) list.push({ type: 'freeze', name: 'แช่แข็ง (Freeze)', icon: '❄️', turns: this.freezeTurns });
@@ -484,6 +486,9 @@ export class Player {
     this.freezeTurns = 0;
     this.blindTurns = 0;
     this.curseTurns = 0;
+    this.polymorphTurns = 0;
+    this.polymorphType = null;
+    this.cursedBoxTurns = 0;
   }
 
   public hasSetBonus(setName: string): boolean {
@@ -511,12 +516,29 @@ export class Player {
   public isDarkling = false;
   public darklingTurnsLeft = 0;
   public backupNormalStats: { maxHp: number; atk: number; def: number; mag: number; spd: number } | null = null;
+  public darklingSpecialization: 'destroyer' | 'reaper' | 'tormentor' | null = null;
 
   // Humiliating Prank System
   public prank: PrankState = {
     hasGraffiti: false,
     turnsRemaining: 0
   };
+
+  // EX Burst Limit Break Gauge (0 to 100)
+  public burstGauge: number = 0;
+
+  // Passive Relics
+  public relics: string[] = [];
+
+  // Blacksmith Forging & Runes
+  public weaponUpgradeLevel: number = 0; // +1 to +9
+  public weaponRune: 'fire' | 'ice' | 'thunder' | 'poison' | null = null;
+
+  // Polymorph & Cursed Delivery Box Pranks
+  public polymorphTurns: number = 0;
+  public polymorphType: 'pig' | 'mole' | null = null;
+  public mockeryTitle: string = '';
+  public cursedBoxTurns: number = 0;
 
   // Home & Companion Housing System
   public homeNodeId: number | null = null;
@@ -595,13 +617,20 @@ export class Player {
   }
 
   get displayName(): string {
+    let name = this.name;
     if (this.prank.hasGraffiti && this.prank.sillyName) {
-      return this.prank.sillyName;
+      name = this.prank.sillyName;
     }
-    return this.name;
+    if (this.mockeryTitle) {
+      return `[${this.mockeryTitle}] ${name}`;
+    }
+    return name;
   }
 
   getTotalStat(stat: 'atk' | 'def' | 'mag' | 'spd' | 'luk'): number {
+    if (this.polymorphTurns > 0) {
+      return 1; // Turned into a helpless pig or mole!
+    }
     let val = this[stat] || 0;
     if (this.isDarkling) {
       val = Math.floor(val * 2.5);
@@ -609,6 +638,11 @@ export class Player {
     Object.values(this.equipment).forEach(item => {
       if (item && item[stat]) val += item[stat]!;
     });
+    // Blacksmith Weapon Forging (+3 ATK, +1 SPD per level)
+    if (this.weaponUpgradeLevel > 0) {
+      if (stat === 'atk') val += this.weaponUpgradeLevel * 3;
+      if (stat === 'spd') val += this.weaponUpgradeLevel;
+    }
     // Active Isekai Food Buff
     if (this.foodBuff) {
       if (stat === 'atk' && this.foodBuff.atkBoost) val += this.foodBuff.atkBoost;
@@ -616,6 +650,10 @@ export class Player {
       if (stat === 'mag' && this.foodBuff.magBoost) val += this.foodBuff.magBoost;
       if (stat === 'spd' && this.foodBuff.spdBoost) val += this.foodBuff.spdBoost;
       if (stat === 'luk' && this.foodBuff.lukBoost) val += this.foodBuff.lukBoost;
+    }
+    // Berserker Fang relic (+40% ATK when HP < 35%)
+    if (stat === 'atk' && this.relics.includes('berserker_fang') && this.hp < this.maxHp * 0.35) {
+      val = Math.round(val * 1.4);
     }
     // Curse of Rust reduces physical attack and defense by 30%
     if (this.rustTurns > 0 && (stat === 'atk' || stat === 'def')) {
@@ -804,6 +842,26 @@ export class Player {
 
     if (this.freezeTurns > 0) this.freezeTurns--;
     if (this.blindTurns > 0) this.blindTurns--;
+
+    if (this.polymorphTurns > 0) {
+      this.polymorphTurns--;
+      if (this.polymorphTurns === 0) {
+        this.polymorphType = null;
+      }
+    }
+
+    let cursedBoxExploded = false;
+    let cursedBoxDamage = 0;
+    if (this.cursedBoxTurns > 0) {
+      this.cursedBoxTurns--;
+      if (this.cursedBoxTurns === 0) {
+        cursedBoxExploded = true;
+        cursedBoxDamage = Math.max(25, Math.floor(this.maxHp * 0.35));
+        this.hp = Math.max(1, this.hp - cursedBoxDamage);
+        const goldLost = Math.floor(this.gold * 0.25);
+        this.gold -= goldLost;
+      }
+    }
 
     let curseTriggered = false;
     if (this.curseTurns > 0) {

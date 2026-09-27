@@ -1,6 +1,7 @@
 import { Player, FoodBuff, GuildQuest } from './Player';
 import { BoardNode } from './BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
+import { royalDecreeSystem } from './RoyalDecreeSystem';
 
 export interface TavernMeal {
   id: string;
@@ -133,7 +134,6 @@ export class IsekaiEventManager {
 
   // Generate Guild Quests suitable for player's current rank
   public getAvailableGuildQuests(player: Player): GuildQuest[] {
-    const rank = player.guildRank;
     const quests: GuildQuest[] = [
       {
         id: 'q_exterminate_1',
@@ -178,8 +178,34 @@ export class IsekaiEventManager {
         targetCount: 1,
         rewardGold: 850,
         rewardXp: 400
+      },
+      {
+        id: 'q_apex_world_boss',
+        title: '👑 ค่าหัวมังกรบรรพกาล โอโรโบรอส (Apex World Boss)',
+        rank: 'S',
+        desc: 'กำจัดมังกรบรรพกาล หรือบอสระดับสูงสุดแห่งมิติเพื่อเกียรติยศสูงสุด',
+        targetType: 'boss',
+        currentProgress: 0,
+        targetCount: 1,
+        rewardGold: 1500,
+        rewardXp: 800
       }
     ];
+
+    if (royalDecreeSystem.activeWantedBounty) {
+      const wb = royalDecreeSystem.activeWantedBounty;
+      quests.unshift({
+        id: 'q_wanted_pvp',
+        title: `💀 หมายจับกิลด์: ล่าจอมมาร [${wb.targetPlayerName}]!`,
+        rank: 'S',
+        desc: `${wb.reason} สังหารเพื่อรับค่าหัวหลวง ${wb.rewardGold}G!`,
+        targetType: 'boss',
+        currentProgress: 0,
+        targetCount: 1,
+        rewardGold: wb.rewardGold,
+        rewardXp: 600
+      });
+    }
 
     return quests;
   }
@@ -222,10 +248,86 @@ export class IsekaiEventManager {
   }
 
   // Fishing Minigame
-  public executeFishing(player: Player): FishingResult {
-    const roll = Math.random();
-    audio.coin();
+  public executeFishing(player: Player, accuracy?: 'perfect' | 'great' | 'miss'): FishingResult {
+    audio.reelSplash();
 
+    if (accuracy === 'perfect') {
+      if (Math.random() < 0.5) {
+        const gold = 260 + Math.floor(Math.random() * 80);
+        player.gold += gold;
+        player.maxHp += 10;
+        player.hp = Math.min(player.maxHp, player.hp + 20);
+        return {
+          title: '✨ มังกรเกล็ดทองคำแห่งแม่น้ำโบราณ! (PERFECT CATCH)',
+          desc: `จังหวะดึงสายเบ็ดสมบูรณ์แบบ! คุณดึงปลามังกรทองในตำนานขึ้นมา พลังชีวิตสูงสุด +10 Max HP และขายเกล็ดมังกรได้ +${gold}G!`,
+          icon: '🐉',
+          type: 'gold',
+          goldAmount: gold
+        };
+      } else {
+        const gold = 200 + Math.floor(Math.random() * 60);
+        player.gold += gold;
+        player.inventory.push({
+          id: 'pot_hp_super',
+          name: 'น้ำทิพย์ชุบชีวิต (Elixir of Life)',
+          type: 'potion',
+          cost: 65,
+          desc: 'ฟื้นฟู 100 HP ทันที',
+          icon: '🧪'
+        });
+        return {
+          title: '💎 หีบศิลาจารึกสมบัติราชวงศ์! (PERFECT CATCH)',
+          desc: `วัดคันเบ็ดแม่นยำไร้ที่ติ! ดึงหีบศิลาประดับอัญมณีขึ้นจากก้นธารน้ำ ได้รับทองคำ +${gold}G และน้ำทิพย์ชุบชีวิต 1 ขวด!`,
+          icon: '🎁',
+          type: 'item',
+          goldAmount: gold
+        };
+      }
+    } else if (accuracy === 'great') {
+      if (Math.random() < 0.5) {
+        const gold = 100 + Math.floor(Math.random() * 50);
+        player.gold += gold;
+        return {
+          title: 'ปลาคาร์ปทองคำนำโชค! (GREAT CATCH)',
+          desc: `วัดเบ็ดได้จังหวะดีเยี่ยม! ปลาคาร์ปสีทองกระโดดขึ้นเหนือน้ำ พ่อค้ารับซื้อทันที +${gold}G!`,
+          icon: '✨',
+          type: 'gold',
+          goldAmount: gold
+        };
+      } else {
+        const heal = 60;
+        player.hp = Math.min(player.maxHp, player.hp + heal);
+        return {
+          title: 'ปลาเทราต์สายรุ้งประกายแสง! (GREAT CATCH)',
+          desc: `คุณตกได้ปลาเทราต์ตัวอ้วนสมบูรณ์! ย่างไฟกินสดๆ ริมธารน้ำ ฟื้นฟูพลังชีวิต (+${heal} HP)`,
+          icon: '🐟',
+          type: 'heal',
+          healAmount: heal
+        };
+      }
+    } else if (accuracy === 'miss') {
+      if (Math.random() < 0.6) {
+        const gold = 5;
+        player.gold += gold;
+        return {
+          title: 'รองเท้าบูทหนังเก่าขาดรุ่งริ่ง... (MISS)',
+          desc: `ดึงสายเบ็ดเร็วหรือช้าเกินไป! สิ่งที่ติดขึ้นมาคือรองเท้าบูทเปียกโชก ขายให้ร้านรับซื้อของเก่าได้เพียง +${gold}G`,
+          icon: '👢',
+          type: 'gold',
+          goldAmount: gold
+        };
+      } else {
+        return {
+          title: 'สาวคราเคนแม่น้ำจอมดุร้าย! (DANGER)',
+          desc: `กระตุกสายเบ็ดผิดจังหวะจนทำให้สัตว์ร้ายใต้ผิวน้ำตื่นตระหนก! สาวคราเคนหนวดปลาหมึกยักษ์โผล่มาจู่โจม!`,
+          icon: '🐙',
+          type: 'combat',
+          monsterName: 'River Kraken Maiden'
+        };
+      }
+    }
+
+    const roll = Math.random();
     if (roll < 0.35) {
       const heal = 45;
       player.hp = Math.min(player.maxHp, player.hp + heal);

@@ -4,7 +4,7 @@ import { audio } from '../engine/AudioSynthesizer';
 
 export interface CalamityEvent {
   id: string;
-  type: 'demon_incursion' | 'monster_stampede' | 'golden_goblin';
+  type: 'demon_incursion' | 'monster_stampede' | 'golden_goblin' | 'world_boss';
   headline: string;
   loreDescription: string;
   bannerIcon: string;
@@ -40,6 +40,12 @@ export class WorldCalamitySystem {
     if (dayCounter >= 22 && !this.triggeredCalamityIds.has('golden_goblin_1')) {
       this.triggeredCalamityIds.add('golden_goblin_1');
       return this.triggerGoldenGoblinMigration();
+    }
+
+    // 4. Week 5 (Day 28+): Apex Ancient Dragon Ouroboros (World Boss Raid)
+    if (dayCounter >= 28 && !this.triggeredCalamityIds.has('world_boss_ouroboros_1')) {
+      this.triggeredCalamityIds.add('world_boss_ouroboros_1');
+      return this.triggerApexDragonBoss(allNodes);
     }
 
     return null;
@@ -127,6 +133,38 @@ export class WorldCalamitySystem {
     this.activeCalamity = calamity;
     this.calamityHistory.push(calamity.headline);
     audio.fanfare();
+    return calamity;
+  }
+
+  // World Boss Apex Ancient Dragon Emergence
+  public triggerApexDragonBoss(allNodes: BoardNode[]): CalamityEvent {
+    // Target a castle/town or central node
+    const candidateNodes = allNodes.filter(n => n.type === 'town' && (n.realmId === 'sunfire' || n.realmId === 'solaria'));
+    const targetNode = candidateNodes[Math.floor(Math.random() * candidateNodes.length)] || allNodes[0];
+
+    if (targetNode.townData) {
+      targetNode.townData.isOccupiedByMonster = true;
+      targetNode.townData.monsterName = 'มังกรบรรพกาล โอโรโบรอส (Apex World Boss)';
+      targetNode.townData.monsterHp = 380;
+      targetNode.townData.monsterMaxHp = 380;
+      targetNode.townData.monsterAtk = 36;
+      targetNode.townData.monsterDef = 24;
+    }
+
+    const calamity: CalamityEvent = {
+      id: 'world_boss_ouroboros_1',
+      type: 'world_boss',
+      headline: `👑 มหันตภัยโลก: มังกรบรรพกาล 'โอโรโบรอส' ยึดครอง ${targetNode.name}!`,
+      loreDescription: `ฟากฟ้ามืดมิดด้วยปีกเพลิงของมังกรบรรพกาล โอโรโบรอส (World Boss Apex)! อสูรยักษ์ได้ร่อนลงยึดครอง ${targetNode.name} อย่างเบ็ดเสร็จ! กษัตริย์ริโก้ประกาศค่าหัว 1,500G และเครื่องบรรณาการล้ำค่าแด่ผู้พิชิต!`,
+      bannerIcon: '🐉',
+      affectedTownNames: [targetNode.name],
+      bountyReward: 1500
+    };
+
+    this.activeCalamity = calamity;
+    this.calamityHistory.push(calamity.headline);
+    audio.limitBreak();
+    audio.playBgm('boss');
     return calamity;
   }
 }
