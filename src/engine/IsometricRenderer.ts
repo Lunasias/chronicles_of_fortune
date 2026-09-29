@@ -316,8 +316,8 @@ export class IsometricRenderer {
     // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
     this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
 
-    // 4. Interactive Breadcrumb Stepping Stones for Previewed Path
-    this.renderPathBreadcrumbs(ctx, nodes);
+    // 4. Interactive Breadcrumb Stepping Stones for Previewed Path (disabled per user request)
+    // this.renderPathBreadcrumbs(ctx, nodes);
 
     // 5. Depth-Sorted Entities (Terrain Blocks, Buildings, Props, Characters & Environmental Clutter)
     this.renderDepthSortedWorld(ctx, nodes, players, activePlayer, highlightedNodes, minX, maxX, minY, maxY, time);
@@ -411,27 +411,8 @@ export class IsometricRenderer {
   }
 
   private renderPathBreadcrumbs(ctx: CanvasRenderingContext2D, nodes: BoardNode[]) {
-    if (this.previewPathNodeIds.length < 2) return;
-
-    // Outer neon glow stroke (zero-lag)
-    ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    for (let idx = 0; idx < this.previewPathNodeIds.length; idx++) {
-      const nodeId = this.previewPathNodeIds[idx];
-      const p = this.nodeScreenCache.get(nodeId) || (nodes.find(n => n.id === nodeId) ? this.toScreen(nodes.find(n => n.id === nodeId)!.gx, nodes.find(n => n.id === nodeId)!.gy, nodes.find(n => n.id === nodeId)!.gz) : null);
-      if (!p) continue;
-      if (idx === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.stroke();
-
-    // Inner bright core beam
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 4;
-    ctx.stroke();
+    // Disabled moving / bouncing path line per user request ("ไม่เอาเส้นทางเดินขยับๆ")
+    return;
   }
 
   private renderDepthSortedWorld(
@@ -1067,7 +1048,7 @@ export class IsometricRenderer {
       ].includes(node.type);
 
       const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
-      const bob = Math.sin((time * 0.0055) + (node.id * 0.7)) * 5;
+      const bob = 0; // Static destination overhead markers per user request ("ไม่เอาเส้นทางเดินขยับๆ")
       const pointerY = py - baseClearance + bob;
 
       ctx.save();

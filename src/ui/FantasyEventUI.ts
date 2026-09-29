@@ -139,14 +139,15 @@ export class FantasyEventUI {
 
     // Bot AI choice
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         // AI chooses choice 0 or 1 with higher probability
         const aiIdx = Math.random() > 0.3 ? 0 : (Math.random() > 0.5 ? 1 : 2);
         handleChoiceSelection(aiIdx);
         setTimeout(() => {
           document.getElementById('btnFeDismiss')?.click();
-        }, 1500);
-      }, 1000);
+        }, Math.max(120, Math.round(1500 / speed)));
+      }, Math.max(120, Math.round(1000 / speed)));
     }
   }
 }

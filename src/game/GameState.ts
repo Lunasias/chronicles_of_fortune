@@ -400,13 +400,18 @@ export class GameState {
 
     const reachable = new Set<number>();
     const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
+    const visited = new Set<string>();
     // BFS tracking path history to avoid immediate 180-degree reversals in the same turn
     const queue: Array<{ nodeId: number; prevId: number | null; steps: number }> = [
       { nodeId: this.activePlayer.nodeId, prevId: this.activePlayer.prevNodeId ?? null, steps: 0 }
     ];
+    let head = 0;
 
-    while (queue.length > 0) {
-      const { nodeId, prevId, steps } = queue.shift()!;
+    while (head < queue.length) {
+      const { nodeId, prevId, steps } = queue[head++];
+      const stateKey = `${nodeId}_${prevId ?? 'none'}_${steps}`;
+      if (visited.has(stateKey)) continue;
+      visited.add(stateKey);
 
       // Valid landing destinations:
       // Exact steps required by default, or flexible if special crystal item used
@@ -444,10 +449,12 @@ export class GameState {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
     const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
 
+    const visited = new Set<string>();
     const queue: Array<{ path: number[] }> = [{ path: [this.activePlayer.nodeId] }];
+    let head = 0;
 
-    while (queue.length > 0) {
-      const { path } = queue.shift()!;
+    while (head < queue.length) {
+      const { path } = queue[head++];
       const currentId = path[path.length - 1];
       const steps = path.length - 1;
 
@@ -463,10 +470,13 @@ export class GameState {
         continue;
       }
 
+      const prevId = path.length >= 2 ? path[path.length - 2] : (this.activePlayer.prevNodeId ?? null);
+      const stateKey = `${currentId}_${prevId ?? 'none'}_${steps}`;
+      if (visited.has(stateKey)) continue;
+      visited.add(stateKey);
+
       const node = this.allNodes.find(n => n.id === currentId);
       if (!node) continue;
-
-      const prevId = path.length >= 2 ? path[path.length - 2] : (this.activePlayer.prevNodeId ?? null);
 
       for (const nextId of node.neighbors) {
         if (prevId !== null && nextId === prevId && node.neighbors.length > 1) {

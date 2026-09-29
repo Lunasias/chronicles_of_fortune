@@ -82,14 +82,15 @@ export class WeeklyReportUI {
       if (isLast && sorted.length >= 2 && !p.isDarkling) {
         const gap = sorted[0].getNetWorth(this.game.allNodes) - netWorth;
         if (gap >= 250) {
+          const speed = this.game.gameSpeed || 1;
           setTimeout(() => {
             document.getElementById('darklingPactModal')?.classList.remove('hidden');
             if (p.isAI) {
               setTimeout(() => {
                 document.getElementById('btnAcceptDarkling')?.click();
-              }, 1200);
+              }, Math.max(150, Math.round(1200 / speed)));
             }
-          }, 1500);
+          }, Math.max(150, Math.round(1500 / speed)));
         }
       }
     });

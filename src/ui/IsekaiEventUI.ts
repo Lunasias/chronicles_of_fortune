@@ -155,6 +155,7 @@ export class IsekaiEventUI {
 
     // Bot AI auto-interact
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (player.hp < player.maxHp * 0.6 && player.gold >= 25) {
           isekaiEventManager.restAtInn(player);
@@ -164,8 +165,8 @@ export class IsekaiEventUI {
         setTimeout(() => {
           modal.classList.add('hidden');
           onLeave();
-        }, 900);
-      }, 700);
+        }, Math.max(100, Math.round(900 / speed)));
+      }, Math.max(100, Math.round(700 / speed)));
     }
   }
 
@@ -257,6 +258,7 @@ export class IsekaiEventUI {
 
     // Bot AI auto-accept
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (!player.activeGuildQuest) {
           const available = isekaiEventManager.getAvailableGuildQuests(player);
@@ -267,8 +269,8 @@ export class IsekaiEventUI {
         setTimeout(() => {
           modal.classList.add('hidden');
           onLeave();
-        }, 800);
-      }, 700);
+        }, Math.max(100, Math.round(800 / speed)));
+      }, Math.max(100, Math.round(700 / speed)));
     }
   }
 
@@ -397,15 +399,16 @@ export class IsekaiEventUI {
 
     // Bot AI auto-fish
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         btnCast?.click();
         setTimeout(() => {
           handleReelAction();
           setTimeout(() => {
             document.getElementById('btnFishingContinue')?.click();
-          }, 1400);
-        }, 850);
-      }, 500);
+          }, Math.max(120, Math.round(1400 / speed)));
+        }, Math.max(100, Math.round(850 / speed)));
+      }, Math.max(100, Math.round(500 / speed)));
     }
   }
 
@@ -452,6 +455,7 @@ export class IsekaiEventUI {
 
     // Bot AI choice
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (player.hp < 40 && player.gold >= 40) {
           handleChoice('bribe');
@@ -462,8 +466,8 @@ export class IsekaiEventUI {
         }
         setTimeout(() => {
           document.getElementById('btnBanditDismiss')?.click();
-        }, 1200);
-      }, 800);
+        }, Math.max(120, Math.round(1200 / speed)));
+      }, Math.max(100, Math.round(800 / speed)));
     }
   }
 
@@ -492,9 +496,10 @@ export class IsekaiEventUI {
     modal.classList.remove('hidden');
 
     if (player.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         document.getElementById('btnCloseShrine')?.click();
-      }, 1400);
+      }, Math.max(150, Math.round(1400 / speed)));
     }
   }
 
@@ -521,12 +526,13 @@ export class IsekaiEventUI {
 
     modal.classList.remove('hidden');
 
-    // Auto dismiss after 3 seconds if AI is active
+    // Auto dismiss after 2.5 seconds if AI is active
     if (this.game.activePlayer.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         modal.classList.add('hidden');
         onDismiss();
-      }, 2500);
+      }, Math.max(200, Math.round(2500 / speed)));
     }
   }
 }

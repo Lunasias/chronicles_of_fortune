@@ -136,7 +136,8 @@ export class HomeUI {
       };
 
       if (player.isAI) {
-        setTimeout(() => btnRest.click(), 700);
+        const speed = this.game.gameSpeed || 1;
+        setTimeout(() => btnRest.click(), Math.max(100, Math.round(700 / speed)));
       }
     }
     // Case 3: Other player's Home -> Polite visit fee
@@ -164,7 +165,8 @@ export class HomeUI {
       };
 
       if (player.isAI) {
-        setTimeout(() => btnDismiss.click(), 600);
+        const speed = this.game.gameSpeed || 1;
+        setTimeout(() => btnDismiss.click(), Math.max(100, Math.round(600 / speed)));
       }
     }
 

@@ -52,6 +52,7 @@ export class PrankUI {
 
     // AI bot choice (check if WINNER is AI)
     if (winner.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (victim.townDeeds.length > 0) {
           this.handleStealTown();
@@ -62,7 +63,7 @@ export class PrankUI {
           (document.getElementById('inputPrankName') as HTMLInputElement).value = 'Poophead';
           this.handleConfirmPrank();
         }
-      }, 900);
+      }, Math.max(120, Math.round(900 / speed)));
     }
   }
 

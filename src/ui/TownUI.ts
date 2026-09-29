@@ -111,6 +111,7 @@ export class TownUI {
 
     // AI automatic action
     if (p.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (p.hp < p.maxHp * 0.6 && p.gold >= 30) {
           this.handleInn();
@@ -118,8 +119,8 @@ export class TownUI {
         if (owner?.id === p.id && p.gold >= investCost) {
           this.handleInvest();
         }
-        setTimeout(() => this.handleLeave(), 600);
-      }, 800);
+        setTimeout(() => this.handleLeave(), Math.max(100, Math.round(600 / speed)));
+      }, Math.max(100, Math.round(800 / speed)));
     }
   }
 
@@ -152,7 +153,9 @@ export class TownUI {
     const res = townManager.investInTown(this.currentTown, p);
     if (res.success) {
       this.game.addLog(`📈 ${p.displayName} ลงทุนพัฒนาเมือง ${this.currentTown.name}! อัปเกรดเป็น ${res.tierName} (เลเวล ${res.newLevel})!`, 'level');
-      this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
+      if (!p.isAI) {
+        this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
+      }
     } else {
       this.game.addLog(`ไม่สามารถลงทุนได้ (ต้องเป็นเจ้าของเมืองและมีเงินทองเพียงพอ)`);
     }

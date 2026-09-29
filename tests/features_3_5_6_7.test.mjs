@@ -135,3 +135,31 @@ test('Combat Status Effects: Freeze skips action, Blind has miss chance, Burn ap
   assert.ok(burnRound.burnDamage > 0);
   assert.equal(monster.burnTurns, 1);
 });
+
+test('Movement pathfinding performance on high rolls (10 steps) executes instantly without freezing', () => {
+  const game = new GameState();
+  game.initGame([
+    { name: 'P1', classKey: 'warrior', isAI: false }
+  ]);
+  const p1 = game.players[0];
+  p1.nodeId = 0;
+  game.remainingMoves = 10;
+  p1.hasFlexibleMovement = false;
+
+  const t0 = performance.now();
+  game.updateReachableHighlights();
+  const t1 = performance.now();
+
+  assert.ok(t1 - t0 < 50, `updateReachableHighlights took ${t1 - t0}ms, must be < 50ms`);
+  assert.ok(game.highlightedNodes.length > 0, 'Reachable nodes must exist for 10 steps');
+
+  const chosen = game.highlightedNodes[0];
+  const t2 = performance.now();
+  const path = game.findPathToTarget(chosen);
+  const t3 = performance.now();
+
+  assert.ok(t3 - t2 < 50, `findPathToTarget took ${t3 - t2}ms, must be < 50ms`);
+  assert.ok(path, 'Path must be found to target');
+  assert.equal(path.length - 1, 10, 'Steps must be exactly 10');
+});
+

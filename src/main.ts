@@ -276,7 +276,8 @@ class DokaponApp {
         if (!path || path.length <= 1) {
           path = [this.game.activePlayer.nodeId, hoveredNode.id];
         }
-        this.renderer.previewPathNodeIds = path || [];
+        // Do not render moving/bouncing neon path line per user request ("ไม่เอาเส้นทางเดินขยับๆ")
+        this.renderer.previewPathNodeIds = [];
 
         const steps = path && path.length > 1 ? path.length - 1 : undefined;
 
@@ -959,7 +960,7 @@ class DokaponApp {
     this.onTurnStarted();
 
     if (this.game.activePlayer.isAI) {
-      setTimeout(() => this.triggerDiceRoll(), 1200);
+      setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
     }
   }
 
@@ -976,6 +977,8 @@ class DokaponApp {
     diceResultText.innerText = 'กำลังทอย...';
 
     let count = 0;
+    const speed = this.game.gameSpeed || 1;
+    const rollInterval = Math.max(20, Math.round(70 / speed));
     const interval = setInterval(() => {
       audio.diceRoll();
       diceCube.innerText = `${Math.floor(Math.random() * 6) + 1}`;
@@ -1005,13 +1008,31 @@ class DokaponApp {
               this.game.players,
               this.game.aiDifficulty
             );
-            const path = this.game.findPathToTarget(chosenTarget);
-            if (path) {
+            let path = this.game.findPathToTarget(chosenTarget);
+            if (!path && this.game.highlightedNodes.length > 0) {
+              for (const altNodeId of this.game.highlightedNodes) {
+                path = this.game.findPathToTarget(altNodeId);
+                if (path) break;
+              }
+            }
+            if (!path) {
+              const target = chosenTarget ?? this.game.highlightedNodes[0];
+              if (target !== undefined && target !== this.game.activePlayer.nodeId) {
+                path = [this.game.activePlayer.nodeId, target];
+              }
+            }
+            if (path && path.length > 1) {
               this.game.executePath(
                 path,
                 () => this.onMoveStep(),
                 tile => this.handleTileArrival(tile)
               );
+            } else {
+              // Safety fallback: if no path found, end turn or arrive at current tile!
+              this.game.remainingMoves = 0;
+              this.game.highlightedNodes = [];
+              const here = this.game.allNodes.find(n => n.id === this.game.activePlayer.nodeId) || this.game.allNodes[0];
+              this.handleTileArrival(here);
             }
           } else {
             const isFlexMove = !!this.game.activePlayer.hasFlexibleMovement;
@@ -1022,9 +1043,9 @@ class DokaponApp {
               'level'
             );
           }
-        }, 800);
+        }, Math.max(150, Math.round(800 / speed)));
       }
-    }, 70);
+    }, rollInterval);
   }
 
   private onMoveStep() {
@@ -1840,7 +1861,7 @@ class DokaponApp {
           this.game.startTurn();
           this.onTurnStarted();
           if (this.game.activePlayer.isAI) {
-            setTimeout(() => this.triggerDiceRoll(), 1200);
+            setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
           }
         });
       });
@@ -1849,7 +1870,7 @@ class DokaponApp {
     if (this.game.phase === 'BOARD_TURN') {
       this.onTurnStarted();
       if (this.game.activePlayer.isAI) {
-        setTimeout(() => this.triggerDiceRoll(), 1200);
+        setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
       }
     }
   }

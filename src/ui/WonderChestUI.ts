@@ -212,7 +212,8 @@ export class WonderChestUI {
     this.modal.classList.remove('hidden');
 
     if (player.isAI) {
-      setTimeout(() => this.startSpin(player), 900);
+      const speed = this.game.gameSpeed || 1;
+      setTimeout(() => this.startSpin(player), Math.max(120, Math.round(900 / speed)));
     }
   }
 
@@ -308,9 +309,10 @@ export class WonderChestUI {
         if (btnText) btnText.innerText = '✔ รับรางวัลเรียบร้อย';
 
         // Auto-dismiss or allow click
+        const speed = this.game.gameSpeed || 1;
         setTimeout(() => {
           this.close();
-        }, player.isAI ? 1800 : 2500);
+        }, Math.max(180, Math.round((player.isAI ? 1800 : 2500) / speed)));
       }
     };
 

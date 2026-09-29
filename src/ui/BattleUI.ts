@@ -1141,6 +1141,11 @@ export class BattleUI {
     } else {
       audio.fanfare();
     }
+    // Critical: Reset active battle references so main render loop resumes rendering world viewport!
+    this.game.activeBattle = null;
+    this.game.activeBattleEnemyCombatant = null;
+    this.isExecutingRound = false;
+
     document.getElementById('battleScreen')?.classList.add('hidden');
     document.getElementById('battleScoutModal')?.classList.add('hidden');
     this.isScoutOpen = false;

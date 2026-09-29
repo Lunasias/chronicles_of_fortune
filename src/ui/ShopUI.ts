@@ -121,6 +121,7 @@ export class ShopUI {
 
     // AI bot behavior
     if (this.game.activePlayer.isAI) {
+      const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         const p = this.game.activePlayer;
         if (p.gold >= 60 && !p.inventory.some(i => i.id === 'spin_2')) {
@@ -131,8 +132,8 @@ export class ShopUI {
             this.game.addLog(`AI ${p.displayName} ซื้อ 2-Spinner!`, 'gold');
           }
         }
-        setTimeout(() => this.handleLeave(), 600);
-      }, 700);
+        setTimeout(() => this.handleLeave(), Math.max(100, Math.round(600 / speed)));
+      }, Math.max(100, Math.round(700 / speed)));
     }
   }
 
