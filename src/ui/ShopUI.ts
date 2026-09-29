@@ -19,6 +19,7 @@ export const SHOP_CATALOG: EquipmentItem[] = [
   { id: 'pot_mag', name: 'น้ำยาปัญญามนต์ (MAG Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มพลังเวทมนตร์ +3 MAG อย่างถาวร!', icon: '🔮' },
   { id: 'pot_spd', name: 'น้ำยาวายุติดปีก (SPD Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มความเร็ว +3 SPD อย่างถาวร!', icon: '👟' },
   { id: 'pot_luk', name: 'น้ำยาเทพีนำโชค (LUK Elixir)', type: 'potion', cost: 650, desc: 'เพิ่มโชคชะตา +3 LUK อย่างถาวร!', icon: '🍀' },
+  { id: 'item_crystal_step', name: 'ผลึกย่างก้าวอิสระ (Free Step Crystal)', type: 'potion', cost: 220, desc: 'หยุดเดินที่ช่องใดก็ได้ตามเส้นทาง ไม่จำเป็นต้องตรงกับแต้มเต๋า 1 เทิร์น', icon: '💎' },
   { id: 'item_bomb', name: 'ระเบิดไดนาไมต์สนามรบ (Field Bomb)', type: 'potion', cost: 250, desc: 'ขว้างใส่ศัตรู/ผู้เล่นใกล้เคียง สร้าง 40 ดาเมจ', icon: '💣' },
   { id: 'item_dispel', name: 'เครื่องรางแก้คำสาป (Dispel Charm)', type: 'potion', cost: 180, desc: 'ลบล้างคำสาปสนิมและสถานะผิดปกติทั้งหมด', icon: '🫙' },
   { id: 'item_recall', name: 'คัมภีร์วาร์ปปราสาท (Castle Recall)', type: 'potion', cost: 220, desc: 'เปิดมิติวาร์ปกลับสู่ปราสาทหลวงทันที', icon: '🚪' },

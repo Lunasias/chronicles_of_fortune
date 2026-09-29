@@ -33,6 +33,7 @@ import { scaleMonster, tierForNode } from './game/BalanceSystem';
 import type { ThreatTier } from './game/BalanceSystem';
 import { SaveManager } from './game/SaveManager';
 import { escapeHtml } from './util/Html';
+import { triggerHaptic } from './util/haptics';
 import { companionKeyForDefeatedMonster, createCompanion, getCompanionProfile } from './game/CompanionDatabase';
 
 class DokaponApp {
@@ -596,25 +597,6 @@ class DokaponApp {
       this.hasMovedWhileDragging = false;
     });
 
-    // Floating Zoom Controls (+, -, 1x)
-    document.getElementById('btnZoomIn')?.addEventListener('click', () => {
-      audio.click();
-      this.renderer.camera.targetZoom = Math.min(1.8, this.renderer.camera.targetZoom * 1.18);
-      this.renderer.camera.zoom = this.renderer.camera.targetZoom;
-      this.renderer.clampCameraBounds();
-    });
-    document.getElementById('btnZoomOut')?.addEventListener('click', () => {
-      audio.click();
-      this.renderer.camera.targetZoom = Math.max(0.55, this.renderer.camera.targetZoom * 0.82);
-      this.renderer.camera.zoom = this.renderer.camera.targetZoom;
-      this.renderer.clampCameraBounds();
-    });
-    document.getElementById('btnZoomReset')?.addEventListener('click', () => {
-      audio.click();
-      this.renderer.resetTacticalZoom();
-      this.renderer.clampCameraBounds();
-    });
-
     // Minimap collapse toggle on mobile
     let isMinimapCollapsed = false;
     document.getElementById('btnToggleMinimap')?.addEventListener('click', () => {
@@ -982,6 +964,7 @@ class DokaponApp {
   }
 
   private triggerDiceRoll() {
+    triggerHaptic('medium');
     const totalRoll = this.game.rollMovementDice();
 
     const diceModal = document.getElementById('diceRollModal')!;
@@ -1000,9 +983,13 @@ class DokaponApp {
 
       if (count > 7) {
         clearInterval(interval);
+        triggerHaptic('selection');
         diceCube.classList.remove('dice-rolling');
         diceCube.innerText = `${totalRoll}`;
-        diceResultText.innerText = `คุณทอยได้ ${totalRoll}! (เลือกเดินได้ 1 - ${totalRoll} ช่อง)`;
+        const isFlex = !!this.game.activePlayer.hasFlexibleMovement;
+        diceResultText.innerText = isFlex
+          ? `คุณทอยได้ ${totalRoll}! (ผลึกอิสระ: เลือกเดินได้ 1 - ${totalRoll} ช่อง)`
+          : `คุณทอยได้ ${totalRoll}! (เดินตรง ${totalRoll} ช่อง)`;
         audio.coin();
 
         setTimeout(() => {
@@ -1027,7 +1014,13 @@ class DokaponApp {
               );
             }
           } else {
-            this.game.addLog(`👉 ทอยได้ ${totalRoll}! คลิกเลือกช่องปลายทางบนแผนที่เพื่อเดิน (เลือกได้ตั้งแต่ 1 ถึง ${totalRoll} ช่อง)`, 'level');
+            const isFlexMove = !!this.game.activePlayer.hasFlexibleMovement;
+            this.game.addLog(
+              isFlexMove
+                ? `👉 ทอยได้ ${totalRoll}! (ใช้ผลึกย่างก้าวอิสระ) คลิกเลือกช่องปลายทางบนแผนที่ (1 ถึง ${totalRoll} ก้าว)`
+                : `👉 ทอยได้ ${totalRoll}! คลิกเลือกช่องปลายทางบนแผนที่ (ต้องก้าวตรงตามแต้ม ${totalRoll} ก้าว)`,
+              'level'
+            );
           }
         }, 800);
       }
@@ -1035,6 +1028,7 @@ class DokaponApp {
   }
 
   private onMoveStep() {
+    triggerHaptic('light');
     const p = this.game.activePlayer;
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
     this.renderer.spawnFootstepDust(p.gridX, p.gridY, p.gridZ);
@@ -1042,6 +1036,7 @@ class DokaponApp {
   }
 
   private handleTileArrival(tile: BoardNode) {
+    triggerHaptic('selection');
     const p = this.game.activePlayer;
     this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
 
@@ -2317,6 +2312,10 @@ class DokaponApp {
             } else {
               this.game.addLog(`💣 ${p.displayName} จุดระเบิดไดนาไมต์ก้องกังวาน!`);
             }
+          } else if (item.id === 'item_crystal_step') {
+            p.hasFlexibleMovement = true;
+            audio.magicCast();
+            this.game.addLog(`💎 ${p.displayName} ใช้ผลึกย่างก้าวอิสระ! สามารถเลือกหยุดเดินที่ช่องใดก็ได้ตามเส้นทางในเทิร์นนี้!`, 'level');
           } else if (item.id === 'item_recall') {
             // Warp Recall to Castle (Node 0)
             p.nodeId = 0;
@@ -2873,19 +2872,19 @@ class DokaponApp {
 
   public loop(time: number) {
     if (this.game.phase !== 'TITLE') {
-      // Render 2.5D Isometric World Viewport
-      this.renderer.render(
-        this.game.allNodes,
-        this.game.players,
-        this.game.activePlayer,
-        this.game.highlightedNodes,
-        this.renderer.previewPathNodeIds,
-        time
-      );
-
-      // Render Battle Arena if active
       if (this.game.activeBattle) {
+        // Render Battle Arena when active (bypasses heavy overworld rendering)
         this.battleUI.renderArena(time);
+      } else {
+        // Render 2.5D Isometric World Viewport
+        this.renderer.render(
+          this.game.allNodes,
+          this.game.players,
+          this.game.activePlayer,
+          this.game.highlightedNodes,
+          this.renderer.previewPathNodeIds,
+          time
+        );
       }
     }
 
@@ -2897,4 +2896,9 @@ class DokaponApp {
 window.addEventListener('load', () => {
   const app = new DokaponApp();
   app.loop(0);
+
+  // Register PWA Service Worker
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
 });

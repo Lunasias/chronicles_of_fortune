@@ -446,6 +446,7 @@ export class Player {
 
   // Active Item Spinner (e.g. 2-Spinner, 3-Spinner)
   public activeSpinnerMultiplier = 1;
+  public hasFlexibleMovement = false;
 
   // Equipment & Inventory
   public equipment: {
@@ -777,12 +778,13 @@ export class Player {
     // Boost stats
     this.maxHp = Math.floor(this.maxHp * 2.5);
     this.hp = this.maxHp;
-    this.atk = Math.floor(this.atk * 2.2);
-    this.def = Math.floor(this.def * 2.0);
-    this.spd = Math.floor(this.spd * 1.8);
+    this.atk = Math.floor(this.atk * 3.0);
+    this.def = Math.floor(this.def * 2.2);
+    this.spd = Math.floor(this.spd * 2.0);
 
     // Darkling rolls 3 dice!
     this.activeSpinnerMultiplier = 3;
+    this.fieldSpells = ['dark_calamity', 'swap', 'dark_plague'];
   }
 
   revertDarkling() {

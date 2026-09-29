@@ -349,8 +349,9 @@ export class GameState {
     let totalRoll = 0;
 
     if (p.isDarkling) {
-      // Darkling dice is strictly capped at maximum 3 (1, 2, or 3)
-      totalRoll = Math.floor(Math.random() * 3) + 1;
+      // Darkling rolls multi-dice (2d6 standard)
+      totalRoll = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+      this.addLog(`😈 พลังจอมมารคลั่ง! ทอยลูกเต๋าคู่มรณะ ก้าวเดินได้ถึง ${totalRoll} ก้าว!`, 'darkling');
     } else {
       const numDice = Math.max(1, p.activeSpinnerMultiplier);
       for (let i = 0; i < numDice; i++) {
@@ -389,7 +390,8 @@ export class GameState {
     return totalRoll;
   }
 
-  // Calculate all reachable destination nodes: Allows flexible landing from 1 to remainingMoves steps & backtracking
+  // Calculate all reachable destination nodes:
+  // Core Dokapon rules: Destination MUST match exact rolled steps, UNLESS flexible step item is active!
   updateReachableHighlights() {
     if (this.remainingMoves <= 0) {
       this.highlightedNodes = [];
@@ -397,6 +399,7 @@ export class GameState {
     }
 
     const reachable = new Set<number>();
+    const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
     // BFS tracking path history to avoid immediate 180-degree reversals in the same turn
     const queue: Array<{ nodeId: number; prevId: number | null; steps: number }> = [
       { nodeId: this.activePlayer.nodeId, prevId: this.activePlayer.prevNodeId ?? null, steps: 0 }
@@ -406,9 +409,13 @@ export class GameState {
       const { nodeId, prevId, steps } = queue.shift()!;
 
       // Valid landing destinations:
-      // Allow flexible landing on any node reachable within 1 to remainingMoves steps (<= rolled dice count)
-      if (steps >= 1 && steps <= this.remainingMoves) {
-        if (nodeId !== this.activePlayer.nodeId) {
+      // Exact steps required by default, or flexible if special crystal item used
+      if (allowFlexible) {
+        if (steps >= 1 && steps <= this.remainingMoves && nodeId !== this.activePlayer.nodeId) {
+          reachable.add(nodeId);
+        }
+      } else {
+        if (steps === this.remainingMoves && nodeId !== this.activePlayer.nodeId) {
           reachable.add(nodeId);
         }
       }
@@ -435,6 +442,7 @@ export class GameState {
   // Pathfinding: Find valid directional route from current position to chosen target node
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
+    const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
 
     const queue: Array<{ path: number[] }> = [{ path: [this.activePlayer.nodeId] }];
 
@@ -443,7 +451,11 @@ export class GameState {
       const currentId = path[path.length - 1];
       const steps = path.length - 1;
 
-      if (currentId === targetNodeId && steps >= 1 && steps <= this.remainingMoves) {
+      const matchesTarget = allowFlexible
+        ? (currentId === targetNodeId && steps >= 1 && steps <= this.remainingMoves)
+        : (currentId === targetNodeId && steps === this.remainingMoves);
+
+      if (matchesTarget) {
         return path;
       }
 
@@ -567,6 +579,7 @@ export class GameState {
 
     // Process active player end-of-turn effects
     const prevP = this.activePlayer;
+    prevP.hasFlexibleMovement = false;
     const tickRes = prevP.tickTurn();
     if (tickRes.poisonDamage) {
       this.addLog(`☠️ พิษแล่นเข้าสู่หัวใจ! ${prevP.displayName} เสียเลือด ${tickRes.poisonDamage} HP!`, 'battle');

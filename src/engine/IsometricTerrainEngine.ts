@@ -379,12 +379,7 @@ export class IsometricTerrainEngine {
   }
 
   /**
-   * A 2:1 isometric ring drawn as integer 2x1 blocks.
-   *
-   * `ctx.ellipse` antialiases, which made the surf the one soft-edged thing on an otherwise
-   * hard-edged board. Scanning x and plotting the two arcs per column, rounded to whole pixels,
-   * gives the same shape with crisp edges. `phase` scrolls a dash pattern through the ring so the
-   * crest reads as advancing surf instead of as a drawn circle.
+   * Fast hardware-accelerated 2:1 isometric ring using native canvas ellipse.
    */
   private isoRing(
     ctx: CanvasRenderingContext2D,
@@ -397,16 +392,19 @@ export class IsometricTerrainEngine {
     phase: number,
     dashed: boolean
   ): void {
-    ctx.fillStyle = color;
-    const x0 = Math.round(cx - rx);
-    const x1 = Math.round(cx + rx);
-    for (let x = x0; x <= x1; x += thickness) {
-      const t = (x - cx) / rx;
-      if (t < -1 || t > 1) continue;
-      if (dashed && (Math.floor((x - x0) / thickness) + Math.round(phase)) % 6 < 2) continue;
-      const dy = ry * Math.sqrt(Math.max(0, 1 - t * t));
-      ctx.fillRect(x, Math.round(cy - dy), thickness, 1);
-      ctx.fillRect(x, Math.round(cy + dy), thickness, 1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = thickness;
+    ctx.beginPath();
+    if (dashed) {
+      ctx.setLineDash([6, 8]);
+      ctx.lineDashOffset = phase * 3;
+    } else {
+      ctx.setLineDash([]);
+    }
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (dashed) {
+      ctx.setLineDash([]);
     }
   }
 

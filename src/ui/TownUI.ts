@@ -22,6 +22,7 @@ export class TownUI {
     document.getElementById('btnTownInvest')?.addEventListener('click', () => this.handleInvest());
     document.getElementById('btnTownCollect')?.addEventListener('click', () => this.handleCollect());
     document.getElementById('btnTownRob')?.addEventListener('click', () => this.handleRob());
+    document.getElementById('btnTownTakeover')?.addEventListener('click', () => this.handleTakeover());
     document.getElementById('btnLeaveTown')?.addEventListener('click', () => this.handleLeave());
   }
 
@@ -65,6 +66,34 @@ export class TownUI {
     } else {
       ownerText.innerText = 'เป็นกลาง (ยังไม่มีเจ้าของ)';
       ownerText.style.color = '#86efac';
+    }
+
+    const isOwner = owner?.id === p.id;
+    const isRival = !!owner && !isOwner;
+
+    const btnInvest = document.getElementById('btnTownInvest');
+    const btnCollect = document.getElementById('btnTownCollect');
+    const btnRob = document.getElementById('btnTownRob');
+    const btnTakeover = document.getElementById('btnTownTakeover');
+
+    if (isOwner) {
+      btnInvest?.classList.remove('hidden');
+      btnCollect?.classList.remove('hidden');
+      btnRob?.classList.add('hidden');
+      btnTakeover?.classList.add('hidden');
+    } else if (isRival) {
+      btnInvest?.classList.add('hidden');
+      btnCollect?.classList.add('hidden');
+      btnRob?.classList.remove('hidden');
+      btnTakeover?.classList.remove('hidden');
+      const takeoverCost = (townNode.townData?.baseValue || 200) * 2;
+      const takeoverText = document.getElementById('townTakeoverCostText');
+      if (takeoverText) takeoverText.innerText = `ฮุบซื้อกรรมสิทธิ์ (${takeoverCost}G)`;
+    } else {
+      btnInvest?.classList.add('hidden');
+      btnCollect?.classList.add('hidden');
+      btnRob?.classList.add('hidden');
+      btnTakeover?.classList.add('hidden');
     }
 
     const investCost = 150 * (townNode.townData?.level || 1);
@@ -149,6 +178,20 @@ export class TownUI {
     syncFeedPanelClass();
     if (this.onInitiateRobCallback) {
       this.onInitiateRobCallback(this.currentTown);
+    }
+  }
+
+  private handleTakeover() {
+    if (!this.currentTown?.townData) return;
+    const p = this.game.activePlayer;
+    const ownerId = this.currentTown.townData.ownerId;
+    const owner = this.game.players.find(pl => pl.id === ownerId);
+    if (!owner || owner.id === p.id) return;
+
+    const res = townManager.hostileTakeover(this.currentTown, p, owner);
+    this.game.addLog(res.message, res.success ? 'gold' : 'info');
+    if (res.success) {
+      this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
     }
   }
 

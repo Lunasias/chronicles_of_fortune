@@ -1486,6 +1486,7 @@ export class BattleUI {
     const drawHero = () => {
       this.drawUnitTeamRing(ctx, px, py - ringYOffset, '#06b6d4', 0.9 * scaleFactor, true);
       ctx.drawImage(heroSprite, px - heroW / 2, py - heroYOffset, heroW, heroH);
+      this.drawStatusOverheadBadges(ctx, px, py - heroYOffset - 8, playerCombatant);
     };
 
     const drawEnemy = () => {
@@ -1511,6 +1512,8 @@ export class BattleUI {
       ctx.restore();
 
       ctx.restore();
+
+      this.drawStatusOverheadBadges(ctx, ex, ey - enemyYOffset - 8, enemyCombatant);
     };
 
     // Isometric Depth sorting: smaller Y drawn first (background), larger Y drawn second (foreground)
@@ -1537,6 +1540,51 @@ export class BattleUI {
       this.drawCinematicCutsceneBanner(ctx, w, h);
     }
 
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // OVERHEAD COMBAT STATUS EFFECT BADGES (Burn, Freeze, Silence, Blind)
+  // =========================================================================
+  private drawStatusOverheadBadges(ctx: CanvasRenderingContext2D, cx: number, cy: number, combatant: Combatant) {
+    const badges: Array<{ icon: string; text: string; bg: string; border: string }> = [];
+    if (combatant.burnTurns && combatant.burnTurns > 0) {
+      badges.push({ icon: '🔥', text: `BURN (${combatant.burnTurns})`, bg: 'rgba(153, 27, 27, 0.92)', border: '#ef4444' });
+    }
+    if (combatant.freezeTurns && combatant.freezeTurns > 0) {
+      badges.push({ icon: '❄️', text: `FROZEN (${combatant.freezeTurns})`, bg: 'rgba(30, 58, 138, 0.92)', border: '#38bdf8' });
+    }
+    if (combatant.silenceTurns && combatant.silenceTurns > 0) {
+      badges.push({ icon: '🤐', text: `SILENCE (${combatant.silenceTurns})`, bg: 'rgba(88, 28, 135, 0.92)', border: '#c084fc' });
+    }
+    if ((combatant.blindTurns && combatant.blindTurns > 0) || (combatant.playerRef?.blindTurns && combatant.playerRef.blindTurns > 0)) {
+      badges.push({ icon: '👁️', text: `BLIND`, bg: 'rgba(30, 41, 59, 0.92)', border: '#94a3b8' });
+    }
+
+    if (badges.length === 0) return;
+
+    ctx.save();
+    let currentY = cy;
+    badges.forEach(b => {
+      ctx.font = 'bold 8px Silkscreen, sans-serif';
+      const str = `${b.icon} ${b.text}`;
+      const m = ctx.measureText(str);
+      const bw = m.width + 12;
+      const bh = 14;
+      ctx.fillStyle = b.bg;
+      ctx.beginPath();
+      ctx.roundRect(cx - bw / 2, currentY - bh, bw, bh, 3);
+      ctx.fill();
+      ctx.strokeStyle = b.border;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(str, cx, currentY - bh / 2);
+      currentY -= (bh + 4);
+    });
     ctx.restore();
   }
 

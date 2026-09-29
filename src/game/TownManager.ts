@@ -122,6 +122,26 @@ export class TownManager {
     newOwner.townsControlled = newOwner.townDeeds.length;
   }
 
+  // Hostile takeover: rival player pays 2x town base value to forcefully buy out ownership
+  hostileTakeover(townNode: BoardNode, buyer: Player, currentOwner: Player): { success: boolean; cost: number; message: string } {
+    if (!townNode.townData || townNode.townData.ownerId !== currentOwner.id) {
+      return { success: false, cost: 0, message: 'เมืองนี้ไม่ได้อยู่ในการครอบครองของคู่แข่ง!' };
+    }
+    const cost = (townNode.townData.baseValue || 200) * 2;
+    if (buyer.gold < cost) {
+      return { success: false, cost, message: `ต้องการทอง ${cost}G เพื่อทำการฮุบกรรมสิทธิ์เมือง!` };
+    }
+    buyer.gold -= cost;
+    currentOwner.gold += Math.floor(cost * 0.75);
+    this.transferTownOwnership(townNode, buyer, currentOwner);
+    audio.fanfare();
+    return {
+      success: true,
+      cost,
+      message: `🏢 ยึดกิจการสำเร็จ! ${buyer.displayName} ทุ่มเงิน ${cost}G ทำการ Hostile Takeover ฮุบเมือง ${townNode.name} จาก ${currentOwner.displayName}!`
+    };
+  }
+
   // Collect daily turn income from all owned towns
   collectTurnRevenue(player: Player, allNodes: BoardNode[]): number {
     let totalTax = 0;

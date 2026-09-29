@@ -25,6 +25,10 @@ export interface Combatant {
   hasResurrected?: boolean;
   barrierHp?: number;
   isShocked?: boolean;
+  burnTurns?: number;
+  freezeTurns?: number;
+  silenceTurns?: number;
+  blindTurns?: number;
 }
 
 export interface RoundResult {
@@ -259,10 +263,11 @@ export class BattleEngine {
     const aPos = a.gridPos || 'mid';
     const dPos = d.gridPos || 'mid';
 
-    // Blindness Accuracy Check
-    if (a.playerRef && a.playerRef.blindTurns > 0 && atkAction !== 'skill' && Math.random() < 0.40) {
+    // 0. Freeze Check: Frozen unit cannot take any action this round!
+    if (a.freezeTurns && a.freezeTurns > 0) {
+      a.freezeTurns--;
       audio.miss();
-      narration = `👁️ ${a.name} ติดสถานะตาบอด (Blind)! การโจมตีพลาดเป้าอย่างสิ้นเชิง! (0 ดาเมจ)`;
+      narration = `❄️ ${a.name} ติดสถานะแช่แข็ง (Freeze)! ร่างกายขยับไม่ได้ จึงไม่สามารถออกแอ็กชันในรอบนี้ได้!`;
       return {
         attackerAction: atkAction,
         defenderAction: defAction,
@@ -275,6 +280,48 @@ export class BattleEngine {
         isDodged: true,
         narration
       };
+    }
+
+    // 0.1 Silence Check: Silenced unit cannot cast magic or skills!
+    if (a.silenceTurns && a.silenceTurns > 0 && (atkAction === 'magic' || atkAction === 'skill')) {
+      a.silenceTurns--;
+      audio.miss();
+      narration = `🤐 ${a.name} ติดสถานะใบ้ (Silence)! ไม่สามารถร่ายเวทมนตร์หรือสกิลได้ การร่ายเวทล้มเหลว! (0 ดาเมจ)`;
+      return {
+        attackerAction: atkAction,
+        defenderAction: defAction,
+        damageToDefender: 0,
+        damageToAttacker: 0,
+        isCounterSuccess,
+        isStrikeSuccess,
+        isMagicBlocked,
+        isGiveUp,
+        isDodged: true,
+        narration
+      };
+    }
+
+    // 0.2 Blindness Accuracy Check: 50% miss chance on physical attacks/strikes!
+    const isBlind = (a.blindTurns && a.blindTurns > 0) || (a.playerRef && a.playerRef.blindTurns > 0);
+    if (isBlind && (atkAction === 'attack' || atkAction === 'strike')) {
+      if (a.blindTurns && a.blindTurns > 0) a.blindTurns--;
+      if (a.playerRef && a.playerRef.blindTurns > 0) a.playerRef.blindTurns--;
+      if (Math.random() < 0.50) {
+        audio.miss();
+        narration = `👁️ ${a.name} ติดสถานะตาบอด (Blind)! การโจมตีฟันวืดพลาดเป้าอย่างสิ้นเชิง! (0 ดาเมจ)`;
+        return {
+          attackerAction: atkAction,
+          defenderAction: defAction,
+          damageToDefender: 0,
+          damageToAttacker: 0,
+          isCounterSuccess,
+          isStrikeSuccess,
+          isMagicBlocked,
+          isGiveUp,
+          isDodged: true,
+          narration
+        };
+      }
     }
 
     // 1. Give Up / Flee Mechanism
@@ -751,6 +798,7 @@ export class BattleEngine {
         result.narration += ` 🩸 [ดูดเลือด +${heal} HP]`;
       }
       if (passives.includes('burn')) {
+        d.burnTurns = 2;
         const burnDmg = Math.round(result.damageToDefender * 0.15);
         d.hp = Math.max(0, d.hp - burnDmg);
         result.damageToDefender += burnDmg;
@@ -772,12 +820,14 @@ export class BattleEngine {
     if (a.playerRef && a.playerRef.weaponRune && result.damageToDefender > 0) {
       const rune = a.playerRef.weaponRune;
       if (rune === 'fire' && Math.random() < 0.50) {
+        d.burnTurns = 2;
         const burnDmg = Math.max(8, Math.round(d.maxHp * 0.08));
         d.hp = Math.max(0, d.hp - burnDmg);
         result.damageToDefender += burnDmg;
         result.burnDamage = burnDmg;
         result.narration += ` 🔥 [รูนเพลิงลุกไหม้ +${burnDmg}]`;
       } else if (rune === 'ice' && Math.random() < 0.45) {
+        d.freezeTurns = 1;
         result.statusInflicted = 'freeze';
         result.narration += ` ❄️ [รูนเหมันต์แช่แข็ง!]`;
       } else if (rune === 'thunder' && Math.random() < 0.40) {
@@ -828,6 +878,33 @@ export class BattleEngine {
     }
     if (d.playerRef && result.damageToDefender > 0) {
       d.playerRef.burstGauge = Math.min(100, d.playerRef.burstGauge + 25);
+    }
+
+    // Additional status triggers from combat actions
+    if (result.damageToDefender > 0 && result.attackerAction === 'magic' && Math.random() < 0.35) {
+      d.silenceTurns = 2;
+      result.narration += ` 🤐 [คำสาปเวท ติดสถานะใบ้ 2 เทิร์น!]`;
+    }
+    if (result.damageToDefender > 0 && result.attackerAction === 'strike' && Math.random() < 0.30) {
+      d.blindTurns = 2;
+      result.narration += ` 👁️ [สะเก็ดประกายแสง ติดสถานะตาบอด 2 เทิร์น!]`;
+    }
+
+    // Burn DoT ticking at end of round
+    if (d.burnTurns && d.burnTurns > 0 && d.hp > 0) {
+      const dBurn = Math.max(6, Math.round(d.maxHp * 0.10));
+      d.hp = Math.max(0, d.hp - dBurn);
+      d.burnTurns--;
+      result.burnDamage = (result.burnDamage || 0) + dBurn;
+      result.damageToDefender += dBurn;
+      result.narration += ` 🔥 [ไฟลุกไหม้ ${d.name} -${dBurn} HP!]`;
+    }
+    if (a.burnTurns && a.burnTurns > 0 && a.hp > 0) {
+      const aBurn = Math.max(6, Math.round(a.maxHp * 0.10));
+      a.hp = Math.max(0, a.hp - aBurn);
+      a.burnTurns--;
+      result.damageToAttacker += aBurn;
+      result.narration += ` 🔥 [ไฟลุกไหม้ ${a.name} -${aBurn} HP!]`;
     }
 
     return result;

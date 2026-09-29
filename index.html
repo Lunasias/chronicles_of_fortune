@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chronicles of Fortune - ตำนานแห่งโชคชะตา</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fortuna">
   <!-- Tailwind CSS is compiled at build time and imported from src/main.ts -->
   <!-- Google Pixel Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -655,13 +660,6 @@
     <div id="questTrackerList" class="p-2 flex flex-col gap-1.5 overflow-y-auto max-h-48 sm:max-h-60 text-[10px] leading-snug font-medium">
       <div class="text-slate-400 text-[9px] italic text-center py-2">กำลังตรวจสอบข้อมูลแผนที่...</div>
     </div>
-  </div>
-
-  <!-- FLOATING ZOOM & CAMERA CONTROLS (z-20) -->
-  <div id="zoomControls" class="absolute bottom-16 sm:bottom-20 right-2 sm:right-3.5 z-20 flex flex-col gap-1 pointer-events-auto">
-    <button id="btnZoomIn" class="pixel-btn w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm font-bold text-white bg-slate-900/90 border-slate-700 touch-manipulation" title="ซูมเข้า (+)">➕</button>
-    <button id="btnZoomOut" class="pixel-btn w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm font-bold text-white bg-slate-900/90 border-slate-700 touch-manipulation" title="ซูมออก (-)">➖</button>
-    <button id="btnZoomReset" class="pixel-btn w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[10px] sm:text-xs font-bold text-amber-300 bg-slate-900/90 border-slate-700 touch-manipulation" title="รีเซ็ตมุมมอง">1x</button>
   </div>
 
   <!-- BOTTOM ACTION BAR (z-20) -->
@@ -1443,6 +1441,11 @@
           <span class="text-base">🏴‍☠️</span>
           <span class="font-bold">ปล้นเมือง</span>
           <span class="text-[9px] text-rose-200">สู้กับทหารรักษาเมือง</span>
+        </button>
+        <button id="btnTownTakeover" class="hidden pixel-btn pixel-btn-purple p-2 sm:p-2.5 text-xs flex flex-col items-center text-center gap-1 col-span-2">
+          <span class="text-base">🏢</span>
+          <span class="font-bold">ฮุบกรรมสิทธิ์เมือง (Hostile Takeover)</span>
+          <span id="townTakeoverCostText" class="text-[9px] text-purple-200">จ่าย 2 เท่าเพื่อซื้อเมืองทันที</span>
         </button>
       </div>
 

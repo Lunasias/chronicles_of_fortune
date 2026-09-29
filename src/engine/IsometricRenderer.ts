@@ -64,6 +64,7 @@ export class IsometricRenderer {
     size: number;
     alpha: number;
   }> = [];
+  private depthRenderList: Array<{ depth: number; draw: () => void }> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -445,12 +446,8 @@ export class IsometricRenderer {
     maxY: number,
     time: number
   ) {
-    interface Renderable {
-      depth: number;
-      draw: () => void;
-    }
-
-    const renderList: Renderable[] = [];
+    const renderList = this.depthRenderList;
+    renderList.length = 0;
 
     // 1. Add Isometric Blocks & Props within viewport
     for (let i = 0; i < nodes.length; i++) {
