@@ -62,7 +62,13 @@ export class AISystem {
   }
 
   // Select best route when choosing at an intersection
-  chooseRoute(candidateNodeIds: number[], aiPlayer: Player, allNodes: BoardNode[], allPlayers: Player[]): number {
+  chooseRoute(
+    candidateNodeIds: number[],
+    aiPlayer: Player,
+    allNodes: BoardNode[],
+    allPlayers: Player[],
+    difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
+  ): number {
     if (candidateNodeIds.length === 1) return candidateNodeIds[0];
 
     const personality = aiPlayer.aiPersonality || 'balanced';
@@ -89,7 +95,8 @@ export class AISystem {
           const maxHp = node.townData.monsterMaxHp || node.townData.monsterHp;
           // Monster is low on HP: PRIME TARGET TO LAST-HIT
           if (node.townData.monsterHp <= maxHp * 0.5) {
-            score += personality === 'economist' ? 160 : 130;
+            const snipeBonus = difficulty === 'ruthless' ? 240 : difficulty === 'casual' ? 60 : 140;
+            score += (personality === 'economist' ? 160 : 130) + snipeBonus;
           } else {
             score += personality === 'economist' ? 95 : 60; // Town to liberate!
           }
@@ -116,23 +123,24 @@ export class AISystem {
       const rivalOnNode = allPlayers.find(p => p.id !== aiPlayer.id && p.nodeId === id);
       if (rivalOnNode) {
         const grudge = this.getGrudge(aiPlayer.id, rivalOnNode.id);
+        const ruthlessness = difficulty === 'ruthless' ? 100 : difficulty === 'casual' ? -30 : 0;
         if (aiPlayer.isDarkling) {
-          score += 180 + grudge;
+          score += 180 + grudge + ruthlessness;
         } else if (personality === 'hunter') {
-          score += 130 + grudge * 1.5; // PK Hunter loves seeking duels and revenge!
+          score += 130 + grudge * 1.5 + ruthlessness; // PK Hunter loves seeking duels and revenge!
         } else if (personality === 'tactician') {
-          score += aiPlayer.hp > rivalOnNode.hp + 25 ? (100 + grudge) : -20; // Smart risk assessment
+          score += aiPlayer.hp > rivalOnNode.hp + 25 ? (100 + grudge + ruthlessness) : -20; // Smart risk assessment
         } else if (personality === 'economist') {
-          score += aiPlayer.hp > rivalOnNode.hp + 40 ? (50 + grudge) : -30;
+          score += aiPlayer.hp > rivalOnNode.hp + 40 ? (50 + grudge + ruthlessness) : -30;
         } else if (aiPlayer.hp > rivalOnNode.hp + 20) {
-          score += 90 + grudge; // Ambush weakened rival!
+          score += 90 + grudge + ruthlessness; // Ambush weakened rival!
         } else {
           score += 45 + grudge * 0.8;
         }
       }
 
       // Add a bit of unpredictability
-      score += Math.random() * 8;
+      score += Math.random() * (difficulty === 'casual' ? 25 : 8);
 
       if (score > bestScore) {
         bestScore = score;
@@ -146,27 +154,34 @@ export class AISystem {
   // Combat Attacker Decision with Psychological Mind-Reading
   chooseAttackerAction(
     ai: Player,
-    opponent: { hp: number; maxHp: number; def: number; mag: number; playerRef?: Player }
+    opponent: { hp: number; maxHp: number; def: number; mag: number; playerRef?: Player },
+    difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
   ): AttackerAction {
     const roll = Math.random();
+    if (difficulty === 'casual' && roll < 0.50) {
+      const actions: AttackerAction[] = ['attack', 'attack', 'strike', 'magic'];
+      return actions[Math.floor(Math.random() * actions.length)];
+    }
+
     const personality = ai.aiPersonality || 'balanced';
     const opponentId = opponent.playerRef?.id;
 
     // Mind-reading: if opponent frequently Counters, avoid Strike!
-    if (opponentId !== undefined) {
+    if (opponentId !== undefined && difficulty !== 'casual') {
       const frequentDef = this.getMostFrequentMove(opponentId, 'defender');
+      const readRate = difficulty === 'ruthless' ? 0.90 : 0.70;
       if (frequentDef === 'counter') {
         // Punish counter with regular attack or magic!
-        if (ai.mp >= 14 && ai.mag > 10 && roll < 0.5) return 'magic';
+        if (ai.mp >= 14 && ai.mag > 10 && roll < 0.6) return 'magic';
         return 'attack';
       }
       if (frequentDef === 'defend') {
         // Punish defend with devastating Strike!
-        if (roll < 0.70) return 'strike';
+        if (roll < readRate) return 'strike';
       }
       if (frequentDef === 'magic_guard') {
         // Punish magic guard with strike or attack!
-        if (roll < 0.45) return 'strike';
+        if (roll < (difficulty === 'ruthless' ? 0.65 : 0.45)) return 'strike';
         return 'attack';
       }
     }
@@ -203,21 +218,31 @@ export class AISystem {
   }
 
   // Combat Defender Decision with Psychological Reading
-  chooseDefenderAction(ai: Player, attacker: { atk: number; mag: number; classKey?: string; playerRef?: Player }): DefenderAction {
+  chooseDefenderAction(
+    ai: Player,
+    attacker: { atk: number; mag: number; classKey?: string; playerRef?: Player },
+    difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
+  ): DefenderAction {
     const roll = Math.random();
+    if (difficulty === 'casual' && roll < 0.50) {
+      const actions: DefenderAction[] = ['defend', 'defend', 'counter', 'magic_guard'];
+      return actions[Math.floor(Math.random() * actions.length)];
+    }
+
     const personality = ai.aiPersonality || 'balanced';
     const attackerId = attacker.playerRef?.id;
 
     // Mind-reading: if attacker has a clear habit, exploit it!
-    if (attackerId !== undefined) {
+    if (attackerId !== undefined && difficulty !== 'casual') {
       const frequentAtk = this.getMostFrequentMove(attackerId, 'attacker');
-      if (frequentAtk === 'strike' && roll < 0.75) {
+      const readRate = difficulty === 'ruthless' ? 0.90 : 0.75;
+      if (frequentAtk === 'strike' && roll < readRate) {
         return 'counter';
       }
-      if (frequentAtk === 'magic' && roll < 0.75) {
+      if (frequentAtk === 'magic' && roll < readRate) {
         return 'magic_guard';
       }
-      if (frequentAtk === 'attack' && roll < 0.70) {
+      if (frequentAtk === 'attack' && roll < (difficulty === 'ruthless' ? 0.85 : 0.70)) {
         return 'defend';
       }
     }

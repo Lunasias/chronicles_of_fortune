@@ -93,6 +93,8 @@ export interface SaveGameData {
   logs: Array<{ text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }>;
   bossCurrentHp?: number;
   bossMaxHp?: number;
+  aiDifficulty?: 'casual' | 'tactical' | 'ruthless';
+  placedTraps?: Array<{ nodeId: number; ownerId: number; damage: number }>;
 }
 
 const STORAGE_KEY = 'chronicles_of_fortune_savegame';
@@ -115,15 +117,92 @@ const DEFAULT_EQUIPMENT = { weapon: null, shield: null, armor: null, accessory: 
 
 export class SaveManager {
   private static getStorageKeys(slot: number = 1): { saveKey: string; metaKey: string } {
+    if (slot === 0) {
+      return { saveKey: `${STORAGE_KEY}_auto`, metaKey: `${META_KEY}_auto` };
+    }
     if (slot <= 1) {
       return { saveKey: STORAGE_KEY, metaKey: META_KEY };
     }
     return { saveKey: `${STORAGE_KEY}_slot_${slot}`, metaKey: `${META_KEY}_slot_${slot}` };
   }
 
-
   public static getSlotMetas(): Array<{ slot: number; meta: SaveMetadata | null }> {
-    return [1, 2, 3].map(slot => ({ slot, meta: this.getSaveMetadata(slot) }));
+    return [0, 1, 2, 3].map(slot => ({ slot, meta: this.getSaveMetadata(slot) }));
+  }
+
+  public static autoSave(game: GameState, bossState?: { currentHp: number; maxHp: number }): boolean {
+    return this.save(game, bossState, 0);
+  }
+
+  public static exportSaveData(slot: number = 1): string | null {
+    try {
+      const { saveKey } = this.getStorageKeys(slot);
+      const raw = localStorage.getItem(saveKey);
+      if (!raw) return null;
+      const bytes = new TextEncoder().encode(raw);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    } catch (err) {
+      console.error('Failed to export save data:', err);
+      return null;
+    }
+  }
+
+  public static importSaveData(game: GameState, encodedStr: string, slot: number = 1): { success: boolean; error?: string } {
+    try {
+      if (!encodedStr || typeof encodedStr !== 'string') {
+        return { success: false, error: 'รหัสข้อมูลบันทึกไม่ถูกต้อง' };
+      }
+      let jsonStr = '';
+      const trimmed = encodedStr.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        jsonStr = trimmed;
+      } else {
+        const binary = atob(trimmed);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        jsonStr = new TextDecoder().decode(bytes);
+      }
+
+      const data = JSON.parse(jsonStr) as SaveGameData;
+      if (!data || typeof data !== 'object') {
+        return { success: false, error: 'โครงสร้างข้อมูลบันทึกไม่ถูกต้อง' };
+      }
+      if (!Array.isArray(data.players) || data.players.length === 0) {
+        return { success: false, error: 'ไม่พบข้อมูลผู้เล่นในไฟล์บันทึก' };
+      }
+
+      const { saveKey, metaKey } = this.getStorageKeys(slot);
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('th-TH', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+      });
+      const hero = data.players[data.activePlayerIdx || 0] || data.players[0];
+      const meta: SaveMetadata = {
+        savedAt: data.savedAt || Date.now(),
+        dateStr: data.dateStr || dateStr,
+        day: data.dayCounter || 1,
+        week: data.weekCounter || 1,
+        activeHeroName: hero ? hero.name : 'Unknown Hero',
+        activeHeroClass: hero ? (hero.className || 'Hero') : 'Hero',
+        activeHeroLevel: hero ? (hero.level || 1) : 1,
+        activeHeroGold: hero ? (hero.gold || 300) : 300,
+        totalPlayers: data.players.length
+      };
+
+      localStorage.setItem(saveKey, jsonStr);
+      localStorage.setItem(metaKey, JSON.stringify(meta));
+
+      return this.load(game, slot);
+    } catch (err) {
+      console.error('Failed to import save data:', err);
+      return { success: false, error: 'ถอดรหัสข้อมูลบันทึกไม่สำเร็จ โปรดตรวจสอบรหัสที่คัดลอกมา' };
+    }
   }
 
   public static clearSave(slot: number = 1) {
@@ -214,7 +293,9 @@ export class SaveManager {
         players: serializedPlayers, townStates, homeStates,
         logs: JSON.parse(JSON.stringify(game.logs.slice(0, 30))),
         bossCurrentHp: bossState?.currentHp,
-        bossMaxHp: bossState?.maxHp
+        bossMaxHp: bossState?.maxHp,
+        aiDifficulty: game.aiDifficulty || 'tactical',
+        placedTraps: JSON.parse(JSON.stringify(game.placedTraps || []))
       };
 
       const hero = game.activePlayer;
@@ -362,6 +443,12 @@ export class SaveManager {
       game.dayCounter = Math.max(1, numOr(data.dayCounter, 1));
       game.weekCounter = Math.max(1, numOr(data.weekCounter, 1));
       game.winGoal = data.winGoal || 'networth';
+      if (data.aiDifficulty) {
+        game.aiDifficulty = data.aiDifficulty;
+      }
+      if (Array.isArray(data.placedTraps)) {
+        game.placedTraps = data.placedTraps;
+      }
       game.activePlayerIdx = Math.min(Math.max(0, numOr(data.activePlayerIdx, 0)), game.players.length - 1);
       game.phase = 'BOARD_TURN';
       game.remainingMoves = 0;

@@ -45,6 +45,10 @@ export class GameState {
   public gameMode: 'standard' | 'blitz' = 'standard';
   public blitzDayLimit: number = 20;
   public allowDarkling: boolean = true;
+  public aiDifficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical';
+
+  // Field Traps placed by players
+  public placedTraps: Array<{ nodeId: number; ownerId: number; damage: number }> = [];
 
   // Active sub-states
   public activeBattle: BattleEngine | null = null;

@@ -703,12 +703,13 @@ class DokaponApp {
       const slot = this.getSelectedSaveSlot();
       const meta = SaveManager.getSaveMetadata(slot);
       const statusEl = document.getElementById('settingsSaveStatusText');
+      const slotLabel = slot === 0 ? 'Auto-Save' : `ช่อง ${slot}`;
       if (statusEl) {
         if (meta) {
-          statusEl.innerText = `ช่อง ${slot}: ${meta.activeHeroName} (Lv.${meta.activeHeroLevel}) • ${meta.dateStr}`;
+          statusEl.innerText = `${slotLabel}: ${meta.activeHeroName} (Lv.${meta.activeHeroLevel}) • ${meta.dateStr}`;
           statusEl.style.color = '#38bdf8';
         } else {
-          statusEl.innerText = `ช่อง ${slot}: ยังไม่มีข้อมูลบันทึก`;
+          statusEl.innerText = `${slotLabel}: ยังไม่มีข้อมูลบันทึก`;
           statusEl.style.color = '#94a3b8';
         }
       }
@@ -749,6 +750,52 @@ class DokaponApp {
     });
     document.getElementById('btnSettingsResetSave')?.addEventListener('click', () => {
       this.resetSavedGame();
+    });
+
+    // Save Data Export & Import Handlers
+    document.getElementById('btnSettingsExport')?.addEventListener('click', () => {
+      audio.click();
+      const slot = this.getSelectedSaveSlot();
+      const code = SaveManager.exportSaveData(slot);
+      if (code) {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(code).then(() => {
+            alert(`คัดลอกรหัสเซฟ [ช่อง ${slot === 0 ? 'Auto' : slot}] สำเร็จ! สามารถนำไปสำรองหรือนำเข้าบนอุปกรณ์อื่นได้`);
+          }).catch(() => {
+            prompt('รหัสบันทึกความคืบหน้า (Save Code):', code);
+          });
+        } else {
+          prompt('รหัสบันทึกความคืบหน้า (Save Code):', code);
+        }
+      } else {
+        audio.hurt();
+        alert(`ยังไม่มีข้อมูลบันทึกในช่อง ${slot === 0 ? 'Auto-Save' : slot}`);
+      }
+    });
+
+    document.getElementById('btnSettingsImport')?.addEventListener('click', () => {
+      audio.click();
+      const slot = this.getSelectedSaveSlot();
+      const code = prompt(`วางรหัสบันทึก (Save Code) เพื่อนำเข้าสู่ช่อง ${slot === 0 ? 'Auto-Save' : slot}:`);
+      if (code && code.trim()) {
+        const res = SaveManager.importSaveData(this.game, code.trim(), slot);
+        if (res.success) {
+          audio.fanfare();
+          alert(`นำเข้าข้อมูลเซฟลงในช่อง ${slot === 0 ? 'Auto-Save' : slot} และโหลดความคืบหน้าสำเร็จ!`);
+          document.getElementById('titleScreen')?.classList.add('hidden');
+          document.getElementById('settingsModal')?.classList.add('hidden');
+          document.getElementById('topHUD')?.classList.remove('hidden');
+          document.getElementById('bottomBar')?.classList.remove('hidden');
+          document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+
+          this.onTurnStarted();
+          this.hud.update();
+          this.updateTitleSaveStatus();
+        } else {
+          audio.hurt();
+          alert(`นำเข้าไม่สำเร็จ: ${res.error || 'รหัสไม่ถูกต้อง'}`);
+        }
+      }
     });
 
     // Audio & scanline settings
@@ -917,6 +964,11 @@ class DokaponApp {
       this.game.allowDarkling = allowDarklingCheck.checked;
     }
 
+    const aiDifficultySelect = document.getElementById('selectAIDifficulty') as HTMLSelectElement | null;
+    if (aiDifficultySelect) {
+      this.game.aiDifficulty = aiDifficultySelect.value as 'casual' | 'tactical' | 'ruthless';
+    }
+
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
@@ -963,7 +1015,8 @@ class DokaponApp {
               this.game.highlightedNodes,
               this.game.activePlayer,
               this.game.allNodes,
-              this.game.players
+              this.game.players,
+              this.game.aiDifficulty
             );
             const path = this.game.findPathToTarget(chosenTarget);
             if (path) {
@@ -1041,7 +1094,11 @@ class DokaponApp {
         break;
 
       case 'red':
-        this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        if (Math.random() < 0.75) {
+          this.initiateRandomEncounter(tile);
+        } else {
+          this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
+        }
         break;
 
       case 'church':
@@ -1777,6 +1834,14 @@ class DokaponApp {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
         this.openRoyalDecreeModal(() => {
+          // Auto-Save at the start of each new week!
+          SaveManager.autoSave(this.game, {
+            currentHp: this.bossCurrentHp,
+            maxHp: this.bossMaxHp
+          });
+          this.game.addLog(`💾 บันทึกอัตโนมัติ (Auto-Save สัปดาห์ที่ ${this.game.weekCounter}) เรียบร้อย!`, 'info');
+          this.updateTitleSaveStatus();
+
           this.game.startTurn();
           this.onTurnStarted();
           if (this.game.activePlayer.isAI) {

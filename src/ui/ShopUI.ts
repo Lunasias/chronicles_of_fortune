@@ -23,6 +23,11 @@ export const SHOP_CATALOG: EquipmentItem[] = [
   { id: 'item_dispel', name: 'เครื่องรางแก้คำสาป (Dispel Charm)', type: 'potion', cost: 180, desc: 'ลบล้างคำสาปสนิมและสถานะผิดปกติทั้งหมด', icon: '🫙' },
   { id: 'item_recall', name: 'คัมภีร์วาร์ปปราสาท (Castle Recall)', type: 'potion', cost: 220, desc: 'เปิดมิติวาร์ปกลับสู่ปราสาทหลวงทันที', icon: '🚪' },
   { id: 'item_key', name: 'กุญแจเวทมนตร์ (Magic Key)', type: 'potion', cost: 200, desc: 'ปลดล็อกหีบสมบัติและห้องนิรภัยโบราณ', icon: '🗝️' },
+  { id: 'item_trap', name: 'กับดักหลุมพราง (Pitfall Trap)', type: 'potion', cost: 240, desc: 'วางกับดักขุดหลุมบนช่องปัจจุบัน ใครเดินเหยียบจะเสีย 30 HP และแต้มเดินครึ่งหนึ่ง!', icon: '🕳️' },
+  { id: 'item_warp_mirror', name: 'กระจกสลับตำแหน่ง (Warp Mirror)', type: 'potion', cost: 380, desc: 'สลับตำแหน่งบนกระดานกับคู่แข่งที่มีมูลค่าสุทธิสูงสุดทันที!', icon: '🪞' },
+  { id: 'item_lure_whistle', name: 'นกหวีดล่อมอนสเตอร์ (Monster Whistle)', type: 'potion', cost: 320, desc: 'เป่านกหวีดเรียกล่าอสูรเข้าจู่โจมคู่แข่งใกล้เคียง สร้าง 35 ดาเมจและตาบอด 3 เทิร์น!', icon: '📯' },
+  { id: 'item_town_seal', name: 'ตราประทับหลวงยึดภาษี (Royal Town Seal)', type: 'potion', cost: 450, desc: 'ใช้อำนาจหลวงขูดรีดภาษี 300G จากเมืองของผู้นำอันดับ 1 เข้ากระเป๋าตนเอง!', icon: '📜' },
+  { id: 'item_smoke_bomb', name: 'ระเบิดควันนินจา (Ninja Smoke Bomb)', type: 'potion', cost: 160, desc: 'ปาระเบิดควันพรางตัว รับสถานะล่องหนแคล้วคลาดจากการปะทะ!', icon: '💨' },
 
   // Weapons (Tiers 1–5: Progressive Scaled Costs)
   { id: 'wpn_broadsword', name: 'T1 ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 320, atk: 8, desc: 'คมดาบกล้าแกร่งเบื้องต้น (+8 ATK)', icon: '⚔️' },

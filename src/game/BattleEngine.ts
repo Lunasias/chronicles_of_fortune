@@ -3,6 +3,7 @@ import { audio } from '../engine/AudioSynthesizer';
 
 export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill' | 'burst';
 export type DefenderAction = 'defend' | 'counter' | 'magic_guard' | 'give_up';
+export type CombatGridPosition = 'front' | 'mid' | 'back';
 
 export interface Combatant {
   name: string;
@@ -15,6 +16,7 @@ export interface Combatant {
   mag: number;
   spd: number;
   luk: number;
+  gridPos?: CombatGridPosition;
   isBoss?: boolean;
   isPvP?: boolean;
   playerRef?: Player;
@@ -204,6 +206,27 @@ export class BattleEngine {
       this.defender = combatant1;
       this.isPlayerAttacking = false;
     }
+    if (!this.attacker.gridPos) {
+      this.attacker.gridPos = this.getDefaultGridPos(this.attacker);
+    }
+    if (!this.defender.gridPos) {
+      this.defender.gridPos = this.getDefaultGridPos(this.defender);
+    }
+  }
+
+  public getDefaultGridPos(c: Combatant): CombatGridPosition {
+    const cls = (c.classKey || c.playerRef?.classKey || '').toLowerCase();
+    if (cls === 'warrior' || cls === 'paladin' || cls === 'dark_knight' || cls === 'berserker' || c.isBoss) return 'front';
+    if (cls === 'magician' || cls === 'spellblade' || cls === 'ninja' || cls === 'cleric') return 'back';
+    return 'mid';
+  }
+
+  public setCombatantGridPosition(isAttacker: boolean, pos: CombatGridPosition) {
+    if (isAttacker) {
+      this.attacker.gridPos = pos;
+    } else {
+      this.defender.gridPos = pos;
+    }
   }
 
   // Swap turns between attacker and defender for next round
@@ -231,9 +254,10 @@ export class BattleEngine {
     let isDodged = false;
     let narration = '';
 
-
     const a = this.attacker;
     const d = this.defender;
+    const aPos = a.gridPos || 'mid';
+    const dPos = d.gridPos || 'mid';
 
     // Blindness Accuracy Check
     if (a.playerRef && a.playerRef.blindTurns > 0 && atkAction !== 'skill' && Math.random() < 0.40) {
@@ -320,12 +344,19 @@ export class BattleEngine {
       const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
       damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(Math.random() * 8)));
 
+      if (dPos === 'front') {
+        damageToAttacker = Math.round(damageToAttacker * 1.15);
+      }
+
       // LUK Critical Hit for Counter
       if (Math.random() < Math.min(0.40, (d.luk || 5) * 0.015)) {
         damageToAttacker = Math.round(damageToAttacker * 1.5);
         narration = `💥 สวนกลับคริติคอลขั้นสุดยอด! ${d.name} ปัดป้องดาบของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย! (ติด Critical!)`;
       } else {
         narration = `💥 สวนกลับสมบูรณ์แบบ! ${d.name} ปัดป้องท่าชาร์จฟันของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย!`;
+      }
+      if (dPos === 'front') {
+        narration += ' ⚔️[แถวหน้า สวนกลับแรงขึ้น 15%]';
       }
 
       a.hp = Math.round(Math.max(0, a.hp - damageToAttacker));
@@ -354,7 +385,12 @@ export class BattleEngine {
       isStrikeSuccess = true;
       audio.strikeHit();
       // Strike ignores defense!
-      const rawStrike = Math.round(a.atk * 2.6 + Math.floor(Math.random() * 12));
+      let rawStrike = Math.round(a.atk * 2.6 + Math.floor(Math.random() * 12));
+      if (aPos === 'front') rawStrike = Math.round(rawStrike * 1.15);
+      if (dPos === 'front') rawStrike = Math.round(rawStrike * 1.10);
+      else if (dPos === 'mid') rawStrike = Math.round(rawStrike * 0.90);
+      else if (dPos === 'back') rawStrike = Math.round(rawStrike * 0.85);
+
       damageToDefender = Math.round(Math.max(20, rawStrike));
 
       // LUK Critical Strike
@@ -424,6 +460,9 @@ export class BattleEngine {
         elementalBonus = Math.floor(a.mag * 0.35);
         rawSpell += elementalBonus;
       }
+
+      if (aPos === 'back') rawSpell = Math.round(rawSpell * 1.20);
+      if (dPos === 'back') rawSpell = Math.round(rawSpell * 1.20);
 
       let spellDmg = Math.round(Math.max(12, rawSpell));
 
@@ -627,6 +666,10 @@ export class BattleEngine {
     audio.attackHit();
     const rawAtk = Math.round(a.atk * 2.1 - (d.def || 5) * 0.75);
     let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2)));
+    if (aPos === 'front') finalDmg = Math.round(finalDmg * 1.15);
+    if (dPos === 'front') finalDmg = Math.round(finalDmg * 1.10);
+    else if (dPos === 'mid') finalDmg = Math.round(finalDmg * 0.90);
+    else if (dPos === 'back') finalDmg = Math.round(finalDmg * 0.85);
 
     // LUK Critical Hit for Attack
     let isCrit = false;

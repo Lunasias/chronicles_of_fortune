@@ -864,8 +864,22 @@
     </div>
 
     <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
-    <div class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col md:flex-row gap-2 sm:gap-3 border-t-2 border-slate-800 overflow-y-auto">
+    <div class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col gap-2 border-t-2 border-slate-800 overflow-y-auto">
       
+      <!-- Brown Dust 2 3x3 Tactical Formation Row -->
+      <div id="battleFormationRow" class="w-full flex flex-wrap items-center justify-between pb-1 mb-1 border-b border-slate-800 text-[11px] gap-1">
+        <div class="flex items-center gap-1.5 text-amber-300 font-bold">
+          <span>📐 ตำแหน่งแถว:</span>
+          <span id="battleFormationDesc" class="text-slate-300 font-normal text-[10px]">เลือกแถวยืนรับโบนัส</span>
+        </div>
+        <div class="flex items-center gap-1" id="battleFormationButtons">
+          <button id="btnFormFront" class="pixel-btn px-2 py-0.5 text-[10px] font-bold text-amber-300 hover:text-white" title="แถวหน้า: +15% โจมตี/ชาร์จฟัน, +15% สวนกลับ">⚔️ หน้า</button>
+          <button id="btnFormMid" class="pixel-btn px-2 py-0.5 text-[10px] font-bold text-emerald-300 hover:text-white border-emerald-400 bg-emerald-950/60" title="แถวกลาง: สมดุล, +10% ต้านทานกายภาพ">🛡️ กลาง</button>
+          <button id="btnFormBack" class="pixel-btn px-2 py-0.5 text-[10px] font-bold text-purple-300 hover:text-white" title="แถวหลัง: +20% เวท/ท่าไม้ตาย, ลดทอนดาเมจฟัน">🔮 หลัง</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-2 sm:gap-3 flex-1">
       <!-- Attacker 4-Choice Cards + Companion Summon + EX Burst -->
       <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 sm:gap-2 flex-1">
         <!-- Attack -->
@@ -952,6 +966,7 @@
           <span>↩️ Counter &gt; Strike</span>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- PASS & PLAY PRIVACY SHIELD FOR 2-PLAYER LOCAL DUELS -->
@@ -1641,6 +1656,7 @@
                   <option value="1">ช่อง 1</option>
                   <option value="2">ช่อง 2</option>
                   <option value="3">ช่อง 3</option>
+                  <option value="0">Auto-Save (อัตโนมัติ)</option>
                 </select>
               </div>
             </div>
@@ -1652,6 +1668,16 @@
               <button id="btnSettingsLoad" class="pixel-btn py-1.5 text-[11px] text-slate-200 hover:text-white flex items-center justify-center gap-1">
                 <span>📂</span>
                 <span>โหลดบันทึก</span>
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-1.5">
+              <button id="btnSettingsExport" class="pixel-btn py-1 text-[10px] text-cyan-300 hover:text-white flex items-center justify-center gap-1" title="ส่งออกรหัสบันทึก">
+                <span>📋</span>
+                <span>คัดลอกรหัสเซฟ</span>
+              </button>
+              <button id="btnSettingsImport" class="pixel-btn py-1 text-[10px] text-emerald-300 hover:text-white flex items-center justify-center gap-1" title="นำเข้ารหัสบันทึก">
+                <span>📥</span>
+                <span>นำเข้ารหัสเซฟ</span>
               </button>
             </div>
             <div id="settingsSaveStatusText" class="text-[9px] text-slate-400 mt-1 italic text-center"></div>
@@ -1743,6 +1769,16 @@
           <option value="towns">ปลดปล่อย 4 เมือง</option>
           <option value="boss">ปราบจอมมังกร</option>
           <option value="gold">สะสมทอง 3,000 ก่อน</option>
+        </select>
+      </div>
+
+      <!-- AI DIFFICULTY LEVEL (Track 7: AI Difficulty Tiers) -->
+      <div class="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
+        <span class="font-bold">ระดับสติปัญญา AI:</span>
+        <select id="selectAIDifficulty" class="bg-slate-950 border border-slate-700 text-amber-300 px-2 py-1 text-xs outline-none">
+          <option value="casual">🌱 ผ่อนคลาย (Casual - ผิดพลาดบ่อย สู้สบาย)</option>
+          <option value="tactical" selected>⚔️ ช่ำชอง (Tactical - สมดุล อ่านใจตามปกติ)</option>
+          <option value="ruthless">💀 เหี้ยมโหด (Ruthless - ชิงไหวชิงพริบดักทาง 90%)</option>
         </select>
       </div>
 

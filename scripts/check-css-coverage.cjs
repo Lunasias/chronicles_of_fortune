@@ -80,7 +80,11 @@ const isUsableSelector = t =>
 const inlineStyle = fs.readFileSync('index.html', 'utf8').split('</style>')[0];
 const isCustomClass = t => inlineStyle.includes(`.${t}`) || selectorClasses.has(t);
 
-const candidates = [...styleClasses].filter(isUsableSelector);
+// Tokens that appear as quoted JS values inside classList.toggle() condition arguments
+// but are not CSS class names.
+const falsePositives = new Set(['front', 'mid', 'back']);
+
+const candidates = [...styleClasses].filter(t => isUsableSelector(t) && !falsePositives.has(t));
 
 const missing = [];
 const skipped = [];

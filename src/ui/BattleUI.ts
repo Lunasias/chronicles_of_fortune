@@ -1,5 +1,5 @@
 import { GameState } from '../game/GameState';
-import { BattleEngine, AttackerAction, DefenderAction, Combatant } from '../game/BattleEngine';
+import { BattleEngine, AttackerAction, DefenderAction, Combatant, CombatGridPosition } from '../game/BattleEngine';
 import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelSpriteGenerator';
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
@@ -159,6 +159,11 @@ export class BattleUI {
     targetBannerAlpha: 0
   };
 
+  public getSpeedDelay(ms: number): number {
+    const s = this.game.gameSpeed || 1;
+    return Math.max(25, Math.round(ms / s));
+  }
+
   startCutscenePhase(
     phase: 'dash' | 'impact' | 'leap_back',
     durationMs: number,
@@ -170,7 +175,7 @@ export class BattleUI {
     this.cutscene.active = true;
     this.cutscene.phase = phase;
     this.cutscene.phaseStartTime = performance.now();
-    this.cutscene.phaseDuration = durationMs;
+    this.cutscene.phaseDuration = this.getSpeedDelay(durationMs);
     this.cutscene.startX = this.cutscene.attackerOffsetX;
     this.cutscene.startY = this.cutscene.attackerOffsetY;
     this.cutscene.targetX = targetOffsetX;
@@ -214,6 +219,49 @@ export class BattleUI {
         this.toggleScoutDrawer();
       }
     });
+
+    // Brown Dust 2 Tactical Formation Row Selection
+    const setPlayerFormation = (pos: CombatGridPosition) => {
+      const b = this.game.activeBattle;
+      if (!b || this.isExecutingRound) return;
+      const human = b.attacker.playerRef && !b.attacker.playerRef.isAI
+        ? b.attacker
+        : (b.defender.playerRef && !b.defender.playerRef.isAI ? b.defender : (b.isPlayerAttacking ? b.attacker : b.defender));
+      if (!human) return;
+      human.gridPos = pos;
+      audio.click();
+      this.updateFormationButtons(pos);
+      const descEl = document.getElementById('battleFormationDesc');
+      if (descEl) {
+        if (pos === 'front') descEl.innerText = 'แถวหน้า: +15% โจมตี/ชาร์จฟัน, +15% สวนกลับ';
+        else if (pos === 'mid') descEl.innerText = 'แถวกลาง: สมดุล, +10% ต้านทานกายภาพ';
+        else descEl.innerText = 'แถวหลัง: +20% เวท/ท่าไม้ตาย, ลดทอนดาเมจฟัน';
+      }
+    };
+
+    document.getElementById('btnFormFront')?.addEventListener('click', () => setPlayerFormation('front'));
+    document.getElementById('btnFormMid')?.addEventListener('click', () => setPlayerFormation('mid'));
+    document.getElementById('btnFormBack')?.addEventListener('click', () => setPlayerFormation('back'));
+  }
+
+  private updateFormationButtons(currentPos?: CombatGridPosition) {
+    const b = this.game.activeBattle;
+    if (!b) return;
+    const human = b.attacker.playerRef && !b.attacker.playerRef.isAI
+      ? b.attacker
+      : (b.defender.playerRef && !b.defender.playerRef.isAI ? b.defender : (b.isPlayerAttacking ? b.attacker : b.defender));
+    const pos = currentPos || human?.gridPos || 'mid';
+
+    const btnF = document.getElementById('btnFormFront');
+    const btnM = document.getElementById('btnFormMid');
+    const btnB = document.getElementById('btnFormBack');
+
+    btnF?.classList.toggle('border-amber-400', pos === 'front');
+    btnF?.classList.toggle('bg-amber-950/60', pos === 'front');
+    btnM?.classList.toggle('border-emerald-400', pos === 'mid');
+    btnM?.classList.toggle('bg-emerald-950/60', pos === 'mid');
+    btnB?.classList.toggle('border-purple-400', pos === 'back');
+    btnB?.classList.toggle('bg-purple-950/60', pos === 'back');
   }
 
   toggleScoutDrawer() {
@@ -555,9 +603,9 @@ export class BattleUI {
       if (enemy.hp <= 0) {
         setTimeout(() => {
           this.concludeBattle(b.attacker.hp > 0 ? b.attacker : b.defender, enemy);
-        }, 1200);
+        }, this.getSpeedDelay(1000));
       }
-    }, 450);
+    }, this.getSpeedDelay(450));
   }
 
   public triggerEmergencyCompanionAssist(playerC: Combatant, enemyC: Combatant, onComplete: () => void) {
@@ -610,7 +658,7 @@ export class BattleUI {
       } else {
         onComplete();
       }
-    }, 1400);
+    }, this.getSpeedDelay(1100));
   }
 
   private checkAITurn() {
@@ -623,7 +671,7 @@ export class BattleUI {
       // AI or Monster is Attacking!
       setTimeout(() => {
         const action = b.attacker.playerRef
-          ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender)
+          ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
           : (Math.random() < 0.45 ? 'attack' : Math.random() < 0.75 ? 'strike' : 'magic');
         this.pendingAttackerAction = action;
 
@@ -631,7 +679,7 @@ export class BattleUI {
         if (!isDefenderHuman) {
           // Both are AI
           const defAct = b.defender.playerRef
-            ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker)
+            ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty)
             : 'defend';
           this.executeRoundWithAnimation(action, defAct);
         } else {
@@ -642,7 +690,7 @@ export class BattleUI {
           defGroup.classList.remove('hidden');
           document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกัน!`;
         }
-      }, 700);
+      }, this.getSpeedDelay(600));
     }
   }
 
@@ -693,7 +741,7 @@ export class BattleUI {
     // AI or Monster Defender: choose immediately
     let defAction: DefenderAction = 'defend';
     if (b.defender.playerRef && b.defender.playerRef.isAI) {
-      defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker);
+      defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty);
     } else {
       const roll = Math.random();
       if (roll < 0.45) defAction = 'defend';
@@ -714,7 +762,7 @@ export class BattleUI {
     this.pendingAttackerAction = null;
 
     if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
-      atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender);
+      atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty);
     } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
       const roll = Math.random();
       if (roll < 0.45) atkAction = 'attack';
@@ -1044,11 +1092,11 @@ export class BattleUI {
 
           // Check for Battle Conclusion
           if (b.defender.hp <= 0 || result.isGiveUp) {
-            setTimeout(() => this.concludeBattle(b.attacker, b.defender), 600);
+            setTimeout(() => this.concludeBattle(b.attacker, b.defender), this.getSpeedDelay(550));
             return;
           }
           if (b.attacker.hp <= 0) {
-            setTimeout(() => this.concludeBattle(b.defender, b.attacker), 600);
+            setTimeout(() => this.concludeBattle(b.defender, b.attacker), this.getSpeedDelay(550));
             return;
           }
 
@@ -1080,9 +1128,9 @@ export class BattleUI {
           this.updateUI();
           this.updateCommandMenu();
           this.checkAITurn();
-        }, 460);
-      }, 480);
-    }, 340);
+        }, this.getSpeedDelay(460));
+      }, this.getSpeedDelay(480));
+    }, this.getSpeedDelay(340));
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
@@ -1269,28 +1317,42 @@ export class BattleUI {
     // 3. PREPARE DYNAMIC COMBATANT COORDINATES & SPRITES
     // -----------------------------------------------------------------------
     const isPlayerAtk = b.isPlayerAttacking;
+    const playerCombatant = isPlayerAtk ? b.attacker : b.defender;
+    const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
+    const pPos = playerCombatant.gridPos || 'mid';
+    const ePos = enemyCombatant.gridPos || 'mid';
+
+    // Brown Dust 2 3x3 tactical grid slots
+    this.drawTacticalGridSlots(ctx, pxCenter, pyCenter, pPos, true);
+    this.drawTacticalGridSlots(ctx, exCenter, eyCenter, ePos, false);
+
+    // Dynamic Row Offsets on 3x3 Isometric Dais
+    const pRowDX = pPos === 'front' ? 28 : (pPos === 'back' ? -28 : 0);
+    const pRowDY = pPos === 'front' ? -14 : (pPos === 'back' ? 14 : 0);
+
+    const eRowDX = ePos === 'front' ? -28 : (ePos === 'back' ? 28 : 0);
+    const eRowDY = ePos === 'front' ? 14 : (ePos === 'back' ? -14 : 0);
 
     const px =
-      pxCenter +
+      pxCenter + pRowDX +
       (isPlayerAtk ? this.cutscene.attackerOffsetX : this.cutscene.defenderOffsetX) +
       combatVFX.heroStaggerX;
     const py =
-      pyCenter +
+      pyCenter + pRowDY +
       (isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
       Math.sin(time * 0.005) * 3;
 
     const ex =
-      exCenter +
+      exCenter + eRowDX +
       (!isPlayerAtk ? this.cutscene.attackerOffsetX : this.cutscene.defenderOffsetX) +
       combatVFX.monsterStaggerX;
     const ey =
-      eyCenter +
+      eyCenter + eRowDY +
       (!isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
       combatVFX.monsterStaggerY +
       Math.sin(time * 0.005 + 1) * 3;
 
     const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
-    const enemyCombatant = isPlayerAtk ? b.defender : b.attacker;
     const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
     // Dynamic 8-Directional Combat Stance & Orientation: Always face directly towards each other!
@@ -2735,6 +2797,73 @@ export class BattleUI {
     ctx.restore();
 
     ctx.restore();
+  }
+
+  // =========================================================================
+  // HELPER: BROWN DUST 2 3X3 TACTICAL ISOMETRIC GRID SLOTS & BRACKETS [ ]
+  // =========================================================================
+  private drawTacticalGridSlots(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    activePos: CombatGridPosition = 'mid',
+    isPlayer: boolean = true
+  ) {
+    const slots: Array<{ pos: CombatGridPosition; dx: number; dy: number }> = isPlayer
+      ? [
+          { pos: 'back', dx: -28, dy: 14 },
+          { pos: 'mid', dx: 0, dy: 0 },
+          { pos: 'front', dx: 28, dy: -14 }
+        ]
+      : [
+          { pos: 'front', dx: -28, dy: 14 },
+          { pos: 'mid', dx: 0, dy: 0 },
+          { pos: 'back', dx: 28, dy: -14 }
+        ];
+
+    slots.forEach(slot => {
+      const sx = cx + slot.dx;
+      const sy = cy + slot.dy;
+      const isActive = slot.pos === activePos;
+      const hw = 22;
+      const hh = 11;
+
+      ctx.save();
+      ctx.strokeStyle = isActive ? (isPlayer ? '#38bdf8' : '#fb7185') : 'rgba(255, 255, 255, 0.28)';
+      ctx.lineWidth = isActive ? 1.8 : 1.0;
+      if (isActive) {
+        ctx.fillStyle = isPlayer ? 'rgba(56, 189, 248, 0.20)' : 'rgba(251, 113, 133, 0.20)';
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - hh);
+        ctx.lineTo(sx + hw, sy);
+        ctx.lineTo(sx, sy + hh);
+        ctx.lineTo(sx - hw, sy);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Brown Dust 2 signature bracket corners [ ]
+      const bl = 5;
+      ctx.beginPath();
+      ctx.moveTo(sx - bl, sy - hh + bl * 0.5);
+      ctx.lineTo(sx, sy - hh);
+      ctx.lineTo(sx + bl, sy - hh + bl * 0.5);
+
+      ctx.moveTo(sx + hw - bl, sy - bl * 0.5);
+      ctx.lineTo(sx + hw, sy);
+      ctx.lineTo(sx + hw - bl, sy + bl * 0.5);
+
+      ctx.moveTo(sx - bl, sy + hh - bl * 0.5);
+      ctx.lineTo(sx, sy + hh);
+      ctx.lineTo(sx + bl, sy + hh - bl * 0.5);
+
+      ctx.moveTo(sx - hw + bl, sy - bl * 0.5);
+      ctx.lineTo(sx - hw, sy);
+      ctx.lineTo(sx - hw + bl, sy + bl * 0.5);
+      ctx.stroke();
+
+      ctx.restore();
+    });
   }
 
   // =========================================================================
