@@ -4,6 +4,7 @@ import { audio } from '../engine/AudioSynthesizer';
 export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill' | 'burst';
 export type DefenderAction = 'defend' | 'counter' | 'magic_guard' | 'give_up';
 export type CombatGridPosition = 'front' | 'mid' | 'back';
+export type GridHazardType = 'none' | 'power_rune' | 'poison_pool' | 'spike_trap' | 'sanctuary_rune';
 
 export interface Combatant {
   name: string;
@@ -29,6 +30,8 @@ export interface Combatant {
   freezeTurns?: number;
   silenceTurns?: number;
   blindTurns?: number;
+  isWet?: boolean;
+  conflagrationTurns?: number;
 }
 
 export interface RoundResult {
@@ -51,6 +54,12 @@ export interface RoundResult {
   curseInflicted?: boolean;
   isBurst?: boolean;
   statusInflicted?: string;
+  isShatter?: boolean;
+  isChainShock?: boolean;
+  isConflagration?: boolean;
+  knockbackRow?: CombatGridPosition;
+  hazardTriggered?: GridHazardType;
+  isDuoBurst?: boolean;
 }
 
 
@@ -199,6 +208,17 @@ export class BattleEngine {
     };
   }
 
+  public playerHazards: Record<CombatGridPosition, GridHazardType> = {
+    front: 'none',
+    mid: 'none',
+    back: 'none'
+  };
+  public enemyHazards: Record<CombatGridPosition, GridHazardType> = {
+    front: 'none',
+    mid: 'none',
+    back: 'none'
+  };
+
   constructor(combatant1: Combatant, combatant2: Combatant) {
     // Determine initiative by Speed stat
     if (combatant1.spd >= combatant2.spd) {
@@ -215,6 +235,20 @@ export class BattleEngine {
     }
     if (!this.defender.gridPos) {
       this.defender.gridPos = this.getDefaultGridPos(this.defender);
+    }
+    this.initTacticalHazards();
+  }
+
+  private initTacticalHazards() {
+    // 60% chance to spawn dynamic field hazards/runes on tactical grid
+    const hazardPool: GridHazardType[] = ['power_rune', 'spike_trap', 'poison_pool', 'sanctuary_rune'];
+    if (Math.random() < 0.65) {
+      const pSlot: CombatGridPosition = Math.random() < 0.5 ? 'front' : (Math.random() < 0.5 ? 'mid' : 'back');
+      this.playerHazards[pSlot] = Math.random() < 0.55 ? 'power_rune' : (Math.random() < 0.5 ? 'sanctuary_rune' : 'spike_trap');
+    }
+    if (Math.random() < 0.65) {
+      const eSlot: CombatGridPosition = Math.random() < 0.5 ? 'mid' : (Math.random() < 0.5 ? 'front' : 'back');
+      this.enemyHazards[eSlot] = hazardPool[Math.floor(Math.random() * hazardPool.length)];
     }
   }
 
@@ -878,6 +912,153 @@ export class BattleEngine {
     }
     if (d.playerRef && result.damageToDefender > 0) {
       d.playerRef.burstGauge = Math.min(100, d.playerRef.burstGauge + 25);
+    }
+
+    // Additional status triggers from combat actions
+    // =========================================================================
+    // 1. ELEMENTAL REACTIONS & SYNERGY
+    // =========================================================================
+    // A. Shatter: Physical Strike or Attack vs Frozen target -> 2.5x critical damage!
+    if ((result.isStrikeSuccess || result.attackerAction === 'attack') && d.freezeTurns && d.freezeTurns > 0 && result.damageToDefender > 0) {
+      result.isShatter = true;
+      const shatterBonus = Math.round(result.damageToDefender * 1.5);
+      result.damageToDefender += shatterBonus;
+      d.hp = Math.max(0, d.hp - shatterBonus);
+      d.freezeTurns = 0;
+      audio.elementalShatter();
+      result.narration += ` ❄️💥 [SHATTER! บดขยี้แช่แข็งแตกกระจาย +${shatterBonus} ดาเมจคริติคอล!]`;
+    }
+
+    // B. Chain Shock: Magic or Skill vs Shocked / Wet target -> +75% bonus damage!
+    if ((result.attackerAction === 'magic' || result.attackerAction === 'skill') && (d.isShocked || d.isWet) && result.damageToDefender > 0) {
+      result.isChainShock = true;
+      const shockBonus = Math.round(result.damageToDefender * 0.75);
+      result.damageToDefender += shockBonus;
+      d.hp = Math.max(0, d.hp - shockBonus);
+      d.isShocked = false;
+      audio.chainLightning();
+      result.narration += ` ⚡ [CHAIN SHOCK! สายฟ้าแล่นผ่านร่างเปียกชื้น +${shockBonus} ดาเมจ!]`;
+    }
+
+    // C. Conflagration: Magic or Skill vs Burning target -> instant explosion!
+    if ((result.attackerAction === 'magic' || result.attackerAction === 'skill') && d.burnTurns && d.burnTurns > 0 && result.damageToDefender > 0) {
+      result.isConflagration = true;
+      const conflagDmg = Math.max(12, Math.floor(d.maxHp * 0.16));
+      result.damageToDefender += conflagDmg;
+      d.hp = Math.max(0, d.hp - conflagDmg);
+      result.narration += ` 🔥💥 [CONFLAGRATION! เพลิงลุกไหม้ปะทุระเบิด +${conflagDmg} ดาเมจ!]`;
+    }
+
+    // =========================================================================
+    // 2. KNOCKBACK & 3x3 TACTICAL GRID HAZARDS
+    // =========================================================================
+    if (result.isStrikeSuccess && result.damageToDefender > 0) {
+      const curRow = d.gridPos || 'mid';
+      let newRow: CombatGridPosition | null = null;
+      if (curRow === 'front') newRow = 'mid';
+      else if (curRow === 'mid') newRow = 'back';
+
+      if (newRow) {
+        d.gridPos = newRow;
+        result.knockbackRow = newRow;
+        result.narration += ` 💨 [แรงกระแทกซัดกระเด็นไปแถว ${newRow.toUpperCase()}!]`;
+
+        const defHazards = this.isPlayerAttacking ? this.enemyHazards : this.playerHazards;
+        const hz = defHazards[newRow];
+        if (hz === 'spike_trap') {
+          const trapDmg = 20;
+          result.damageToDefender += trapDmg;
+          d.hp = Math.max(0, d.hp - trapDmg);
+          result.hazardTriggered = 'spike_trap';
+          audio.hazardTrigger();
+          result.narration += ` 📌 [ชนกับดักหนามเหล็ก +${trapDmg} ดาเมจ!]`;
+        } else if (hz === 'poison_pool') {
+          const pDmg = 14;
+          result.damageToDefender += pDmg;
+          d.hp = Math.max(0, d.hp - pDmg);
+          if (d.playerRef) d.playerRef.poisonTurns = 3;
+          result.hazardTriggered = 'poison_pool';
+          audio.hazardTrigger();
+          result.narration += ` 🧪 [ตกลงในบ่อพิษ +${pDmg} ดาเมจ!]`;
+        }
+      }
+    }
+
+    // Attacker Tactical Grid Slot Buffs
+    const atkHazards = this.isPlayerAttacking ? this.playerHazards : this.enemyHazards;
+    const aRow = a.gridPos || 'mid';
+    if (atkHazards[aRow] === 'power_rune' && result.damageToDefender > 0) {
+      const runeBonus = Math.round(result.damageToDefender * 0.25);
+      result.damageToDefender += runeBonus;
+      d.hp = Math.max(0, d.hp - runeBonus);
+      result.narration += ` ⚡ [ศิลารูนแห่งพลัง +${runeBonus} ดาเมจ]`;
+    } else if (atkHazards[aRow] === 'sanctuary_rune' && a.hp < a.maxHp) {
+      const heal = 15;
+      a.hp = Math.min(a.maxHp, a.hp + heal);
+      result.narration += ` ✨ [รูนศักดิ์สิทธิ์ +${heal} HP]`;
+    }
+
+    // =========================================================================
+    // 3. ADVANCED CLASS MASTERY PERKS
+    // =========================================================================
+    const dCls = (d.classKey || d.playerRef?.classKey || '').toLowerCase();
+    const aCls = (a.classKey || a.playerRef?.classKey || '').toLowerCase();
+
+    // Paladin: Holy Aegis heal-on-block
+    if ((dCls === 'paladin' || dCls.includes('paladin')) && result.defenderAction === 'defend') {
+      const heal = 12;
+      d.hp = Math.min(d.maxHp, d.hp + heal);
+      result.narration += ` 🛡️✨ [พาลาดิน: พรศักดิ์สิทธิ์ฟื้นฟู +${heal} HP]`;
+    }
+    // Berserker: Blood Frenzy damage bonus when HP is below 50%
+    if ((aCls === 'berserker' || aCls.includes('berserk')) && a.hp < a.maxHp * 0.5 && result.damageToDefender > 0) {
+      const berserkBonus = Math.round(result.damageToDefender * 0.35);
+      result.damageToDefender += berserkBonus;
+      d.hp = Math.max(0, d.hp - berserkBonus);
+      result.narration += ` 🪓🩸 [เบอร์เซิร์กเกอร์: คลั่งโลหิต +${berserkBonus}]`;
+    }
+    // Archmage: Spell penetration bonus
+    if ((aCls === 'archmage' || aCls.includes('archmage')) && result.attackerAction === 'magic' && result.damageToDefender > 0) {
+      const archBonus = Math.round(result.damageToDefender * 0.30);
+      result.damageToDefender += archBonus;
+      d.hp = Math.max(0, d.hp - archBonus);
+      result.narration += ` 🔮🌟 [มหาจอมเวท: ทะลวงมิติ +${archBonus}]`;
+    }
+    // Assassin: Critical Strike mastery bonus
+    if ((aCls === 'assassin' || aCls.includes('assassin')) && result.isCritical && result.damageToDefender > 0) {
+      const assassinBonus = Math.round(result.damageToDefender * 0.50);
+      result.damageToDefender += assassinBonus;
+      d.hp = Math.max(0, d.hp - assassinBonus);
+      result.narration += ` 🗡️☠️ [นักฆ่า: เล็งจุดตายสังหาร +${assassinBonus}]`;
+    }
+    // Ninja: Shadow Clone evasion chance
+    if ((dCls === 'ninja' || dCls.includes('ninja')) && (result.attackerAction === 'attack' || result.attackerAction === 'strike') && !result.isCounterSuccess) {
+      if (Math.random() < 0.22) {
+        result.isDodged = true;
+        d.hp = Math.min(d.maxHp, d.hp + result.damageToDefender);
+        result.damageToDefender = 0;
+        result.narration = `🥷 [นินจา: สลับท่อนไม้ร่างเงาหลบการโจมตีอย่างไร้รอยขีดข่วน!] (0 ดาเมจ)`;
+      }
+    }
+    // High Priest: Divine Resurrection once per battle
+    if ((dCls === 'high_priest' || dCls.includes('priest')) && d.hp <= 0 && !d.hasResurrected) {
+      d.hasResurrected = true;
+      d.hp = Math.round(d.maxHp * 0.35);
+      result.narration += ` ⛪✨ [มหาสมณะ: แสงทิพย์ชุบชีวิต 35% HP!]`;
+    }
+
+    // =========================================================================
+    // 4. COMPANION BOND GAINS & DUO EX BURST
+    // =========================================================================
+    if (a.playerRef) {
+      a.playerRef.gainCompanionBond(4);
+    }
+    if (result.attackerAction === 'burst' && a.playerRef && a.playerRef.companion && (a.playerRef.companion.bondLevel || 1) >= 3) {
+      result.isDuoBurst = true;
+      const duoBonus = Math.round(result.damageToDefender * 0.5);
+      result.damageToDefender += duoBonus;
+      d.hp = Math.max(0, d.hp - duoBonus);
+      result.narration += ` 🌟💖 [DUO EX: ${a.playerRef.companion.name} ประสานพลังท่าไม้ตายคู่หู +${duoBonus} ดาเมจ!]`;
     }
 
     // Additional status triggers from combat actions

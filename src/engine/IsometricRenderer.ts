@@ -344,9 +344,10 @@ export class IsometricRenderer {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // No screen vignette. There was one - first a radial gradient, then hard bands - and either
-    // way it reads as a dark frame around the play area rather than as atmosphere, which is not
-    // what a board game wants around the board.
+    // 10. Squid Ink Sabotage Overlay
+    if (activePlayer && activePlayer.squidInkTurns > 0) {
+      this.renderSquidInkOverlay(ctx, w, h);
+    }
   }
 
 
@@ -1048,7 +1049,7 @@ export class IsometricRenderer {
       ].includes(node.type);
 
       const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
-      const bob = 0; // Static destination overhead markers per user request ("ไม่เอาเส้นทางเดินขยับๆ")
+      const bob = Math.sin((time * 0.006) + (node.id * 0.7)) * 6; // Animated destination blue arrows bobbing up and down
       const pointerY = py - baseClearance + bob;
 
       ctx.save();
@@ -1539,11 +1540,35 @@ export class IsometricRenderer {
     this.clampCameraBounds();
   }
 
-  // Reset to default comfortable fixed tactical board zoom
-  resetTacticalZoom() {
-    const defaultZ = this.getDefaultZoom();
-    this.camera.zoom = defaultZ;
-    this.camera.targetZoom = defaultZ;
+  // Smooth analog panning from gamepad or keys
+  panCamera(dx: number, dy: number) {
+    this.camera.targetX += dx;
+    this.camera.targetY += dy;
+    this.clampCameraBounds();
+  }
+
+  private renderSquidInkOverlay(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    const blobs = [
+      { x: w * 0.25, y: h * 0.35, r: Math.min(w, h) * 0.28 },
+      { x: w * 0.70, y: h * 0.60, r: Math.min(w, h) * 0.32 },
+      { x: w * 0.50, y: h * 0.50, r: Math.min(w, h) * 0.20 },
+      { x: w * 0.82, y: h * 0.22, r: Math.min(w, h) * 0.18 },
+      { x: w * 0.15, y: h * 0.75, r: Math.min(w, h) * 0.22 },
+    ];
+    blobs.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#f87171';
+    ctx.font = 'bold 13px Silkscreen, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🦑 หมึกปลาหมึกบดบังวิสัยทัศน์! (SQUID INK BLIND)', w / 2, 40);
+    ctx.restore();
   }
 }
+
 

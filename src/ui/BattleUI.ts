@@ -159,9 +159,43 @@ export class BattleUI {
     targetBannerAlpha: 0
   };
 
+  public skipAIBattles: boolean = false;
+
   public getSpeedDelay(ms: number): number {
+    if (this.skipAIBattles) {
+      return 25; // Instant fast-forward delay
+    }
     const s = this.game.gameSpeed || 1;
     return Math.max(25, Math.round(ms / s));
+  }
+
+  private typewriterTimer: number | null = null;
+
+  public displayNarrationWithSpeechBlip(text: string) {
+    const el = document.getElementById('battleNarration');
+    if (!el) return;
+    if (this.typewriterTimer !== null) {
+      clearInterval(this.typewriterTimer);
+      this.typewriterTimer = null;
+    }
+    el.innerText = '';
+    let idx = 0;
+    const speedMs = Math.max(8, Math.round(20 / (this.game.gameSpeed || 1)));
+    this.typewriterTimer = window.setInterval(() => {
+      if (idx < text.length) {
+        const char = text[idx];
+        el.innerText += char;
+        if (char !== ' ' && char !== '\n' && idx % 2 === 0) {
+          audio.speechBlip(char, 520);
+        }
+        idx++;
+      } else {
+        if (this.typewriterTimer !== null) {
+          clearInterval(this.typewriterTimer);
+          this.typewriterTimer = null;
+        }
+      }
+    }, speedMs);
   }
 
   startCutscenePhase(
@@ -218,6 +252,25 @@ export class BattleUI {
       if (e.key === '2' && !document.getElementById('battleScreen')?.classList.contains('hidden')) {
         this.toggleScoutDrawer();
       }
+    });
+
+    // Fast-Forward / Skip AI Battles toggle button
+    document.getElementById('btnSkipAIBattle')?.addEventListener('click', () => {
+      audio.click();
+      this.skipAIBattles = !this.skipAIBattles;
+      const btn = document.getElementById('btnSkipAIBattle');
+      if (btn) {
+        if (this.skipAIBattles) {
+          btn.classList.add('pixel-btn-gold', 'text-slate-950');
+          btn.classList.remove('pixel-btn-blue', 'text-cyan-200');
+          btn.innerHTML = '<span>⚡</span><span>ข้าม AI: เปิด</span>';
+        } else {
+          btn.classList.remove('pixel-btn-gold', 'text-slate-950');
+          btn.classList.add('pixel-btn-blue', 'text-cyan-200');
+          btn.innerHTML = '<span>⏩</span><span>ข้าม/เร่งความเร็ว</span>';
+        }
+      }
+      this.checkAITurn();
     });
 
     // Brown Dust 2 Tactical Formation Row Selection
@@ -678,6 +731,24 @@ export class BattleUI {
         const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : !b.isPlayerAttacking;
         if (!isDefenderHuman) {
           // Both are AI
+          if (this.skipAIBattles) {
+            while (b.attacker.hp > 0 && b.defender.hp > 0) {
+              const aiAtk = b.attacker.playerRef
+                ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
+                : (Math.random() < 0.45 ? 'attack' : Math.random() < 0.75 ? 'strike' : 'magic');
+              const aiDef = b.defender.playerRef
+                ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty)
+                : 'defend';
+              b.resolveRound(aiAtk, aiDef);
+              if (b.attacker.hp > 0 && b.defender.hp > 0) {
+                b.swapTurns();
+              }
+            }
+            const winner = b.attacker.hp > 0 ? b.attacker : b.defender;
+            const loser = b.attacker.hp > 0 ? b.defender : b.attacker;
+            this.concludeBattle(winner, loser);
+            return;
+          }
           const defAct = b.defender.playerRef
             ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty)
             : 'defend';
@@ -928,7 +999,18 @@ export class BattleUI {
       if (b.defender.playerRef) aiSystem.recordMove(b.defender.playerRef.id, defAction);
 
       const result = b.resolveRound(atkAction, defAction);
-      document.getElementById('battleNarration')!.innerText = result.narration;
+      this.displayNarrationWithSpeechBlip(result.narration);
+
+      if (result.isShatter) {
+        combatVFX.triggerScreenShake(26);
+        combatVFX.triggerHitstop(10);
+      } else if (result.isDuoBurst) {
+        combatVFX.triggerScreenShake(28);
+        combatVFX.triggerHitstop(12);
+      } else if (result.isChainShock) {
+        combatVFX.triggerScreenShake(18);
+        combatVFX.triggerHitstop(6);
+      }
 
       if (b.defender.playerRef && b.attacker.playerRef && result.damageToDefender > 25) {
         aiSystem.recordGrudge(b.defender.playerRef.id, b.attacker.playerRef.id, 10, 'heavy damage');
@@ -2910,10 +2992,62 @@ export class BattleUI {
       ctx.lineTo(sx, sy + hh);
       ctx.lineTo(sx + bl, sy + hh - bl * 0.5);
 
-      ctx.moveTo(sx - hw + bl, sy - bl * 0.5);
-      ctx.lineTo(sx - hw, sy);
-      ctx.lineTo(sx - hw + bl, sy + bl * 0.5);
-      ctx.stroke();
+      // Tactical Grid Hazards & Runes on this slot
+      const hazards = isPlayer
+        ? (this.game.activeBattle ? this.game.activeBattle.playerHazards : null)
+        : (this.game.activeBattle ? this.game.activeBattle.enemyHazards : null);
+
+      if (hazards && hazards[slot.pos] && hazards[slot.pos] !== 'none') {
+        const hz = hazards[slot.pos];
+        if (hz === 'power_rune') {
+          // Golden power rune glow and sigil
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.28)';
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, hw * 0.75, hh * 0.75, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('⚡', sx, sy);
+        } else if (hz === 'spike_trap') {
+          // Sharp steel spike trap
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 2;
+          for (let sp = -10; sp <= 10; sp += 7) {
+            ctx.beginPath();
+            ctx.moveTo(sx + sp, sy + 3);
+            ctx.lineTo(sx + sp, sy - 6);
+            ctx.stroke();
+          }
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('📌', sx, sy - 8);
+        } else if (hz === 'poison_pool') {
+          // Toxic green bubbling puddle
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.32)';
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, hw * 0.8, hh * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🧪', sx, sy);
+        } else if (hz === 'sanctuary_rune') {
+          // Radiant holy sanctuary
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, hw * 0.75, hh * 0.75, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('✨', sx, sy);
+        }
+      }
 
       ctx.restore();
     });

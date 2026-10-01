@@ -35,6 +35,7 @@ import { SaveManager } from './game/SaveManager';
 import { escapeHtml } from './util/Html';
 import { triggerHaptic } from './util/haptics';
 import { companionKeyForDefeatedMonster, createCompanion, getCompanionProfile } from './game/CompanionDatabase';
+import { GamepadController } from './engine/GamepadController';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -42,6 +43,7 @@ class DokaponApp {
   private game: GameState;
   private hud: HUD;
   private battleUI: BattleUI;
+  private gamepadController!: GamepadController;
   private townUI: TownUI;
   private shopUI: ShopUI;
   private prankUI: PrankUI;
@@ -114,6 +116,224 @@ class DokaponApp {
     this.bindInteractiveTileSelection();
     this.renderRosterSetup(3);
     this.updateTitleSaveStatus();
+    this.initGamepadController();
+  }
+
+  private selectNodeToMove(targetNode: BoardNode) {
+    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
+    if (!this.game.highlightedNodes.includes(targetNode.id)) return;
+
+    let path = this.game.findPathToTarget(targetNode.id);
+    if (!path || path.length <= 1) {
+      path = [this.game.activePlayer.nodeId, targetNode.id];
+    }
+    if (!path || path.length <= 1) return;
+
+    this.inspectUI.hideMoveDestinationPreview();
+
+    // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
+    const rival = this.game.players.find(
+      pl => pl.id !== this.game.activePlayer.id && pl.nodeId === targetNode.id && pl.hp > 0
+    );
+
+    if (rival && !this.game.activePlayer.isAI) {
+      this.inspectUI.openDuelScouting(
+        this.game.activePlayer,
+        rival,
+        targetNode.name,
+        () => {
+          audio.coin();
+          this.renderer.hoveredNodeId = null;
+          this.renderer.previewPathNodeIds = [];
+          this.game.executePath(
+            path,
+            () => this.onMoveStep(),
+            tile => this.handleTileArrival(tile)
+          );
+        },
+        () => {}
+      );
+      return;
+    }
+
+    // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
+    const preview = getNodeEncounterPreview(targetNode, this.game.activePlayer);
+    if (
+      preview.featuredMonster &&
+      (targetNode.townData?.isOccupiedByMonster || targetNode.type === 'boss') &&
+      !this.game.activePlayer.isAI
+    ) {
+      this.inspectUI.openMonsterScouting(
+        preview.featuredMonster,
+        targetNode,
+        this.game.activePlayer,
+        () => {
+          audio.coin();
+          this.renderer.hoveredNodeId = null;
+          this.renderer.previewPathNodeIds = [];
+          this.game.executePath(
+            path,
+            () => this.onMoveStep(),
+            tile => this.handleTileArrival(tile)
+          );
+        },
+        () => {}
+      );
+      return;
+    }
+
+    audio.coin();
+    this.renderer.hoveredNodeId = null;
+    this.renderer.previewPathNodeIds = [];
+
+    // Execute full path chosen by player!
+    this.game.executePath(
+      path,
+      () => this.onMoveStep(),
+      tile => this.handleTileArrival(tile)
+    );
+  }
+
+  // =========================================================================
+  // INTERACTIVE CLICK / TAP-TO-MOVE TILE SELECTION ON THE 2.5D BOARD
+  // =========================================================================
+  private handleCanvasSelectAt(clientX: number, clientY: number) {
+    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
+
+    const clickedNode = this.renderer.screenToNode(clientX, clientY, this.game.allNodes, this.game.highlightedNodes);
+    if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
+      this.selectNodeToMove(clickedNode);
+    }
+  }
+
+  // =========================================================================
+  // WEB GAMEPAD CONTROLLER INTEGRATION
+  // =========================================================================
+  private initGamepadController() {
+    this.gamepadController = new GamepadController({
+      onPan: (dx, dy) => {
+        if (!this.game.activeBattle) {
+          this.renderer.panCamera(dx, dy);
+        }
+      },
+      onZoom: (delta) => {
+        if (!this.game.activeBattle) {
+          this.renderer.camera.targetZoom = Math.max(0.35, Math.min(2.5, this.renderer.camera.targetZoom + delta));
+          this.renderer.clampCameraBounds();
+        }
+      },
+      onConfirm: () => {
+        if (this.game.activeBattle) {
+          const isAtk = this.game.activeBattle.isPlayerAttacking;
+          if (isAtk) {
+            document.getElementById('btnCmdAttack')?.click();
+          } else {
+            document.getElementById('btnCmdDefend')?.click();
+          }
+        } else {
+          // On board: Roll dice / spinner if waiting for roll
+          const rollBtn = document.getElementById('btnRollDice');
+          const spinnerBtn = document.getElementById('btnRollSpinner');
+          if (rollBtn && !rollBtn.classList.contains('hidden') && !rollBtn.hasAttribute('disabled')) {
+            rollBtn.click();
+            return;
+          }
+          if (spinnerBtn && !spinnerBtn.classList.contains('hidden') && !spinnerBtn.hasAttribute('disabled')) {
+            spinnerBtn.click();
+            return;
+          }
+          // If node preview is active, move to hovered node
+          if (this.renderer.hoveredNodeId !== null && this.game.highlightedNodes.includes(this.renderer.hoveredNodeId)) {
+            const targetNode = this.game.allNodes.find(n => n.id === this.renderer.hoveredNodeId);
+            if (targetNode) this.selectNodeToMove(targetNode);
+          }
+        }
+      },
+      onCancel: () => {
+        if (this.game.activeBattle) {
+          const isAtk = this.game.activeBattle.isPlayerAttacking;
+          if (isAtk) {
+            document.getElementById('btnCmdGiveUp')?.click();
+          } else {
+            document.getElementById('btnCmdCounter')?.click();
+          }
+        } else {
+          const modals = [
+            'worldMapModal',
+            'inventoryModal',
+            'modalBag',
+            'settingsModal',
+            'shopModal',
+            'townModal',
+            'hallOfFameModal',
+            'inspectModal'
+          ];
+          for (const mId of modals) {
+            const el = document.getElementById(mId);
+            if (el && !el.classList.contains('hidden')) {
+              el.classList.add('hidden');
+              audio.click();
+              return;
+            }
+          }
+        }
+      },
+      onSecondary: () => {
+        if (this.game.activeBattle) {
+          const isAtk = this.game.activeBattle.isPlayerAttacking;
+          if (isAtk) {
+            document.getElementById('btnCmdStrike')?.click();
+          } else {
+            document.getElementById('btnCmdMagicGuard')?.click();
+          }
+        } else {
+          document.getElementById('btnOpenBag')?.click();
+        }
+      },
+      onSpecial: () => {
+        if (this.game.activeBattle) {
+          const burstBtn = document.getElementById('btnCmdBurst');
+          if (burstBtn && !burstBtn.classList.contains('hidden') && !burstBtn.hasAttribute('disabled')) {
+            burstBtn.click();
+          } else {
+            document.getElementById('btnCmdMagic')?.click();
+          }
+        } else {
+          const modal = document.getElementById('worldMapModal');
+          if (modal && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            document.getElementById('worldMapTooltip')?.classList.add('hidden');
+          } else {
+            this.openWorldMapAtlas();
+          }
+        }
+      },
+      onSelect: () => {
+        document.getElementById('btnInspectHero')?.click();
+      },
+      onStart: () => {
+        document.getElementById('btnOpenSettings')?.click();
+      },
+      onDpadLeft: () => this.cycleHighlightedNode(-1),
+      onDpadRight: () => this.cycleHighlightedNode(1),
+      onDpadUp: () => this.cycleHighlightedNode(-1),
+      onDpadDown: () => this.cycleHighlightedNode(1)
+    });
+  }
+
+  private cycleHighlightedNode(direction: number) {
+    if (this.game.highlightedNodes.length === 0) return;
+    const curIdx = this.game.highlightedNodes.indexOf(this.renderer.hoveredNodeId ?? -1);
+    let nextIdx = curIdx + direction;
+    if (nextIdx < 0) nextIdx = this.game.highlightedNodes.length - 1;
+    if (nextIdx >= this.game.highlightedNodes.length) nextIdx = 0;
+    const targetId = this.game.highlightedNodes[nextIdx];
+    const targetNode = this.game.allNodes.find(n => n.id === targetId);
+    if (targetNode) {
+      this.renderer.hoveredNodeId = targetId;
+      this.renderer.centerCameraOn(targetNode.gx, targetNode.gy, targetNode.gz);
+      audio.click();
+    }
   }
 
 
@@ -172,90 +392,6 @@ class DokaponApp {
     }
   }
 
-  // =========================================================================
-  // INTERACTIVE CLICK / TAP-TO-MOVE TILE SELECTION ON THE 2.5D BOARD
-  // =========================================================================
-  private handleCanvasSelectAt(clientX: number, clientY: number) {
-    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
-
-    const clickedNode = this.renderer.screenToNode(clientX, clientY, this.game.allNodes, this.game.highlightedNodes);
-    if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
-      let path = this.game.findPathToTarget(clickedNode.id);
-      if (!path || path.length <= 1) {
-        path = [this.game.activePlayer.nodeId, clickedNode.id];
-      }
-      if (path && path.length > 1) {
-        this.inspectUI.hideMoveDestinationPreview();
-
-        // Pre-combat scouting check: if a rival player is standing on this tile, scout them first!
-        const rival = this.game.players.find(
-          pl => pl.id !== this.game.activePlayer.id && pl.nodeId === clickedNode.id && pl.hp > 0
-        );
-
-        if (rival && !this.game.activePlayer.isAI) {
-          this.inspectUI.openDuelScouting(
-            this.game.activePlayer,
-            rival,
-            clickedNode.name,
-            () => {
-              // Confirmed move to battle rival!
-              audio.coin();
-              this.renderer.hoveredNodeId = null;
-              this.renderer.previewPathNodeIds = [];
-              this.game.executePath(
-                path,
-                () => this.onMoveStep(),
-                tile => this.handleTileArrival(tile)
-              );
-            },
-            () => {
-              // Cancelled, pick another move
-            }
-          );
-          return;
-        }
-
-        // Pre-combat monster scouting check: if node is town occupied by monster or boss lair!
-        const preview = getNodeEncounterPreview(clickedNode, this.game.activePlayer);
-        if (
-          preview.featuredMonster &&
-          (clickedNode.townData?.isOccupiedByMonster || clickedNode.type === 'boss') &&
-          !this.game.activePlayer.isAI
-        ) {
-          this.inspectUI.openMonsterScouting(
-            preview.featuredMonster,
-            clickedNode,
-            this.game.activePlayer,
-            () => {
-              audio.coin();
-              this.renderer.hoveredNodeId = null;
-              this.renderer.previewPathNodeIds = [];
-              this.game.executePath(
-                path,
-                () => this.onMoveStep(),
-                tile => this.handleTileArrival(tile)
-              );
-            },
-            () => {
-              // Cancelled, pick another route
-            }
-          );
-          return;
-        }
-
-        audio.coin();
-        this.renderer.hoveredNodeId = null;
-        this.renderer.previewPathNodeIds = [];
-
-        // Execute full path chosen by player!
-        this.game.executePath(
-          path,
-          () => this.onMoveStep(),
-          tile => this.handleTileArrival(tile)
-        );
-      }
-    }
-  }
 
   private bindInteractiveTileSelection() {
     // Mouse hover over 2.5D isometric tiles
@@ -367,7 +503,7 @@ class DokaponApp {
         const target = e.currentTarget as HTMLElement;
         target.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
         target.classList.remove('text-amber-300');
-        const mode = target.getAttribute('data-mode') as 'standard' | 'blitz';
+        const mode = target.getAttribute('data-mode') as 'standard' | 'blitz' | 'coop_raid' | 'endless_spire';
         this.game.gameMode = mode;
       });
     });
@@ -612,6 +748,32 @@ class DokaponApp {
       } else {
         wrap.classList.remove('hidden');
         btn.innerText = '▼';
+      }
+    });
+
+    // Click on radar minimap opens full Bird's-Eye Atlas
+    document.getElementById('minimapCanvas')?.addEventListener('click', () => {
+      audio.click();
+      this.openWorldMapAtlas();
+    });
+
+    // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if (e.key === 'm' || e.key === 'M') {
+        const modal = document.getElementById('worldMapModal');
+        if (modal) {
+          if (modal.classList.contains('hidden')) {
+            audio.click();
+            this.openWorldMapAtlas();
+          } else {
+            audio.click();
+            modal.classList.add('hidden');
+            document.getElementById('worldMapTooltip')?.classList.add('hidden');
+          }
+        }
       }
     });
 
@@ -2892,6 +3054,8 @@ class DokaponApp {
   }
 
   public loop(time: number) {
+    this.gamepadController?.update();
+
     if (this.game.phase !== 'TITLE') {
       if (this.game.activeBattle) {
         // Render Battle Arena when active (bypasses heavy overworld rendering)

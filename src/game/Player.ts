@@ -309,6 +309,46 @@ export const FIELD_SPELLS: Record<string, FieldSpellData> = {
     desc: 'พลังเฉพาะจอมมาร! ปล่อยหมอกคำสาปและพิษร้ายแรงใส่คู่แข่งทุกคนบนกระดาน!',
     requiresTarget: false
   },
+  sleepy: {
+    id: 'sleepy',
+    name: 'มนตราหลับใหล (Sleepy Slumber)',
+    icon: '💤',
+    mpCost: 20,
+    desc: 'ร่ายมนตร์สะกดให้เป้าหมายหลับใหล ข้ามเทิร์นถัดไป 1 เทิร์นเต็ม!',
+    requiresTarget: true
+  },
+  squid_ink: {
+    id: 'squid_ink',
+    name: 'หมึกปลาหมึกมืดมน (Squid Ink Blinder)',
+    icon: '🦑',
+    mpCost: 15,
+    desc: 'พ่นหมึกสีดำบดบังวิสัยทัศน์ของเป้าหมาย 1 เทิร์น ไม่สามารถมองเห็นกระดานและช่องเดินได้ชัด!',
+    requiresTarget: true
+  },
+  downer: {
+    id: 'downer',
+    name: 'คำสาปลดทอนพลัง (Downer Curse)',
+    icon: '📉',
+    mpCost: 18,
+    desc: 'สาปแช่งลดสเตตัส ATK/DEF/MAG/SPD ของเป้าหมายลง 25% เป็นเวลา 3 เทิร์น!',
+    requiresTarget: true
+  },
+  banish: {
+    id: 'banish',
+    name: 'มหาเนรเทศข้ามทวีป (Banishment Warp)',
+    icon: '🌀',
+    mpCost: 28,
+    desc: 'เปิดรอยแยกมิติ ผลักคู่แข่งกระเด็นไปสู่ช่องสุ่มในทวีปห่างไกลทันที!',
+    requiresTarget: true
+  },
+  bounty_hunt: {
+    id: 'bounty_hunt',
+    name: 'ประกาศล่าค่าหัว (Wanted Bounty Post)',
+    icon: '📜',
+    mpCost: 25,
+    desc: 'ส่งหมายจับหลวงตั้งค่าหัวผู้เล่นเป้าหมาย 2,000G! ใครสังหารได้จะได้รับเงินรางวัลทันที!',
+    requiresTarget: true
+  },
   holy_sanctuary: {
     id: 'holy_sanctuary',
     name: 'วิหารศักดิ์สิทธิ์ (Holy Sanctuary)',
@@ -366,6 +406,8 @@ export interface CompanionData {
   color?: string;
   bonusDesc?: string;
   contractTurnsRemaining?: number;
+  bondLevel?: number; // 1 to 5
+  bondExp?: number;
 }
 
 export interface SkinVariantData {
@@ -468,9 +510,13 @@ export class Player {
   public freezeTurns: number = 0;
   public blindTurns: number = 0;
   public curseTurns: number = 0;
+  public sleepTurns: number = 0;
+  public squidInkTurns: number = 0;
+  public downerTurns: number = 0;
+  public bountyReward: number = 0;
 
-  public getStatusAilments(): Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box'; name: string; icon: string; turns: number }> {
-    const list: Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box'; name: string; icon: string; turns: number }> = [];
+  public getStatusAilments(): Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box' | 'sleep' | 'squid_ink' | 'downer'; name: string; icon: string; turns: number }> {
+    const list: Array<{ type: 'rust' | 'poison' | 'freeze' | 'blind' | 'curse' | 'polymorph' | 'cursed_box' | 'sleep' | 'squid_ink' | 'downer'; name: string; icon: string; turns: number }> = [];
     if (this.polymorphTurns > 0) list.push({ type: 'polymorph', name: `สาปกลายร่าง (${this.polymorphType === 'mole' ? 'ตัวตุ่น' : 'หมู'})`, icon: this.polymorphType === 'mole' ? '🦔' : '🐷', turns: this.polymorphTurns });
     if (this.cursedBoxTurns > 0) list.push({ type: 'cursed_box', name: 'กล่องระเบิดต้องสาป (Ticking Box)', icon: '📦💥', turns: this.cursedBoxTurns });
     if (this.rustTurns > 0) list.push({ type: 'rust', name: 'สนิมกัดกร่อน (Rust)', icon: '🛡️', turns: this.rustTurns });
@@ -478,6 +524,9 @@ export class Player {
     if (this.freezeTurns > 0) list.push({ type: 'freeze', name: 'แช่แข็ง (Freeze)', icon: '❄️', turns: this.freezeTurns });
     if (this.blindTurns > 0) list.push({ type: 'blind', name: 'ตาบอด (Blind)', icon: '👁️', turns: this.blindTurns });
     if (this.curseTurns > 0) list.push({ type: 'curse', name: 'คำสาปมรณะ (Doom Curse)', icon: '💀', turns: this.curseTurns });
+    if (this.sleepTurns > 0) list.push({ type: 'sleep', name: 'หลับใหล (Sleep)', icon: '💤', turns: this.sleepTurns });
+    if (this.squidInkTurns > 0) list.push({ type: 'squid_ink', name: 'หมึกบดบัง (Ink Blind)', icon: '🦑', turns: this.squidInkTurns });
+    if (this.downerTurns > 0) list.push({ type: 'downer', name: 'ลดสเตตัส (Downer)', icon: '📉', turns: this.downerTurns });
     return list;
   }
 
@@ -487,6 +536,9 @@ export class Player {
     this.freezeTurns = 0;
     this.blindTurns = 0;
     this.curseTurns = 0;
+    this.sleepTurns = 0;
+    this.squidInkTurns = 0;
+    this.downerTurns = 0;
     this.polymorphTurns = 0;
     this.polymorphType = null;
     this.cursedBoxTurns = 0;
@@ -659,6 +711,10 @@ export class Player {
     // Curse of Rust reduces physical attack and defense by 30%
     if (this.rustTurns > 0 && (stat === 'atk' || stat === 'def')) {
       val = Math.max(1, Math.floor(val * 0.7));
+    }
+    // Downer Curse reduces all stats by 25%
+    if (this.downerTurns > 0) {
+      val = Math.max(1, Math.floor(val * 0.75));
     }
     return val;
   }
@@ -844,6 +900,9 @@ export class Player {
 
     if (this.freezeTurns > 0) this.freezeTurns--;
     if (this.blindTurns > 0) this.blindTurns--;
+    if (this.sleepTurns > 0) this.sleepTurns--;
+    if (this.squidInkTurns > 0) this.squidInkTurns--;
+    if (this.downerTurns > 0) this.downerTurns--;
 
     if (this.polymorphTurns > 0) {
       this.polymorphTurns--;
@@ -918,5 +977,19 @@ export class Player {
 
   tickTurnEffects() {
     return this.tickTurn();
+  }
+
+  gainCompanionBond(amount = 10): { leveledUp: boolean; newLevel: number } | undefined {
+    if (!this.companion) return undefined;
+    if (this.companion.bondLevel === undefined) this.companion.bondLevel = 1;
+    if (this.companion.bondExp === undefined) this.companion.bondExp = 0;
+    this.companion.bondExp += amount;
+    const req = this.companion.bondLevel * 30;
+    if (this.companion.bondExp >= req && this.companion.bondLevel < 5) {
+      this.companion.bondExp -= req;
+      this.companion.bondLevel++;
+      return { leveledUp: true, newLevel: this.companion.bondLevel };
+    }
+    return { leveledUp: false, newLevel: this.companion.bondLevel };
   }
 }

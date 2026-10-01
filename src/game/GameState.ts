@@ -42,8 +42,9 @@ export class GameState {
   public gameSpeed = 1;
 
   // Game Mode & House Rules
-  public gameMode: 'standard' | 'blitz' = 'standard';
+  public gameMode: 'standard' | 'blitz' | 'coop_raid' | 'endless_spire' = 'standard';
   public blitzDayLimit: number = 20;
+  public coopRaidDayLimit: number = 30;
   public allowDarkling: boolean = true;
   public aiDifficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical';
 
@@ -162,6 +163,15 @@ export class GameState {
 
   startTurn() {
     const p = this.activePlayer;
+
+    // Check Sleep Status: Skips turn if sleeping!
+    if (p.sleepTurns > 0) {
+      p.sleepTurns--;
+      this.addLog(`💤 ${p.displayName} กำลังหลับใหลอย่างลึกซึ้งจากมนตรา Sleepy Slumber! จึงข้ามเทิร์นนี้ไป!`, 'battle');
+      this.endTurn();
+      return;
+    }
+
     this.phase = 'BOARD_TURN';
     const turnRes = p.tickTurn();
     if (turnRes?.companionDeparted) {
@@ -273,6 +283,42 @@ export class GameState {
       target.blindTurns = 3;
       this.addLog(`👁️ ${caster.displayName} ร่ายเวท Flash Blind สาดแสงจ้าใส่ ${target.displayName}! (ติดสถานะ Blind ตาบอด 3 เทิร์น โจมตีพลาด 40%)`, 'battle');
       return { success: true, message: `👁️ สาดแสงจ้าใส่ ${target.displayName}! ตาบอด 3 เทิร์น` };
+    }
+
+    if (spellKey === 'sleepy' && target) {
+      target.sleepTurns = 1;
+      this.addLog(`💤 ${caster.displayName} ร่ายมนตรา Sleepy Slumber สะกดให้ ${target.displayName} หลับใหล (ข้ามเทิร์นถัดไป 1 เทิร์น)!`, 'battle');
+      return { success: true, message: `💤 มนตราสะกดสำเร็จ! ${target.displayName} จะหลับข้ามเทิร์นถัดไป!` };
+    }
+
+    if (spellKey === 'squid_ink' && target) {
+      target.squidInkTurns = 1;
+      this.addLog(`🦑 ${caster.displayName} พ่นหมึกมืดมนใส่ ${target.displayName} บดบังวิสัยทัศน์บนแผนที่ 1 เทิร์น!`, 'battle');
+      return { success: true, message: `🦑 พ่นหมึกสีดำปิดบังหน้าจอของ ${target.displayName} สำเร็จ!` };
+    }
+
+    if (spellKey === 'downer' && target) {
+      target.downerTurns = 3;
+      this.addLog(`📉 ${caster.displayName} ร่ายคำสาป Downer Curse ใส่ ${target.displayName}! (ทุกสเตตัสลดลง 25% เป็นเวลา 3 เทิร์น)`, 'darkling');
+      return { success: true, message: `📉 สาปแช่งลดพลังทุกสเตตัสของ ${target.displayName} ลง 25% (3 เทิร์น)!` };
+    }
+
+    if (spellKey === 'banish' && target) {
+      const farNodes = this.allNodes.filter(n => Math.hypot(n.gx - target!.gridX, n.gy - target!.gridY) > 20);
+      const destNode = farNodes.length > 0 ? farNodes[Math.floor(Math.random() * farNodes.length)] : this.allNodes[Math.floor(Math.random() * this.allNodes.length)];
+      target.nodeId = destNode.id;
+      target.gridX = destNode.gx;
+      target.gridY = destNode.gy;
+      target.gridZ = destNode.gz;
+      this.addLog(`🌀 ${caster.displayName} ร่ายมหาเนรเทศ Banishment ส่ง ${target.displayName} กระเด็นไปทวีปห่างไกลที่ [${destNode.name}]!`, 'darkling');
+      return { success: true, message: `🌀 มหาเนรเทศสำเร็จ! ผลัก ${target.displayName} ปลิวไปที่ ${destNode.name}!` };
+    }
+
+    if (spellKey === 'bounty_hunt' && target) {
+      target.bountyReward = 350;
+      royalDecreeSystem.issueWantedBounty(target, 2000, `ถูกตั้งค่าหัวโดย ${caster.displayName}!`);
+      this.addLog(`📜 ${caster.displayName} ประกาศตั้งค่าหัวนำจับ ${target.displayName} 2,000G! ใครสังหารได้รับเงินทันที!`, 'gold');
+      return { success: true, message: `📜 ส่งหมายจับหลวงตั้งค่าหัว ${target.displayName} 2,000G สำเร็จ!` };
     }
 
     if (spellKey === 'assassin_hit' && target) {
@@ -638,6 +684,28 @@ export class GameState {
   checkWinConditions() {
     // Blitz Mode: Match concludes when blitzDayLimit is reached (highest net worth wins!)
     if (this.gameMode === 'blitz' && this.dayCounter >= this.blitzDayLimit) {
+      this.phase = 'VICTORY';
+      return;
+    }
+
+    // Co-op Demon Lord Raid: Cooperatively slay boss or survive invasion
+    if (this.gameMode === 'coop_raid') {
+      const bossNodes = this.allNodes.filter(n => n.type === 'boss');
+      const allBossesDefeated = bossNodes.every(b => !b.townData?.isOccupiedByMonster);
+      if (allBossesDefeated && bossNodes.length > 0) {
+        this.addLog('👑 กองกำลังร่วมมือพิชิตจอมมารสำเร็จ! อาณาจักรฟอร์ทูนารอดพ้นจากหายนะ!', 'level');
+        this.phase = 'VICTORY';
+        return;
+      }
+      if (this.dayCounter >= this.coopRaidDayLimit) {
+        this.addLog('⌛ ครบกำหนดเวลา 30 วันการรุกรานของจอมมาร!', 'darkling');
+        this.phase = 'VICTORY';
+        return;
+      }
+    }
+
+    // Endless Spire Mode
+    if (this.gameMode === 'endless_spire' && this.dayCounter >= 40) {
       this.phase = 'VICTORY';
       return;
     }

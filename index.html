@@ -509,6 +509,14 @@
     </div>
   </div>
 
+  <!-- GAMEPAD STATUS TOAST (z-30) -->
+  <div id="gamepadToast" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2">
+    <div class="pixel-box-gold px-3.5 py-1.5 flex items-center gap-2 text-[11px] font-bold text-cyan-300 bg-slate-950/95 border-cyan-500 shadow-lg">
+      <span class="text-base animate-bounce">🎮</span>
+      <span id="gamepadToastText">เชื่อมต่อคอนโทรลเลอร์แล้ว</span>
+    </div>
+  </div>
+
   <!-- TURN START CINEMATIC ANNOUNCEMENT BANNER (z-25) -->
   <div id="turnStartBanner" class="hidden pointer-events-none absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-25 flex flex-col items-center justify-center opacity-0 max-w-[90vw]">
     <div class="pixel-box-gold px-4 sm:px-6 py-1.5 sm:py-2 flex items-center gap-2 sm:gap-3 border-amber-500">
@@ -617,8 +625,8 @@
           <button id="btnToggleMinimap" class="text-[9px] text-slate-400 hover:text-white px-1 font-bold">▼</button>
         </div>
         <div id="minimapCanvasWrapper">
-          <canvas id="minimapCanvas" width="130" height="130" class="block w-20 h-20 sm:w-[130px] sm:h-[130px] bg-slate-900 cursor-pointer"></canvas>
-          <div class="hidden sm:block absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 text-slate-400 pointer-events-none">เรดาร์ 2.5D</div>
+          <canvas id="minimapCanvas" width="130" height="130" class="block w-20 h-20 sm:w-[130px] sm:h-[130px] bg-slate-900 cursor-pointer hover:ring-2 hover:ring-amber-400 transition-all" title="คลิกเพื่อเปิดแผนที่ยุทธศาสตร์โลกแบบเต็มจอ (กดปุ่ม M)"></canvas>
+          <div class="hidden sm:block absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 text-slate-400 pointer-events-none">เรดาร์ 2.5D (M)</div>
         </div>
       </div>
     </div>
@@ -774,12 +782,16 @@
           </div>
         </div>
 
-        <!-- Center Tactical Scout Button -->
-        <div class="pointer-events-auto flex flex-col items-center shrink-0">
+        <!-- Center Tactical Scout & Skip AI Buttons -->
+        <div class="pointer-events-auto flex flex-col items-center shrink-0 gap-1">
           <button id="btnBattleScout" class="pixel-btn pixel-btn-purple px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-amber-300 font-bold flex items-center gap-1 sm:gap-1.5 animate-pulse touch-manipulation">
             <span>👁️</span>
             <span class="hidden xs:inline">สอดแนม</span>
             <span>[2]</span>
+          </button>
+          <button id="btnSkipAIBattle" class="pixel-btn pixel-btn-blue px-2 py-0.5 text-[9px] sm:text-[10px] text-cyan-200 font-bold flex items-center gap-1 touch-manipulation" title="ข้ามการต่อสู้ของ AI หรือเร่งความเร็วการต่อสู้">
+            <span>⏩</span>
+            <span>ข้าม/เร่งความเร็ว</span>
           </button>
         </div>
 
@@ -1788,12 +1800,18 @@
       <!-- GAME MODE & HOUSE RULES (Track 4: Blitz Mode & House Rules) -->
       <div class="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
         <span class="font-bold">โหมดเกม:</span>
-        <div class="flex gap-2">
-          <button id="btnModeStandard" class="game-mode-btn pixel-btn pixel-btn-gold px-2.5 py-1 text-xs text-slate-950 font-bold" data-mode="standard">
+        <div class="flex flex-wrap gap-1.5 justify-end">
+          <button id="btnModeStandard" class="game-mode-btn pixel-btn pixel-btn-gold px-2 py-1 text-[11px] text-slate-950 font-bold" data-mode="standard">
             Standard (มาตรฐาน)
           </button>
-          <button id="btnModeBlitz" class="game-mode-btn pixel-btn px-2.5 py-1 text-xs text-amber-300" data-mode="blitz">
-            ⚡ Blitz (20 วันตัดสิน)
+          <button id="btnModeBlitz" class="game-mode-btn pixel-btn px-2 py-1 text-[11px] text-amber-300" data-mode="blitz">
+            ⚡ Blitz (20 วัน)
+          </button>
+          <button id="btnModeCoopRaid" class="game-mode-btn pixel-btn px-2 py-1 text-[11px] text-amber-300" data-mode="coop_raid">
+            👹 Co-op Raid
+          </button>
+          <button id="btnModeEndlessSpire" class="game-mode-btn pixel-btn px-2 py-1 text-[11px] text-amber-300" data-mode="endless_spire">
+            🏰 Endless Spire
           </button>
         </div>
       </div>

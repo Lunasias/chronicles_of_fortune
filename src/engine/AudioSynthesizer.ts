@@ -647,7 +647,47 @@ export class AudioSynthesizer {
       this.playTone(90, 'sawtooth', 0.4, 0.5);
     }, 360);
   }
+
+  elementalShatter() {
+    if (!this.enabled) return;
+    this.init();
+    // High-pitched crystalline crash
+    this.playTone(1864, 'square', 0.08, 0.35);
+    setTimeout(() => this.playTone(1396, 'triangle', 0.12, 0.4), 25);
+    setTimeout(() => this.playTone(987, 'sawtooth', 0.18, 0.3), 60);
+    this.playChiptuneSnare();
+  }
+
+  chainLightning() {
+    if (!this.enabled) return;
+    this.init();
+    // Electric buzzing arc
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const freq = 400 + Math.random() * 800;
+        this.playTone(freq, 'sawtooth', 0.04, 0.28);
+      }, i * 35);
+    }
+  }
+
+  hazardTrigger() {
+    if (!this.enabled) return;
+    this.init();
+    // Metallic clamp / poison sizzle snap
+    this.playTone(220, 'sawtooth', 0.12, 0.35);
+    setTimeout(() => this.playTone(110, 'square', 0.2, 0.4), 40);
+  }
+
+  speechBlip(char: string = 'a', basePitch = 480) {
+    if (!this.enabled) return;
+    this.init();
+    // Deterministic retro micro-blip per character code
+    const code = char.charCodeAt(0) || 65;
+    const freq = basePitch + ((code % 12) - 6) * 18;
+    this.playTone(freq, 'square', 0.025, 0.15);
+  }
 }
 
 export const audio = new AudioSynthesizer();
+
 
