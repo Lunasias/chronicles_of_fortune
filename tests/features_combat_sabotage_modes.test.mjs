@@ -5,6 +5,9 @@ import assert from 'node:assert/strict';
 import { GameState } from '../.test-build/game/GameState.js';
 import { Player } from '../.test-build/game/Player.js';
 import { BattleEngine } from '../.test-build/game/BattleEngine.js';
+import { townManager } from '../.test-build/game/TownManager.js';
+import { darklingSystem } from '../.test-build/game/DarklingSystem.js';
+import { networkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
 
 test('Combat Depth: Shatter reaction deals critical bonus damage and clears freeze', () => {
   const hero = {
@@ -227,4 +230,100 @@ test('Game Modes: Co-op Demon Lord Raid concludes when boss nodes are defeated o
 
   game.checkWinConditions();
   assert.equal(game.phase, 'VICTORY');
+});
+
+test('Town Trade Routes: 3+ towns in realm activate trade route with 30% tax yield and 1.5x toll', () => {
+  const game = new GameState();
+  game.initGame([
+    { name: 'Merchant', classKey: 'alchemist', isAI: false },
+    { name: 'Rival', classKey: 'warrior', isAI: false }
+  ]);
+
+  const p1 = game.players[0];
+  const p2 = game.players[1];
+
+  // Find 3 town nodes in solaria realm
+  const solariaTowns = game.allNodes.filter(n => n.type === 'town' && n.realmId === 'solaria').slice(0, 3);
+  assert.equal(solariaTowns.length, 3);
+
+  // P1 owns all 3 towns
+  solariaTowns.forEach(t => {
+    p1.townDeeds.push(t.id);
+    if (t.townData) {
+      t.townData.ownerId = p1.id;
+      t.townData.isOccupiedByMonster = false;
+    }
+  });
+
+  // Verify trade route is active
+  const isRoute = townManager.isTownInTradeRoute(solariaTowns[0], p1, game.allNodes);
+  assert.equal(isRoute, true);
+
+  const activeRoutes = townManager.getActiveTradeRoutes(p1, game.allNodes);
+  assert.ok(activeRoutes.includes('solaria'));
+
+  // Calculate toll with trade route bonus
+  const normalToll = townManager.calculateToll(solariaTowns[0], p2);
+  const tradeToll = townManager.calculateToll(solariaTowns[0], p2, game.allNodes, p1);
+  assert.ok(tradeToll >= normalToll * 1.45);
+
+  // Revenue collection includes 30% bonus
+  const revenue = townManager.collectTurnRevenue(p1, game.allNodes);
+  assert.ok(revenue > 0);
+});
+
+test('Darkling Specializations: Destroyer, Reaper, Tormentor branches and Oblivion Slash', () => {
+  const game = new GameState();
+  game.initGame([
+    { name: 'P1', classKey: 'warrior', isAI: false },
+    { name: 'P2', classKey: 'mage', isAI: false }
+  ]);
+  const darkPlayer = game.players[0];
+  const target = game.players[1];
+
+  // Test Destroyer branch
+  darklingSystem.acceptPact(darkPlayer, game.allNodes, 'destroyer');
+  assert.equal(darkPlayer.isDarkling, true);
+  assert.ok(darkPlayer.fieldSpells.includes('oblivion_slash'));
+
+  // Test Oblivion Slash field spell (50% HP damage)
+  target.hp = 100;
+  darkPlayer.mp = 50;
+  const castRes = game.castFieldSpell(darkPlayer, 'oblivion_slash', target.id);
+  assert.equal(castRes.success, true);
+  assert.equal(target.hp, 50);
+  assert.equal(target.curseTurns, 3);
+});
+
+test('Game Modes: Roguelike Draft mode grants starter draft kit & realm mutations', () => {
+  const game = new GameState();
+  game.gameMode = 'roguelike_draft';
+  game.initGame([
+    { name: 'P1', classKey: 'warrior', isAI: false },
+    { name: 'P2', classKey: 'cleric', isAI: false }
+  ]);
+
+  assert.equal(game.gameMode, 'roguelike_draft');
+  assert.ok(game.activeRoguelikeModifier !== null);
+  // Both players got drafted relics
+  assert.ok(game.players[0].relics.length > 0);
+  assert.ok(game.players[1].relics.length > 0);
+
+  // Check 28-day win condition
+  game.dayCounter = 28;
+  game.checkWinConditions();
+  assert.equal(game.phase, 'VICTORY');
+});
+
+test('P2P Network Room Manager: generates 6-char room code and manages room lifecycle', () => {
+  const room = networkRoomManager.createRoom('HostPlayer');
+  assert.ok(room.code.startsWith('CF-'));
+  assert.equal(room.isHost, true);
+  assert.equal(room.connectedPeers.length, 1);
+
+  const roomInfo = networkRoomManager.getRoomInfo();
+  assert.equal(roomInfo?.code, room.code);
+
+  networkRoomManager.leaveRoom();
+  assert.equal(networkRoomManager.getRoomInfo(), null);
 });

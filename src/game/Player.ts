@@ -219,6 +219,126 @@ export const JOB_PROMOTIONS: Record<string, JobPromotionData[]> = {
   ]
 };
 
+export const TIER3_PROMOTIONS: Record<string, JobPromotionData[]> = {
+  paladin: [
+    {
+      tier2Key: 'crusader',
+      name: 'แกรนด์ครูเซเดอร์ (Grand Crusader)',
+      avatar: '👑🛡️',
+      color: '#f59e0b',
+      desc: 'อัครอัศวินศักดิ์สิทธิ์ผู้พิทักษ์บัลลังก์ มีเกราะเทวานิรันดร์และพลังฟื้นฟูไร้ขีดจำกัด',
+      statBonus: { hp: 80, mp: 30, atk: 8, def: 14, mag: 6, spd: 4, luk: 6 },
+      skillName: 'มหาปราการเทวาพิทักษ์จักรวาล (Aegis of the Heavens)',
+      skillCost: 22,
+      skillDesc: 'เสกเกราะแสงเทวา คืนเลือด 40% และสะท้อนดาเมจ 50% กลับใส่ศัตรู'
+    }
+  ],
+  berserker: [
+    {
+      tier2Key: 'warlord',
+      name: 'วอร์ลอร์ดจอมราชัน (Blood Warlord)',
+      avatar: '👑🩸',
+      color: '#b91c1c',
+      desc: 'ราชันแห่งสนามรบผู้กลืนกินความแค้น ยิ่งเลือดน้อยยิ่งสร้างความเสียหายมหาศาล',
+      statBonus: { hp: 60, mp: 20, atk: 20, def: 4, mag: 0, spd: 10, luk: 4 },
+      skillName: 'มหาดาบผ่าพิภพโลหิตเดือด (World Breaker)',
+      skillCost: 24,
+      skillDesc: 'สละ 25% HP เพื่อฟันสับทำลายล้าง 320% ของ ATK โดยไม่สนเกราะป้องกัน!'
+    }
+  ],
+  archmage: [
+    {
+      tier2Key: 'grand_arcanist',
+      name: 'ปรมาจารย์มหาเวทโบราณ (Grand Arcanist)',
+      avatar: '👑🌌',
+      color: '#9333ea',
+      desc: 'ผู้กุมความลับแห่งจักรวาล สลายมิติและควบคุมพลังดวงดาราทั้งมวล',
+      statBonus: { hp: 40, mp: 90, atk: 4, def: 5, mag: 22, spd: 7, luk: 7 },
+      skillName: 'ซูเปอร์โนวาดับดารา (Supernova Cataclysm)',
+      skillCost: 32,
+      skillDesc: 'ระเบิดมหาดวงดาว สร้างดาเมจเวทมหาศาล 350% ของ MAG และสลาย MP ของศัตรู'
+    }
+  ],
+  necromancer: [
+    {
+      tier2Key: 'lich_king',
+      name: 'ราชันลิชคืนชีพ (Nether Lich King)',
+      avatar: '👑💀',
+      color: '#047857',
+      desc: 'จักรพรรดิแห่งความตาย ผู้ครอบครองดวงวิญญาณนับพันและคำสาปชั่วนิรันดร์',
+      statBonus: { hp: 50, mp: 70, atk: 6, def: 8, mag: 16, spd: 5, luk: 12 },
+      skillName: 'มหาคำสาปกลืนวิญญาณนิรันดร์ (Soul Drain Apocalypse)',
+      skillCost: 28,
+      skillDesc: 'สูบพลังชีวิต 45% ของ Max HP ศัตรูมาเป็นเกราะบาเรียให้ตนเองทันที'
+    }
+  ],
+  ninja: [
+    {
+      tier2Key: 'phantom_shinobi',
+      name: 'ชิโนบิเงาอนันต์ (Phantom Shinobi)',
+      avatar: '👑🌀',
+      color: '#0d9488',
+      desc: 'นักรบเงาไร้ตัวตน สามารถสลับมิติและฟันสังหารโดยศัตรูไม่รู้ตัว',
+      statBonus: { hp: 45, mp: 40, atk: 12, def: 6, mag: 6, spd: 18, luk: 12 },
+      skillName: 'หมื่นเงาพายุจักรพรรดิ (Infinite Phantom Gale)',
+      skillCost: 24,
+      skillDesc: 'พุ่งโจมตี 8 ครั้งซ้อน หลบหลีก 100% ในเทิร์นนี้ และฉกทอง 30% ของศัตรู'
+    }
+  ],
+  assassin: [
+    {
+      tier2Key: 'shadow_reaper',
+      name: 'เพชฌฆาตวิญญาณราตรี (Shadow Reaper)',
+      avatar: '👑☠️',
+      color: '#be123c',
+      desc: 'ยมทูตแห่งเงามืด ผู้ตัดสินความเป็นความตายด้วยการแทงจุดตายเพียงครั้งเดียว',
+      statBonus: { hp: 40, mp: 35, atk: 18, def: 5, mag: 4, spd: 14, luk: 16 },
+      skillName: 'เคียวเกี่ยววิญญาณมรณะ (Soul Harvester)',
+      skillCost: 26,
+      skillDesc: 'ฟาดฟันจุดตายติดคริติคอล 3.5 เท่า และหากกำจัดเป้าหมายได้จะขโมยทองทั้งหมด!'
+    }
+  ],
+  high_priest: [
+    {
+      tier2Key: 'radiant_archon',
+      name: 'อัครเทวทูตสุริยัน (Radiant Archon)',
+      avatar: '👑✨',
+      color: '#d97706',
+      desc: 'กายทิพย์แห่งสวรรค์ ปลดปล่อยแสงแห่งการพิพากษาและพรชำระบาปสมบูรณ์แบบ',
+      statBonus: { hp: 60, mp: 80, atk: 5, def: 12, mag: 16, spd: 6, luk: 10 },
+      skillName: 'พิพากษาแสงสวรรค์เก้าชั้นฟ้า (Nine Heavens Judgement)',
+      skillCost: 28,
+      skillDesc: 'ฟื้นฟูเลือดและมานาเต็ม 100% พร้อมยิงลำแสงสุริยันพิฆาตใส่ศัตรู'
+    }
+  ],
+  saint: [
+    {
+      tier2Key: 'seraphic_saint',
+      name: 'เซราฟผู้ไถ่บาปสากล (Seraphic Saint)',
+      avatar: '👑💖',
+      color: '#db2777',
+      desc: 'สตรีศักดิ์สิทธิ์ผู้ผสานดวงจิตกับปาฏิหาริย์แห่งโชคชะตาขั้นสูงสุด',
+      statBonus: { hp: 65, mp: 75, atk: 6, def: 10, mag: 14, spd: 7, luk: 18 },
+      skillName: 'ปาฏิหาริย์ดวงดาราแห่งการฟื้นคืน (Miracle Resurrection)',
+      skillCost: 26,
+      skillDesc: 'มอบพรอมตะ 1 เทิร์น ฟื้นฟูสถานะทั้งหมด และเพิ่มโชคลาภสูงสุด'
+    }
+  ],
+  rune_master: [
+    {
+      tier2Key: 'rune_sovereign',
+      name: 'จอมราชันอักขระมนตรา (Rune Sovereign)',
+      avatar: '👑⚔️',
+      color: '#e11d48',
+      desc: 'ราชาแห่งคมดาบเวท ผู้ผสานมนตราแห่งจักรวาลลงในทุกการฟัน',
+      statBonus: { hp: 65, mp: 65, atk: 15, def: 10, mag: 15, spd: 11, luk: 10 },
+      skillName: 'มหาเพลงดาบจักรวาลอักขระ (Omni-Rune Cataclysm)',
+      skillCost: 28,
+      skillDesc: 'ปลดปล่อยพลังรูนทั้งมวล ผ่ามิติสร้างความเสียหายมหาศาลแบบกายภาพผสมเวท!'
+    }
+  ]
+};
+
 export interface FieldSpellData {
   id: string;
   name: string;
@@ -300,6 +420,14 @@ export const FIELD_SPELLS: Record<string, FieldSpellData> = {
     mpCost: 40,
     desc: 'พลังเฉพาะจอมมาร! ทำลายปราการเมืองของคู่แข่ง 2 เมือง ปลดปล่อยมอนสเตอร์ยึดคืน!',
     requiresTarget: false
+  },
+  oblivion_slash: {
+    id: 'oblivion_slash',
+    name: 'ดาบผ่าพิภพอเวจี (Oblivion Slash)',
+    icon: '🗡️💥',
+    mpCost: 35,
+    desc: 'วิชาพิฆาตจอมมารสาย Destroyer! ฟันสังหารเป้าหมาย ลด HP 50% ทันที!',
+    requiresTarget: true
   },
   dark_plague: {
     id: 'dark_plague',
@@ -597,9 +725,10 @@ export class Player {
   public homeNodeId: number | null = null;
   public companion: CompanionData | null = null;
 
-  // Tier 2 Job Promotion & AI Personality
+  // Tier 2 & Tier 3 Job Promotion & AI Personality
   public originalClassKey: string;
   public isPromoted: boolean = false;
+  public promotionTier: number = 1;
   public aiPersonality: 'balanced' | 'economist' | 'hunter' | 'tactician' = 'balanced';
 
   // Match Summary & Hall of Fame Statistics
@@ -784,20 +913,32 @@ export class Player {
   }
 
   canPromote(): boolean {
-    return this.level >= 10 && !this.isPromoted && !this.isDarkling;
+    if (this.isDarkling) return false;
+    // Tier 1 -> Tier 2 at Level 10+
+    if (!this.isPromoted && this.level >= 10) return true;
+    // Tier 2 -> Tier 3 at Level 20+
+    if (this.isPromoted && this.promotionTier < 3 && this.level >= 20) return true;
+    return false;
   }
 
   getAvailablePromotions(): JobPromotionData[] {
-    const baseKey = this.originalClassKey || this.classKey;
-    return JOB_PROMOTIONS[baseKey] || [];
+    if (!this.isPromoted) {
+      const baseKey = this.originalClassKey || this.classKey;
+      return JOB_PROMOTIONS[baseKey] || [];
+    }
+    if (this.promotionTier === 2 && this.level >= 20) {
+      return TIER3_PROMOTIONS[this.classKey] || [];
+    }
+    return [];
   }
 
-  promote(tier2Key: string): boolean {
+  promote(tierKey: string): boolean {
     const promos = this.getAvailablePromotions();
-    const target = promos.find(p => p.tier2Key === tier2Key);
+    const target = promos.find(p => p.tier2Key === tierKey);
     if (!target) return false;
 
     this.isPromoted = true;
+    this.promotionTier = this.promotionTier === 1 ? 2 : 3;
     this.classKey = target.tier2Key;
     this.className = target.name;
     this.avatar = target.avatar;

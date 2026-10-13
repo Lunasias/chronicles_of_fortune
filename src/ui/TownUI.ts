@@ -57,10 +57,11 @@ export class TownUI {
 
       // If rival owned, collect toll automatically upon entering
       if (owner.id !== p.id) {
-        const toll = townManager.calculateToll(townNode, p);
+        const isTradeRoute = townManager.isTownInTradeRoute(townNode, owner, this.game.allNodes);
+        const toll = townManager.calculateToll(townNode, p, this.game.allNodes, owner);
         p.gold = Math.max(0, p.gold - toll);
         owner.gold += toll;
-        this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!${p.relics.includes('thief_band') ? ' (💍 แหวนหัวขโมยลดค่าผ่านทาง 50%!)' : ''}`, 'gold');
+        this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!${isTradeRoute ? ' (🌐 เส้นทางการค้าคูณ 1.5 เท่า!)' : ''}${p.relics.includes('thief_band') ? ' (💍 แหวนหัวขโมยลดค่าผ่านทาง 50%!)' : ''}`, 'gold');
         audio.coin();
       }
     } else {
@@ -86,9 +87,10 @@ export class TownUI {
       btnCollect?.classList.add('hidden');
       btnRob?.classList.remove('hidden');
       btnTakeover?.classList.remove('hidden');
-      const takeoverCost = (townNode.townData?.baseValue || 200) * 2;
+      const isTradeRoute = owner ? townManager.isTownInTradeRoute(townNode, owner, this.game.allNodes) : false;
+      const takeoverCost = (townNode.townData?.baseValue || 200) * (isTradeRoute ? 3 : 2);
       const takeoverText = document.getElementById('townTakeoverCostText');
-      if (takeoverText) takeoverText.innerText = `ฮุบซื้อกรรมสิทธิ์ (${takeoverCost}G)`;
+      if (takeoverText) takeoverText.innerText = `ฮุบซื้อกรรมสิทธิ์ (${takeoverCost}G)${isTradeRoute ? ' [เส้นทางการค้า x3]' : ''}`;
     } else {
       btnInvest?.classList.add('hidden');
       btnCollect?.classList.add('hidden');
@@ -191,7 +193,7 @@ export class TownUI {
     const owner = this.game.players.find(pl => pl.id === ownerId);
     if (!owner || owner.id === p.id) return;
 
-    const res = townManager.hostileTakeover(this.currentTown, p, owner);
+    const res = townManager.hostileTakeover(this.currentTown, p, owner, this.game.allNodes);
     this.game.addLog(res.message, res.success ? 'gold' : 'info');
     if (res.success) {
       this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);

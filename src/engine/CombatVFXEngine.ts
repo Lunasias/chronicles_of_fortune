@@ -93,6 +93,17 @@ export interface SummonPortal {
   pillarHeight: number;
 }
 
+export interface CutInBanner {
+  title: string;
+  subtitle: string;
+  avatar: string;
+  color: string;
+  companionAvatar?: string;
+  companionName?: string;
+  durationFrames: number;
+  elapsed: number;
+}
+
 export class CombatVFXEngine {
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
@@ -126,6 +137,13 @@ export class CombatVFXEngine {
   public speedLinesColor = '#ffffff';
   public speedLinesTimer = 0;
 
+  // Impact Flash (White-hot hitfreeze impact frame)
+  public impactFlashAlpha = 0;
+  public impactFlashColor = '#ffffff';
+
+  // Brown Dust 2 Style Cut-In Action Banner
+  public activeCutInBanner: CutInBanner | null = null;
+
   constructor() {}
 
   triggerHitstop(frames = 4) {
@@ -140,6 +158,35 @@ export class CombatVFXEngine {
     this.speedLinesColor = color;
     this.speedLinesAlpha = 1.0;
     this.speedLinesTimer = durationFrames;
+  }
+
+  triggerImpactFlash(color = '#ffffff', alpha = 0.85) {
+    this.impactFlashColor = color;
+    this.impactFlashAlpha = alpha;
+  }
+
+  triggerCutInBanner(
+    title: string,
+    subtitle: string,
+    avatar: string,
+    color = '#f59e0b',
+    companionAvatar?: string,
+    companionName?: string,
+    durationFrames = 42
+  ) {
+    this.activeCutInBanner = {
+      title,
+      subtitle,
+      avatar,
+      color,
+      companionAvatar,
+      companionName,
+      durationFrames,
+      elapsed: 0
+    };
+    this.triggerSpeedLines(color, durationFrames);
+    this.triggerScreenShake(10);
+    this.triggerHitstop(5);
   }
 
   spawnFloatingCombatText(
@@ -775,6 +822,20 @@ export class CombatVFXEngine {
       this.speedLinesAlpha = 0;
     }
 
+    // 4.1 Update Impact Flash
+    if (this.impactFlashAlpha > 0) {
+      this.impactFlashAlpha -= 0.20;
+      if (this.impactFlashAlpha < 0) this.impactFlashAlpha = 0;
+    }
+
+    // 4.2 Update Cut-In Banner
+    if (this.activeCutInBanner) {
+      this.activeCutInBanner.elapsed++;
+      if (this.activeCutInBanner.elapsed >= this.activeCutInBanner.durationFrames) {
+        this.activeCutInBanner = null;
+      }
+    }
+
     // 5. Update Cutscene
     if (this.activeCutscene) {
       this.activeCutscene.elapsed++;
@@ -1116,6 +1177,98 @@ export class CombatVFXEngine {
 
     // 6. Action Speed Lines (Anime Dynamic Slash Overlay)
     this.renderSpeedLines(ctx, arenaWidth, arenaHeight);
+
+    // 7. Brown Dust 2 Style Cut-In Action Banner
+    this.renderCutInBanner(ctx, arenaWidth, arenaHeight);
+
+    // 8. White-Hot Impact Flash Frame
+    this.renderImpactFlash(ctx, arenaWidth, arenaHeight);
+  }
+
+  private renderCutInBanner(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    const banner = this.activeCutInBanner;
+    if (!banner) return;
+
+    ctx.save();
+    const progress = Math.min(1.0, banner.elapsed / Math.max(1, banner.durationFrames));
+    let slideX = 0;
+    let alpha = 1.0;
+    if (progress < 0.2) {
+      const p = progress / 0.2;
+      slideX = (1 - p) * -w * 0.4;
+      alpha = p;
+    } else if (progress > 0.85) {
+      const p = (progress - 0.85) / 0.15;
+      slideX = p * w * 0.4;
+      alpha = 1 - p;
+    }
+
+    const bannerY = h * 0.42;
+    const bannerH = 76;
+
+    // Dark sleek backdrop with crisp geometric borders
+    ctx.globalAlpha = Math.min(1.0, alpha * 0.95);
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(0, bannerY - bannerH / 2, w, bannerH);
+
+    // Top and bottom neon accent rails
+    ctx.fillStyle = banner.color || '#f59e0b';
+    ctx.fillRect(0, bannerY - bannerH / 2, w, 3);
+    ctx.fillRect(0, bannerY + bannerH / 2 - 3, w, 3);
+
+    // Diagonal hazard stripes on edges
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    for (let x = -bannerH; x < w + bannerH; x += 32) {
+      ctx.beginPath();
+      ctx.moveTo(x + (banner.elapsed * 4) % 32, bannerY - bannerH / 2);
+      ctx.lineTo(x + 16 + (banner.elapsed * 4) % 32, bannerY - bannerH / 2);
+      ctx.lineTo(x - 8 + (banner.elapsed * 4) % 32, bannerY + bannerH / 2);
+      ctx.lineTo(x - 24 + (banner.elapsed * 4) % 32, bannerY + bannerH / 2);
+      ctx.fill();
+    }
+
+    // Avatar Box (Hero Avatar + Optional Companion Avatar)
+    const avBoxX = w * 0.22 + slideX;
+    ctx.font = '36px "Segoe UI Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(banner.avatar, avBoxX, bannerY);
+
+    if (banner.companionAvatar) {
+      ctx.font = '24px "Segoe UI Emoji", sans-serif';
+      ctx.fillText('💖', avBoxX + 38, bannerY);
+      ctx.font = '32px "Segoe UI Emoji", sans-serif';
+      ctx.fillText(banner.companionAvatar, avBoxX + 76, bannerY);
+    }
+
+    // Text Content (Title & Subtitle)
+    const textX = (banner.companionAvatar ? avBoxX + 130 : avBoxX + 60);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    // Title text
+    ctx.font = 'bold 22px Silkscreen, monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = banner.color || '#f59e0b';
+    ctx.shadowBlur = 10;
+    ctx.fillText(banner.title.toUpperCase(), textX, bannerY - 14);
+
+    // Subtitle text
+    ctx.font = 'bold 12px "Kanit", sans-serif';
+    ctx.fillStyle = banner.color || '#fde047';
+    ctx.shadowBlur = 0;
+    ctx.fillText(banner.subtitle, textX, bannerY + 16);
+
+    ctx.restore();
+  }
+
+  private renderImpactFlash(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    if (this.impactFlashAlpha <= 0.01) return;
+    ctx.save();
+    ctx.fillStyle = this.impactFlashColor;
+    ctx.globalAlpha = Math.min(1.0, this.impactFlashAlpha);
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
   }
 
   private renderSpeedLines(ctx: CanvasRenderingContext2D, w: number, h: number) {

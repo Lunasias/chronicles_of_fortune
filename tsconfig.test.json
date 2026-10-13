@@ -15,6 +15,7 @@
     "src/engine/IsometricPropPainter.ts",
     "src/engine/PixelScale.ts",
     "src/engine/SkyPainter.ts",
+    "src/engine/NetworkRoomManager.ts",
     "src/game/BalanceSystem.ts",
     "src/game/BoardMap.ts",
     "src/game/CompanionDatabase.ts",

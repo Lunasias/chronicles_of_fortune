@@ -83,13 +83,37 @@ export class TownManager {
     return { success: true, newLevel, tierName };
   }
 
+  // Check if a town is part of an active Trade Route (player owns >= 3 towns in that realm)
+  isTownInTradeRoute(townNode: BoardNode, owner: Player, allNodes: BoardNode[]): boolean {
+    if (!townNode.townData || townNode.townData.ownerId !== owner.id) return false;
+    const realmId = townNode.realmId;
+    const count = owner.townDeeds.reduce((acc, tId) => {
+      const node = allNodes.find(n => n.id === tId);
+      return (node && node.type === 'town' && node.realmId === realmId) ? acc + 1 : acc;
+    }, 0);
+    return count >= 3;
+  }
+
+  // Get list of realm IDs where player owns 3+ towns
+  getActiveTradeRoutes(player: Player, allNodes: BoardNode[]): string[] {
+    const realmCounts: Record<string, number> = {};
+    player.townDeeds.forEach(tId => {
+      const node = allNodes.find(n => n.id === tId);
+      if (node && node.type === 'town') {
+        realmCounts[node.realmId] = (realmCounts[node.realmId] || 0) + 1;
+      }
+    });
+    return Object.keys(realmCounts).filter(r => realmCounts[r] >= 3);
+  }
+
   // Calculate toll when rival visits an owned town
-  calculateToll(townNode: BoardNode, visitor?: Player): number {
+  calculateToll(townNode: BoardNode, visitor?: Player, allNodes?: BoardNode[], owner?: Player): number {
     if (!townNode.townData || !townNode.townData.ownerId) return 0;
     const decreeMult = royalDecreeSystem.activeDecree.id === 'ECONOMIC_BOOM' ? 2 : 1;
     const tierMult = townNode.townData.level >= 3 ? 2.0 : 1.0;
     const specMult = townNode.townData.specialization === 'trade_port' ? 1.5 : 1.0;
-    let toll = Math.floor((30 + townNode.townData.level * 25) * decreeMult * tierMult * specMult);
+    const tradeRouteMult = (allNodes && owner && this.isTownInTradeRoute(townNode, owner, allNodes)) ? 1.5 : 1.0;
+    let toll = Math.floor((30 + townNode.townData.level * 25) * decreeMult * tierMult * specMult * tradeRouteMult);
     if (visitor && visitor.relics.includes('thief_band')) {
       toll = Math.floor(toll * 0.5);
     }
@@ -122,14 +146,16 @@ export class TownManager {
     newOwner.townsControlled = newOwner.townDeeds.length;
   }
 
-  // Hostile takeover: rival player pays 2x town base value to forcefully buy out ownership
-  hostileTakeover(townNode: BoardNode, buyer: Player, currentOwner: Player): { success: boolean; cost: number; message: string } {
+  // Hostile takeover: rival player pays 2x (or 3x for trade route) town base value to forcefully buy out ownership
+  hostileTakeover(townNode: BoardNode, buyer: Player, currentOwner: Player, allNodes?: BoardNode[]): { success: boolean; cost: number; message: string } {
     if (!townNode.townData || townNode.townData.ownerId !== currentOwner.id) {
       return { success: false, cost: 0, message: 'เมืองนี้ไม่ได้อยู่ในการครอบครองของคู่แข่ง!' };
     }
-    const cost = (townNode.townData.baseValue || 200) * 2;
+    const isTradeRoute = allNodes ? this.isTownInTradeRoute(townNode, currentOwner, allNodes) : false;
+    const multiplier = isTradeRoute ? 3 : 2;
+    const cost = (townNode.townData.baseValue || 200) * multiplier;
     if (buyer.gold < cost) {
-      return { success: false, cost, message: `ต้องการทอง ${cost}G เพื่อทำการฮุบกรรมสิทธิ์เมือง!` };
+      return { success: false, cost, message: `ต้องการทอง ${cost}G เพื่อทำการฮุบกรรมสิทธิ์เมือง!${isTradeRoute ? ' (เมืองนี้อยู่ในเส้นทางการค้า ต้องใช้เงิน 3 เท่า)' : ''}` };
     }
     buyer.gold -= cost;
     currentOwner.gold += Math.floor(cost * 0.75);
@@ -138,7 +164,7 @@ export class TownManager {
     return {
       success: true,
       cost,
-      message: `🏢 ยึดกิจการสำเร็จ! ${buyer.displayName} ทุ่มเงิน ${cost}G ทำการ Hostile Takeover ฮุบเมือง ${townNode.name} จาก ${currentOwner.displayName}!`
+      message: `🏢 ยึดกิจการสำเร็จ! ${buyer.displayName} ทุ่มเงิน ${cost}G ทำการ Hostile Takeover ฮุบเมือง ${townNode.name} จาก ${currentOwner.displayName}!${isTradeRoute ? ' (ทลายเส้นทางการค้าสำเร็จ!)' : ''}`
     };
   }
 
@@ -146,6 +172,7 @@ export class TownManager {
   collectTurnRevenue(player: Player, allNodes: BoardNode[]): number {
     let totalTax = 0;
     const decreeMult = royalDecreeSystem.activeDecree.id === 'ECONOMIC_BOOM' ? 2.0 : 1.0;
+    const activeTradeRoutes = this.getActiveTradeRoutes(player, allNodes);
 
     player.townDeeds.forEach(tId => {
       const node = allNodes.find(n => n.id === tId);
@@ -154,6 +181,9 @@ export class TownManager {
         let tax = Math.floor(node.townData.taxYield * decreeMult * tierMult);
         if (node.townData.specialization === 'trade_port') tax = Math.floor(tax * 1.5);
         if (node.townData.specialization === 'mining') tax += 100;
+        if (activeTradeRoutes.includes(node.realmId)) {
+          tax = Math.floor(tax * 1.30); // 30% Trade Route bonus!
+        }
         totalTax += tax;
       }
     });

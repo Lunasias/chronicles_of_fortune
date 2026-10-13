@@ -328,7 +328,7 @@ export class IsometricRenderer {
     // 7. Regional Weather Particles & Living Ecosystem
     const activeNode = activePlayer ? nodes.find(n => n.id === activePlayer.nodeId) || nodes[0] : nodes[0];
     const localWeather = ecosystemSystem.getNodeWeather(activeNode);
-    this.renderRegionalWeather(ctx, localWeather, time);
+    this.renderRegionalWeather(ctx, localWeather, time, activeNode?.biome);
 
     // 8. Night Glows for Town Torches & Player Lanterns (inside world space)
     const lighting = ecosystemSystem.getLightingOverlay();
@@ -358,6 +358,10 @@ export class IsometricRenderer {
     minY: number,
     maxY: number
   ) {
+    // Reset any line dash state before rendering roadways
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+
     for (let i = 0; i < this.roadwaySegments.length; i++) {
       const seg = this.roadwaySegments[i];
 
@@ -389,20 +393,18 @@ export class IsometricRenderer {
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Layer 3: Weathered flagstone stepping pavers
+      // Layer 3: Smooth solid flagstone central spine (static, no moving dashes)
       ctx.strokeStyle = seg.dashColor;
-      ctx.lineWidth = 3.0;
+      ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
-      ctx.setLineDash([4, 8]);
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
-      ctx.setLineDash([]);
 
       // Layer 4: Worn pathway rut & central stone fissure
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.lineWidth = 1.0;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
@@ -944,13 +946,11 @@ export class IsometricRenderer {
       pixelRing(ctx, cx, cy, groundRx, groundRy, ctx.strokeStyle, 1);
       ctx.stroke();
 
-      // 4.2 Expanding Active Sonar / Runic Pulse Wave on Ground
-      const pulseProg = ((time * 0.0022) + (node.id * 0.18)) % 1;
-      const pulseRx = groundRx * (0.85 + pulseProg * 0.65);
-      const pulseRy = groundRy * (0.85 + pulseProg * 0.65);
-      const pulseAlpha = (1 - pulseProg) * (isHovered ? 0.65 : 0.45);
-      ctx.strokeStyle = isHovered ? `rgba(251, 191, 36, ${pulseAlpha})` : `rgba(0, 240, 255, ${pulseAlpha})`;
-      ctx.lineWidth = 2.0;
+      // 4.2 Static Active Runic Accent Ring on Ground (No moving/expanding wave)
+      const pulseRx = groundRx * 1.15;
+      const pulseRy = groundRy * 1.15;
+      ctx.strokeStyle = isHovered ? 'rgba(251, 191, 36, 0.40)' : 'rgba(0, 240, 255, 0.25)';
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       pixelRing(ctx, cx, cy, pulseRx, pulseRy, ctx.strokeStyle, 1);
       ctx.stroke();
@@ -1049,7 +1049,7 @@ export class IsometricRenderer {
       ].includes(node.type);
 
       const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
-      const bob = Math.sin((time * 0.006) + (node.id * 0.7)) * 6; // Animated destination blue arrows bobbing up and down
+      const bob = 0; // Static destination overhead markers per user request (no bobbing/moving)
       const pointerY = py - baseClearance + bob;
 
       ctx.save();
@@ -1372,7 +1372,7 @@ export class IsometricRenderer {
     ctx.restore();
   }
 
-  private renderRegionalWeather(ctx: CanvasRenderingContext2D, weather: WeatherType, time: number) {
+  private renderRegionalWeather(ctx: CanvasRenderingContext2D, weather: WeatherType, time: number, activeBiome?: string) {
     if (weather === 'rain') {
       // Slanting rain streaks + water splash ripples
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
@@ -1442,6 +1442,44 @@ export class IsometricRenderer {
         ctx.beginPath();
         pixelDisc(ctx, p.x, p.y, p.size * 1.1, ctx.fillStyle);
         ctx.fill();
+      });
+    } else if (activeBiome === 'volcano') {
+      // Rising Volcanic Cinder Embers
+      this.particles.forEach((p, idx) => {
+        p.x += Math.sin(time * 0.003 + idx) * 0.7;
+        p.y -= p.vy * 0.8 + 1.2;
+        if (p.y < -1600) p.y = 1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = idx % 3 === 0 ? '#ef4444' : idx % 3 === 1 ? '#f97316' : '#fbbf24';
+        ctx.fillRect(p.x, p.y, p.size * 0.9, p.size * 0.9);
+      });
+    } else if (activeBiome === 'sakura_shrine') {
+      // Drifting Sakura Petals
+      this.particles.forEach((p, idx) => {
+        p.x += Math.sin(time * 0.002 + idx) * 1.2 + 0.8;
+        p.y += p.vy * 0.5 + 0.6;
+        if (p.y > 1600) p.y = -1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = idx % 2 === 0 ? '#f472b6' : '#fb7185';
+        ctx.beginPath();
+        pixelDisc(ctx, p.x, p.y, p.size * 0.85, ctx.fillStyle);
+        ctx.fill();
+      });
+    } else if (activeBiome === 'crystal_cavern' || activeBiome === 'fairy_grove') {
+      // Shimmering Mana Sparkles
+      this.particles.forEach((p, idx) => {
+        p.x += Math.cos(time * 0.002 + idx) * 0.6;
+        p.y += Math.sin(time * 0.002 + idx) * 0.6;
+        if (p.y > 1600) p.y = -1600;
+        if (p.x > 1600) p.x = -1600;
+        if (p.x < -1600) p.x = 1600;
+
+        ctx.fillStyle = idx % 2 === 0 ? '#38bdf8' : '#c084fc';
+        ctx.fillRect(p.x, p.y, p.size * 0.75, p.size * 0.75);
       });
     } else {
       // Clear Skies / Sunny: Gentle golden pollen / leaf motes

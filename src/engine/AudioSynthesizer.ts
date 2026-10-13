@@ -32,7 +32,7 @@ export class AudioSynthesizer {
   // VOLUME & TOGGLE CONTROLS (BGM ALWAYS HALF OF SFX VOLUME)
   // =========================================================================
   setBgmVolume(val: number) {
-    this.bgmVolume = Math.max(0, Math.min(this.sfxVolume * 0.5, val));
+    this.bgmVolume = Math.max(0, Math.min(1, val));
     if (this.ctx && this.bgmGainNode) {
       this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
     }
@@ -40,10 +40,6 @@ export class AudioSynthesizer {
 
   setSfxVolume(val: number) {
     this.sfxVolume = Math.max(0, Math.min(1, val));
-    this.bgmVolume = this.sfxVolume * 0.5;
-    if (this.ctx && this.bgmGainNode) {
-      this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
-    }
   }
 
   toggleBgm(): boolean {

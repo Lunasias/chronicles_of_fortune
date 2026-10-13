@@ -47,12 +47,20 @@ export class DarklingSystem {
     darklingPlayer.becomeDarkling();
 
     // Grant apocalyptic Darkling spells according to specialization
-    if (spec === 'reaper') {
-      darklingPlayer.fieldSpells = ['dark_calamity', 'swap', 'assassin_hit'];
-      darklingPlayer.atk += 15;
+    if (spec === 'destroyer') {
+      darklingPlayer.fieldSpells = ['dark_calamity', 'oblivion_slash', 'swap'];
+      darklingPlayer.maxHp += 120;
+      darklingPlayer.hp += 120;
+      darklingPlayer.atk += 30;
+    } else if (spec === 'reaper') {
+      darklingPlayer.fieldSpells = ['dark_plague', 'tax_audit', 'curse_rust', 'swap'];
+      darklingPlayer.mag += 30;
+      darklingPlayer.mp += 60;
+      darklingPlayer.maxMp += 60;
     } else if (spec === 'tormentor') {
-      darklingPlayer.fieldSpells = ['dark_plague', 'curse_rust', 'poison_dart'];
-      darklingPlayer.mag += 15;
+      darklingPlayer.fieldSpells = ['squid_ink', 'sleepy', 'downer', 'banish'];
+      darklingPlayer.spd += 30;
+      darklingPlayer.luk += 20;
     } else {
       darklingPlayer.fieldSpells = ['dark_calamity', 'dark_plague', 'swap'];
       darklingPlayer.maxHp += 100;

@@ -782,17 +782,23 @@
           </div>
         </div>
 
-        <!-- Center Tactical Scout & Skip AI Buttons -->
+        <!-- Center Tactical Scout & Speed Controls -->
         <div class="pointer-events-auto flex flex-col items-center shrink-0 gap-1">
           <button id="btnBattleScout" class="pixel-btn pixel-btn-purple px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-amber-300 font-bold flex items-center gap-1 sm:gap-1.5 animate-pulse touch-manipulation">
             <span>👁️</span>
             <span class="hidden xs:inline">สอดแนม</span>
             <span>[2]</span>
           </button>
-          <button id="btnSkipAIBattle" class="pixel-btn pixel-btn-blue px-2 py-0.5 text-[9px] sm:text-[10px] text-cyan-200 font-bold flex items-center gap-1 touch-manipulation" title="ข้ามการต่อสู้ของ AI หรือเร่งความเร็วการต่อสู้">
-            <span>⏩</span>
-            <span>ข้าม/เร่งความเร็ว</span>
-          </button>
+          <div class="flex items-center gap-1">
+            <button id="btnBattleSpeedToggle" class="pixel-btn pixel-btn-gold px-2 py-0.5 text-[9px] sm:text-[10px] text-slate-950 font-bold flex items-center gap-1 touch-manipulation" title="เร่งความเร็วการต่อสู้ (1x, 2x, 4x)">
+              <span>⚡</span>
+              <span id="battleSpeedText">1x</span>
+            </button>
+            <button id="btnSkipAIBattle" class="pixel-btn pixel-btn-blue px-2 py-0.5 text-[9px] sm:text-[10px] text-cyan-200 font-bold flex items-center gap-1 touch-manipulation" title="ข้ามการต่อสู้ของ AI">
+              <span>⏩</span>
+              <span>ข้าม AI</span>
+            </button>
+          </div>
         </div>
 
         <!-- Enemy Status -->
@@ -1300,12 +1306,27 @@
         <div>• 👾 ร่ายมนตร์ภัยพิบัติ: เรียกมอนสเตอร์ยึดเมือง!</div>
         <div>• ⏳ การแปลงร่างอยู่ได้ <strong class="text-amber-300">14 เทิร์น</strong>!</div>
       </div>
-      <div class="flex gap-3 justify-center">
-        <button id="btnAcceptDarkling" class="pixel-btn pixel-btn-purple flex-1 py-2.5 text-xs font-bold text-white tracking-wider">
-          ยอมรับสนธิสัญญามืด! 😈
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+        <button id="btnAcceptDarklingDestroyer" class="pixel-btn pixel-btn-red p-2.5 text-xs font-bold text-white flex flex-col items-center gap-1">
+          <span class="text-lg">🗡️</span>
+          <span>สายทำลายล้าง (Destroyer)</span>
+          <span class="text-[9px] text-rose-200 font-normal">ATK สูงสุด + ดาบผ่าพิภพ</span>
         </button>
-        <button id="btnRejectDarkling" class="pixel-btn flex-1 py-2.5 text-xs font-bold text-slate-400 hover:text-white">
-          ปฏิเสธ
+        <button id="btnAcceptDarklingReaper" class="pixel-btn pixel-btn-purple p-2.5 text-xs font-bold text-white flex flex-col items-center gap-1">
+          <span class="text-lg">💀</span>
+          <span>สายกลืนกิน (Reaper)</span>
+          <span class="text-[9px] text-purple-200 font-normal">MAG สูงสุด + ปล้นทองทั่วโลก</span>
+        </button>
+        <button id="btnAcceptDarklingTormentor" class="pixel-btn pixel-btn-blue p-2.5 text-xs font-bold text-cyan-200 flex flex-col items-center gap-1">
+          <span class="text-lg">🌀</span>
+          <span>สายปั่นป่วน (Tormentor)</span>
+          <span class="text-[9px] text-cyan-300 font-normal">SPD สูงสุด + หมึกมืด & เนรเทศ</span>
+        </button>
+      </div>
+      <div class="flex gap-3 justify-center">
+        <button id="btnAcceptDarkling" class="hidden"></button>
+        <button id="btnRejectDarkling" class="pixel-btn flex-1 py-2 text-xs font-bold text-slate-400 hover:text-white">
+          ปฏิเสธสนธิสัญญามืด
         </button>
       </div>
     </div>
@@ -1655,6 +1676,20 @@
             <span>เสียง 8-บิต:</span>
             <input type="checkbox" id="checkSound" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
           </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span>ระดับเสียงดนตรี (BGM):</span>
+            <div class="flex items-center gap-1.5">
+              <input type="range" id="sliderBgmVolume" min="0" max="100" value="25" class="w-24 accent-amber-500 cursor-pointer">
+              <span id="bgmVolumeVal" class="text-[10px] text-amber-300 w-7 text-right">25%</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span>ระดับเสียงเอฟเฟกต์ (SFX):</span>
+            <div class="flex items-center gap-1.5">
+              <input type="range" id="sliderSfxVolume" min="0" max="100" value="40" class="w-24 accent-amber-500 cursor-pointer">
+              <span id="sfxVolumeVal" class="text-[10px] text-amber-300 w-7 text-right">40%</span>
+            </div>
+          </div>
           <div class="flex items-center justify-between">
             <span>สั่นหน้าจอ:</span>
             <input type="checkbox" id="checkShake" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
@@ -1750,6 +1785,10 @@
         </span>
         <span id="titleLoadGameMeta" class="text-[9px] text-amber-300 font-normal"></span>
       </button>
+      <button id="btnTitleMultiplayerRoom" class="pixel-btn py-2 text-xs text-cyan-300 hover:text-white flex items-center justify-center gap-1.5 font-bold">
+        <span>🌐</span>
+        <span>ห้องเล่นหลายคน (Room Code P2P)</span>
+      </button>
       <button id="btnTitleHallOfFame" class="pixel-btn py-2 text-xs text-amber-300 hover:text-white flex items-center justify-center gap-1.5 font-bold">
         <span>🏛️</span>
         <span>หอเกียรติยศ (Hall of Fame)</span>
@@ -1812,6 +1851,9 @@
           </button>
           <button id="btnModeEndlessSpire" class="game-mode-btn pixel-btn px-2 py-1 text-[11px] text-amber-300" data-mode="endless_spire">
             🏰 Endless Spire
+          </button>
+          <button id="btnModeRoguelikeDraft" class="game-mode-btn pixel-btn px-2 py-1 text-[11px] text-amber-300" data-mode="roguelike_draft">
+            🎲 Roguelike Draft
           </button>
         </div>
       </div>

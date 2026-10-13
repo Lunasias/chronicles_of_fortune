@@ -400,11 +400,13 @@ export class IsometricTerrainEngine {
       ctx.lineDashOffset = phase * 3;
     } else {
       ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
     }
     ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.stroke();
     if (dashed) {
       ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
     }
   }
 

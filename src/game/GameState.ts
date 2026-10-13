@@ -26,6 +26,62 @@ export type GamePhase =
   | 'WEEKLY_REPORT'
   | 'VICTORY';
 
+export type GameModeType = 'standard' | 'blitz' | 'coop_raid' | 'endless_spire' | 'roguelike_draft';
+
+export interface RoguelikeModifier {
+  id: string;
+  name: string;
+  icon: string;
+  desc: string;
+  atkMultiplier: number;
+  defMultiplier: number;
+  tollMultiplier: number;
+  diceBonus: number;
+}
+
+export const ROGUELIKE_MODIFIERS: RoguelikeModifier[] = [
+  {
+    id: 'blood_frenzy',
+    name: 'Blood Moon Frenzy (คลั่งจันทราโลหิต)',
+    icon: '🩸',
+    desc: 'พลังโจมตี ATK ทั่วกระดาน +35% แต่พลังป้องกัน DEF ลดลง 20%!',
+    atkMultiplier: 1.35,
+    defMultiplier: 0.80,
+    tollMultiplier: 1.0,
+    diceBonus: 0
+  },
+  {
+    id: 'midas_gold',
+    name: 'Midas Prosperity (พรแห่งไมดาส)',
+    icon: '✨',
+    desc: 'ค่าผ่านทางและภาษีเมืองเพิ่มขึ้น 50% ทุกการก้าวเดินมีค่าดั่งทอง!',
+    atkMultiplier: 1.0,
+    defMultiplier: 1.0,
+    tollMultiplier: 1.5,
+    diceBonus: 0
+  },
+  {
+    id: 'gale_stride',
+    name: 'Tempest Stride (วายุพาจร)',
+    icon: '🌪️',
+    desc: 'สายลมหนุนหลัง! ผลทอยลูกเต๋าเพิ่มขึ้น +2 ช่องสำหรับทุกคน!',
+    atkMultiplier: 1.0,
+    defMultiplier: 1.0,
+    tollMultiplier: 1.0,
+    diceBonus: 2
+  },
+  {
+    id: 'arcane_surge',
+    name: 'Arcane Surge (คลื่นมนตราเอ่อล้น)',
+    icon: '🔮',
+    desc: 'สมาธิด้านเวทมนตร์เพิ่มพูน พลังเวทและสกิลรุนแรงขึ้น!',
+    atkMultiplier: 1.2,
+    defMultiplier: 1.2,
+    tollMultiplier: 1.0,
+    diceBonus: 0
+  }
+];
+
 export class GameState {
   public phase: GamePhase = 'TITLE';
   public players: Player[] = [];
@@ -42,14 +98,15 @@ export class GameState {
   public gameSpeed = 1;
 
   // Game Mode & House Rules
-  public gameMode: 'standard' | 'blitz' | 'coop_raid' | 'endless_spire' = 'standard';
+  public gameMode: GameModeType = 'standard';
+  public activeRoguelikeModifier: RoguelikeModifier | null = null;
   public blitzDayLimit: number = 20;
   public coopRaidDayLimit: number = 30;
   public allowDarkling: boolean = true;
   public aiDifficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical';
 
   // Field Traps placed by players
-  public placedTraps: Array<{ nodeId: number; ownerId: number; damage: number }> = [];
+  public placedTraps: Array<{ nodeId: number; ownerId: number; damage: number; type?: 'damage' | 'pitfall' | 'greed' | 'rust' }> = [];
 
   // Active sub-states
   public activeBattle: BattleEngine | null = null;
@@ -59,14 +116,21 @@ export class GameState {
 
   // Log drawer messages
   public logs: Array<{ text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }> = [];
+  public onLogAdded?: (entry: { text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }) => void;
 
   get activePlayer(): Player {
     return this.players[this.activePlayerIdx] || this.players[0];
   }
 
   addLog(text: string, type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' = 'info') {
-    this.logs.unshift({ text, type });
+    const entry = { text, type };
+    this.logs.unshift(entry);
     if (this.logs.length > 60) this.logs.pop();
+
+    if (this.onLogAdded) {
+      this.onLogAdded(entry);
+      return;
+    }
 
     // Stream into Live Game Event Feed Window (Middle-Left of screen)
     if (typeof document !== 'undefined') {
@@ -106,6 +170,14 @@ export class GameState {
           list.removeChild(list.lastChild!);
         }
       }
+    }
+  }
+
+  clearLogs(): void {
+    this.logs = [];
+    if (typeof document !== 'undefined') {
+      const list = document.getElementById('gameEventFeedList');
+      if (list) list.innerHTML = '';
     }
   }
 
@@ -152,6 +224,22 @@ export class GameState {
     this.logs = [];
 
     this.addLog(`⚔️ The Grand Dokapon Expedition เริ่มต้นขึ้นแล้วทั้ง ${this.getTownCount()} เมือง!`, 'level');
+
+    if (this.gameMode === 'roguelike_draft') {
+      const draftRelics = ['angel_feather', 'thief_band', 'speed_boots', 'shield_ring'];
+      const draftSpells = ['zap', 'swap', 'holy_sanctuary', 'tax_audit'];
+      this.players.forEach((p, idx) => {
+        const relic = draftRelics[idx % draftRelics.length];
+        const spell = draftSpells[idx % draftSpells.length];
+        p.relics.push(relic);
+        if (!p.fieldSpells.includes(spell)) {
+          p.fieldSpells.push(spell);
+        }
+      });
+      this.activeRoguelikeModifier = ROGUELIKE_MODIFIERS[0];
+      this.addLog(`🎲 ROGUELIKE DRAFT: ผู้เล่นทุกคนได้รับ Relic และ คัมภีร์เวทเริ่มต้น! สภาพแวดล้อม: ${this.activeRoguelikeModifier.icon} ${this.activeRoguelikeModifier.name}`, 'level');
+    }
+
     this.startTurn();
   }
 
@@ -354,6 +442,16 @@ export class GameState {
       }
       this.addLog(`☄️ จอมมาร ${caster.displayName} ปลดปล่อย Demonic Calamity! ทำลายเมือง [${affected.join(', ') || 'ไม่มีเมืองให้ทำลาย'}] ให้มอนสเตอร์ยึดครอง!`, 'darkling');
       return { success: true, message: `☄️ ถล่มเมือง ${affected.join(', ') || 'ไม่มีเมือง'} คืนสู่ความมืดมิดสำเร็จ!` };
+    }
+
+    if (spellKey === 'oblivion_slash' && target) {
+      const dmg = Math.max(30, Math.floor(target.hp * 0.5));
+      target.hp = Math.max(1, target.hp - dmg);
+      target.curseTurns = 3;
+      audio.strikeHit();
+      audio.curseExplosion();
+      this.addLog(`🗡️💥 จอมมารสาย Destroyer ${caster.displayName} วาดดาบผ่าพิภพอเวจี Oblivion Slash ใส่ ${target.displayName}! ฟันลด HP ${dmg} หน่วย และสาปแช่ง 3 เทิร์น!`, 'darkling');
+      return { success: true, message: `🗡️💥 ดาบผ่าพิภพอเวจีผ่าร่าง ${target.displayName} ลด HP ${dmg}!` };
     }
 
     if (spellKey === 'dark_plague') {
@@ -670,6 +768,13 @@ export class GameState {
         this.weekCounter++;
         royalDecreeSystem.generateWeeklyDecree(this.weekCounter, this.allNodes, this.players);
         this.addLog(`📜 พระราชกฤษฎีกา: ${royalDecreeSystem.activeDecree.headline}`, 'gold');
+
+        if (this.gameMode === 'roguelike_draft') {
+          const modIdx = (this.weekCounter - 1) % ROGUELIKE_MODIFIERS.length;
+          this.activeRoguelikeModifier = ROGUELIKE_MODIFIERS[modIdx];
+          this.addLog(`🎲 ROGUELIKE REALM MUTATION: ${this.activeRoguelikeModifier.icon} ${this.activeRoguelikeModifier.name} - ${this.activeRoguelikeModifier.desc}`, 'level');
+        }
+
         this.phase = 'WEEKLY_REPORT';
         if (onWeeklyReportCallback) {
           onWeeklyReportCallback();
@@ -706,6 +811,12 @@ export class GameState {
 
     // Endless Spire Mode
     if (this.gameMode === 'endless_spire' && this.dayCounter >= 40) {
+      this.phase = 'VICTORY';
+      return;
+    }
+
+    // Roguelike Draft Mode
+    if (this.gameMode === 'roguelike_draft' && this.dayCounter >= 28) {
       this.phase = 'VICTORY';
       return;
     }

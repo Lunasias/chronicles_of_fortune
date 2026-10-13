@@ -310,6 +310,7 @@ export const DUNGEON_FROZEN_NODES: BoardNode[] = [
 export class DungeonSystem {
   private returnNodes: Record<number, number> = {};
   public torchMeter: Record<number, number> = {}; // PlayerId -> torch % (0 to 100)
+  public dungeonDepth: Record<number, number> = {}; // PlayerId -> current floor depth (1, 2, 3...)
 
   ensureDungeonLoaded(game: GameState): void {
     if (!game.allNodes.some(n => n.id === 1000)) {
@@ -327,6 +328,10 @@ export class DungeonSystem {
     return (nodeId >= 1000 && nodeId <= 1006) ||
            (nodeId >= 1100 && nodeId <= 1106) ||
            (nodeId >= 1200 && nodeId <= 1206);
+  }
+
+  getDungeonDepth(playerId: number): number {
+    return this.dungeonDepth[playerId] || 1;
   }
 
   getTorch(playerId: number): number {
@@ -355,6 +360,7 @@ export class DungeonSystem {
     this.ensureDungeonLoaded(game);
     this.returnNodes[player.id] = player.nodeId;
     this.torchMeter[player.id] = 100; // Reset torch on entry
+    this.dungeonDepth[player.id] = 1;
 
     let startId = 1000;
     const r = preferredRealm || game.allNodes.find(n => n.id === player.nodeId)?.realmId;
@@ -371,15 +377,43 @@ export class DungeonSystem {
     audio.darklingRoar();
     audio.playBiomeBgm(startNode.biome || 'abyss');
     game.addLog(
-      `🌀 ${player.displayName} ดำดิ่งสู่ '${startNode.realmName}' เพื่อค้นหามหาสมบัติที่สาบสูญ! (คบเพลิง 100%)`,
+      `🌀 ${player.displayName} ดำดิ่งสู่ '${startNode.realmName}' ชั้นที่ 1 เพื่อค้นหามหาสมบัติที่สาบสูญ! (คบเพลิง 100%)`,
       'battle'
     );
   }
 
+  descendDeeper(player: Player, game: GameState): { success: boolean; newDepth: number } {
+    const currentDepth = this.getDungeonDepth(player.id);
+    const nextDepth = currentDepth + 1;
+    this.dungeonDepth[player.id] = nextDepth;
+    this.torchMeter[player.id] = 100; // Refill torch for the new floor
+
+    // Find starting node of the current dungeon
+    let startId = 1000;
+    if (player.nodeId >= 1100 && player.nodeId <= 1106) startId = 1100;
+    else if (player.nodeId >= 1200 && player.nodeId <= 1206) startId = 1200;
+
+    player.nodeId = startId;
+    player.prevNodeId = null;
+    const startNode = game.allNodes.find(n => n.id === startId)!;
+    player.gridX = startNode.gx;
+    player.gridY = startNode.gy;
+    player.gridZ = startNode.gz;
+
+    audio.darklingRoar();
+    game.addLog(
+      `🔥 ผู้กล้าหาญ! ${player.displayName} ตัดสินใจดำดิ่งลงสู่ชั้นลึกที่ ${nextDepth} (ความมืดหนาทึบขึ้น รางวัลทวีคูณ!)`,
+      'battle'
+    );
+    return { success: true, newDepth: nextDepth };
+  }
+
   exitDungeon(player: Player, game: GameState): void {
     const returnId = this.returnNodes[player.id] ?? 0;
+    const depth = this.getDungeonDepth(player.id);
     delete this.returnNodes[player.id];
     delete this.torchMeter[player.id];
+    delete this.dungeonDepth[player.id];
 
     const targetNode = game.allNodes.find(n => n.id === returnId) || game.allNodes[0];
     player.nodeId = targetNode.id;
@@ -388,9 +422,10 @@ export class DungeonSystem {
     player.gridY = targetNode.gy;
     player.gridZ = targetNode.gz;
 
-    // Rewards for completing the crawl
-    const bonusGold = 1500;
-    const bonusXp = 350;
+    // Rewards scale significantly with dungeon depth
+    const depthMultiplier = 1 + (depth - 1) * 0.8;
+    const bonusGold = Math.round(1500 * depthMultiplier);
+    const bonusXp = Math.round(350 * depthMultiplier);
     player.gold += bonusGold;
     player.matchStats.goldEarnedTotal += bonusGold;
     player.gainXP(bonusXp);
@@ -398,7 +433,7 @@ export class DungeonSystem {
     audio.jackpotFanfare();
     audio.playBiomeBgm(targetNode.biome || targetNode.realmId);
     game.addLog(
-      `✨ ผู้พิชิตดันเจี้ยน! ${player.displayName} ทะลวงประตูมิติมืดกลับสู่ผืนพิภพสำเร็จ! ได้รับทอง +${bonusGold}G และ +${bonusXp} XP!`,
+      `✨ ผู้พิชิตดันเจี้ยน (ชั้นที่ ${depth})! ${player.displayName} ทะลวงมิติกลับสู่ผืนพิภพสำเร็จ! ได้รับทอง +${bonusGold}G และ +${bonusXp} XP!`,
       'level'
     );
   }

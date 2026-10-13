@@ -234,7 +234,7 @@ export class InspectUI {
           <div class="pixel-box-gold p-3 mb-3 border-2 border-amber-400 bg-amber-950/70 flex items-center justify-between gap-2">
             <div>
               <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                <span>⭐</span> <span>พร้อมเลื่อนขั้นอาชีพขั้นสูง (Tier 2)!</span>
+                <span>⭐</span> <span>พร้อมเลื่อนขั้นอาชีพขั้นสูง (${player.isPromoted ? 'Tier 3 Master' : 'Tier 2'})!</span>
               </div>
               <div class="text-[10px] text-amber-200">ปลดล็อกพลังใหม่และสเตตัสถาวรระดับตำนาน</div>
             </div>
@@ -374,7 +374,7 @@ export class InspectUI {
           <div class="flex items-center gap-2">
             <span class="text-2xl">⭐</span>
             <div>
-              <h2 class="text-sm font-bold text-amber-300">พิธีเลื่อนขั้นอาชีพ (Tier 2 Promotion)</h2>
+              <h2 class="text-sm font-bold text-amber-300">พิธีเลื่อนขั้นอาชีพ (${player.isPromoted ? 'Tier 3 Master Promotion' : 'Tier 2 Promotion'})</h2>
               <p class="text-[10px] text-slate-300">เลือกเส้นทางแห่งวีรบุรุษขั้นสูงเพื่อรับพลังใหม่</p>
             </div>
           </div>

@@ -21,14 +21,19 @@ export class WeeklyReportUI {
       }
     });
 
-    document.getElementById('btnAcceptDarkling')?.addEventListener('click', () => {
+    const handleAcceptPact = (spec: 'destroyer' | 'reaper' | 'tormentor' = 'destroyer') => {
       audio.darklingRoar();
       document.getElementById('darklingPactModal')?.classList.add('hidden');
       const sorted = [...this.game.players].sort((a, b) => a.getNetWorth(this.game.allNodes) - b.getNetWorth(this.game.allNodes));
       const trailing = sorted[0]; // Last place
-      darklingSystem.acceptPact(trailing, this.game.allNodes);
-      this.game.addLog(`😈 APOCALYPSE! ${trailing.name} surrendered their soul to become THE DARKLING!`, 'darkling');
-    });
+      darklingSystem.acceptPact(trailing, this.game.allNodes, spec);
+      this.game.addLog(`😈 APOCALYPSE! ${trailing.displayName} สละวิญญาณทำสัญญาเป็น THE DARKLING (${spec.toUpperCase()})!`, 'darkling');
+    };
+
+    document.getElementById('btnAcceptDarklingDestroyer')?.addEventListener('click', () => handleAcceptPact('destroyer'));
+    document.getElementById('btnAcceptDarklingReaper')?.addEventListener('click', () => handleAcceptPact('reaper'));
+    document.getElementById('btnAcceptDarklingTormentor')?.addEventListener('click', () => handleAcceptPact('tormentor'));
+    document.getElementById('btnAcceptDarkling')?.addEventListener('click', () => handleAcceptPact('destroyer'));
 
     document.getElementById('btnRejectDarkling')?.addEventListener('click', () => {
       audio.click();

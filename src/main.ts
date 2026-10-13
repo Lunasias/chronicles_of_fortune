@@ -28,6 +28,7 @@ import { FantasyEventUI } from './ui/FantasyEventUI';
 import { CasinoUI } from './ui/CasinoUI';
 import { dungeonSystem } from './game/DungeonSystem';
 import { hallOfFameUI } from './ui/HallOfFameUI';
+import { multiplayerRoomUI } from './ui/MultiplayerRoomUI';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { scaleMonster, tierForNode } from './game/BalanceSystem';
 import type { ThreatTier } from './game/BalanceSystem';
@@ -96,6 +97,12 @@ class DokaponApp {
 
     document.getElementById('btnTitleHallOfFame')?.addEventListener('click', () => {
       hallOfFameUI.open();
+    });
+    document.getElementById('btnTitleMultiplayerRoom')?.addEventListener('click', () => {
+      multiplayerRoomUI.open(() => {
+        document.getElementById('titleButtonsBlock')?.classList.add('hidden');
+        document.getElementById('playerSetupBlock')?.classList.remove('hidden');
+      });
     });
     document.getElementById('btnViewHallOfFameFromVictory')?.addEventListener('click', () => {
       hallOfFameUI.open();
@@ -503,7 +510,7 @@ class DokaponApp {
         const target = e.currentTarget as HTMLElement;
         target.classList.add('pixel-btn-gold', 'text-slate-950', 'font-bold');
         target.classList.remove('text-amber-300');
-        const mode = target.getAttribute('data-mode') as 'standard' | 'blitz' | 'coop_raid' | 'endless_spire';
+        const mode = target.getAttribute('data-mode') as 'standard' | 'blitz' | 'coop_raid' | 'endless_spire' | 'roguelike_draft';
         this.game.gameMode = mode;
       });
     });
@@ -883,6 +890,23 @@ class DokaponApp {
       document.getElementById('settingsModal')?.classList.add('hidden');
     });
 
+    // Audio Volume Sliders
+    const bgmSlider = document.getElementById('sliderBgmVolume') as HTMLInputElement | null;
+    const bgmValText = document.getElementById('bgmVolumeVal');
+    bgmSlider?.addEventListener('input', () => {
+      const val = parseInt(bgmSlider.value, 10) || 0;
+      if (bgmValText) bgmValText.innerText = `${val}%`;
+      audio.setBgmVolume(val / 100);
+    });
+
+    const sfxSlider = document.getElementById('sliderSfxVolume') as HTMLInputElement | null;
+    const sfxValText = document.getElementById('sfxVolumeVal');
+    sfxSlider?.addEventListener('input', () => {
+      const val = parseInt(sfxSlider.value, 10) || 0;
+      if (sfxValText) sfxValText.innerText = `${val}%`;
+      audio.setSfxVolume(val / 100);
+    });
+
     // In-game Save & Load Handlers
     document.getElementById('btnSaveGame')?.addEventListener('click', () => {
       this.saveGameProgress(true);
@@ -1122,6 +1146,20 @@ class DokaponApp {
     this.onTurnStarted();
 
     if (this.game.activePlayer.isAI) {
+      const ai = this.game.activePlayer;
+      if (!ai.isDarkling && Math.random() < 0.25) {
+        const trapDecision = aiSystem.chooseTrapPlacement(ai, this.game.allNodes, this.game.players, this.game.placedTraps);
+        if (trapDecision) {
+          ai.gold -= 60;
+          this.game.placedTraps.push({
+            nodeId: trapDecision.nodeId,
+            ownerId: ai.id,
+            damage: Math.round(ai.atk * 1.5),
+            type: trapDecision.type
+          });
+          this.game.addLog(`🕵️ ${ai.displayName} แอบวางกับดัก (${trapDecision.type.toUpperCase()}) บนกระดาน!`, 'battle');
+        }
+      }
       setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
     }
   }
@@ -1228,6 +1266,33 @@ class DokaponApp {
       audio.playBiomeBgm(tile.biome || tile.realmId);
     }
 
+    // 0. Check for Triggered Field Trap!
+    const trapIndex = this.game.placedTraps.findIndex(t => t.nodeId === tile.id);
+    if (trapIndex !== -1) {
+      const trap = this.game.placedTraps[trapIndex];
+      if (trap.ownerId !== p.id) {
+        this.game.placedTraps.splice(trapIndex, 1);
+        const owner = this.game.players.find(pl => pl.id === trap.ownerId);
+        const ownerName = owner ? owner.displayName : 'ใครบางคน';
+        audio.hurt();
+
+        const trapType = trap.type || 'damage';
+        if (trapType === 'greed') {
+          const goldStolen = Math.min(p.gold, Math.max(40, Math.floor(p.gold * 0.25)));
+          p.gold -= goldStolen;
+          if (owner) owner.gold += goldStolen;
+          this.game.addLog(`💣 กับดักชิงทรัพย์! ${p.displayName} เหยียบกับดักของ ${ownerName} สูญเสียทอง ${goldStolen}G!`, 'gold');
+        } else if (trapType === 'rust') {
+          p.rustTurns = 3;
+          this.game.addLog(`🛡️ กับดักสนิม! ${p.displayName} เหยียบกับดักของ ${ownerName} อุปกรณ์เป็นสนิม 3 เทิร์น!`, 'battle');
+        } else {
+          const dmg = trap.damage || Math.round(p.maxHp * 0.20);
+          p.hp = Math.max(1, p.hp - dmg);
+          this.game.addLog(`💥 กับดักระเบิด! ${p.displayName} เหยียบกับดักของ ${ownerName} เสียพลังชีวิต ${dmg} HP!`, 'battle');
+        }
+      }
+    }
+
     // 1. Check for PvP Collision!
     const rival = this.game.players.find(other => other.id !== p.id && other.nodeId === p.nodeId);
     if (rival) {
@@ -1284,6 +1349,26 @@ class DokaponApp {
         break;
 
       case 'dark_gate':
+        if (p.isDarkling) {
+          // Void Rift Shortcut for Darkling
+          const realmDestinations = [
+            { realm: 'solaria', nodeId: 0, name: 'Solaria Capital' },
+            { realm: 'sunfire', nodeId: 18, name: 'Sunfire Dunes' },
+            { realm: 'frostpeak', nodeId: 35, name: 'Frostpeak Glaciers' },
+            { realm: 'gloomspore', nodeId: 52, name: 'Gloomspore Swamps' },
+          ];
+          const warpDest = realmDestinations[Math.floor(Math.random() * realmDestinations.length)];
+          const targetNode = this.game.allNodes.find(n => n.id === warpDest.nodeId) || this.game.allNodes[0];
+          p.nodeId = targetNode.id;
+          p.gridX = targetNode.gx;
+          p.gridY = targetNode.gy;
+          p.gridZ = targetNode.gz;
+          audio.darklingRoar();
+          this.game.addLog(`🌀 VOID RIFT SHORTCUT! จอมมาร ${p.displayName} ฉีกมิติผ่านรอยแยก Void Rift วาร์ปทะลวงสู่ [${targetNode.name}]!`, 'darkling');
+          this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+          this.advanceTurn();
+          break;
+        }
         this.fantasyEventUI.openEvent(p, tile, () => {
           if (darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
             document.getElementById('darklingPactModal')?.classList.remove('hidden');

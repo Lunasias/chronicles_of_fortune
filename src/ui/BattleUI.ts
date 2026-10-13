@@ -160,13 +160,26 @@ export class BattleUI {
   };
 
   public skipAIBattles: boolean = false;
+  public battleSpeedMultiplier: 1 | 2 | 4 = 1;
 
   public getSpeedDelay(ms: number): number {
     if (this.skipAIBattles) {
       return 25; // Instant fast-forward delay
     }
-    const s = this.game.gameSpeed || 1;
+    const s = (this.game.gameSpeed || 1) * this.battleSpeedMultiplier;
     return Math.max(25, Math.round(ms / s));
+  }
+
+  public toggleBattleSpeed(): number {
+    if (this.battleSpeedMultiplier === 1) this.battleSpeedMultiplier = 2;
+    else if (this.battleSpeedMultiplier === 2) this.battleSpeedMultiplier = 4;
+    else this.battleSpeedMultiplier = 1;
+
+    const textEl = document.getElementById('battleSpeedText');
+    if (textEl) {
+      textEl.innerText = `${this.battleSpeedMultiplier}x`;
+    }
+    return this.battleSpeedMultiplier;
   }
 
   private typewriterTimer: number | null = null;
@@ -273,6 +286,12 @@ export class BattleUI {
       this.checkAITurn();
     });
 
+    // Battle Speed Multiplier Toggle (1x, 2x, 4x)
+    document.getElementById('btnBattleSpeedToggle')?.addEventListener('click', () => {
+      audio.click();
+      this.toggleBattleSpeed();
+    });
+
     // Brown Dust 2 Tactical Formation Row Selection
     const setPlayerFormation = (pos: CombatGridPosition) => {
       const b = this.game.activeBattle;
@@ -377,10 +396,13 @@ export class BattleUI {
       isPvP: enemy.isPvP || false,
       playerRef: p,
       classKey: p.classKey,
-      skillName: p.skillName
+      skillName: p.skillName,
+      avatar: p.avatar
     };
 
-    this.game.activeBattle = new BattleEngine(playerCombatant, enemy);
+    const currentNode = this.game.allNodes.find(n => n.id === p.nodeId);
+    const biome = currentNode?.biome || 'grass';
+    this.game.activeBattle = new BattleEngine(playerCombatant, enemy, biome);
     this.game.activeBattleEnemyCombatant = enemy;
     this.onBattleEndCallback = onBattleEnd;
 
@@ -638,27 +660,53 @@ export class BattleUI {
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${companion.name}!`, 'crit');
     combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, enemyX, enemyY, 'mage', false);
 
-    const enemy = isPAtk ? b.defender : b.attacker;
-    const dmg = 45 + Math.floor(player.getTotalStat('atk') * 0.85);
-    enemy.hp = Math.max(0, enemy.hp - dmg);
+    if (isPAtk) {
+      // Offensive Companion Assist
+      const enemy = b.defender;
+      const baseStat = Math.max(player.getTotalStat('atk'), player.getTotalStat('mag'));
+      const dmg = Math.round(55 + baseStat * 0.95);
+      enemy.hp = Math.max(0, enemy.hp - dmg);
 
-    setTimeout(() => {
-      // Fire companion laser beam & impact!
-      combatVFX.spawnMagicLaserBeam(summonX, summonY - 50, enemyX, enemyY - 50, companion.color || '#f43f5e', 22);
-      combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${dmg} HP!`, 'crit');
-      audio.strikeHit();
-      this.updateUI();
+      setTimeout(() => {
+        combatVFX.spawnMagicLaserBeam(summonX, summonY - 50, enemyX, enemyY - 50, companion.color || '#f43f5e', 22);
+        combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${dmg} HP!`, 'crit');
+        combatVFX.triggerImpactFlash('#ffffff', 0.85);
+        audio.strikeHit();
+        this.updateUI();
 
-      const logMsg = `💖 [คู่หูเข้าช่วยรบ!] ${companion.name} ปรากฏตัวจากประตูมิติ ร่าย [${companion.skillName}] สร้างความเสียหายรุนแรง ${dmg} แก่ ${enemy.name}!`;
-      document.getElementById('battleNarration')!.innerText = logMsg;
-      this.game.addLog(logMsg, 'battle');
+        const logMsg = `💖 [คู่หูเข้าช่วยรบ!] ${companion.name} ปรากฏตัวจากประตูมิติ ร่าย [${companion.skillName}] สร้างความเสียหายรุนแรง ${dmg} แก่ ${enemy.name}!`;
+        document.getElementById('battleNarration')!.innerText = logMsg;
+        this.game.addLog(logMsg, 'battle');
 
-      if (enemy.hp <= 0) {
-        setTimeout(() => {
-          this.concludeBattle(b.attacker.hp > 0 ? b.attacker : b.defender, enemy);
-        }, this.getSpeedDelay(1000));
-      }
-    }, this.getSpeedDelay(450));
+        if (enemy.hp <= 0) {
+          setTimeout(() => {
+            this.concludeBattle(b.attacker.hp > 0 ? b.attacker : b.defender, enemy);
+          }, this.getSpeedDelay(1000));
+        }
+      }, this.getSpeedDelay(450));
+    } else {
+      // Defensive Sanctuary Assist (Heal + Barrier + Cleanse Debuffs)
+      const healAmount = Math.round(player.maxHp * 0.35);
+      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+      b.defender.barrierHp = (b.defender.barrierHp || 0) + Math.round(player.maxHp * 0.20);
+      b.defender.burnTurns = 0;
+      b.defender.freezeTurns = 0;
+      b.defender.silenceTurns = 0;
+      b.defender.blindTurns = 0;
+      player.cleanseAilments();
+
+      setTimeout(() => {
+        combatVFX.spawnMagicHit(summonX, summonY - 20, true);
+        combatVFX.spawnFloatingCombatText(summonX, summonY - 60, `+${healAmount} HP (CLEANSED)`, 'heal');
+        combatVFX.triggerImpactFlash('#38bdf8', 0.7);
+        audio.relicChime();
+        this.updateUI();
+
+        const logMsg = `💖 [คู่หูพิทักษ์ชีพ!] ${companion.name} กางมหาบาเรียศักดิ์สิทธิ์ [${companion.skillName}] ฟื้นฟู +${healAmount} HP และชำระล้างสถานะผิดปกติทั้งหมด!`;
+        document.getElementById('battleNarration')!.innerText = logMsg;
+        this.game.addLog(logMsg, 'level');
+      }, this.getSpeedDelay(450));
+    }
   }
 
   public triggerEmergencyCompanionAssist(playerC: Combatant, enemyC: Combatant, onComplete: () => void) {
@@ -899,6 +947,18 @@ export class BattleUI {
       actionTitle = '🔥💥 LIMIT BREAK: EX BURST! 💥🔥';
       actionSub = `${b.attacker.name} ปลดปล่อยมหาพลังสะเทือนฟ้าดิน!`;
       bannerColor = '#f59e0b';
+      const comp = b.attacker.playerRef?.companion;
+      const isDuo = comp && (comp.bondLevel || 1) >= 3;
+      combatVFX.triggerCutInBanner(
+        isDuo ? 'DUO EX BURST' : 'LIMIT BREAK BURST',
+        isDuo ? `${b.attacker.name} & ${comp.name} ผสานพลังคู่หู!` : `${b.attacker.name} ปลดปล่อยพลังขีดสุด!`,
+        b.attacker.avatar || '⚔️',
+        '#f59e0b',
+        comp?.avatar,
+        comp?.name,
+        45
+      );
+      combatVFX.triggerImpactFlash('#ffffff', 0.85);
     } else if (atkAction === 'strike') {
       actionTitle = '⚡ ชาร์จฟันทะลวงเกราะ! ⚡';
       actionSub = `${b.attacker.name} ชาร์จพลังทำลายล้างทะลวงการป้องกัน!`;
@@ -911,6 +971,17 @@ export class BattleUI {
       actionTitle = `🌟 ท่าไม้ตาย: ${b.attacker.skillName || 'สกิลเฉพาะ'} 🌟`;
       actionSub = `${b.attacker.name} ปลดปล่อยวิชาลับเฉพาะคลาส!`;
       bannerColor = '#ec4899';
+      if (b.attacker.playerRef?.isPromoted) {
+        combatVFX.triggerCutInBanner(
+          b.attacker.skillName || 'CLASS SKILL',
+          `${b.attacker.name} ปลดปล่อยวิชาลับเฉพาะคลาส!`,
+          b.attacker.avatar || '⭐',
+          '#ec4899',
+          undefined,
+          undefined,
+          36
+        );
+      }
     } else {
       actionTitle = '⚔️ บุกโจมตีประชิด! ⚔️';
       actionSub = `${b.attacker.name} พุ่งทะยานฟันด้วยอาวุธคู่กาย!`;
@@ -1033,6 +1104,7 @@ export class BattleUI {
         this.attackerAnim = 'hurt';
         combatVFX.triggerScreenShake(20);
         combatVFX.triggerHitstop(8);
+        combatVFX.triggerImpactFlash('#fde047', 0.9);
         combatVFX.triggerSpeedLines('rgba(234, 179, 8, 0.9)', 28);
         combatVFX.spawnCounterHit(
           atkBaseX + this.cutscene.attackerOffsetX,
@@ -1049,6 +1121,9 @@ export class BattleUI {
         }
         combatVFX.triggerScreenShake(atkAction === 'strike' ? 22 : 14);
         combatVFX.triggerHitstop(atkAction === 'strike' ? 9 : 6);
+        if (result.isCritical || result.isStrikeSuccess || atkAction === 'burst') {
+          combatVFX.triggerImpactFlash('#ffffff', 0.85);
+        }
         if (atkAction === 'strike') {
           combatVFX.triggerSpeedLines('rgba(239, 68, 68, 0.9)', 30);
         } else if (atkAction === 'magic') {

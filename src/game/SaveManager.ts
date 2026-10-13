@@ -1,8 +1,10 @@
 import { GameState } from './GameState';
-import { Player } from './Player';
-import { TownData } from './BoardMap';
+import { Player, FoodBuff, GuildQuest, CompanionData } from './Player';
+import { TownData, HomeData } from './BoardMap';
+import { EquipmentItem, PrankState } from '../engine/PixelSpriteGenerator';
 
 export interface SaveMetadata {
+  saveVersion?: number;
   savedAt: number;
   dateStr: string;
   day: number;
@@ -42,31 +44,49 @@ export interface SerializedPlayer {
   gridZ: number;
   facing: string;
   activeSpinnerMultiplier: number;
-  equipment: any;
-  inventory: any[];
+  equipment: {
+    weapon: EquipmentItem | null;
+    shield: EquipmentItem | null;
+    armor: EquipmentItem | null;
+    accessory: EquipmentItem | null;
+  };
+  inventory: EquipmentItem[];
   fieldSpells: string[];
   rustTurns: number;
   poisonTurns?: number;
   freezeTurns?: number;
   blindTurns?: number;
   curseTurns?: number;
-  foodBuff: any;
-  activeGuildQuest: any;
+  sleepTurns?: number;
+  squidInkTurns?: number;
+  downerTurns?: number;
+  bountyReward?: number;
+  foodBuff: FoodBuff | null;
+  activeGuildQuest: GuildQuest | null;
   guildRank: string;
   completedQuestsCount: number;
   isDarkling: boolean;
   darklingTurnsLeft: number;
-  backupNormalStats: any;
-  prank: any;
+  backupNormalStats: { maxHp: number; atk: number; def: number; mag: number; spd: number } | null;
+  prank: PrankState;
   color: string;
   className: string;
   avatar: string;
+  skillName?: string;
   homeNodeId: number | null;
-  companion: any;
+  companion: CompanionData | null;
   originalClassKey?: string;
   isPromoted?: boolean;
-  aiPersonality?: string;
-  matchStats?: any;
+  promotionTier?: number;
+  aiPersonality?: 'balanced' | 'economist' | 'hunter' | 'tactician';
+  matchStats?: {
+    monstersKilled: number;
+    pvpWins: number;
+    goldEarnedTotal: number;
+    townsCapturedTotal: number;
+    pranksGiven: number;
+    pranksReceived: number;
+  };
   burstGauge?: number;
   relics?: string[];
   weaponUpgradeLevel?: number;
@@ -89,12 +109,12 @@ export interface SaveGameData {
   phase: string;
   players: SerializedPlayer[];
   townStates: Array<{ nodeId: number; townData: TownData }>;
-  homeStates?: Array<{ nodeId: number; homeData: any; type: string }>;
+  homeStates?: Array<{ nodeId: number; homeData: HomeData; type: string }>;
   logs: Array<{ text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }>;
   bossCurrentHp?: number;
   bossMaxHp?: number;
   aiDifficulty?: 'casual' | 'tactical' | 'ruthless';
-  placedTraps?: Array<{ nodeId: number; ownerId: number; damage: number }>;
+  placedTraps?: Array<{ nodeId: number; ownerId: number; damage: number; type?: 'damage' | 'pitfall' | 'greed' | 'rust' }>;
 }
 
 const STORAGE_KEY = 'chronicles_of_fortune_savegame';
@@ -184,6 +204,7 @@ export class SaveManager {
       });
       const hero = data.players[data.activePlayerIdx || 0] || data.players[0];
       const meta: SaveMetadata = {
+        saveVersion: data.version || SAVE_VERSION,
         savedAt: data.savedAt || Date.now(),
         dateStr: data.dateStr || dateStr,
         day: data.dayCounter || 1,
@@ -260,6 +281,7 @@ export class SaveManager {
           companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null,
           originalClassKey: p.originalClassKey,
           isPromoted: p.isPromoted,
+          promotionTier: p.promotionTier,
           aiPersonality: p.aiPersonality,
           matchStats: JSON.parse(JSON.stringify(p.matchStats)),
           burstGauge: p.burstGauge,
@@ -300,6 +322,7 @@ export class SaveManager {
 
       const hero = game.activePlayer;
       const meta: SaveMetadata = {
+        saveVersion: SAVE_VERSION,
         savedAt: saveData.savedAt, dateStr, day: game.dayCounter, week: game.weekCounter,
         activeHeroName: hero ? hero.name : 'Unknown Hero',
         activeHeroClass: hero ? hero.className : 'Warrior',
@@ -401,13 +424,15 @@ export class SaveManager {
         p.companion = sp.companion ?? null;
         p.originalClassKey = sp.originalClassKey || sp.classKey || 'warrior';
         p.isPromoted = Boolean(sp.isPromoted);
+        p.promotionTier = Math.max(1, Math.min(3, numOr(sp.promotionTier, p.isPromoted ? 2 : 1)));
         p.aiPersonality = (sp.aiPersonality as any) || 'balanced';
-        p.matchStats = sp.matchStats || {
-          monstersKilled: 0,
-          pvpWins: 0,
-          goldEarnedTotal: p.gold,
-          townsCapturedTotal: p.townsControlled,
-          pranksGiven: 0
+        p.matchStats = {
+          monstersKilled: numOr(sp.matchStats?.monstersKilled, 0),
+          pvpWins: numOr(sp.matchStats?.pvpWins, 0),
+          goldEarnedTotal: numOr(sp.matchStats?.goldEarnedTotal, p.gold),
+          townsCapturedTotal: numOr(sp.matchStats?.townsCapturedTotal, p.townsControlled),
+          pranksGiven: numOr(sp.matchStats?.pranksGiven, 0),
+          pranksReceived: numOr(sp.matchStats?.pranksReceived, 0)
         };
         p.burstGauge = Math.max(0, Math.min(100, numOr(sp.burstGauge, 0)));
         p.relics = Array.isArray(sp.relics) ? [...sp.relics] : [];
@@ -489,6 +514,7 @@ export class SaveManager {
       const meta = JSON.parse(raw) as SaveMetadata;
       if (!meta || typeof meta !== 'object') return null;
       return {
+        saveVersion: numOr(meta.saveVersion, 1),
         savedAt: numOr(meta.savedAt, 0),
         dateStr: meta.dateStr || '',
         day: numOr(meta.day, 1),

@@ -18,6 +18,7 @@ export interface Combatant {
   spd: number;
   luk: number;
   gridPos?: CombatGridPosition;
+  avatar?: string;
   isBoss?: boolean;
   isPvP?: boolean;
   playerRef?: Player;
@@ -218,8 +219,10 @@ export class BattleEngine {
     mid: 'none',
     back: 'none'
   };
+  public biome: string = 'grass';
 
-  constructor(combatant1: Combatant, combatant2: Combatant) {
+  constructor(combatant1: Combatant, combatant2: Combatant, biome: string = 'grass') {
+    this.biome = biome;
     // Determine initiative by Speed stat
     if (combatant1.spd >= combatant2.spd) {
       this.attacker = combatant1;
@@ -764,6 +767,11 @@ export class BattleEngine {
       const blockRatio = Math.max(0.18, 0.45 - (d.def || 5) * 0.0035);
       finalDmg = Math.round(Math.max(2, finalDmg * blockRatio));
       narration = `🛡️ ป้องกันสำเร็จ! ${d.name} ยกโล่และเกราะ (DEF ${d.def}) ลดทอนแรงปะทะ รับความเสียหายเพียง ${finalDmg} หน่วย!`;
+      if (this.biome === 'waterfall_forest' || this.biome === 'fairy_grove') {
+        const naturalHeal = Math.min(25, Math.round((d.maxHp || 100) * 0.08));
+        d.hp = Math.min(d.maxHp, d.hp + naturalHeal);
+        narration += ` 🌿[พรพฤกษาฟื้นฟู +${naturalHeal} HP]`;
+      }
     } else if (defAction === 'counter') {
       // Counter failed! Full damage
       finalDmg = Math.round(finalDmg * 1.25);

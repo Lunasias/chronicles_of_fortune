@@ -1,6 +1,7 @@
 import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { AttackerAction, DefenderAction } from './BattleEngine';
+import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 
 export interface CombatMoveHistory {
   [key: string]: number;
@@ -72,6 +73,7 @@ export class AISystem {
     if (candidateNodeIds.length === 1) return candidateNodeIds[0];
 
     const personality = aiPlayer.aiPersonality || 'balanced';
+    const leader = this.getLeader(allPlayers);
 
     // If Darkling: seek closest opponent!
     if (aiPlayer.isDarkling) {
@@ -124,18 +126,21 @@ export class AISystem {
       if (rivalOnNode) {
         const grudge = this.getGrudge(aiPlayer.id, rivalOnNode.id);
         const ruthlessness = difficulty === 'ruthless' ? 100 : difficulty === 'casual' ? -30 : 0;
+        const isTargetLeader = leader && rivalOnNode.id === leader.id && rivalOnNode.id !== aiPlayer.id;
+        const leaderBonus = isTargetLeader ? (difficulty === 'ruthless' ? 60 : 35) : 0;
+
         if (aiPlayer.isDarkling) {
-          score += 180 + grudge + ruthlessness;
+          score += 180 + grudge + ruthlessness + leaderBonus;
         } else if (personality === 'hunter') {
-          score += 130 + grudge * 1.5 + ruthlessness; // PK Hunter loves seeking duels and revenge!
+          score += 130 + grudge * 1.5 + ruthlessness + leaderBonus; // PK Hunter loves seeking duels and revenge!
         } else if (personality === 'tactician') {
-          score += aiPlayer.hp > rivalOnNode.hp + 25 ? (100 + grudge + ruthlessness) : -20; // Smart risk assessment
+          score += aiPlayer.hp > rivalOnNode.hp + 25 ? (100 + grudge + ruthlessness + leaderBonus) : -20; // Smart risk assessment
         } else if (personality === 'economist') {
-          score += aiPlayer.hp > rivalOnNode.hp + 40 ? (50 + grudge + ruthlessness) : -30;
+          score += aiPlayer.hp > rivalOnNode.hp + 40 ? (50 + grudge + ruthlessness + leaderBonus) : -30;
         } else if (aiPlayer.hp > rivalOnNode.hp + 20) {
-          score += 90 + grudge + ruthlessness; // Ambush weakened rival!
+          score += 90 + grudge + ruthlessness + leaderBonus; // Ambush weakened rival!
         } else {
-          score += 45 + grudge * 0.8;
+          score += 45 + grudge * 0.8 + leaderBonus * 0.5;
         }
       }
 
@@ -313,9 +318,68 @@ export class AISystem {
     return 'prank';
   }
 
+  // Estimate a player's net worth for strategic ranking
+  getEstimatedNetWorth(player: Player): number {
+    let worth = player.gold || 0;
+    worth += (player.townsControlled || 0) * 450;
+    if (player.equipment) {
+      if (player.equipment.weapon) worth += player.equipment.weapon.cost || 150;
+      if (player.equipment.armor) worth += player.equipment.armor.cost || 120;
+      if (player.equipment.shield) worth += player.equipment.shield.cost || 80;
+      if (player.equipment.accessory) worth += player.equipment.accessory.cost || 100;
+    }
+    return worth;
+  }
+
+  // Identify who is leading the game to direct strategic counter-attacks
+  getLeader(players: Player[]): Player | null {
+    if (!players || players.length === 0) return null;
+    let leader = players[0];
+    let maxWorth = this.getEstimatedNetWorth(leader);
+    for (let i = 1; i < players.length; i++) {
+      const worth = this.getEstimatedNetWorth(players[i]);
+      if (worth > maxWorth) {
+        maxWorth = worth;
+        leader = players[i];
+      }
+    }
+    return leader;
+  }
+
+  // Strategic decision: should the AI invest gold to upgrade an owned town?
+  shouldInvestInTown(ai: Player, townData: { level: number; baseValue: number }): boolean {
+    const cost = Math.round(townData.baseValue * (0.4 + townData.level * 0.2));
+    const safetyReserve = ai.aiPersonality === 'economist' ? 80 : 150;
+    if (ai.gold < cost + safetyReserve) return false;
+    if (townData.level >= 5) return false;
+    if (ai.aiPersonality === 'economist') return true;
+    if (ai.aiPersonality === 'tactician' && ai.gold >= cost * 2) return true;
+    return Math.random() < 0.6;
+  }
+
+  // Strategic decision: select the most beneficial equipment to purchase from a shop
+  chooseShopItem(ai: Player, availableItems: EquipmentItem[]): EquipmentItem | null {
+    const affordable = availableItems.filter(item => (item.cost || 0) <= ai.gold - 50);
+    if (affordable.length === 0) return null;
+
+    // Sort by most effective upgrade for current stats
+    affordable.sort((a, b) => {
+      let scoreA = 0;
+      let scoreB = 0;
+      if (a.type === 'weapon') scoreA += (a.atk || 0) * 2 + (a.mag || 0) * 1.5;
+      if (b.type === 'weapon') scoreB += (b.atk || 0) * 2 + (b.mag || 0) * 1.5;
+      if (a.type === 'armor' || a.type === 'shield') scoreA += (a.def || 0) * 2;
+      if (b.type === 'armor' || b.type === 'shield') scoreB += (b.def || 0) * 2;
+      return scoreB - scoreA;
+    });
+
+    return affordable[0] || null;
+  }
+
   // Choose revenge/prime target for offensive field spells based on grudge and threat
   chooseFieldSpellTarget(ai: Player, opponents: Player[]): Player | null {
     if (opponents.length === 0) return null;
+    const leader = this.getLeader(opponents);
     let highestScore = -999;
     let bestTarget = opponents[0];
 
@@ -325,6 +389,10 @@ export class AISystem {
       if (op.gold >= 300) score += 30;
       if (op.townsControlled >= 2) score += 40;
       if (op.isDarkling) score += 80;
+      // High-priority sabotage against the current match leader!
+      if (leader && op.id === leader.id && op.id !== ai.id) {
+        score += 55;
+      }
 
       if (score > highestScore) {
         highestScore = score;
@@ -333,6 +401,40 @@ export class AISystem {
     });
 
     return bestTarget;
+  }
+
+  // AI Strategic Field Trap placement
+  chooseTrapPlacement(
+    ai: Player,
+    allNodes: BoardNode[],
+    allPlayers: Player[],
+    existingTraps: Array<{ nodeId: number; ownerId: number }>
+  ): { nodeId: number; type: 'damage' | 'pitfall' | 'greed' | 'rust' } | null {
+    if (ai.gold < 150) return null;
+
+    const trappedNodeIds = new Set(existingTraps.map(t => t.nodeId));
+    const opponents = allPlayers.filter(p => p.id !== ai.id);
+    if (opponents.length === 0) return null;
+
+    const candidateNodeIds: number[] = [];
+    const castleNode = allNodes.find(n => n.id === 0);
+    if (castleNode) {
+      candidateNodeIds.push(...castleNode.neighbors);
+    }
+
+    // Towns owned by AI
+    const myTowns = allNodes.filter(n => n.type === 'town' && n.townData?.ownerId === ai.id);
+    myTowns.forEach(t => candidateNodeIds.push(...t.neighbors));
+
+    // Filter valid candidates
+    const validCandidates = candidateNodeIds.filter(id => !trappedNodeIds.has(id));
+    if (validCandidates.length === 0) return null;
+
+    const chosenNodeId = validCandidates[Math.floor(Math.random() * validCandidates.length)];
+    const types: Array<'damage' | 'pitfall' | 'greed' | 'rust'> = ['damage', 'greed', 'pitfall', 'rust'];
+    const chosenType = ai.aiPersonality === 'economist' ? 'greed' : (ai.aiPersonality === 'hunter' ? 'damage' : types[Math.floor(Math.random() * types.length)]);
+
+    return { nodeId: chosenNodeId, type: chosenType };
   }
 }
 
