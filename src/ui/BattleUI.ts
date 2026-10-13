@@ -469,7 +469,21 @@ export class BattleUI {
     const pRef = pCombatant.playerRef || this.game.activePlayer;
     const burstVal = Math.min(100, Math.max(0, pRef?.burstGauge || 0));
     if (burstEl) burstEl.style.width = `${burstVal}%`;
-    if (burstTextEl) burstTextEl.innerText = `BURST: ${burstVal}%`;
+    if (burstTextEl) {
+      burstTextEl.innerText = burstVal >= 100 ? '⭐ BURST MAX!' : `BURST: ${burstVal}%`;
+    }
+
+    // Tactical Turn Timeline order display
+    const qFirstName = document.getElementById('battleQueueFirstName');
+    const qFirstRole = document.getElementById('battleQueueFirstRole');
+    const qSecondName = document.getElementById('battleQueueSecondName');
+    const qSecondRole = document.getElementById('battleQueueSecondRole');
+    if (qFirstName && qSecondName) {
+      qFirstName.innerText = b.attacker.name;
+      if (qFirstRole) qFirstRole.innerText = '1ST';
+      qSecondName.innerText = b.defender.name;
+      if (qSecondRole) qSecondRole.innerText = '2ND';
+    }
 
     document.getElementById('battleEnemyName')!.innerText = eCombatant.name;
     document.getElementById('battleEnemyRoleBadge')!.innerText = !isPAtk ? 'ฝ่ายโจมตี (ATTACKER)' : 'ฝ่ายตั้งรับ (DEFENDER)';
@@ -590,8 +604,10 @@ export class BattleUI {
     if (burstBtn) {
       if ((p.burstGauge || 0) >= 100) {
         burstBtn.classList.remove('hidden');
+        burstBtn.classList.add('animate-pulse');
       } else {
         burstBtn.classList.add('hidden');
+        burstBtn.classList.remove('animate-pulse');
       }
     }
 

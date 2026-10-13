@@ -682,6 +682,40 @@ export class AudioSynthesizer {
     const freq = basePitch + ((code % 12) - 6) * 18;
     this.playTone(freq, 'square', 0.025, 0.15);
   }
+
+  coinClink() {
+    if (!this.enabled) return;
+    this.init();
+    // High-pitched crystal coin chime
+    this.playTone(1318.5, 'square', 0.04, 0.28);
+    setTimeout(() => this.playTone(1975.5, 'triangle', 0.14, 0.32), 35);
+  }
+
+  burstReady() {
+    if (!this.enabled) return;
+    this.init();
+    // Radiant ascending power chord
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.22, 0.35), idx * 60);
+    });
+  }
+
+  tradeRouteFanfare() {
+    if (!this.enabled) return;
+    this.init();
+    // Majestic merchant fanfare
+    [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'square', 0.16, 0.3), idx * 80);
+    });
+  }
+
+  thunderClap() {
+    if (!this.enabled) return;
+    this.init();
+    // Low rumble thunder crash
+    this.playTone(85, 'sawtooth', 0.35, 0.32);
+    setTimeout(() => this.playTone(55, 'triangle', 0.45, 0.38), 60);
+  }
 }
 
 export const audio = new AudioSynthesizer();

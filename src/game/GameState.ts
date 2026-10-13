@@ -9,6 +9,7 @@ import { audio } from '../engine/AudioSynthesizer';
 import { royalDecreeSystem } from './RoyalDecreeSystem';
 import { escapeHtml } from '../util/Html';
 import { weatherSystem } from './WeatherSystem';
+import { ecosystemSystem } from './EcosystemSystem';
 
 export type GamePhase =
   | 'TITLE'
@@ -527,6 +528,13 @@ export class GameState {
     if (weatherMod < 0 && totalRoll > 1) {
       totalRoll = Math.max(1, totalRoll + weatherMod);
       this.addLog(`❄️ ลมพายุหิมะพัดต้านอย่างรุนแรง! ลดการก้าวเดินลง 1 ก้าว (เหลือ ${totalRoll} ก้าว)`, 'info');
+    }
+
+    // Regional living ecosystem rain slide perk: 20% chance to slide +1 bonus step on wet roads
+    const localWeather = hereNode ? ecosystemSystem.getNodeWeather(hereNode) : 'sunny';
+    if (localWeather === 'rain' && Math.random() < 0.20) {
+      totalRoll += 1;
+      this.addLog(`🌧️ ถนนเปียกลื่นจากสายฝน! เท้าไถลลื่นไปข้างหน้าเพิ่ม +1 ก้าว!`, 'info');
     }
 
     p.activeSpinnerMultiplier = 1;

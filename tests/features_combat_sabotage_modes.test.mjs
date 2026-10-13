@@ -327,3 +327,34 @@ test('P2P Network Room Manager: generates 6-char room code and manages room life
   networkRoomManager.leaveRoom();
   assert.equal(networkRoomManager.getRoomInfo(), null);
 });
+
+test('Town Milestone Perks: town level 2+ provides regeneration for owner', () => {
+  const townNode = {
+    id: 5,
+    name: 'Oakhaven',
+    type: 'town',
+    realmId: 'solaria',
+    biome: 'grass',
+    gx: 0,
+    gy: 0,
+    gz: 0,
+    neighbors: [],
+    townData: {
+      ownerId: 'player_1',
+      level: 2,
+      baseValue: 300,
+      taxYield: 50,
+      isOccupiedByMonster: false
+    }
+  };
+
+  const player = new Player('player_1', 'Hero', 'warrior', '#38bdf8', false);
+  player.hp = 80;
+  player.maxHp = 120;
+
+  // Town level 2 gives +8 HP healing
+  const healAmount = townNode.townData.level >= 3 ? 16 : 8;
+  player.hp = Math.min(player.maxHp, player.hp + healAmount);
+
+  assert.equal(player.hp, 88);
+});

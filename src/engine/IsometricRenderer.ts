@@ -6,6 +6,7 @@ import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
 import { pixelDisc, pixelEllipse, pixelGlow, pixelRing } from './PixelFx';
 import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
+import { audio } from './AudioSynthesizer';
 
 export interface Camera2D {
   x: number;
@@ -333,7 +334,7 @@ export class IsometricRenderer {
     // 8. Night Glows for Town Torches & Player Lanterns (inside world space)
     const lighting = ecosystemSystem.getLightingOverlay();
     if (lighting.isNight) {
-      this.renderNightLanternGlows(ctx, nodes, players, minX, maxX, minY, maxY);
+      this.renderNightLanternGlows(ctx, nodes, players, minX, maxX, minY, maxY, time);
     }
 
     ctx.restore();
@@ -344,7 +345,10 @@ export class IsometricRenderer {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // 10. Squid Ink Sabotage Overlay
+    // 10. Atmospheric Volumetric Sunbeams (God Rays) during Dawn & Dusk
+    this.renderAtmosphericLightShafts(ctx, w, h, ecosystemSystem.timeOfDay);
+
+    // 11. Squid Ink Sabotage Overlay
     if (activePlayer && activePlayer.squidInkTurns > 0) {
       this.renderSquidInkOverlay(ctx, w, h);
     }
@@ -1331,12 +1335,13 @@ export class IsometricRenderer {
     minX: number,
     maxX: number,
     minY: number,
-    maxY: number
+    maxY: number,
+    time: number
   ) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
 
-    // Warm radial torchlight glows on towns, inns, taverns
+    // Warm radial torchlight glows on towns, inns, taverns with subtle organic flicker
     const townGlow = this.getTownGlowCanvas();
     nodes.forEach(n => {
       if (
@@ -1350,7 +1355,10 @@ export class IsometricRenderer {
       ) {
         const p = this.toScreen(n.gx, n.gy, n.gz);
         if (p.x >= minX - 95 && p.x <= maxX + 95 && p.y >= minY - 95 && p.y <= maxY + 95) {
-          ctx.drawImage(townGlow, p.x - 95, p.y - 113);
+          const flicker = 0.94 + Math.sin(time * 0.007 + n.id * 1.5) * 0.08;
+          const gw = 190 * flicker;
+          const gh = 190 * flicker;
+          ctx.drawImage(townGlow, p.x - gw / 2, p.y - 113 * flicker, gw, gh);
         }
       }
     });
@@ -1372,6 +1380,29 @@ export class IsometricRenderer {
     ctx.restore();
   }
 
+  /**
+   * Volumetric Sunbeams (God Rays) during Dawn & Dusk for breathtaking atmospheric mood.
+   */
+  private renderAtmosphericLightShafts(ctx: CanvasRenderingContext2D, w: number, h: number, timeOfDay: string) {
+    if (timeOfDay !== 'DAWN' && timeOfDay !== 'DUSK') return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    const isDawn = timeOfDay === 'DAWN';
+    const rayColor = isDawn ? 'rgba(253, 224, 71, 0.038)' : 'rgba(251, 146, 60, 0.045)';
+    const numRays = 4;
+    const rayWidth = w * 0.16;
+    const angle = isDawn ? 0.38 : -0.38;
+
+    ctx.translate(w / 2, 0);
+    ctx.rotate(angle);
+    ctx.fillStyle = rayColor;
+    for (let i = -numRays; i <= numRays; i += 2) {
+      const rx = i * rayWidth * 1.35;
+      ctx.fillRect(rx, -h * 0.4, rayWidth, h * 2.2);
+    }
+    ctx.restore();
+  }
+
   private renderRegionalWeather(ctx: CanvasRenderingContext2D, weather: WeatherType, time: number, activeBiome?: string) {
     if (weather === 'rain') {
       // Slanting rain streaks + water splash ripples
@@ -1389,6 +1420,13 @@ export class IsometricRenderer {
         ctx.lineTo(p.x - 3, p.y + 12);
       });
       ctx.stroke();
+
+      // Occasional gentle atmospheric sheet-lightning flash on storm
+      if (Math.random() < 0.003) {
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.12)';
+        ctx.fillRect(-1600, -1600, 3200, 3200);
+        audio.thunderClap();
+      }
     } else if (weather === 'snow') {
       // Gently fluttering snowflakes
       ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';

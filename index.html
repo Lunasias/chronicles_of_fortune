@@ -784,6 +784,19 @@
 
         <!-- Center Tactical Scout & Speed Controls -->
         <div class="pointer-events-auto flex flex-col items-center shrink-0 gap-1">
+          <!-- Tactical Turn Timeline Order Bar -->
+          <div id="battleTurnTimeline" class="pixel-box px-1.5 py-0.5 bg-slate-950/95 border-slate-700 flex items-center gap-1 text-[8px] sm:text-[9px] font-bold">
+            <span class="text-slate-400">เทิร์น:</span>
+            <div id="battleQueueFirst" class="flex items-center gap-0.5 px-1 py-0.5 bg-cyan-950 text-cyan-300 border border-cyan-500/80">
+              <span id="battleQueueFirstRole">1ST</span>
+              <span id="battleQueueFirstName" class="truncate max-w-[42px]">ผู้เล่น</span>
+            </div>
+            <span class="text-slate-500">▶</span>
+            <div id="battleQueueSecond" class="flex items-center gap-0.5 px-1 py-0.5 bg-rose-950 text-rose-300 border border-rose-500/80">
+              <span id="battleQueueSecondRole">2ND</span>
+              <span id="battleQueueSecondName" class="truncate max-w-[42px]">ศัตรู</span>
+            </div>
+          </div>
           <button id="btnBattleScout" class="pixel-btn pixel-btn-purple px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-amber-300 font-bold flex items-center gap-1 sm:gap-1.5 animate-pulse touch-manipulation">
             <span>👁️</span>
             <span class="hidden xs:inline">สอดแนม</span>

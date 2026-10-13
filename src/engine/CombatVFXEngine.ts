@@ -200,30 +200,37 @@ export class CombatVFXEngine {
     let size = 18;
     let vy = -3.8;
     let vx = (Math.random() - 0.5) * 1.5;
+    let displayText = text;
 
     if (type === 'crit') {
-      color = '#ef4444';
-      shadowColor = '#7f1d1d';
-      size = 24;
-      vy = -5.2;
-      this.triggerHitstop(5);
+      displayText = `⭐ ${text} (CRIT!)`;
+      color = '#fbbf24';
+      shadowColor = '#b45309';
+      size = 25;
+      vy = -5.4;
+      this.triggerHitstop(6);
+      this.triggerScreenShake(14);
     } else if (type === 'magic') {
+      displayText = `🔮 ${text}`;
       color = '#c084fc';
       shadowColor = '#581c87';
-      size = 20;
+      size = 21;
       vy = -4.2;
     } else if (type === 'counter') {
+      displayText = `🛡️ PARRY! ${text}`;
       color = '#38bdf8';
       shadowColor = '#0369a1';
-      size = 22;
+      size = 23;
       vy = -4.8;
       this.triggerHitstop(6);
     } else if (type === 'heal') {
+      displayText = `💖 +${text}`;
       color = '#4ade80';
       shadowColor = '#15803d';
       size = 20;
       vy = -3.5;
     } else if (type === 'miss') {
+      displayText = `💨 MISS`;
       color = '#94a3b8';
       shadowColor = '#334155';
       size = 16;
@@ -235,7 +242,7 @@ export class CombatVFXEngine {
       y,
       vx,
       vy,
-      text,
+      text: displayText,
       color,
       size,
       alpha: 1.0,

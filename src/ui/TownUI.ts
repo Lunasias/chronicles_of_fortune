@@ -62,7 +62,17 @@ export class TownUI {
         p.gold = Math.max(0, p.gold - toll);
         owner.gold += toll;
         this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!${isTradeRoute ? ' (🌐 เส้นทางการค้าคูณ 1.5 เท่า!)' : ''}${p.relics.includes('thief_band') ? ' (💍 แหวนหัวขโมยลดค่าผ่านทาง 50%!)' : ''}`, 'gold');
-        audio.coin();
+        audio.coinClink();
+      } else {
+        // Owner visits own town: Town Milestone Regeneration Perk!
+        if (townLvl >= 2) {
+          const healAmount = townLvl >= 3 ? 16 : 8;
+          const oldHp = p.hp;
+          p.hp = Math.min(p.maxHp, p.hp + healAmount);
+          if (p.hp > oldHp) {
+            this.game.addLog(`💖 ชาวเมือง ${townNode.name} ออกมาต้อนรับท่านเจ้าเมือง! ฟื้นฟู +${p.hp - oldHp} HP (โบนัสเมืองเลเวล ${townLvl})`, 'level');
+          }
+        }
       }
     } else {
       ownerText.innerText = 'เป็นกลาง (ยังไม่มีเจ้าของ)';
@@ -170,7 +180,7 @@ export class TownUI {
     if (this.currentTown.townData.ownerId === p.id) {
       const tax = this.currentTown.townData.taxYield;
       p.gold += tax;
-      audio.coin();
+      audio.coinClink();
       this.game.addLog(`🪙 เก็บภาษีฉุกเฉินได้ ${tax}G จากเมือง ${this.currentTown.name}!`, 'gold');
     } else {
       this.game.addLog(`ท่านไม่ได้เป็นเจ้าของดินแดนนี้!`);
