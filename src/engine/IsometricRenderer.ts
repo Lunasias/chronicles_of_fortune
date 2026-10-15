@@ -371,17 +371,30 @@ export class IsometricRenderer {
 
       // View frustum culling
       if (
-        Math.max(seg.x1, seg.x2) < minX ||
-        Math.min(seg.x1, seg.x2) > maxX ||
-        Math.max(seg.y1, seg.y2) < minY ||
-        Math.min(seg.y1, seg.y2) > maxY
+        Math.max(seg.x1, seg.x2) < minX - 30 ||
+        Math.min(seg.x1, seg.x2) > maxX + 30 ||
+        Math.max(seg.y1, seg.y2) < minY - 30 ||
+        Math.min(seg.y1, seg.y2) > maxY + 30
       ) {
         continue;
       }
 
-      // Layer 1: Soft natural path edge & worn earth embankment
+      const dx = seg.x2 - seg.x1;
+      const dy = seg.y2 - seg.y1;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1) continue;
+
+      // Layer 1: Soft natural path edge & worn earth embankment with drop shadow
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.lineWidth = 15;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1 + 2.5);
+      ctx.lineTo(seg.x2, seg.y2 + 2.5);
+      ctx.stroke();
+
       ctx.strokeStyle = seg.edgeColor;
-      ctx.lineWidth = 12;
+      ctx.lineWidth = 13;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
@@ -390,21 +403,50 @@ export class IsometricRenderer {
 
       // Layer 2: Main packed dirt/cobblestone trail bed
       ctx.strokeStyle = seg.roadColor;
-      ctx.lineWidth = 7;
+      ctx.lineWidth = 8.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Layer 3: Smooth solid flagstone central spine (static, no moving dashes)
-      ctx.strokeStyle = seg.dashColor;
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1);
-      ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
+      // Layer 3: Interlocking Isometric Flagstone Pavers along the path
+      const step = 14;
+      const count = Math.max(1, Math.floor(dist / step));
+      ctx.save();
+      for (let p = 1; p < count; p++) {
+        const t = p / count;
+        const cx = seg.x1 + dx * t;
+        const cy = seg.y1 + dy * t;
+
+        // Deterministic stone variation from coordinates
+        const seed = Math.sin(cx * 12.9898 + cy * 78.233) * 43758.5453;
+        const rand1 = seed - Math.floor(seed);
+        const rand2 = (seed * 1.6) - Math.floor(seed * 1.6);
+
+        const jx = (rand1 - 0.5) * 3;
+        const jy = (rand2 - 0.5) * 1.5;
+        const sw = 8.5 + rand1 * 3.5;
+        const sh = sw * 0.5;
+
+        // Paver shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
+        this.drawDiamond(ctx, cx + jx, cy + jy + 1.2, sw + 1, sh + 0.5);
+
+        // Paver stone body
+        ctx.fillStyle = seg.dashColor;
+        this.drawDiamond(ctx, cx + jx, cy + jy, sw, sh);
+
+        // Paver highlight rim (upper-left light)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + jx - sw / 2, cy + jy);
+        ctx.lineTo(cx + jx, cy + jy - sh / 2);
+        ctx.lineTo(cx + jx + sw / 2, cy + jy);
+        ctx.stroke();
+      }
+      ctx.restore();
 
       // Layer 4: Worn pathway rut & central stone fissure
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
@@ -750,6 +792,12 @@ export class IsometricRenderer {
                 ? (node.id % 4 === 0 ? 'gloom_spore' : 'dark_oak')
                 : 'dark_oak';
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
+            // Ambient ground contact shadow at trunk base
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            pixelEllipse(ctx, px + 52, py + 8, 14, 7, ctx.fillStyle);
+            ctx.fill();
+
             // 1:1 blit of the 64x64 model. The anchor keeps the trunk base on the tile centre
             // at (px + 52, py + 6), the same spot the old 68x88 sprite was resampled into.
             ctx.drawImage(tree, px + 20, py - 48, 64, 64);
@@ -889,39 +937,84 @@ export class IsometricRenderer {
       icon = '🎁';
     }
 
-    // Dokapon Signature Dark Fantasy Runic Node Seal
+    // Dokapon Signature Dark Fantasy 3D Carved Isometric Pedestal & Runic Seal
     ctx.save();
-    // 1. Soft Ground Occlusion Shadow
+    // 1. Soft Ground Occlusion Shadow (Multi-tier depth)
     ctx.beginPath();
-    pixelEllipse(ctx, cx, cy + 2, 25, 16, 'rgba(2, 6, 18, 0.48)');
-    ctx.fillStyle = 'rgba(2, 6, 18, 0.48)';
+    pixelEllipse(ctx, cx, cy + 6, 26, 15, 'rgba(0, 0, 0, 0.42)');
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
     ctx.fill();
 
-    // 2. Weathered Iron / Bronze Outer Rim
     ctx.beginPath();
-    pixelEllipse(ctx, cx, cy, 23, 14, '#090d16');
-    pixelRing(ctx, cx, cy, 23, 14, isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569', Math.max(1, Math.round(2.0)));
+    pixelEllipse(ctx, cx, cy + 3.5, 23, 13, 'rgba(0, 0, 0, 0.58)');
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.58)';
+    ctx.fill();
+
+    // 2. Extruded 3D Stone Plinth (4.5px height bevel)
+    // Front-left cliff face (lit by upper-left sunlight)
+    ctx.fillStyle = isHovered ? '#1e293b' : leftColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 24, cy);
+    ctx.lineTo(cx, cy + 13);
+    ctx.lineTo(cx, cy + 17.5);
+    ctx.lineTo(cx - 24, cy + 4.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front-right cliff face (shaded)
+    ctx.fillStyle = isHovered ? '#0f172a' : rightColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 13);
+    ctx.lineTo(cx + 24, cy);
+    ctx.lineTo(cx + 24, cy + 4.5);
+    ctx.lineTo(cx, cy + 17.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Dark bottom foundation contour
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(cx - 24, cy + 4.5);
+    ctx.lineTo(cx, cy + 17.5);
+    ctx.lineTo(cx + 24, cy + 4.5);
+    ctx.stroke();
+
+    // 3. Weathered Bronze / Iron Outer Rim
+    const rimStroke = isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569';
+    ctx.beginPath();
+    pixelEllipse(ctx, cx, cy, 24, 13, '#090d16');
     ctx.fillStyle = '#090d16';
     ctx.fill();
-    ctx.strokeStyle = isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569';
-    ctx.lineWidth = 2.0;
-    ctx.stroke();
 
-    // 3. Inner Gemstone Core
+    ctx.strokeStyle = rimStroke;
+    ctx.lineWidth = isHovered ? 2.5 : 1.8;
     ctx.beginPath();
-    pixelEllipse(ctx, cx, cy, 18, 11, isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor);
-    pixelRing(ctx, cx, cy, 18, 11, isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#94a3b8', Math.max(1, Math.round(1.2)));
-    ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.95)' : isHighlighted ? 'rgba(0, 240, 255, 0.90)' : topColor;
-    ctx.fill();
-    ctx.strokeStyle = isHovered ? '#38bdf8' : isHighlighted ? '#00f0ff' : '#94a3b8';
-    ctx.lineWidth = 1.2;
+    pixelRing(ctx, cx, cy, 24, 13, rimStroke, 1);
     ctx.stroke();
 
-    // 4. Space Type Icon with drop shadow
-    ctx.font = '13px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(icon, cx, cy + 0.5);
+    // 4. Inner Gemstone Core
+    const coreColor = isHovered
+      ? 'rgba(56, 189, 248, 0.95)'
+      : isHighlighted
+      ? 'rgba(0, 240, 255, 0.90)'
+      : topColor;
+    ctx.beginPath();
+    pixelEllipse(ctx, cx, cy, 18, 9.5, coreColor);
+    ctx.fillStyle = coreColor;
+    ctx.fill();
+
+    // Specular facet glint
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy - 2);
+    ctx.lineTo(cx, cy - 6.5);
+    ctx.lineTo(cx + 12, cy - 2);
+    ctx.stroke();
+
+    // 5. Stylized Handcrafted Dark Fantasy Sigil
+    this.drawNodeSigil(ctx, cx, cy, node.type, icon, isHovered, isHighlighted);
     ctx.restore();
 
 
@@ -1013,6 +1106,188 @@ export class IsometricRenderer {
     ctx.lineTo(cx - w / 2, cy);
     ctx.closePath();
     ctx.fill();
+  }
+
+  /**
+   * Stylized Handcrafted Dark Fantasy Sigils for Board Nodes
+   * Replaces raw OS font emojis with crisp, consistent 2.5D pixel-art emblems.
+   */
+  private drawNodeSigil(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    type: string,
+    fallbackIcon: string,
+    isHovered: boolean,
+    isHighlighted: boolean
+  ) {
+    ctx.save();
+    switch (type) {
+      case 'blue': { // Golden Imperial Coin
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        pixelEllipse(ctx, cx, cy, 7, 4.5, '#f59e0b');
+        ctx.fill();
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(cx - 2, cy - 2, 4, 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 1, cy - 1, 2, 1);
+        break;
+      }
+      case 'red': { // Demonic Crimson Horns / Skull Sigil
+        ctx.fillStyle = '#f87171';
+        ctx.beginPath();
+        ctx.moveTo(cx - 4, cy - 4);
+        ctx.lineTo(cx - 2, cy - 1);
+        ctx.lineTo(cx + 2, cy - 1);
+        ctx.lineTo(cx + 4, cy - 4);
+        ctx.lineTo(cx + 3, cy + 3);
+        ctx.lineTo(cx - 3, cy + 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#450a0a';
+        ctx.fillRect(cx - 2, cy, 1.5, 1.5);
+        ctx.fillRect(cx + 0.5, cy, 1.5, 1.5);
+        break;
+      }
+      case 'town': { // Bastion Keep Parapet & Gate
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 5, cy - 3, 10, 6);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 3, cy - 3, 2, 2);
+        ctx.fillRect(cx + 1, cy - 3, 2, 2);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 2, cy + 1, 4, 2);
+        break;
+      }
+      case 'church': { // Holy Divine Sunburst Cross
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 1.5, cy - 5, 3, 9);
+        ctx.fillRect(cx - 4, cy - 3, 8, 3);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(cx - 0.5, cy - 2, 1, 1);
+        break;
+      }
+      case 'shop_weapon': { // Crossed Steel Broadswords
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 4, cy - 4);
+        ctx.lineTo(cx + 4, cy + 3);
+        ctx.moveTo(cx + 4, cy - 4);
+        ctx.lineTo(cx - 4, cy + 3);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 1, cy - 1, 2, 2);
+        break;
+      }
+      case 'shop_item': { // Apothecary Potion Flask
+        ctx.fillStyle = '#4ade80';
+        ctx.beginPath();
+        pixelEllipse(ctx, cx, cy + 1, 4, 3, '#4ade80');
+        ctx.fill();
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(cx - 1.5, cy - 4, 3, 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 1, cy - 1, 1, 1);
+        break;
+      }
+      case 'shop_magic': { // Arcane Swirling Crystal Orb
+        ctx.fillStyle = '#c084fc';
+        ctx.beginPath();
+        pixelEllipse(ctx, cx, cy, 5, 3.5, '#c084fc');
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 2, cy - 1, 2, 1);
+        ctx.fillStyle = '#e879f9';
+        ctx.fillRect(cx + 1, cy, 1, 1);
+        break;
+      }
+      case 'tavern': { // Foaming Amber Tankard
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(cx - 3, cy - 2, 6, 5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 3, cy - 4, 6, 2);
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx + 3, cy - 1, 2, 3);
+        break;
+      }
+      case 'vault':
+      case 'mystery_chest': { // Gilded Iron Treasure Chest
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(cx - 4, cy - 3, 8, 6);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 4, cy - 1, 8, 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 1, cy, 2, 2);
+        break;
+      }
+      case 'dark_gate': { // Abyssal Void Rift
+        ctx.fillStyle = '#a855f7';
+        ctx.beginPath();
+        pixelEllipse(ctx, cx, cy, 6, 4, '#a855f7');
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        pixelEllipse(ctx, cx, cy, 3, 2, '#0f172a');
+        ctx.fill();
+        break;
+      }
+      case 'boss': { // Draconic Fiend Crown
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, cy - 4);
+        ctx.lineTo(cx - 2, cy + 3);
+        ctx.lineTo(cx, cy - 1);
+        ctx.lineTo(cx + 2, cy + 3);
+        ctx.lineTo(cx + 5, cy - 4);
+        ctx.lineTo(cx, cy + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 0.5, cy, 1, 1);
+        break;
+      }
+      case 'guild': { // Quest Parchment Scroll
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(cx - 4, cy - 3, 8, 6);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(cx - 1, cy - 1, 2, 2);
+        break;
+      }
+      case 'fishing': { // Azure Lake Ripple & Leaping Fish
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(cx - 2, cy - 2, 4, 2);
+        break;
+      }
+      case 'isekai_event': { // Celestial Lightning Rune
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.moveTo(cx + 1, cy - 5);
+        ctx.lineTo(cx - 3, cy - 1);
+        ctx.lineTo(cx, cy - 1);
+        ctx.lineTo(cx - 1, cy + 5);
+        ctx.lineTo(cx + 3, cy + 1);
+        ctx.lineTo(cx, cy + 1);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+      default: {
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(fallbackIcon, cx, cy + 0.5);
+        break;
+      }
+    }
+    ctx.restore();
   }
 
   /**
@@ -1390,17 +1665,22 @@ export class IsometricRenderer {
   }
 
   /**
-   * Volumetric Sunbeams (God Rays) during Dawn & Dusk for breathtaking atmospheric mood.
+   * Volumetric Sunbeams (God Rays) across Day, Dawn & Dusk for breathtaking atmospheric mood.
    */
   private renderAtmosphericLightShafts(ctx: CanvasRenderingContext2D, w: number, h: number, timeOfDay: string) {
-    if (timeOfDay !== 'DAWN' && timeOfDay !== 'DUSK') return;
+    if (timeOfDay === 'NIGHT') return;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     const isDawn = timeOfDay === 'DAWN';
-    const rayColor = isDawn ? 'rgba(253, 224, 71, 0.038)' : 'rgba(251, 146, 60, 0.045)';
+    const isDay = timeOfDay === 'DAY';
+    const rayColor = isDawn
+      ? 'rgba(253, 224, 71, 0.038)'
+      : isDay
+      ? 'rgba(254, 240, 138, 0.022)'
+      : 'rgba(251, 146, 60, 0.045)';
     const numRays = 4;
     const rayWidth = w * 0.16;
-    const angle = isDawn ? 0.38 : -0.38;
+    const angle = isDawn ? 0.38 : isDay ? 0.28 : -0.38;
 
     ctx.translate(w / 2, 0);
     ctx.rotate(angle);

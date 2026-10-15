@@ -1175,10 +1175,18 @@ class DokaponApp {
       this.openWorldMapAtlas();
     });
 
-    // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas
+    // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas, Space rolls dice
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if (e.key === ' ' || e.code === 'Space') {
+        const rollBtn = document.getElementById('btnRollDice');
+        if (rollBtn && !rollBtn.classList.contains('pointer-events-none') && !rollBtn.classList.contains('hidden')) {
+          e.preventDefault();
+          rollBtn.click();
+        }
+      }
 
       if (e.key === 'm' || e.key === 'M') {
         const modal = document.getElementById('worldMapModal');
