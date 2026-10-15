@@ -96,6 +96,8 @@ class DokaponApp {
     this.casinoUI = new CasinoUI(this.game);
 
     dungeonSystem.ensureDungeonLoaded(this.game);
+    (window as any).__gameApp = this;
+    (window as any).__battleUI = this.battleUI;
 
     document.getElementById('btnTitleHallOfFame')?.addEventListener('click', () => {
       hallOfFameUI.open();
@@ -1189,6 +1191,8 @@ class DokaponApp {
           }
         }
       }
+
+
     });
 
     // Mobile Orientation Hint Dismissal
@@ -3626,7 +3630,7 @@ class DokaponApp {
 }
 
 // Start Application on Load
-window.addEventListener('load', () => {
+function startApp() {
   const app = new DokaponApp();
   app.loop(0);
 
@@ -3634,4 +3638,10 @@ window.addEventListener('load', () => {
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('load', startApp);
+} else {
+  startApp();
+}

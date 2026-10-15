@@ -74,7 +74,10 @@ export class CustomIsometricHeroRenderer {
         const img = new Image();
         const src = `/assets/${folder}/Idle/rotations/${fileName}`;
 
-        img.onload = () => this.markAssetLoaded();
+        img.onload = () => {
+          this.cache.clear();
+          this.markAssetLoaded();
+        };
         img.onerror = () => this.markAssetFailed(src);
         img.src = src;
         this.imageStore.set(key, img);
@@ -87,7 +90,10 @@ export class CustomIsometricHeroRenderer {
             const runKey = `${folder}_run_${dir}_${f}`;
             const runSrc = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
             const runImg = new Image();
-            runImg.onload = () => this.markAssetLoaded();
+            runImg.onload = () => {
+              this.cache.clear();
+              this.markAssetLoaded();
+            };
             runImg.onerror = () => this.markAssetFailed(runSrc);
             runImg.src = runSrc;
             this.imageStore.set(runKey, runImg);
@@ -96,7 +102,10 @@ export class CustomIsometricHeroRenderer {
             const atkKey = `${folder}_attack_${dir}_${f}`;
             const atkSrc = `/assets/${folder}/Attack/rotations/${baseName}_${f}.png`;
             const atkImg = new Image();
-            atkImg.onload = () => this.markAssetLoaded();
+            atkImg.onload = () => {
+              this.cache.clear();
+              this.markAssetLoaded();
+            };
             atkImg.onerror = () => this.markAssetFailed(atkSrc);
             atkImg.src = atkSrc;
             this.imageStore.set(atkKey, atkImg);
@@ -233,7 +242,11 @@ export class CustomIsometricHeroRenderer {
 
     ctx.restore();
 
-    this.cache.set(cacheKey, canvas);
+    const folder = CLASS_ASSET_FOLDERS[normClass] || CLASS_ASSET_FOLDERS['warrior'];
+    const loadedImg = this.getImage(folder, dir, animState, f);
+    if (loadedImg && loadedImg.complete && loadedImg.naturalWidth > 0) {
+      this.cache.set(cacheKey, canvas);
+    }
     return canvas;
   }
 

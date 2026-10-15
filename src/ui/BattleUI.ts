@@ -8,6 +8,7 @@ import {pixelDisc, pixelEllipse, pixelRing, pixelVerticalRamp } from '../engine/
 import { BoardNode } from '../game/BoardMap';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
+import { customIsometricHeroRenderer } from '../engine/CustomIsometricHeroRenderer';
 import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
@@ -1434,7 +1435,7 @@ export class BattleUI {
     ctx.translate(combatVFX.screenShakeX, combatVFX.screenShakeY);
 
     const arenaCX = w * 0.50;
-    const arenaCY = h * 0.56;
+    const arenaCY = h * 0.50;
     const arenaW = Math.min(w * 0.88, 880);
     const arenaH = arenaW * 0.48;
     const arenaDrop = 36;
@@ -1604,7 +1605,7 @@ export class BattleUI {
       }
     }
 
-    const heroSprite = pixelSprites.getHeroSprite(
+    const heroSprite = customIsometricHeroRenderer.getHeroSprite(
       p.classKey,
       heroDir,
       pAnim,
@@ -1621,15 +1622,16 @@ export class BattleUI {
     const heroH = Math.round(240 * scaleFactor);
     const enemyW = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
     const enemyH = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
-    const heroYOffset = Math.round(222 * scaleFactor);
-    const enemyYOffset = Math.round((enemyCombatant.isBoss ? 268 : 222) * scaleFactor);
-    const ringYOffset = Math.round(14 * scaleFactor);
+    // Exact foot anchor offsets so combatants' feet firmly plant onto the diamond stone dais surface
+    const heroYOffset = Math.round(183 * scaleFactor);
+    const enemyYOffset = Math.round((enemyCombatant.isBoss ? 224 : 185) * scaleFactor);
+    const ringYOffset = Math.round(4 * scaleFactor);
 
     let enemySprite: HTMLCanvasElement;
     if (enemyCombatant.isBoss) {
-      enemySprite = customIsometricMonsterRenderer.getMonsterSprite('Dragon Princess Ignis', enemyDir, eAnim, eFrame);
+      enemySprite = customIsometricMonsterRenderer.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, eFrame);
     } else if (enemyCombatant.playerRef) {
-      enemySprite = pixelSprites.getHeroSprite(
+      enemySprite = customIsometricHeroRenderer.getHeroSprite(
         enemyCombatant.playerRef.classKey,
         enemyDir,
         eAnim,
@@ -1640,7 +1642,7 @@ export class BattleUI {
         enemyCombatant.playerRef.skinVariant
       );
     } else {
-      enemySprite = pixelSprites.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, eFrame);
+      enemySprite = customIsometricMonsterRenderer.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, eFrame);
     }
 
     // -----------------------------------------------------------------------

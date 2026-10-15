@@ -125,19 +125,19 @@ export class CustomIsometricMonsterRenderer {
 
   public getMonsterArchetypeKey(mName: string): string {
     const n = mName.toLowerCase();
-    if (n.includes('slime') || n.includes('ooze') || n.includes('jelly')) return 'slime_princess';
+    if (n.includes('slime') || n.includes('ooze') || n.includes('jelly') || n.includes('aurelia')) return 'slime_princess';
     if (n.includes('skeleton') || n.includes('undead') || n.includes('bone') || n.includes('mummy')) return 'skeletal_maid';
     if (n.includes('knight') || n.includes('commander') || n.includes('paladin') || n.includes('valkyrie') || (n.includes('captain') && !n.includes('pirate'))) return 'dark_knightress';
-    if (n.includes('marauder') || n.includes('bandit') || n.includes('raider') || n.includes('pirate') || n.includes('thief')) return 'bandit_pirate';
+    if (n.includes('marauder') || n.includes('bandit') || n.includes('raider') || n.includes('pirate') || n.includes('thief') || n.includes('scarlett')) return 'bandit_pirate';
     if (n.includes('panther') || n.includes('wolf') || n.includes('hound') || n.includes('chimera') || n.includes('beast') || n.includes('fenra') || n.includes('kaelia')) return 'beast_maiden';
-    if (n.includes('colossus') || n.includes('golem') || n.includes('automaton') || n.includes('dreadnought') || n.includes('behemoth') || n.includes('clockwork')) return 'clockwork_maid';
+    if (n.includes('colossus') || n.includes('golem') || n.includes('automaton') || n.includes('dreadnought') || n.includes('behemoth') || n.includes('clockwork') || n.includes('steam') || n.includes('gear') || n.includes('gunner') || n.includes('victoria') || n.includes('nicole') || n.includes('prismia')) return 'clockwork_maid';
     if (n.includes('yeti') || n.includes('frost giant') || n.includes('borealia')) return 'yeti_maiden';
     if (n.includes('wyrm')) return 'dragon_wyrm';
-    if (n.includes('siren') || n.includes('harpy') || n.includes('demon') || n.includes('archdemon') || n.includes('lilith')) return 'siren_demoness';
+    if (n.includes('siren') || n.includes('harpy') || n.includes('demon') || n.includes('archdemon') || n.includes('lilith') || n.includes('beatrice') || n.includes('duchess') || n.includes('sorceress')) return 'siren_demoness';
     if (n.includes('kraken')) return 'kraken_maiden';
     if (n.includes('sphinx') || n.includes('pharaoh')) return 'sphinx_queen';
     if (n.includes('ent') || n.includes('treant') || n.includes('dryad') || n.includes('nymph') || n.includes('flora')) return 'dryad_nymph';
-    if (n.includes('spider') || n.includes('arachnid') || n.includes('weaver') || n.includes('scorpion') || n.includes('arachne') || n.includes('scorpia')) return 'arachne_weaver';
+    if (n.includes('spider') || n.includes('arachnid') || n.includes('weaver') || n.includes('scorpion') || n.includes('arachne') || n.includes('scorpia') || n.includes('sylvi')) return 'arachne_weaver';
     if (n.includes('bat') || n.includes('vampire') || n.includes('gargoyle')) return 'vampire_countess';
     if (n.includes('ghost') || n.includes('wraith') || n.includes('phantom') || n.includes('specter')) return 'ghost_maiden';
     if (n.includes('tengu') || n.includes('kitsune') || n.includes('chiyo') || n.includes('ayame') || n.includes('sakura') || n.includes('shrine')) return 'sakura_kitsune';
@@ -339,7 +339,9 @@ export class CustomIsometricMonsterRenderer {
       }
     }
 
-    this.cache.set(cacheKey, canvas);
+    if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
+      this.cache.set(cacheKey, canvas);
+    }
     return canvas;
   }
 
