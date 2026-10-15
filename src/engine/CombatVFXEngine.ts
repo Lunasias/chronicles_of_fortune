@@ -673,7 +673,7 @@ export class CombatVFXEngine {
           y: targetY - 30 + (Math.random() - 0.5) * 40,
           vx: (Math.random() - 0.5) * 12,
           vy: (Math.random() - 0.5) * 6,
-          color: Math.random() > 0.4 ? '#38bdf8' : '#ec4899',
+          color: Math.random() > 0.4 ? '#38bdf8' : '#e0f2fe',
           size: 3 + Math.random() * 5,
           alpha: 1.0,
           decay: 0.03
@@ -1436,7 +1436,7 @@ export class CombatVFXEngine {
       // Blinding horizontal lightning energy beam across full screen width
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 14 + Math.sin(cut.elapsed * 0.5) * 6;
-      ctx.shadowColor = '#ec4899';
+      ctx.shadowColor = '#0284c7';
 
       ctx.beginPath();
       ctx.moveTo(0, waveY);

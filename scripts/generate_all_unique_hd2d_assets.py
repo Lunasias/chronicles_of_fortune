@@ -75,19 +75,26 @@ def render_character_frame(char_key, dir_name, anim_state, frame_idx, w=256, h=2
     skin_tone = SKIN_WARM
     skin_shadow = SKIN_WARM_SHADOW
 
-    if char_key in ('A_fair-skinned_sorceress_with_long', 'A_young_priestess_with_blonde', 'clockwork_maid', 'vampire_countess', 'ghost_maiden'):
+    if char_key in ('A_female_magic_swordsman_with', 'A_fair-skinned_sorceress_with_long', 'A_young_priestess_with_blonde', 'clockwork_maid', 'vampire_countess', 'ghost_maiden'):
         skin_tone = SKIN_PALE
         skin_shadow = SKIN_PALE_SHADOW
     elif char_key in ('bandit_pirate', 'beast_maiden', 'goblin_girl', 'dryad_nymph'):
         skin_tone = SKIN_TAN
         skin_shadow = SKIN_TAN_SHADOW
 
-    # Pre-render Special Wings / Tails (Drawn behind body)
+    # Pre-render Special Wings / Tails / Elemental Aura (Drawn behind body)
     if char_key == 'A_female_magic_swordsman_with':
-        # Ethereal Cyan Valkyrie Wings
-        wing_pulse = math.sin(frame_idx * 0.8) * 6
-        draw.polygon([(cx - 20, cy - 30), (cx - 95, cy - 110 + wing_pulse), (cx - 130, cy - 60 + wing_pulse), (cx - 40, cy + 10)], fill=(180, 240, 255, 175), outline=(120, 215, 255, 230), width=3)
-        draw.polygon([(cx + 20, cy - 30), (cx + 95, cy - 110 + wing_pulse), (cx + 130, cy - 60 + wing_pulse), (cx + 40, cy + 10)], fill=(180, 240, 255, 175), outline=(120, 215, 255, 230), width=3)
+        # Crackling Electric Aura & Floating Lightning Arcs around body
+        spark_f = (frame_idx * 1.57)
+        sp_x1 = cx - 55 + math.sin(spark_f) * 15
+        sp_y1 = cy - 20 + math.cos(spark_f) * 35
+        draw.line([sp_x1, sp_y1, sp_x1 + 18, sp_y1 - 24, sp_x1 + 6, sp_y1 - 42], fill=(56, 189, 248, 240), width=4)
+        draw.line([sp_x1, sp_y1, sp_x1 + 18, sp_y1 - 24, sp_x1 + 6, sp_y1 - 42], fill=(240, 250, 255, 255), width=2)
+
+        sp_x2 = cx + 60 - math.cos(spark_f) * 15
+        sp_y2 = cy - 10 + math.sin(spark_f) * 40
+        draw.line([sp_x2, sp_y2, sp_x2 - 16, sp_y2 - 28, sp_x2 + 8, sp_y2 - 50], fill=(56, 189, 248, 240), width=4)
+        draw.line([sp_x2, sp_y2, sp_x2 - 16, sp_y2 - 28, sp_x2 + 8, sp_y2 - 50], fill=(240, 250, 255, 255), width=2)
     elif char_key == 'sakura_kitsune':
         # 9 Plush Fox Tails fanning out
         tail_pulse = math.sin(frame_idx * 0.7) * 8
@@ -164,11 +171,28 @@ def render_character_frame(char_key, dir_name, anim_state, frame_idx, w=256, h=2
         draw.polygon([(cx - 38, cy + 18), (cx + 38, cy + 18), (cx + 46, cy + 42), (cx - 46, cy + 42)], fill=s_col, outline=s_trim, width=2)
 
     elif char_key == 'A_female_magic_swordsman_with':
-        # High-Cut Cyan Combat Leotard
-        l_col = (30, 185, 235, 255)
-        l_trim = (245, 215, 60, 255)
-        draw.polygon([(cx - 26, bust_y - 10), (cx + 26, bust_y - 10), (cx + 32, cy + 22), (cx - 32, cy + 22)], fill=l_col, outline=l_trim, width=2)
-        draw.polygon([(cx - 22, cy + 20), (cx + 22, cy + 20), (cx, cy + 45)], fill=l_col, outline=l_trim, width=2)
+        # Pure White Micro Bikini & Thigh-High Garters
+        w_col = (255, 255, 255, 255)
+        w_shadow = (218, 228, 245, 255)
+        if not is_back:
+            # Sexy white micro triangle cups
+            draw.polygon([(cx - 32, bust_y + 4), (cx - 18, bust_y - 22), (cx - 4, bust_y + 12)], fill=w_col, outline=w_shadow, width=2)
+            draw.polygon([(cx + 32, bust_y + 4), (cx + 18, bust_y - 22), (cx + 4, bust_y + 12)], fill=w_col, outline=w_shadow, width=2)
+            # Neck ties
+            draw.line([cx - 18, bust_y - 22, cx, bust_y - 34], fill=w_col, width=2)
+            draw.line([cx + 18, bust_y - 22, cx, bust_y - 34], fill=w_col, width=2)
+        else:
+            # Backless bikini thin strap
+            draw.line([cx - 30, cy - 14, cx + 30, cy - 14], fill=w_col, width=2)
+        # Micro white thong
+        draw.polygon([(cx - 20, cy + 16), (cx + 20, cy + 16), (cx, cy + 42)], fill=w_col, outline=w_shadow, width=2)
+        draw.line([cx - 38, cy + 18, cx - 20, cy + 18], fill=w_col, width=2)
+        draw.line([cx + 38, cy + 18, cx + 20, cy + 18], fill=w_col, width=2)
+        # White garters and stockings
+        draw.line([cx - 16, cy + 26, leg_l_x - 6, thigh_bot - 14], fill=w_col, width=2)
+        draw.line([cx + 16, cy + 26, leg_r_x + 6, thigh_bot - 14], fill=w_col, width=2)
+        draw.rectangle([leg_l_x - 14, thigh_bot - 16, leg_l_x + 14, foot_bot], fill=(252, 253, 255, 240), outline=w_shadow, width=2)
+        draw.rectangle([leg_r_x - 14, thigh_bot - 16, leg_r_x + 14, foot_bot], fill=(252, 253, 255, 240), outline=w_shadow, width=2)
 
     elif char_key in ('A_fair-skinned_female_assassin_wearing', 'bandit_pirate'):
         # Black Leather Strap Harness Micro-Bikini
@@ -226,7 +250,7 @@ def render_character_frame(char_key, dir_name, anim_state, frame_idx, w=256, h=2
     # Hair Geometry & Color
     h_col = (250, 205, 50, 255) # Blonde default
     if char_key == 'A_fair-skinned_sorceress_with_long': h_col = (175, 75, 220, 255) # Amethyst
-    elif char_key == 'A_female_magic_swordsman_with': h_col = (215, 175, 245, 255) # Lavender
+    elif char_key == 'A_female_magic_swordsman_with': h_col = (252, 253, 255, 255) # Pure White / Silver
     elif char_key == 'A_fair-skinned_female_assassin_wearing': h_col = (40, 42, 52, 255) # Raven
     elif char_key == 'A_young_priestess_with_blonde': h_col = (245, 245, 255, 255) # Silver
     elif char_key == 'clockwork_maid': h_col = (195, 95, 45, 255) # Auburn
@@ -236,8 +260,16 @@ def render_character_frame(char_key, dir_name, anim_state, frame_idx, w=256, h=2
     sway = math.sin((frame_idx / 4) * math.pi * 2) * 8
     draw.polygon([(hx - 36, hy - 25), (hx - 18, hy + 4), (hx, hy + 8), (hx + 18, hy + 4), (hx + 36, hy - 25), (hx, hy - 46)], fill=h_col)
     # Flowing side hair
-    draw.polygon([(hx - 34, hy - 10), (hx - 58 + sway, hy + 45), (hx - 48 + sway, hy + 120), (hx - 28, hy + 20)], fill=h_col)
-    draw.polygon([(hx + 34, hy - 10), (hx + 58 - sway, hy + 45), (hx + 48 - sway, hy + 120), (hx + 28, hy + 20)], fill=h_col)
+    if char_key == 'A_female_magic_swordsman_with':
+        # Long flowing loose white hair past hips
+        draw.polygon([(hx - 34, hy - 10), (hx - 65 + sway * 1.2, hy + 50), (hx - 55 + sway * 1.2, hy + 160), (hx - 24, hy + 20)], fill=h_col, outline=(215, 225, 248, 255), width=2)
+        draw.polygon([(hx + 34, hy - 10), (hx + 65 - sway * 1.2, hy + 50), (hx + 55 - sway * 1.2, hy + 160), (hx + 24, hy + 20)], fill=h_col, outline=(215, 225, 248, 255), width=2)
+        if is_back:
+            # Back locks framing shoulders and arched waist
+            draw.polygon([(hx - 26, hy + 10), (hx - 36 + sway * 0.5, cy + 30), (hx + 36 - sway * 0.5, cy + 30), (hx + 26, hy + 10)], fill=h_col, outline=(215, 225, 248, 255))
+    else:
+        draw.polygon([(hx - 34, hy - 10), (hx - 58 + sway, hy + 45), (hx - 48 + sway, hy + 120), (hx - 28, hy + 20)], fill=h_col)
+        draw.polygon([(hx + 34, hy - 10), (hx + 58 - sway, hy + 45), (hx + 48 - sway, hy + 120), (hx + 28, hy + 20)], fill=h_col)
 
     # Headgear
     if char_key == 'A_young_priestess_with_blonde':
@@ -282,10 +314,52 @@ def render_character_frame(char_key, dir_name, anim_state, frame_idx, w=256, h=2
             draw.ellipse([cx - 100, cy + 80, cx + 100, cy + 140], outline=orb_col, width=4)
 
     elif char_key == 'A_female_magic_swordsman_with':
-        # Lightning Rapier
-        draw.line([wx, wy + 30, wx + vec_x * 40, wy - 105], fill=(240, 250, 255, 255), width=6)
+        # Massive Glowing Cyan Greatsword with Electric Lightning Arcs
+        sword_angle = math.radians(weapon_arc - 25)
+        sw_len = 135
+        sw_w = 26
+        tip_x = wx + math.sin(sword_angle) * sw_len * (vec_x if vec_x != 0 else 1)
+        tip_y = wy - math.cos(sword_angle) * sw_len
+
+        # Base Crossguard (Gold/Bronze)
+        draw.rectangle([wx - 20, wy + 15, wx + 20, wy + 26], fill=(217, 119, 6, 255), outline=(251, 191, 36, 255), width=2)
+        draw.ellipse([wx - 7, wy + 13, wx + 7, wy + 27], fill=(56, 189, 248, 255), outline=(255, 255, 255, 255), width=2)
+
+        # Colossal Slab Blade - Dark metallic core with blazing cyan plasma edges
+        blade_poly = [
+            (wx - sw_w // 2, wy + 15),
+            (wx + sw_w // 2, wy + 15),
+            (tip_x + sw_w // 2, tip_y + 20),
+            (tip_x, tip_y),
+            (tip_x - sw_w // 2, tip_y + 20)
+        ]
+        draw.polygon(blade_poly, fill=(40, 48, 68, 255), outline=(56, 189, 248, 255), width=5)
+        # Inner plasma line
+        draw.line([(wx, wy + 15), (tip_x, tip_y)], fill=(186, 230, 253, 255), width=6)
+        draw.line([(wx, wy + 15), (tip_x, tip_y)], fill=(255, 255, 255, 255), width=2)
+
+        # Crackling Lightning Arcs wrapping around the blade
+        l_phase = frame_idx * 1.8
+        for arc_i in range(3):
+            t_ratio = (arc_i + 1) / 4.0
+            lx = wx + (tip_x - wx) * t_ratio + math.sin(l_phase + arc_i) * 18
+            ly = wy + (tip_y - wy) * t_ratio + math.cos(l_phase + arc_i) * 12
+            draw.line([lx - 12, ly + 8, lx, ly, lx + 14, ly - 10], fill=(56, 189, 248, 255), width=3)
+            draw.line([lx - 12, ly + 8, lx, ly, lx + 14, ly - 10], fill=(255, 255, 255, 255), width=1)
+
+        # Attack Anim: Colossal Lightning Slash Blade Arc & Impact Shockwaves
         if anim_state == "Attack" and frame_idx in (1, 2):
-            draw.line([wx, wy - 50, wx + 120, wy - 70], fill=(56, 189, 248, 255), width=8)
+            draw.arc([cx - 70, cy - 130, cx + 180, cy + 90], start=270, end=430, fill=(56, 189, 248, 250), width=16)
+            draw.arc([cx - 65, cy - 125, cx + 175, cy + 85], start=275, end=425, fill=(240, 252, 255, 255), width=6)
+            draw.polygon([(wx + 80, wy - 30), (wx + 130, wy - 60), (wx + 110, wy - 10)], fill=(56, 189, 248, 255))
+            draw.polygon([(wx + 90, wy + 20), (wx + 140, wy + 40), (wx + 115, wy)], fill=(255, 255, 255, 255))
+
+        # Cast Anim: Ground Lightning Circle & Skyward Electric Pillar
+        elif anim_state == "Cast" and frame_idx in (1, 2):
+            draw.ellipse([cx - 120, cy + 70, cx + 120, cy + 145], outline=(56, 189, 248, 255), width=5)
+            draw.ellipse([cx - 95, cy + 85, cx + 95, cy + 130], outline=(224, 242, 254, 220), width=3)
+            draw.line([cx - 40, cy + 100, cx - 30, cy - 80, cx - 45, cy - 160], fill=(56, 189, 248, 255), width=4)
+            draw.line([cx + 40, cy + 100, cx + 30, cy - 80, cx + 45, cy - 160], fill=(56, 189, 248, 255), width=4)
 
     elif char_key in ('A_fair-skinned_female_assassin_wearing', 'bandit_pirate'):
         # Dual Venom Daggers

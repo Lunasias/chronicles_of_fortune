@@ -547,19 +547,31 @@ export class CustomIsometricHeroRenderer {
       ctx.restore();
     }
 
-    // 6. Spellblade: Feathered Wings Gentle Breathing Glow (Warrior has NO wings!)
+    // 6. Spellblade: Crackling Lightning Aura & Electric Spark Discharge
     if (cls === 'spellblade') {
-      const isBack = dir === 'N' || dir === 'NE' || dir === 'NW';
-      if (isBack) {
-        ctx.save();
-        const wingPulse = Math.sin(frame * 0.8) * 2;
-        ctx.fillStyle = 'rgba(224, 242, 254, 0.25)';
-        ctx.beginPath();
-        ctx.ellipse(cx - 14, cy - 14, 12, 18 + wingPulse, -0.2, 0, Math.PI * 2);
-        ctx.ellipse(cx + 14, cy - 14, 12, 18 + wingPulse, 0.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+      ctx.save();
+      const sparkPulse = Math.sin(frame * 1.5);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+      ctx.lineWidth = 1.6;
+      // Left electrical arc
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, cy + sparkPulse * 6);
+      ctx.lineTo(cx - 24, cy - 6 + sparkPulse * 4);
+      ctx.lineTo(cx - 15, cy - 20);
+      ctx.stroke();
+
+      // Right electrical arc
+      ctx.beginPath();
+      ctx.moveTo(cx + 18, cy + 12 - sparkPulse * 5);
+      ctx.lineTo(cx + 26, cy - 4 - sparkPulse * 3);
+      ctx.lineTo(cx + 16, cy - 16);
+      ctx.stroke();
+
+      // Spark motes
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(cx - 20 + sparkPulse * 4, cy - 22, 2, 2);
+      ctx.fillRect(cx + 22 - sparkPulse * 4, cy + 14, 2, 2);
+      ctx.restore();
     } else if (cls === 'warrior') {
       // Heavy Steel Pauldrons Metallic Glint (No Wings!)
       ctx.save();
@@ -700,7 +712,7 @@ export class CustomIsometricHeroRenderer {
 
     if (animState === 'attack' && frame % 8 >= 1 && frame % 8 <= 5) {
       ctx.save();
-      const slashColor = cls === 'warrior' ? '#38bdf8' : cls === 'spellblade' ? '#ec4899' : cls === 'thief' ? '#f43f5e' : cls === 'magician' ? '#c084fc' : '#fbbf24';
+      const slashColor = cls === 'warrior' ? '#38bdf8' : cls === 'spellblade' ? '#38bdf8' : cls === 'thief' ? '#f43f5e' : cls === 'magician' ? '#c084fc' : '#fbbf24';
       const arcCenterX = cx + vec.x * 18;
       const arcCenterY = cy + vec.y * 18 - 8;
 
