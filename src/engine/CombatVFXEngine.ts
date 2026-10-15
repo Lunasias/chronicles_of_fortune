@@ -1457,7 +1457,7 @@ export class CombatVFXEngine {
       // Lightning branches
       for (let k = 0; k < 6; k++) {
         const rx = (cut.elapsed * 55 + k * 140) % arenaWidth;
-        ctx.strokeStyle = k % 2 === 0 ? '#ec4899' : '#a855f7';
+        ctx.strokeStyle = k % 2 === 0 ? '#38bdf8' : '#e0f2fe';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(rx, waveY);

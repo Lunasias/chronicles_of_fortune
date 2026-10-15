@@ -65,7 +65,7 @@ export class CustomIsometricHeroRenderer {
     const uniqueFolders = Array.from(new Set(Object.values(CLASS_ASSET_FOLDERS)));
     const animatedFolders = uniqueFolders;
 
-    this.totalToLoad = uniqueFolders.length * directions.length + animatedFolders.length * directions.length * 8;
+    this.totalToLoad = uniqueFolders.length * directions.length + animatedFolders.length * directions.length * 16;
 
     for (const folder of uniqueFolders) {
       for (const dir of directions) {
@@ -82,10 +82,22 @@ export class CustomIsometricHeroRenderer {
         img.src = src;
         this.imageStore.set(key, img);
 
-        // Preload multi-frame animations for classes with run/attack sheets
+        // Preload multi-frame animations for classes with run/attack/idle/cast sheets
         if (animatedFolders.includes(folder)) {
           const baseName = fileName.replace('.png', '');
           for (let f = 0; f < 4; f++) {
+            // Idle state frame
+            const idleKey = `${folder}_idle_${dir}_${f}`;
+            const idleSrc = `/assets/${folder}/Idle/rotations/${baseName}_${f}.png`;
+            const idleImg = new Image();
+            idleImg.onload = () => {
+              this.cache.clear();
+              this.markAssetLoaded();
+            };
+            idleImg.onerror = () => this.markAssetFailed(idleSrc);
+            idleImg.src = idleSrc;
+            this.imageStore.set(idleKey, idleImg);
+
             // Run state frame
             const runKey = `${folder}_run_${dir}_${f}`;
             const runSrc = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
@@ -109,6 +121,18 @@ export class CustomIsometricHeroRenderer {
             atkImg.onerror = () => this.markAssetFailed(atkSrc);
             atkImg.src = atkSrc;
             this.imageStore.set(atkKey, atkImg);
+
+            // Cast / Magic state frame
+            const castKey = `${folder}_cast_${dir}_${f}`;
+            const castSrc = `/assets/${folder}/Cast/rotations/${baseName}_${f}.png`;
+            const castImg = new Image();
+            castImg.onload = () => {
+              this.cache.clear();
+              this.markAssetLoaded();
+            };
+            castImg.onerror = () => this.markAssetFailed(castSrc);
+            castImg.src = castSrc;
+            this.imageStore.set(castKey, castImg);
           }
         }
       }
@@ -148,17 +172,35 @@ export class CustomIsometricHeroRenderer {
     animState: CharacterAnimState = 'idle',
     frame: number = 0
   ): HTMLImageElement | null {
+    const f = frame % 4;
+
     if (animState === 'run') {
-      const f = frame % 4;
       const runKey = `${folder}_run_${dir}_${f}`;
       const img = this.imageStore.get(runKey);
       if (img && img.complete && img.naturalWidth > 0) {
         return img;
       }
-    } else if (animState === 'attack' || animState === 'strike' || animState === 'magic') {
-      const f = frame % 4;
+    } else if (animState === 'attack' || animState === 'strike') {
       const atkKey = `${folder}_attack_${dir}_${f}`;
       const img = this.imageStore.get(atkKey);
+      if (img && img.complete && img.naturalWidth > 0) {
+        return img;
+      }
+    } else if (animState === 'magic') {
+      const castKey = `${folder}_cast_${dir}_${f}`;
+      const img = this.imageStore.get(castKey);
+      if (img && img.complete && img.naturalWidth > 0) {
+        return img;
+      }
+      // Fallback to attack if cast isn't available
+      const atkKey = `${folder}_attack_${dir}_${f}`;
+      const atkImg = this.imageStore.get(atkKey);
+      if (atkImg && atkImg.complete && atkImg.naturalWidth > 0) {
+        return atkImg;
+      }
+    } else if (animState === 'idle') {
+      const idleKey = `${folder}_idle_${dir}_${f}`;
+      const img = this.imageStore.get(idleKey);
       if (img && img.complete && img.naturalWidth > 0) {
         return img;
       }
