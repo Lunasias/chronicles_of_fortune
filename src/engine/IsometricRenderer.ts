@@ -234,7 +234,7 @@ export class IsometricRenderer {
     const p = this.toScreen(gx, gy, gz);
     this.dustPuffs.push({
       x: p.x + (Math.random() * 10 - 5),
-      y: p.y + 10 + (Math.random() * 6 - 3),
+      y: p.y + 2 + (Math.random() * 4 - 2),
       size: 4 + Math.random() * 4,
       alpha: 0.8
     });
@@ -461,7 +461,7 @@ export class IsometricRenderer {
       });
 
       // Buildings
-      if (
+      const hasBuilding =
         node.type === 'town' ||
         node.type === 'shop_item' ||
         node.type === 'shop_weapon' ||
@@ -475,8 +475,9 @@ export class IsometricRenderer {
         node.type === 'fishing' ||
         node.type === 'isekai_event' ||
         node.type === 'mystery_chest' ||
-        node.type === 'home'
-      ) {
+        node.type === 'home';
+
+      if (hasBuilding) {
         renderList.push({
           depth: depth + 40,
           draw: () => {
@@ -733,8 +734,8 @@ export class IsometricRenderer {
         });
       }
 
-      // Foliage / Tree Props
-      if (node.id % 2 === 0) {
+      // Foliage / Tree Props (Only on open path nodes, never clipping through buildings)
+      if (node.id % 2 === 0 && !hasBuilding) {
         renderList.push({
           depth: depth + 20,
           draw: () => {
@@ -756,8 +757,8 @@ export class IsometricRenderer {
         });
       }
 
-      // Dark Fantasy Biome Props
-      if (node.id % 3 === 0) {
+      // Dark Fantasy Biome Props (Only on open path nodes)
+      if (node.id % 3 === 0 && !hasBuilding) {
         renderList.push({
           depth: depth + 15,
           draw: () => {
@@ -767,21 +768,25 @@ export class IsometricRenderer {
       }
     }
 
-    // 2. Add Animated Players
-    players.forEach(player => {
-      const p = this.toScreen(player.gridX, player.gridY, player.gridZ);
-
-      renderList.push({
-        depth: (player.gridX + player.gridY) * 1000 + player.gridZ * 100 + 80,
-        draw: () => {
-          this.drawPlayerCharacter(ctx, p.x, p.y, player, player === activePlayer, time);
-        }
-      });
-    });
-
-    // Sort by isometric depth
+    // Sort environment entities by depth
     renderList.sort((a, b) => a.depth - b.depth);
     renderList.forEach(item => item.draw());
+
+    // 2. Animated Players Layer (Dedicated layer rendered on top of scenery so heroes are NEVER obscured!)
+    // Sort players among themselves by isometric depth; active player has slight depth priority when overlapping
+    const sortedPlayers = [...players].sort((a, b) => {
+      const depthA = (a.gridX + a.gridY) * 1000 + a.gridZ * 100 + (a === activePlayer ? 50 : 0);
+      const depthB = (b.gridX + b.gridY) * 1000 + b.gridZ * 100 + (b === activePlayer ? 50 : 0);
+      return depthA - depthB;
+    });
+
+    sortedPlayers.forEach(player => {
+      const p = this.toScreen(player.gridX, player.gridY, player.gridZ);
+      if (p.x < minX - 120 || p.x > maxX + 120 || p.y < minY - 150 || p.y > maxY + 150) {
+        return;
+      }
+      this.drawPlayerCharacter(ctx, p.x, p.y, player, player === activePlayer, time);
+    });
 
     // 3. Highlighted Reachable Destinations Overhead Pass (Always on top of terrain & buildings, never obscured!)
     this.renderDestinationOverheadMarkers(ctx, nodes, highlightedNodes, minX, maxX, minY, maxY, time);
@@ -1053,7 +1058,10 @@ export class IsometricRenderer {
       ].includes(node.type);
 
       const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
-      const bob = 0; // Static destination overhead markers per user request (no bobbing/moving)
+      // Continuous vertical bobbing animation so destination arrows glide up and down smoothly
+      const bobSpeed = isHovered ? 0.007 : 0.005;
+      const bobAmp = isHovered ? 9 : 7;
+      const bob = Math.sin(time * bobSpeed + node.id * 0.35) * bobAmp;
       const pointerY = py - baseClearance + bob;
 
       ctx.save();
@@ -1063,7 +1071,7 @@ export class IsometricRenderer {
       // gradient across a beam is the same soft ramp this whole pass exists to remove.
       const beamW = isHovered ? 26 : 18;
       const beamTop = pointerY + 12;
-      const beamBottom = py + 8;
+      const beamBottom = py;
       const beamBands = 7;
       for (let b = 0; b < beamBands; b++) {
         const t = b / beamBands;
@@ -1263,23 +1271,23 @@ export class IsometricRenderer {
     isActive: boolean,
     time: number
   ) {
-    // 1. Soft Ground Shadow with Ambient Occlusion
+    // 1. Soft Ground Shadow with Ambient Occlusion (Anchored firmly on the tile top plate)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
     ctx.beginPath();
-    pixelEllipse(ctx, px, py + 9, 24, 12, ctx.fillStyle);
+    pixelEllipse(ctx, px, py + 1, 24, 12, ctx.fillStyle);
     ctx.fill();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.50)';
     ctx.beginPath();
-    pixelEllipse(ctx, px, py + 8, 18, 9, ctx.fillStyle);
+    pixelEllipse(ctx, px, py, 18, 9, ctx.fillStyle);
     ctx.fill();
 
-    // 2. Active Player Halo
+    // 2. Active Player Halo (Elevated to tile surface)
     if (isActive) {
       const pulse = Math.sin(time * 0.006) * 3;
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      pixelRing(ctx, px, py + 8, 24 + pulse, 12 + pulse * 0.5, ctx.strokeStyle, 1);
+      pixelRing(ctx, px, py, 24 + pulse, 12 + pulse * 0.5, ctx.strokeStyle, 1);
       ctx.stroke();
     }
 
@@ -1297,19 +1305,20 @@ export class IsometricRenderer {
       player.prank,
       player.skinVariant
     );
-    ctx.drawImage(sprite, px - 57, py - 82, 114, 114);
+    // Draw sprite elevated so the character stands on the tile surface, never sunken into the floor
+    ctx.drawImage(sprite, px - 57, py - 90, 114, 114);
 
-    // 4. Name Tag
+    // 4. Name Tag (Elevated above hero's head)
     ctx.fillStyle = '#030712';
-    ctx.fillRect(px - 34, py - 92, 68, 16);
+    ctx.fillRect(px - 34, py - 100, 68, 16);
     ctx.strokeStyle = player.isDarkling ? '#c084fc' : player.color;
     ctx.lineWidth = 1.2;
-    ctx.strokeRect(px - 34, py - 92, 68, 16);
+    ctx.strokeRect(px - 34, py - 100, 68, 16);
 
     ctx.fillStyle = player.isDarkling ? '#f43f5e' : player.color;
     ctx.font = '8px Silkscreen';
     ctx.textAlign = 'center';
-    ctx.fillText(player.displayName.substring(0, 8), px, py - 80);
+    ctx.fillText(player.displayName.substring(0, 8), px, py - 88);
   }
 
   private renderDustPuffs(ctx: CanvasRenderingContext2D) {
@@ -1373,7 +1382,7 @@ export class IsometricRenderer {
 
       const p = this.toScreen(pl.gridX, pl.gridY, pl.gridZ);
       if (p.x >= minX - 80 && p.x <= maxX + 80 && p.y >= minY - 80 && p.y <= maxY + 80) {
-        ctx.drawImage(playerGlow, p.x - 70, p.y - 62);
+        ctx.drawImage(playerGlow, p.x - 70, p.y - 70);
       }
     });
 
