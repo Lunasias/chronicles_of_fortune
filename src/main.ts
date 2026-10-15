@@ -28,7 +28,8 @@ import { FantasyEventUI } from './ui/FantasyEventUI';
 import { CasinoUI } from './ui/CasinoUI';
 import { dungeonSystem } from './game/DungeonSystem';
 import { hallOfFameUI } from './ui/HallOfFameUI';
-import { multiplayerRoomUI } from './ui/MultiplayerRoomUI';
+import { multiplayerRoomUI, MultiplayerStartOptions } from './ui/MultiplayerRoomUI';
+import { networkRoomManager, NetworkPacket } from './engine/NetworkRoomManager';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { scaleMonster, tierForNode } from './game/BalanceSystem';
 import type { ThreatTier } from './game/BalanceSystem';
@@ -99,9 +100,8 @@ class DokaponApp {
       hallOfFameUI.open();
     });
     document.getElementById('btnTitleMultiplayerRoom')?.addEventListener('click', () => {
-      multiplayerRoomUI.open(() => {
-        document.getElementById('titleButtonsBlock')?.classList.add('hidden');
-        document.getElementById('playerSetupBlock')?.classList.remove('hidden');
+      multiplayerRoomUI.open(opts => {
+        this.startMultiplayerGame(opts);
       });
     });
     document.getElementById('btnViewHallOfFameFromVictory')?.addEventListener('click', () => {
@@ -124,11 +124,193 @@ class DokaponApp {
     this.renderRosterSetup(3);
     this.updateTitleSaveStatus();
     this.initGamepadController();
+    this.bindNetworkListeners();
+  }
+
+  public isMyTurn(): boolean {
+    if (!networkRoomManager.isInRoom()) return true;
+    if (this.game.activePlayer.isAI) return false;
+    return this.game.activePlayerIdx === networkRoomManager.getLocalPlayerIndex();
+  }
+
+  private startMultiplayerGame(opts: MultiplayerStartOptions) {
+    if (opts.saveData) {
+      SaveManager.applySaveData(this.game, opts.saveData, false);
+      this.game.gameMode = (opts.gameMode as any) || 'standard';
+      this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
+    } else {
+      this.game.initGame(opts.partyConfig, opts.winGoal || 'networth');
+      this.game.gameMode = (opts.gameMode as any) || 'standard';
+      this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
+      networkRoomManager.setLocalPlayerIndex(0);
+
+      const initialSave = SaveManager.serializeGameState(this.game, {
+        currentHp: this.bossCurrentHp,
+        maxHp: this.bossMaxHp
+      });
+
+      networkRoomManager.broadcast({
+        packetId: `start_${Date.now()}`,
+        type: 'START_GAME',
+        roomCode: networkRoomManager.getRoomCode()!,
+        senderId: 'host',
+        senderName: this.game.players[0]?.displayName || 'Host',
+        payload: {
+          partyConfig: opts.partyConfig,
+          gameMode: opts.gameMode,
+          winGoal: opts.winGoal,
+          aiDifficulty: opts.aiDifficulty,
+          saveData: initialSave
+        },
+        timestamp: Date.now()
+      });
+    }
+
+    document.getElementById('titleScreen')?.classList.add('hidden');
+    document.getElementById('topHUD')?.classList.remove('hidden');
+    document.getElementById('bottomBar')?.classList.remove('hidden');
+    document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+
+    this.updateMultiplayerHudBadge();
+    this.onTurnStarted();
+
+    if (this.game.activePlayer.isAI) {
+      this.handleAITurnStart();
+    }
+  }
+
+  private bindNetworkListeners() {
+    networkRoomManager.onPacket(pkt => {
+      if (pkt.type === 'DICE_ROLL') {
+        if (pkt.payload && typeof pkt.payload.totalRoll === 'number') {
+          this.triggerDiceRoll(pkt.payload.totalRoll);
+        }
+      } else if (pkt.type === 'MOVE_PATH') {
+        const path = pkt.payload?.path;
+        if (path && Array.isArray(path) && path.length > 1) {
+          this.inspectUI.hideMoveDestinationPreview();
+          this.renderer.hoveredNodeId = null;
+          this.renderer.previewPathNodeIds = [];
+          this.game.executePath(
+            path,
+            () => this.onMoveStep(),
+            tile => this.handleTileArrival(tile)
+          );
+        }
+      } else if (pkt.type === 'SYNC_STATE') {
+        if (pkt.payload?.state && !networkRoomManager.isHost()) {
+          SaveManager.applySaveData(this.game, pkt.payload.state, false);
+          this.hud.update();
+          this.renderer.centerCameraOn(this.game.activePlayer.gridX, this.game.activePlayer.gridY, this.game.activePlayer.gridZ);
+        }
+      } else if (pkt.type === 'BATTLE_ACTION') {
+        if (pkt.payload?.role && pkt.payload?.action) {
+          this.battleUI.receiveRemoteBattleAction(pkt.payload.role, pkt.payload.action);
+        }
+      } else if (pkt.type === 'CHAT_MSG') {
+        this.game.addLog(`💬 [${pkt.senderName}]: ${pkt.payload?.text || ''}`, 'info');
+      }
+    });
+
+    networkRoomManager.onStateChange(() => {
+      this.updateMultiplayerHudBadge();
+    });
+  }
+
+  private updateMultiplayerHudBadge() {
+    let badge = document.getElementById('hudMultiplayerBadge');
+    if (!networkRoomManager.isInRoom()) {
+      if (badge) badge.classList.add('hidden');
+      return;
+    }
+
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'hudMultiplayerBadge';
+      badge.className =
+        'pixel-chip px-2 py-0.5 text-[10px] font-bold flex items-center gap-1.5 bg-slate-900/90 border border-cyan-500/60 text-cyan-300 pointer-events-auto cursor-pointer shadow';
+      badge.title = 'คลิกเพื่อดูห้องและแชทเล่นหลายคน';
+      badge.addEventListener('click', () => {
+        multiplayerRoomUI.open();
+      });
+      const topHUD = document.getElementById('topHUD');
+      if (topHUD) {
+        topHUD.appendChild(badge);
+      }
+    }
+
+    badge.classList.remove('hidden');
+    const myIdx = networkRoomManager.getLocalPlayerIndex();
+    const myPlayer = this.game.players[myIdx];
+    const isMe = this.game.activePlayerIdx === myIdx;
+    badge.innerHTML = `
+      <span>🌐</span>
+      <span>${networkRoomManager.getRoomCode()}</span>
+      <span class="text-slate-500">|</span>
+      <span class="${isMe ? 'text-amber-300 font-extrabold animate-pulse' : 'text-slate-300'}">
+        ${isMe ? '👉 ตาคุณ!' : `รอ P${this.game.activePlayerIdx + 1}`}
+      </span>
+      <span class="text-[9px] text-cyan-400">(${myPlayer ? myPlayer.displayName : `P${myIdx + 1}`})</span>
+    `;
+  }
+
+  private syncMultiplayerState() {
+    if (!networkRoomManager.isInRoom()) return;
+    if (!networkRoomManager.isHost() && !this.isMyTurn()) return;
+
+    const snapshot = SaveManager.serializeGameState(this.game, {
+      currentHp: this.bossCurrentHp,
+      maxHp: this.bossMaxHp
+    });
+    networkRoomManager.broadcast({
+      packetId: `sync_${Date.now()}`,
+      type: 'SYNC_STATE',
+      roomCode: networkRoomManager.getRoomCode()!,
+      senderId: networkRoomManager.getMyPeerId(),
+      senderName: this.game.activePlayer.displayName,
+      payload: { state: snapshot },
+      timestamp: Date.now()
+    });
+  }
+
+  private handleAITurnStart() {
+    if (!this.game.activePlayer.isAI) return;
+    if (networkRoomManager.isInRoom() && !networkRoomManager.isHost()) {
+      return;
+    }
+    const ai = this.game.activePlayer;
+    if (!ai.isDarkling && Math.random() < 0.25) {
+      const trapDecision = aiSystem.chooseTrapPlacement(ai, this.game.allNodes, this.game.players, this.game.placedTraps);
+      if (trapDecision) {
+        ai.gold -= 60;
+        this.game.placedTraps.push({
+          nodeId: trapDecision.nodeId,
+          ownerId: ai.id,
+          damage: Math.round(ai.atk * 1.5),
+          type: trapDecision.type
+        });
+        this.game.addLog(`🕵️ ${ai.displayName} แอบวางกับดัก (${trapDecision.type.toUpperCase()}) บนกระดาน!`, 'battle');
+      }
+    }
+    const totalRoll = this.game.rollMovementDice();
+    if (networkRoomManager.isInRoom()) {
+      networkRoomManager.broadcast({
+        packetId: `dice_ai_${Date.now()}`,
+        type: 'DICE_ROLL',
+        roomCode: networkRoomManager.getRoomCode()!,
+        senderId: 'host',
+        senderName: ai.displayName,
+        payload: { playerIdx: this.game.activePlayerIdx, totalRoll },
+        timestamp: Date.now()
+      });
+    }
+    setTimeout(() => this.triggerDiceRoll(totalRoll), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
   }
 
   private selectNodeToMove(targetNode: BoardNode) {
     if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
     if (!this.game.highlightedNodes.includes(targetNode.id)) return;
+    if (networkRoomManager.isInRoom() && !this.isMyTurn()) return;
 
     let path = this.game.findPathToTarget(targetNode.id);
     if (!path || path.length <= 1) {
@@ -152,6 +334,17 @@ class DokaponApp {
           audio.coin();
           this.renderer.hoveredNodeId = null;
           this.renderer.previewPathNodeIds = [];
+          if (networkRoomManager.isInRoom()) {
+            networkRoomManager.broadcast({
+              packetId: `move_${Date.now()}`,
+              type: 'MOVE_PATH',
+              roomCode: networkRoomManager.getRoomCode()!,
+              senderId: networkRoomManager.getMyPeerId(),
+              senderName: this.game.activePlayer.displayName,
+              payload: { playerIdx: this.game.activePlayerIdx, path },
+              timestamp: Date.now()
+            });
+          }
           this.game.executePath(
             path,
             () => this.onMoveStep(),
@@ -178,6 +371,17 @@ class DokaponApp {
           audio.coin();
           this.renderer.hoveredNodeId = null;
           this.renderer.previewPathNodeIds = [];
+          if (networkRoomManager.isInRoom()) {
+            networkRoomManager.broadcast({
+              packetId: `move_${Date.now()}`,
+              type: 'MOVE_PATH',
+              roomCode: networkRoomManager.getRoomCode()!,
+              senderId: networkRoomManager.getMyPeerId(),
+              senderName: this.game.activePlayer.displayName,
+              payload: { playerIdx: this.game.activePlayerIdx, path },
+              timestamp: Date.now()
+            });
+          }
           this.game.executePath(
             path,
             () => this.onMoveStep(),
@@ -193,6 +397,18 @@ class DokaponApp {
     this.renderer.hoveredNodeId = null;
     this.renderer.previewPathNodeIds = [];
 
+    if (networkRoomManager.isInRoom()) {
+      networkRoomManager.broadcast({
+        packetId: `move_${Date.now()}`,
+        type: 'MOVE_PATH',
+        roomCode: networkRoomManager.getRoomCode()!,
+        senderId: networkRoomManager.getMyPeerId(),
+        senderName: this.game.activePlayer.displayName,
+        payload: { playerIdx: this.game.activePlayerIdx, path },
+        timestamp: Date.now()
+      });
+    }
+
     // Execute full path chosen by player!
     this.game.executePath(
       path,
@@ -206,6 +422,7 @@ class DokaponApp {
   // =========================================================================
   private handleCanvasSelectAt(clientX: number, clientY: number) {
     if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
+    if (networkRoomManager.isInRoom() && !this.isMyTurn()) return;
 
     const clickedNode = this.renderer.screenToNode(clientX, clientY, this.game.allNodes, this.game.highlightedNodes);
     if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
@@ -530,12 +747,32 @@ class DokaponApp {
     // Roll Dice button
     document.getElementById('btnRollDice')?.addEventListener('click', () => {
       if (this.game.phase === 'BOARD_TURN' && !this.game.activePlayer.isAI) {
-        this.triggerDiceRoll();
+        if (!this.isMyTurn()) {
+          this.game.addLog(`⏳ ยังไม่ใช่เทิร์นของคุณ! กำลังรอ ${this.game.activePlayer.displayName} ทอยลูกเต๋า...`);
+          return;
+        }
+        const totalRoll = this.game.rollMovementDice();
+        if (networkRoomManager.isInRoom()) {
+          networkRoomManager.broadcast({
+            packetId: `dice_${Date.now()}`,
+            type: 'DICE_ROLL',
+            roomCode: networkRoomManager.getRoomCode()!,
+            senderId: networkRoomManager.getMyPeerId(),
+            senderName: this.game.activePlayer.displayName,
+            payload: { playerIdx: this.game.activePlayerIdx, totalRoll },
+            timestamp: Date.now()
+          });
+        }
+        this.triggerDiceRoll(totalRoll);
       }
     });
 
     // Multi-Spinner usage
     document.getElementById('btnUseSpinner')?.addEventListener('click', () => {
+      if (networkRoomManager.isInRoom() && !this.isMyTurn()) {
+        this.game.addLog(`⏳ ยังไม่ใช่เทิร์นของคุณ!`);
+        return;
+      }
       audio.click();
       const p = this.game.activePlayer;
       const spinners = p.inventory.filter(i => i.type === 'spinner');
@@ -548,6 +785,7 @@ class DokaponApp {
       p.inventory.splice(p.inventory.indexOf(spin), 1);
       audio.coin();
       this.game.addLog(`🌀 ใช้ ${spin.name}! การทอยครั้งหน้าจะใช้ลูกเต๋า ${p.activeSpinnerMultiplier} ลูก!`, 'level');
+      this.syncMultiplayerState();
     });
 
     // Toggle Chiptune BGM
@@ -560,6 +798,10 @@ class DokaponApp {
 
     // Field Magic / Darkling Calamity button
     document.getElementById('btnFieldMagic')?.addEventListener('click', () => {
+      if (networkRoomManager.isInRoom() && !this.isMyTurn()) {
+        this.game.addLog(`⏳ ยังไม่ใช่เทิร์นของคุณ!`);
+        return;
+      }
       audio.click();
       const p = this.game.activePlayer;
       if (p.isDarkling) {
@@ -1146,27 +1388,15 @@ class DokaponApp {
     this.onTurnStarted();
 
     if (this.game.activePlayer.isAI) {
-      const ai = this.game.activePlayer;
-      if (!ai.isDarkling && Math.random() < 0.25) {
-        const trapDecision = aiSystem.chooseTrapPlacement(ai, this.game.allNodes, this.game.players, this.game.placedTraps);
-        if (trapDecision) {
-          ai.gold -= 60;
-          this.game.placedTraps.push({
-            nodeId: trapDecision.nodeId,
-            ownerId: ai.id,
-            damage: Math.round(ai.atk * 1.5),
-            type: trapDecision.type
-          });
-          this.game.addLog(`🕵️ ${ai.displayName} แอบวางกับดัก (${trapDecision.type.toUpperCase()}) บนกระดาน!`, 'battle');
-        }
-      }
-      setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
+      this.handleAITurnStart();
     }
   }
 
-  private triggerDiceRoll() {
+  private triggerDiceRoll(presetRoll?: number) {
     triggerHaptic('medium');
-    const totalRoll = this.game.rollMovementDice();
+    const totalRoll = presetRoll !== undefined ? presetRoll : this.game.rollMovementDice();
+    this.game.remainingMoves = totalRoll;
+    this.game.phase = 'CHOOSING_PATH';
 
     const diceModal = document.getElementById('diceRollModal')!;
     const diceCube = document.getElementById('diceCube')!;
@@ -1222,6 +1452,17 @@ class DokaponApp {
               }
             }
             if (path && path.length > 1) {
+              if (networkRoomManager.isInRoom() && networkRoomManager.isHost()) {
+                networkRoomManager.broadcast({
+                  packetId: `move_ai_${Date.now()}`,
+                  type: 'MOVE_PATH',
+                  roomCode: networkRoomManager.getRoomCode()!,
+                  senderId: 'host',
+                  senderName: this.game.activePlayer.displayName,
+                  payload: { playerIdx: this.game.activePlayerIdx, path },
+                  timestamp: Date.now()
+                });
+              }
               this.game.executePath(
                 path,
                 () => this.onMoveStep(),
@@ -1247,6 +1488,7 @@ class DokaponApp {
       }
     }, rollInterval);
   }
+
 
   private onMoveStep() {
     triggerHaptic('light');
@@ -2093,6 +2335,7 @@ class DokaponApp {
   }
 
   private finishAdvanceTurn() {
+    this.syncMultiplayerState();
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
@@ -2105,19 +2348,21 @@ class DokaponApp {
           this.game.addLog(`💾 บันทึกอัตโนมัติ (Auto-Save สัปดาห์ที่ ${this.game.weekCounter}) เรียบร้อย!`, 'info');
           this.updateTitleSaveStatus();
 
+          this.syncMultiplayerState();
           this.game.startTurn();
           this.onTurnStarted();
           if (this.game.activePlayer.isAI) {
-            setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
+            this.handleAITurnStart();
           }
         });
       });
     });
 
     if (this.game.phase === 'BOARD_TURN') {
+      this.syncMultiplayerState();
       this.onTurnStarted();
       if (this.game.activePlayer.isAI) {
-        setTimeout(() => this.triggerDiceRoll(), Math.max(150, Math.round(1200 / (this.game.gameSpeed || 1))));
+        this.handleAITurnStart();
       }
     }
   }
@@ -2130,6 +2375,7 @@ class DokaponApp {
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
 
     this.hud.update();
+    this.updateMultiplayerHudBadge();
 
     // 2. Display Turn Start Banner
     const banner = document.getElementById('turnStartBanner');
@@ -2145,15 +2391,53 @@ class DokaponApp {
       titleEl.innerText = `${p.displayName.toUpperCase()}'S TURN`;
       if (subEl) subEl.innerText = 'AI Bot กำลังวางแผน...';
     } else {
-      if (iconEl) iconEl.innerText = p.isDarkling ? '😈' : '⚔️';
-      titleEl.innerText = p.isDarkling ? 'เทิร์นของจอมมาร!' : 'เทิร์นของคุณ!';
-      if (subEl) subEl.innerText = `${p.displayName} - ทอยลูกเต๋า หรือ ร่ายเวท!`;
+      if (networkRoomManager.isInRoom()) {
+        const isMe = this.isMyTurn();
+        if (iconEl) iconEl.innerText = isMe ? (p.isDarkling ? '😈' : '⚔️') : '⏳';
+        titleEl.innerText = isMe
+          ? (p.isDarkling ? 'เทิร์นของจอมมาร (คุณ)!' : 'เทิร์นของคุณ!')
+          : `เทิร์นของ ${p.displayName}`;
+        if (subEl) subEl.innerText = isMe
+          ? `${p.displayName} - ทอยลูกเต๋า หรือ ร่ายเวท!`
+          : `กำลังรอ ${p.displayName} เล่น...`;
+      } else {
+        if (iconEl) iconEl.innerText = p.isDarkling ? '😈' : '⚔️';
+        titleEl.innerText = p.isDarkling ? 'เทิร์นของจอมมาร!' : 'เทิร์นของคุณ!';
+        if (subEl) subEl.innerText = `${p.displayName} - ทอยลูกเต๋า หรือ ร่ายเวท!`;
+      }
+    }
+
+    // Toggle button states based on turn ownership in multiplayer
+    const rollBtn = document.getElementById('btnRollDice');
+    const spinnerBtn = document.getElementById('btnUseSpinner');
+    const magicBtn = document.getElementById('btnFieldMagic');
+    if (networkRoomManager.isInRoom()) {
+      if (this.isMyTurn()) {
+        if (rollBtn) {
+          rollBtn.classList.remove('opacity-50', 'pointer-events-none');
+          rollBtn.innerHTML = '<span>🎲</span><span>ทอยลูกเต๋า (Roll)</span>';
+        }
+        if (spinnerBtn) spinnerBtn.classList.remove('opacity-50', 'pointer-events-none');
+        if (magicBtn) magicBtn.classList.remove('opacity-50', 'pointer-events-none');
+      } else {
+        if (rollBtn) {
+          rollBtn.classList.add('opacity-50', 'pointer-events-none');
+          rollBtn.innerHTML = `<span>⏳</span><span>รอ ${p.displayName}...</span>`;
+        }
+        if (spinnerBtn) spinnerBtn.classList.add('opacity-50', 'pointer-events-none');
+        if (magicBtn) magicBtn.classList.add('opacity-50', 'pointer-events-none');
+      }
+    } else {
+      if (rollBtn) {
+        rollBtn.classList.remove('opacity-50', 'pointer-events-none');
+        rollBtn.innerHTML = '<span>🎲</span><span>ทอยลูกเต๋า (Roll)</span>';
+      }
+      if (spinnerBtn) spinnerBtn.classList.remove('opacity-50', 'pointer-events-none');
+      if (magicBtn) magicBtn.classList.remove('opacity-50', 'pointer-events-none');
     }
 
     banner.classList.remove('hidden');
     requestAnimationFrame(() => {
-      // A pure fade. The old banner also scaled from 0.95, which resamples every glyph in it;
-      // opacity is the one entrance animation that leaves a pixel UI crisp.
       banner.classList.remove('opacity-0');
       banner.classList.add('opacity-100');
     });

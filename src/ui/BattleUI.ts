@@ -11,6 +11,7 @@ import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonster
 import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
+import { networkRoomManager } from '../engine/NetworkRoomManager';
 
 export class BattleUI {
   private game: GameState;
@@ -499,11 +500,123 @@ export class BattleUI {
   }
 
   private isPvPLocal(): boolean {
+    if (networkRoomManager.isInRoom()) return false;
     const b = this.game.activeBattle;
     if (!b) return false;
     const isAttackerHuman = b.attacker.playerRef ? !b.attacker.playerRef.isAI : b.isPlayerAttacking;
     const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : false;
     return Boolean(isAttackerHuman && isDefenderHuman && b.attacker.playerRef && b.defender.playerRef);
+  }
+
+  public receiveRemoteBattleAction(role: 'attacker' | 'defender', action: string) {
+    if (role === 'attacker') {
+      this.handleAttackerInput(action as AttackerAction, true);
+    } else {
+      this.handleDefenderInput(action as DefenderAction, true);
+    }
+  }
+
+  private handleAttackerInput(atkAction: AttackerAction, isRemote = false) {
+    const b = this.game.activeBattle;
+    if (!b || this.isExecutingRound) return;
+
+    if (!isRemote && networkRoomManager.isInRoom()) {
+      networkRoomManager.broadcast({
+        packetId: `bat_atk_${Date.now()}`,
+        type: 'BATTLE_ACTION',
+        roomCode: networkRoomManager.getRoomCode()!,
+        senderId: networkRoomManager.getMyPeerId(),
+        senderName: b.attacker.name,
+        payload: { role: 'attacker', action: atkAction },
+        timestamp: Date.now()
+      });
+    }
+
+    if (atkAction === 'skill') {
+      if (this.playerSkillUsedThisBattle) return;
+      this.playerSkillUsedThisBattle = true;
+      const skillBtn = document.getElementById('btnCmdSkill');
+      const skillLbl = document.getElementById('battleSkillLabel');
+      if (skillBtn && skillLbl) {
+        skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+        skillLbl.innerText = `${(b.attacker.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
+      }
+    }
+
+    audio.click();
+
+    // Check if Defender is a human player (PvP duel or human-controlled defending player)
+    const isDefenderHuman = b.defender.playerRef && !b.defender.playerRef.isAI;
+
+    if (isDefenderHuman) {
+      // PvP mode: Save attacker choice and prompt human defender to choose!
+      this.pendingAttackerAction = atkAction;
+      const atkGroup = document.getElementById('attackerCommandGroup')!;
+      const defGroup = document.getElementById('defenderCommandGroup')!;
+      atkGroup.classList.add('hidden');
+      defGroup.classList.add('hidden');
+
+      if (this.isPvPLocal()) {
+        this.showPrivacyShield(
+          `🛡️ ฝ่ายตั้งรับ: ${b.defender.name}`,
+          `ฝ่ายโจมตีเลือกเสร็จแล้ว! โปรดส่งอุปกรณ์ให้ [${b.defender.name}] เพื่อเลือกการ์ดรับมือ!`,
+          () => {
+            defGroup.classList.remove('hidden');
+            document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+          }
+        );
+      } else {
+        defGroup.classList.remove('hidden');
+        document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
+      }
+      return;
+    }
+
+    // AI or Monster Defender: choose immediately
+    let defAction: DefenderAction = 'defend';
+    if (b.defender.playerRef && b.defender.playerRef.isAI) {
+      defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty);
+    } else {
+      const roll = Math.random();
+      if (roll < 0.45) defAction = 'defend';
+      else if (roll < 0.75) defAction = 'counter';
+      else defAction = 'magic_guard';
+    }
+
+    this.executeRoundWithAnimation(atkAction, defAction);
+  }
+
+  private handleDefenderInput(defAction: DefenderAction, isRemote = false) {
+    const b = this.game.activeBattle;
+    if (!b || this.isExecutingRound) return;
+
+    if (!isRemote && networkRoomManager.isInRoom()) {
+      networkRoomManager.broadcast({
+        packetId: `bat_def_${Date.now()}`,
+        type: 'BATTLE_ACTION',
+        roomCode: networkRoomManager.getRoomCode()!,
+        senderId: networkRoomManager.getMyPeerId(),
+        senderName: b.defender.name,
+        payload: { role: 'defender', action: defAction },
+        timestamp: Date.now()
+      });
+    }
+
+    audio.click();
+
+    let atkAction: AttackerAction = this.pendingAttackerAction || 'attack';
+    this.pendingAttackerAction = null;
+
+    if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
+      atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty);
+    } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
+      const roll = Math.random();
+      if (roll < 0.45) atkAction = 'attack';
+      else if (roll < 0.75) atkAction = 'strike';
+      else atkAction = 'magic';
+    }
+
+    this.executeRoundWithAnimation(atkAction, defAction);
   }
 
   private showPrivacyShield(title: string, message: string, onReady: () => void) {
@@ -829,84 +942,7 @@ export class BattleUI {
     }
   }
 
-  private handleAttackerInput(atkAction: AttackerAction) {
-    const b = this.game.activeBattle;
-    if (!b || this.isExecutingRound) return;
 
-    if (atkAction === 'skill') {
-      if (this.playerSkillUsedThisBattle) return;
-      this.playerSkillUsedThisBattle = true;
-      const skillBtn = document.getElementById('btnCmdSkill');
-      const skillLbl = document.getElementById('battleSkillLabel');
-      if (skillBtn && skillLbl) {
-        skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
-        skillLbl.innerText = `${(b.attacker.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
-      }
-    }
-
-    audio.click();
-
-    // Check if Defender is a human player (PvP duel or human-controlled defending player)
-    const isDefenderHuman = b.defender.playerRef && !b.defender.playerRef.isAI;
-
-    if (isDefenderHuman) {
-      // PvP mode: Save attacker choice and prompt human defender to choose!
-      this.pendingAttackerAction = atkAction;
-      const atkGroup = document.getElementById('attackerCommandGroup')!;
-      const defGroup = document.getElementById('defenderCommandGroup')!;
-      atkGroup.classList.add('hidden');
-      defGroup.classList.add('hidden');
-
-      if (this.isPvPLocal()) {
-        this.showPrivacyShield(
-          `🛡️ ฝ่ายตั้งรับ: ${b.defender.name}`,
-          `ฝ่ายโจมตีเลือกเสร็จแล้ว! โปรดส่งอุปกรณ์ให้ [${b.defender.name}] เพื่อเลือกการ์ดรับมือ!`,
-          () => {
-            defGroup.classList.remove('hidden');
-            document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
-          }
-        );
-      } else {
-        defGroup.classList.remove('hidden');
-        document.getElementById('battleTurnText')!.innerText = `🛡️ ${b.defender.name} (ฝ่ายตั้งรับ): ศัตรูเตรียมจู่โจม! เลือกคำสั่งป้องกันของคุณ!`;
-      }
-      return;
-    }
-
-    // AI or Monster Defender: choose immediately
-    let defAction: DefenderAction = 'defend';
-    if (b.defender.playerRef && b.defender.playerRef.isAI) {
-      defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty);
-    } else {
-      const roll = Math.random();
-      if (roll < 0.45) defAction = 'defend';
-      else if (roll < 0.75) defAction = 'counter';
-      else defAction = 'magic_guard';
-    }
-
-    this.executeRoundWithAnimation(atkAction, defAction);
-  }
-
-  private handleDefenderInput(defAction: DefenderAction) {
-    const b = this.game.activeBattle;
-    if (!b || this.isExecutingRound) return;
-
-    audio.click();
-
-    let atkAction: AttackerAction = this.pendingAttackerAction || 'attack';
-    this.pendingAttackerAction = null;
-
-    if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
-      atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty);
-    } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
-      const roll = Math.random();
-      if (roll < 0.45) atkAction = 'attack';
-      else if (roll < 0.75) atkAction = 'strike';
-      else atkAction = 'magic';
-    }
-
-    this.executeRoundWithAnimation(atkAction, defAction);
-  }
 
   private getIsoDirection(fromX: number, fromY: number, toX: number, toY: number): IsoDirection {
     const dx = toX - fromX;

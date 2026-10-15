@@ -8,6 +8,7 @@ import { BattleEngine } from '../.test-build/game/BattleEngine.js';
 import { townManager } from '../.test-build/game/TownManager.js';
 import { darklingSystem } from '../.test-build/game/DarklingSystem.js';
 import { networkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
+import { SaveManager } from '../.test-build/game/SaveManager.js';
 
 test('Combat Depth: Shatter reaction deals critical bonus damage and clears freeze', () => {
   const hero = {
@@ -316,16 +317,78 @@ test('Game Modes: Roguelike Draft mode grants starter draft kit & realm mutation
 });
 
 test('P2P Network Room Manager: generates 6-char room code and manages room lifecycle', () => {
-  const room = networkRoomManager.createRoom('HostPlayer');
+  const room = networkRoomManager.createRoom('HostPlayer', 'warrior', 0);
   assert.ok(room.code.startsWith('CF-'));
   assert.equal(room.isHost, true);
   assert.equal(room.connectedPeers.length, 1);
+  assert.equal(room.connectedPeers[0].name, 'HostPlayer');
+  assert.equal(room.connectedPeers[0].classKey, 'warrior');
 
-  const roomInfo = networkRoomManager.getRoomInfo();
-  assert.equal(roomInfo?.code, room.code);
+  // Update profile
+  networkRoomManager.updatePlayerProfile('RenamedHost', 'mage', 2);
+  const updated = networkRoomManager.getRoomInfo();
+  assert.equal(updated?.connectedPeers[0].name, 'RenamedHost');
+  assert.equal(updated?.connectedPeers[0].classKey, 'mage');
+  assert.equal(updated?.connectedPeers[0].skinVariant, 2);
 
+  // Packet listener and broadcast
+  let receivedPacket = null;
+  const unsubscribe = networkRoomManager.onPacket(pkt => {
+    receivedPacket = pkt;
+  });
+
+  networkRoomManager.broadcast({
+    packetId: 'test_pkt_1',
+    type: 'CHAT_MSG',
+    roomCode: room.code,
+    senderId: 'host',
+    senderName: 'RenamedHost',
+    payload: { text: 'Hello realm!' },
+    timestamp: Date.now()
+  });
+
+  unsubscribe();
   networkRoomManager.leaveRoom();
   assert.equal(networkRoomManager.getRoomInfo(), null);
+});
+
+test('Multiplayer State Sync: SaveManager.serializeGameState and applySaveData cleanly synchronizes board between peers', () => {
+  const hostGame = new GameState();
+  hostGame.initGame([
+    { name: 'Host Valeria', classKey: 'warrior', isAI: false, skinVariant: 0 },
+    { name: 'Guest Lyra', classKey: 'mage', isAI: false, skinVariant: 1 }
+  ]);
+
+  hostGame.players[0].gold = 1500;
+  hostGame.players[0].hp = 85;
+  hostGame.players[1].gold = 720;
+  hostGame.dayCounter = 5;
+  hostGame.weekCounter = 2;
+  hostGame.activePlayerIdx = 1;
+
+  // Serialize host state
+  const serialized = SaveManager.serializeGameState(hostGame, { currentHp: 800, maxHp: 950 });
+  assert.ok(serialized);
+  assert.equal(serialized.dayCounter, 5);
+  assert.equal(serialized.weekCounter, 2);
+  assert.equal(serialized.activePlayerIdx, 1);
+  assert.equal(serialized.players[0].gold, 1500);
+  assert.equal(serialized.players[1].gold, 720);
+
+  // Apply to guest game state
+  const guestGame = new GameState();
+  const res = SaveManager.applySaveData(guestGame, serialized, false);
+  assert.equal(res.success, true);
+  assert.equal(guestGame.players.length, 2);
+  assert.equal(guestGame.players[0].name, 'Host Valeria');
+  assert.equal(guestGame.players[0].gold, 1500);
+  assert.equal(guestGame.players[0].hp, 85);
+  assert.equal(guestGame.players[1].name, 'Guest Lyra');
+  assert.equal(guestGame.players[1].gold, 720);
+  assert.equal(guestGame.dayCounter, 5);
+  assert.equal(guestGame.weekCounter, 2);
+  assert.equal(guestGame.activePlayerIdx, 1);
+  assert.equal(res.bossState?.currentHp, 800);
 });
 
 test('Town Milestone Perks: town level 2+ provides regeneration for owner', () => {

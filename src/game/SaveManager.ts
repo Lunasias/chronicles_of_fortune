@@ -232,128 +232,90 @@ export class SaveManager {
     localStorage.removeItem(metaKey);
   }
 
-  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
-    try {
-      if (!game || game.players.length === 0) return false;
-      const { saveKey, metaKey } = this.getStorageKeys(slot);
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('th-TH', {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-      });
+  public static serializeGameState(game: GameState, bossState?: { currentHp: number; maxHp: number }): SaveGameData {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('th-TH', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
 
-      const nodeById = new Map(game.allNodes.map(n => [n.id, n]));
+    const nodeById = new Map(game.allNodes.map(n => [n.id, n]));
 
-      const serializedPlayers: SerializedPlayer[] = game.players.map(p => {
-        // The hero's node is authoritative for where it is. A save can be triggered while a
-        // walk animation is still interpolating, and executeSingleStep sets p.nodeId to the
-        // destination immediately while p.gridX/p.gridY are still between the two tiles.
-        // Persisting those interpolated values restores a hero whose coordinates belong to no
-        // node, which then corrupts every facing and screen-position calculation made from
-        // them - the sprite keeps using the wrong origin and stops tracking the walk.
-        const here = nodeById.get(p.nodeId);
-        return {
-          id: p.id, name: p.name, classKey: p.classKey, isAI: p.isAI,
-          skinVariant: p.skinVariant || 0, level: p.level, xp: p.xp, xpNeeded: p.xpNeeded,
-          maxHp: p.maxHp, hp: p.hp, maxMp: p.maxMp, mp: p.mp,
-          atk: p.atk, def: p.def, mag: p.mag, spd: p.spd, luk: p.luk, gold: p.gold,
-          townsControlled: p.townsControlled, townDeeds: [...p.townDeeds],
-          nodeId: p.nodeId, prevNodeId: p.prevNodeId,
-          gridX: here ? here.gx : p.gridX,
-          gridY: here ? here.gy : p.gridY,
-          gridZ: here ? here.gz : p.gridZ,
-          facing: p.facing, activeSpinnerMultiplier: p.activeSpinnerMultiplier,
-          equipment: JSON.parse(JSON.stringify(p.equipment)),
-          inventory: JSON.parse(JSON.stringify(p.inventory)),
-          fieldSpells: [...p.fieldSpells],
-          rustTurns: p.rustTurns,
-          poisonTurns: p.poisonTurns,
-          freezeTurns: p.freezeTurns,
-          blindTurns: p.blindTurns,
-          curseTurns: p.curseTurns,
-          foodBuff: p.foodBuff ? JSON.parse(JSON.stringify(p.foodBuff)) : null,
-          activeGuildQuest: p.activeGuildQuest ? JSON.parse(JSON.stringify(p.activeGuildQuest)) : null,
-          guildRank: p.guildRank, completedQuestsCount: p.completedQuestsCount,
-          isDarkling: p.isDarkling, darklingTurnsLeft: p.darklingTurnsLeft,
-          backupNormalStats: p.backupNormalStats ? JSON.parse(JSON.stringify(p.backupNormalStats)) : null,
-          prank: JSON.parse(JSON.stringify(p.prank)),
-          color: p.color, className: p.className, avatar: p.avatar, skillName: p.skillName,
-          homeNodeId: p.homeNodeId,
-          companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null,
-          originalClassKey: p.originalClassKey,
-          isPromoted: p.isPromoted,
-          promotionTier: p.promotionTier,
-          aiPersonality: p.aiPersonality,
-          matchStats: JSON.parse(JSON.stringify(p.matchStats)),
-          burstGauge: p.burstGauge,
-          relics: [...p.relics],
-          weaponUpgradeLevel: p.weaponUpgradeLevel,
-          weaponRune: p.weaponRune,
-          polymorphTurns: p.polymorphTurns,
-          polymorphType: p.polymorphType,
-          mockeryTitle: p.mockeryTitle,
-          cursedBoxTurns: p.cursedBoxTurns,
-          darklingSpecialization: p.darklingSpecialization
-        };
-      });
-
-      const townStates: Array<{ nodeId: number; townData: TownData }> = [];
-      const homeStates: Array<{ nodeId: number; homeData: any; type: string }> = [];
-      game.allNodes.forEach(n => {
-        if (n.townData) {
-          townStates.push({ nodeId: n.id, townData: JSON.parse(JSON.stringify(n.townData)) });
-        }
-        if (n.homeData) {
-          homeStates.push({ nodeId: n.id, homeData: JSON.parse(JSON.stringify(n.homeData)), type: n.type });
-        }
-      });
-
-      const saveData: SaveGameData = {
-        version: SAVE_VERSION, savedAt: Date.now(), dateStr,
-        dayCounter: game.dayCounter, weekCounter: game.weekCounter,
-        winGoal: game.winGoal, activePlayerIdx: game.activePlayerIdx,
-        phase: (game.phase as string) === 'BATTLE' || (game.phase as string) === 'PVP_CHOICE' ? 'BOARD_TURN' : game.phase,
-        players: serializedPlayers, townStates, homeStates,
-        logs: JSON.parse(JSON.stringify(game.logs.slice(0, 30))),
-        bossCurrentHp: bossState?.currentHp,
-        bossMaxHp: bossState?.maxHp,
-        aiDifficulty: game.aiDifficulty || 'tactical',
-        placedTraps: JSON.parse(JSON.stringify(game.placedTraps || []))
+    const serializedPlayers: SerializedPlayer[] = game.players.map(p => {
+      const here = nodeById.get(p.nodeId);
+      return {
+        id: p.id, name: p.name, classKey: p.classKey, isAI: p.isAI,
+        skinVariant: p.skinVariant || 0, level: p.level, xp: p.xp, xpNeeded: p.xpNeeded,
+        maxHp: p.maxHp, hp: p.hp, maxMp: p.maxMp, mp: p.mp,
+        atk: p.atk, def: p.def, mag: p.mag, spd: p.spd, luk: p.luk, gold: p.gold,
+        townsControlled: p.townsControlled, townDeeds: [...p.townDeeds],
+        nodeId: p.nodeId, prevNodeId: p.prevNodeId,
+        gridX: here ? here.gx : p.gridX,
+        gridY: here ? here.gy : p.gridY,
+        gridZ: here ? here.gz : p.gridZ,
+        facing: p.facing, activeSpinnerMultiplier: p.activeSpinnerMultiplier,
+        equipment: JSON.parse(JSON.stringify(p.equipment)),
+        inventory: JSON.parse(JSON.stringify(p.inventory)),
+        fieldSpells: [...p.fieldSpells],
+        rustTurns: p.rustTurns,
+        poisonTurns: p.poisonTurns,
+        freezeTurns: p.freezeTurns,
+        blindTurns: p.blindTurns,
+        curseTurns: p.curseTurns,
+        foodBuff: p.foodBuff ? JSON.parse(JSON.stringify(p.foodBuff)) : null,
+        activeGuildQuest: p.activeGuildQuest ? JSON.parse(JSON.stringify(p.activeGuildQuest)) : null,
+        guildRank: p.guildRank, completedQuestsCount: p.completedQuestsCount,
+        isDarkling: p.isDarkling, darklingTurnsLeft: p.darklingTurnsLeft,
+        backupNormalStats: p.backupNormalStats ? JSON.parse(JSON.stringify(p.backupNormalStats)) : null,
+        prank: JSON.parse(JSON.stringify(p.prank)),
+        color: p.color, className: p.className, avatar: p.avatar, skillName: p.skillName,
+        homeNodeId: p.homeNodeId,
+        companion: p.companion ? JSON.parse(JSON.stringify(p.companion)) : null,
+        originalClassKey: p.originalClassKey,
+        isPromoted: p.isPromoted,
+        promotionTier: p.promotionTier,
+        aiPersonality: p.aiPersonality,
+        matchStats: JSON.parse(JSON.stringify(p.matchStats)),
+        burstGauge: p.burstGauge,
+        relics: [...p.relics],
+        weaponUpgradeLevel: p.weaponUpgradeLevel,
+        weaponRune: p.weaponRune,
+        polymorphTurns: p.polymorphTurns,
+        polymorphType: p.polymorphType,
+        mockeryTitle: p.mockeryTitle,
+        cursedBoxTurns: p.cursedBoxTurns,
+        darklingSpecialization: p.darklingSpecialization
       };
+    });
 
-      const hero = game.activePlayer;
-      const meta: SaveMetadata = {
-        saveVersion: SAVE_VERSION,
-        savedAt: saveData.savedAt, dateStr, day: game.dayCounter, week: game.weekCounter,
-        activeHeroName: hero ? hero.name : 'Unknown Hero',
-        activeHeroClass: hero ? hero.className : 'Warrior',
-        activeHeroLevel: hero ? hero.level : 1,
-        activeHeroGold: hero ? hero.gold : 300,
-        totalPlayers: game.players.length
-      };
+    const townStates: Array<{ nodeId: number; townData: TownData }> = [];
+    const homeStates: Array<{ nodeId: number; homeData: any; type: string }> = [];
+    game.allNodes.forEach(n => {
+      if (n.townData) {
+        townStates.push({ nodeId: n.id, townData: JSON.parse(JSON.stringify(n.townData)) });
+      }
+      if (n.homeData) {
+        homeStates.push({ nodeId: n.id, homeData: JSON.parse(JSON.stringify(n.homeData)), type: n.type });
+      }
+    });
 
-      localStorage.setItem(saveKey, JSON.stringify(saveData));
-      localStorage.setItem(metaKey, JSON.stringify(meta));
-      return true;
-    } catch (err) {
-      console.error('Failed to save game:', err);
-      return false;
-    }
+    return {
+      version: SAVE_VERSION, savedAt: Date.now(), dateStr,
+      dayCounter: game.dayCounter, weekCounter: game.weekCounter,
+      winGoal: game.winGoal, activePlayerIdx: game.activePlayerIdx,
+      phase: (game.phase as string) === 'BATTLE' || (game.phase as string) === 'PVP_CHOICE' ? 'BOARD_TURN' : game.phase,
+      players: serializedPlayers, townStates, homeStates,
+      logs: JSON.parse(JSON.stringify(game.logs.slice(0, 30))),
+      bossCurrentHp: bossState?.currentHp,
+      bossMaxHp: bossState?.maxHp,
+      aiDifficulty: game.aiDifficulty || 'tactical',
+      placedTraps: JSON.parse(JSON.stringify(game.placedTraps || []))
+    };
   }
 
-  public static load(game: GameState, slot: number = 1): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
+  public static applySaveData(game: GameState, data: SaveGameData, announceLog: boolean = true): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
     try {
-      const { saveKey } = this.getStorageKeys(slot);
-      const raw = localStorage.getItem(saveKey);
-      if (!raw) return { success: false, error: `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
-
-      let data: SaveGameData;
-      try {
-        data = JSON.parse(raw) as SaveGameData;
-      } catch {
-        return { success: false, error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' };
-      }
       if (!data || typeof data !== 'object') {
-        return { success: false, error: 'ไฟล์บันทึกเสียหาย (โครงสร้างไม่ถูกต้อง)' };
+        return { success: false, error: 'ข้อมูลบันทึกเสียหาย (โครงสร้างไม่ถูกต้อง)' };
       }
 
       const version = numOr(data.version, 0);
@@ -390,17 +352,12 @@ export class SaveManager {
         p.townDeeds = Array.isArray(sp.townDeeds) ? sp.townDeeds.filter(d => nodesById.has(d)) : [];
         p.townsControlled = p.townDeeds.length;
         p.prevNodeId = numOr(sp.prevNodeId, -1) >= 0 ? numOr(sp.prevNodeId, -1) : null;
-        // Re-derive the on-screen position from the node rather than trusting the stored
-        // numbers. Old saves (and any save taken mid-walk) can carry coordinates that do not
-        // belong to p.nodeId, which makes calculateIsoDirection compute every facing from the
-        // wrong origin.
         const here = nodesById.get(p.nodeId);
         p.gridX = here ? here.gx : numOr(sp.gridX, 0);
         p.gridY = here ? here.gy : numOr(sp.gridY, 0);
         p.gridZ = here ? here.gz : numOr(sp.gridZ, 0);
         p.facing = (sp.facing as any) || 'SE';
         p.activeSpinnerMultiplier = Math.max(1, numOr(sp.activeSpinnerMultiplier, 1));
-        // Merge over the full slot list so saves written before a slot existed still get it.
         p.equipment = { ...DEFAULT_EQUIPMENT, ...(sp.equipment || {}) };
         p.inventory = Array.isArray(sp.inventory) ? sp.inventory : [];
         p.fieldSpells = Array.isArray(sp.fieldSpells) ? sp.fieldSpells : [];
@@ -483,8 +440,12 @@ export class SaveManager {
       game.activeBattleEnemyCombatant = null;
       game.pendingTileNode = null;
       game.pendingPvPVictim = null;
-      game.logs = Array.isArray(data.logs) ? data.logs : [];
-      game.addLog(`📂 โหลดบันทึกสำเร็จ! (วันที่ ${game.dayCounter}, สัปดาห์ที่ ${game.weekCounter})`, 'info');
+      if (Array.isArray(data.logs)) {
+        game.logs = data.logs;
+      }
+      if (announceLog) {
+        game.addLog(`📂 โหลดบันทึกสำเร็จ! (วันที่ ${game.dayCounter}, สัปดาห์ที่ ${game.weekCounter})`, 'info');
+      }
       return {
         success: true,
         bossState: numOr(data.bossCurrentHp, 0) > 0
@@ -492,8 +453,56 @@ export class SaveManager {
           : undefined
       };
     } catch (err) {
-      console.error('Failed to load game:', err);
+      console.error('Failed to apply save data:', err);
       return { success: false, error: 'เกิดข้อผิดพลาดขณะโหลดข้อมูลบันทึก' };
+    }
+  }
+
+  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
+    try {
+      if (!game || game.players.length === 0) return false;
+      const { saveKey, metaKey } = this.getStorageKeys(slot);
+      const saveData = this.serializeGameState(game, bossState);
+
+      const hero = game.activePlayer;
+      const meta: SaveMetadata = {
+        saveVersion: SAVE_VERSION,
+        savedAt: saveData.savedAt,
+        dateStr: saveData.dateStr || '',
+        day: game.dayCounter,
+        week: game.weekCounter,
+        activeHeroName: hero ? hero.name : 'Unknown Hero',
+        activeHeroClass: hero ? hero.className : 'Warrior',
+        activeHeroLevel: hero ? hero.level : 1,
+        activeHeroGold: hero ? hero.gold : 300,
+        totalPlayers: game.players.length
+      };
+
+      localStorage.setItem(saveKey, JSON.stringify(saveData));
+      localStorage.setItem(metaKey, JSON.stringify(meta));
+      return true;
+    } catch (err) {
+      console.error('Failed to save game:', err);
+      return false;
+    }
+  }
+
+  public static load(game: GameState, slot: number = 1): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
+    try {
+      const { saveKey } = this.getStorageKeys(slot);
+      const raw = localStorage.getItem(saveKey);
+      if (!raw) return { success: false, error: `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
+
+      let data: SaveGameData;
+      try {
+        data = JSON.parse(raw) as SaveGameData;
+      } catch {
+        return { success: false, error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' };
+      }
+      return this.applySaveData(game, data);
+    } catch (err) {
+      console.error('Failed to load game:', err);
+      return { success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูลบันทึก' };
     }
   }
 
