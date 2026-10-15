@@ -178,9 +178,6 @@ export class HUD {
   private updateQuestTracker() {
     const trackerModal = document.getElementById('questTrackerHUD');
     if (!trackerModal) return;
-    if (window.innerWidth > 768) {
-      trackerModal.classList.remove('hidden');
-    }
 
     const listEl = document.getElementById('questTrackerList');
     if (!listEl) return;
@@ -188,6 +185,17 @@ export class HUD {
     const p = this.game.activePlayer;
     const occupiedTowns = this.game.allNodes.filter(n => n.townData?.isOccupiedByMonster);
     const bossNodes = this.game.allNodes.filter(n => n.type === 'boss');
+
+    // Update Top-Bar Crisis Badge without forcing window open
+    const badge = document.getElementById('hudCrisisCount');
+    if (badge) {
+      badge.innerText = `${occupiedTowns.length}`;
+      if (occupiedTowns.length === 0) {
+        badge.className = 'bg-emerald-500/20 px-1 border border-emerald-500/40 text-emerald-300';
+      } else {
+        badge.className = 'bg-red-500/20 px-1 border border-red-500/40 text-red-300';
+      }
+    }
 
     let html = '';
 

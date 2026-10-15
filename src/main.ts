@@ -185,9 +185,6 @@ class DokaponApp {
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
-    if (window.innerWidth > 768) {
-      document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
-    }
 
     this.updateMultiplayerHudBadge();
     this.onTurnStarted();
@@ -262,9 +259,6 @@ class DokaponApp {
             document.getElementById('titleScreen')?.classList.add('hidden');
             document.getElementById('topHUD')?.classList.remove('hidden');
             document.getElementById('bottomBar')?.classList.remove('hidden');
-            if (window.innerWidth > 768) {
-              document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
-            }
             this.onTurnStarted();
             this.hud.update();
             this.updateMultiplayerHudBadge();
@@ -408,9 +402,6 @@ class DokaponApp {
       document.getElementById('titleScreen')?.classList.add('hidden');
       document.getElementById('topHUD')?.classList.remove('hidden');
       document.getElementById('bottomBar')?.classList.remove('hidden');
-      if (window.innerWidth > 768) {
-        document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
-      }
 
       this.onTurnStarted();
       this.hud.update();
@@ -425,9 +416,6 @@ class DokaponApp {
         document.getElementById('titleScreen')?.classList.add('hidden');
         document.getElementById('topHUD')?.classList.remove('hidden');
         document.getElementById('bottomBar')?.classList.remove('hidden');
-        if (window.innerWidth > 768) {
-          document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
-        }
         this.onTurnStarted();
         this.hud.update();
         this.updateMultiplayerHudBadge();
@@ -1260,6 +1248,21 @@ class DokaponApp {
       document.getElementById('gameEventFeedWindow')?.classList.toggle('hidden');
     });
 
+    document.getElementById('btnToggleLogHistory')?.addEventListener('click', () => {
+      audio.click();
+      document.getElementById('gameEventFeedWindow')?.classList.toggle('hidden');
+    });
+
+    document.getElementById('btnToggleCrisisTracker')?.addEventListener('click', () => {
+      audio.click();
+      document.getElementById('questTrackerHUD')?.classList.toggle('hidden');
+    });
+
+    document.getElementById('btnMinimizeQuestTracker')?.addEventListener('click', () => {
+      audio.click();
+      document.getElementById('questTrackerHUD')?.classList.add('hidden');
+    });
+
     // Game Speed Toggle Button
     document.getElementById('btnGameSpeed')?.addEventListener('click', () => {
       audio.click();
@@ -1376,7 +1379,6 @@ class DokaponApp {
           document.getElementById('settingsModal')?.classList.add('hidden');
           document.getElementById('topHUD')?.classList.remove('hidden');
           document.getElementById('bottomBar')?.classList.remove('hidden');
-          document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
 
           this.onTurnStarted();
           this.hud.update();
@@ -1562,7 +1564,6 @@ class DokaponApp {
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
-    document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
 
     this.onTurnStarted();
 
@@ -2712,7 +2713,6 @@ class DokaponApp {
       document.getElementById('settingsModal')?.classList.add('hidden');
       document.getElementById('topHUD')?.classList.remove('hidden');
       document.getElementById('bottomBar')?.classList.remove('hidden');
-      document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
 
       this.onTurnStarted();
       this.hud.update();

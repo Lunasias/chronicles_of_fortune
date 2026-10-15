@@ -261,9 +261,17 @@ export class CustomIsometricMonsterRenderer {
       if (tilt !== 0) ctx.rotate(tilt);
       ctx.scale(scaleX, scaleY);
 
-      // Render 8-directional pixel sprite scaled up crisp to 100x100
-      const drawSize = 100;
+      // Render 8-directional sprite with high-res smoothing if high resolution
+      const isHighRes = mobImg.naturalWidth > 64;
+      if (isHighRes) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+      }
+      const drawSize = isHighRes ? 104 : 100;
       ctx.drawImage(mobImg, -drawSize / 2, -drawSize / 2 - 8, drawSize, drawSize);
+      if (isHighRes) {
+        ctx.imageSmoothingEnabled = false;
+      }
       ctx.restore();
 
       // 3. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX

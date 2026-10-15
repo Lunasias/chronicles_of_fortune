@@ -903,6 +903,15 @@
           <span id="hudWeatherIcon" class="text-xs sm:text-sm">🌤️</span>
           <span id="hudWeatherText" class="hidden sm:inline">ลบ</span>
         </div>
+        <!-- Crisis Tracker Toggle Button -->
+        <button id="btnToggleCrisisTracker" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-red-300 hover:text-white flex items-center gap-1 font-bold touch-manipulation" title="ดูภารกิจและวิกฤตเมือง (Crisis & Objectives)">
+          <span>👑</span>
+          <span id="hudCrisisCount" class="bg-red-500/20 px-1 border border-red-500/40 text-red-300">0</span>
+        </button>
+        <!-- Chronicle Logs Toggle Button -->
+        <button id="btnToggleLogHistory" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-amber-300 hover:text-white flex items-center gap-1 font-bold touch-manipulation" title="ดูบันทึกเหตุการณ์ (Chronicle Logs)">
+          <span>📜</span>
+        </button>
         <button id="btnSaveGame" class="pixel-btn px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs text-amber-300 hover:text-white flex items-center gap-1 font-bold touch-manipulation" title="บันทึกเกม (Save Game)">
           <span>💾</span>
           <span class="hidden sm:inline text-[10px]">บันทึก</span>
@@ -970,12 +979,18 @@
     </div>
   </div>
 
+  <!-- FLOATING EPHEMERAL EVENT TOAST (z-35) Center-Top -->
+  <div id="floatingEventToast" class="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-35 transition-all duration-300 opacity-0 translate-y-3 flex items-center gap-2 px-3 py-1 bg-slate-900 border border-amber-500/60 shadow-md text-[11px] sm:text-xs font-semibold text-amber-200 max-w-[90vw]">
+    <span id="floatingToastIcon" class="text-sm shrink-0">💬</span>
+    <span id="floatingToastText" class="truncate max-w-[70vw]">ยินดีต้อนรับสู่ Chronicles of Fortune</span>
+  </div>
+
   <!-- BOTTOM ACTION BAR (z-20) -->
   <div id="bottomBar" class="hidden absolute bottom-2 sm:bottom-3 left-0 right-0 z-20 flex justify-center items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pointer-events-none">
     <div class="pixel-box pointer-events-auto px-2.5 sm:px-4 py-1.5 sm:py-2 flex flex-wrap justify-center items-center gap-1.5 sm:gap-2.5 bg-slate-900/95 border-slate-700 max-w-[98vw]">
       <!-- Roll Dice / Spinner Button -->
-      <button id="btnRollDice" class="pixel-btn pixel-btn-gold px-3 sm:px-5 py-2 sm:py-2.5 text-xs font-bold text-slate-950 flex items-center gap-1.5 sm:gap-2 touch-manipulation min-h-[38px] sm:min-h-[44px]">
-        <span class="text-base sm:text-lg">🎲</span>
+      <button id="btnRollDice" class="pixel-btn pixel-btn-gold px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-950 flex items-center gap-1.5 sm:gap-2 touch-manipulation min-h-[40px] sm:min-h-[46px] shadow-lg shadow-amber-500/20 ring-1 ring-amber-300/40">
+        <span class="text-base sm:text-xl">🎲</span>
         <span id="btnRollText">ทอยเต๋า</span>
       </button>
 

@@ -591,14 +591,23 @@ export class CustomIsometricHeroRenderer {
     this.applySkinFilter(ctx, skinVariant, isDarkling, anim.isHurt);
 
     if (img) {
-      // Crisp 64x64 pixel art hero sprite drawn centered:
-      // Character feet touch the ground plane at y = cy + 25
-      const drawW = 64;
-      const drawH = 64;
-      const drawX = -32;
-      const drawY = -31;
+      const isHighRes = img.naturalWidth > 64;
+      if (isHighRes) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+      }
+
+      // High-res anime hero sprite (balanced at 68x68 for gorgeous silhouette)
+      const drawW = isHighRes ? 68 : 64;
+      const drawH = isHighRes ? 68 : 64;
+      const drawX = -drawW / 2;
+      const drawY = -drawH / 2 + 1;
 
       ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+      if (isHighRes) {
+        ctx.imageSmoothingEnabled = false;
+      }
     } else {
       // Aesthetic fallback mannequin silhouette while asset is loading
       this.drawLoadingSilhouette(ctx, cls);

@@ -170,8 +170,38 @@ export class GameState {
         if (list.children.length > 40) {
           list.removeChild(list.lastChild!);
         }
+
+        // Trigger ephemeral floating toast
+        this.triggerFloatingToast(text, type);
       }
     }
+  }
+
+  private toastTimer?: any;
+  private triggerFloatingToast(text: string, type: string) {
+    if (typeof document === 'undefined') return;
+    const toast = document.getElementById('floatingEventToast');
+    const toastText = document.getElementById('floatingToastText');
+    const toastIcon = document.getElementById('floatingToastIcon');
+    if (!toast || !toastText || !toastIcon) return;
+
+    let icon = '💬';
+    if (type === 'gold') icon = '🪙';
+    else if (type === 'battle') icon = '⚔️';
+    else if (type === 'darkling') icon = '😈';
+    else if (type === 'level') icon = '⭐';
+
+    toastIcon.innerText = icon;
+    toastText.innerText = text;
+
+    toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+    }, 2800);
   }
 
   clearLogs(): void {
