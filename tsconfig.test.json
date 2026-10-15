@@ -21,6 +21,7 @@
     "src/game/CompanionDatabase.ts",
     "src/game/GameState.ts",
     "src/game/SaveManager.ts",
+    "src/ui/MobileDisplayManager.ts",
     "src/util/Html.ts"
   ]
 }

@@ -178,7 +178,9 @@ export class HUD {
   private updateQuestTracker() {
     const trackerModal = document.getElementById('questTrackerHUD');
     if (!trackerModal) return;
-    trackerModal.classList.remove('hidden');
+    if (window.innerWidth > 768) {
+      trackerModal.classList.remove('hidden');
+    }
 
     const listEl = document.getElementById('questTrackerList');
     if (!listEl) return;

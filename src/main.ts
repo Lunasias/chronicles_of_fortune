@@ -38,6 +38,7 @@ import { escapeHtml } from './util/Html';
 import { triggerHaptic } from './util/haptics';
 import { companionKeyForDefeatedMonster, createCompanion, getCompanionProfile } from './game/CompanionDatabase';
 import { GamepadController } from './engine/GamepadController';
+import { mobileDisplayManager } from './ui/MobileDisplayManager';
 
 class DokaponApp {
   private canvas: HTMLCanvasElement;
@@ -169,7 +170,9 @@ class DokaponApp {
     document.getElementById('titleScreen')?.classList.add('hidden');
     document.getElementById('topHUD')?.classList.remove('hidden');
     document.getElementById('bottomBar')?.classList.remove('hidden');
-    document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+    if (window.innerWidth > 768) {
+      document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+    }
 
     this.updateMultiplayerHudBadge();
     this.onTurnStarted();
@@ -607,13 +610,8 @@ class DokaponApp {
   }
 
   private checkOrientationHint() {
-    const hint = document.getElementById('orientationHintToast');
-    if (!hint) return;
-    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
-    const isPortrait = window.innerHeight > window.innerWidth;
-    if (isMobile && isPortrait && !sessionStorage.getItem('dismissed_orientation_hint')) {
-      hint.classList.remove('hidden');
-    }
+    mobileDisplayManager.updateBodyClasses();
+    mobileDisplayManager.checkAutoPrompt();
   }
 
 
@@ -984,19 +982,24 @@ class DokaponApp {
     });
 
     // Minimap collapse toggle on mobile
-    let isMinimapCollapsed = false;
+    let isMinimapCollapsed = window.innerWidth <= 768;
     document.getElementById('btnToggleMinimap')?.addEventListener('click', () => {
       audio.click();
       const wrap = document.getElementById('minimapCanvasWrapper');
       const btn = document.getElementById('btnToggleMinimap');
       if (!wrap || !btn) return;
-      isMinimapCollapsed = !isMinimapCollapsed;
-      if (isMinimapCollapsed) {
-        wrap.classList.add('hidden');
-        btn.innerText = '▲';
+      if (window.innerWidth <= 768) {
+        wrap.classList.toggle('mobile-expanded');
+        btn.innerText = wrap.classList.contains('mobile-expanded') ? '▲' : '▼';
       } else {
-        wrap.classList.remove('hidden');
-        btn.innerText = '▼';
+        isMinimapCollapsed = !isMinimapCollapsed;
+        if (isMinimapCollapsed) {
+          wrap.classList.add('hidden');
+          btn.innerText = '▲';
+        } else {
+          wrap.classList.remove('hidden');
+          btn.innerText = '▼';
+        }
       }
     });
 
@@ -1032,8 +1035,10 @@ class DokaponApp {
       document.getElementById('orientationHintToast')?.classList.add('hidden');
     });
 
-    // Auto-minimize side event feed & quest tracker on small screens (< 768px)
-    if (window.innerWidth < 768) {
+    // Auto-minimize side event feed & quest tracker on small screens (<= 768px)
+    if (window.innerWidth <= 768) {
+      document.getElementById('gameEventFeedWindow')?.classList.add('hidden');
+      document.getElementById('questTrackerHUD')?.classList.add('hidden');
       const feedList = document.getElementById('gameEventFeedList');
       const feedBtn = document.getElementById('btnMinimizeEventFeed');
       if (feedList && feedBtn) {

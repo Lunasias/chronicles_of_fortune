@@ -51,7 +51,7 @@
        the feed docks to the top edge as a short scrollable bar instead of hiding behind the
        backdrop. The panel is then laid out under it, and its own height is capped so the two
        still fit on a short screen rather than the panel's top being clipped out of reach. */
-    @media (max-width: 1179px) {
+    @media (min-width: 769px) and (max-width: 1179px) {
       body.panel-open #gameEventFeedWindow {
         z-index: 60;
         top: 0.5rem;
@@ -71,6 +71,233 @@
       body.panel-open #townModal > div {
         max-height: calc(100vh - 9.5rem);
         max-height: calc(100dvh - 9.5rem);
+      }
+    }
+
+    /* ===================================================================
+       MOBILE RESPONSIVENESS & ANTI-OVERLAP SYSTEM
+       =================================================================== */
+
+    /* Quick Edge Dock Pills for Mobile Drawers */
+    .mobile-edge-pill {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      /* Show edge pills on mobile */
+      .mobile-edge-pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        z-index: 28;
+        padding: 5px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+
+      #btnMobileToggleFeed {
+        left: 0;
+        top: 48%;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+
+      #btnMobileToggleQuest {
+        right: 0;
+        top: 48%;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      /* On mobile, prevent #gameEventFeedWindow and #questTrackerHUD from floating in the dead center!
+         Instead, transform them into clean bottom drawers so they never clash or block the board. */
+      #gameEventFeedWindow {
+        top: auto !important;
+        bottom: 58px !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        transform: none !important;
+        max-height: 48vh !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.9);
+      }
+
+      #questTrackerHUD {
+        top: auto !important;
+        bottom: 58px !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        transform: none !important;
+        max-height: 48vh !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.9);
+      }
+
+      /* When full-screen building panel is open on mobile, hide event feed completely */
+      body.panel-open #gameEventFeedWindow {
+        display: none !important;
+      }
+
+      body.panel-open #shopModal,
+      body.panel-open #townModal {
+        padding-top: 0 !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      body.panel-open #shopModal > div,
+      body.panel-open #townModal > div {
+        max-height: calc(100dvh - 16px) !important;
+      }
+
+      /* Compact Top HUD on mobile */
+      #topHUD {
+        top: max(4px, env(safe-area-inset-top, 4px));
+        left: max(4px, env(safe-area-inset-left, 4px));
+        right: max(4px, env(safe-area-inset-right, 4px));
+        gap: 4px;
+      }
+
+      #topHUD .pixel-box {
+        padding: 4px 6px;
+      }
+
+      /* Compact avatar in Top HUD */
+      #hudPlayerAvatarWrapper {
+        width: 32px !important;
+        height: 32px !important;
+      }
+      #hudAvatarCanvas {
+        width: 32px !important;
+        height: 32px !important;
+      }
+
+      /* Minimap on mobile: compact toggleable preview */
+      #minimapCanvasWrapper {
+        display: none;
+      }
+      #minimapCanvasWrapper.mobile-expanded {
+        display: block !important;
+        position: fixed;
+        top: 56px;
+        right: 8px;
+        z-index: 35;
+        background: #0b1120;
+        padding: 4px;
+        border: 2px solid #f0c04a;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.85);
+      }
+      #minimapBox {
+        padding: 2px 4px;
+      }
+
+      /* Bottom Action Bar on mobile: compact horizontal swipe track */
+      #bottomBar {
+        bottom: max(4px, env(safe-area-inset-bottom, 4px));
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+
+      #bottomBar > div {
+        padding: 4px 6px;
+        gap: 4px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        max-width: 100vw;
+        border-radius: 4px;
+      }
+
+      #bottomBar button {
+        flex-shrink: 0;
+        min-height: 36px;
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+
+      /* Primary Roll button stands out and stays anchored */
+      #btnRollDice {
+        min-height: 38px;
+        padding: 4px 12px;
+        font-size: 12px;
+      }
+
+      /* Combat Screen adjustments on mobile */
+      #battleScreen #battleTurnTimeline {
+        display: none;
+      }
+
+      #attackerCommandGroup, #defenderCommandGroup {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+      }
+
+      .command-card {
+        min-height: 44px !important;
+        padding: 4px !important;
+      }
+
+      #battleFormationRow {
+        padding-bottom: 2px;
+        margin-bottom: 2px;
+      }
+    }
+
+    /* Hooks for mobile devices and orientations */
+    .is-mobile-device {}
+    .is-mobile-landscape {}
+    .mobile-portrait-mode {}
+
+    /* Extra optimizations when playing in mobile portrait mode specifically */
+    body.is-mobile-portrait #topHUD,
+    body.mobile-portrait-mode #topHUD {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    body.is-mobile-portrait #hudRosterStrip,
+    body.mobile-portrait-mode #hudRosterStrip {
+      order: 3;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    /* Extra optimizations when playing in landscape mode on a phone */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #topHUD {
+        top: max(2px, env(safe-area-inset-top, 2px));
+        padding: 0;
+        gap: 2px;
+      }
+      #topHUD .pixel-box {
+        padding: 2px 4px;
+      }
+      #hudPlayerAvatarWrapper, #hudAvatarCanvas {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      #bottomBar {
+        bottom: max(2px, env(safe-area-inset-bottom, 2px));
+      }
+      #bottomBar button {
+        min-height: 30px;
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+      #battleScreen .min-h-\[140px\] {
+        min-height: 100px !important;
+        max-height: 36vh !important;
+        padding: 4px !important;
+      }
+      #attackerCommandGroup, #defenderCommandGroup {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
       }
     }
 
@@ -500,6 +727,76 @@
   <!-- FLOATING DAMAGE / NOTICE CONTAINER (z-30) -->
   <div id="floatingTextContainer" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
 
+  <!-- MOBILE DISPLAY MODE CHOOSER (z-50) -->
+  <div id="mobileDisplayModal" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 pointer-events-auto">
+    <div class="pixel-box-gold max-w-sm w-full p-4 flex flex-col items-center text-center">
+      <div class="text-3xl mb-1 animate-bounce">📱✨</div>
+      <h3 class="text-sm font-bold text-amber-300 mb-1">ตั้งค่ามุมมองหน้าจอบนมือถือ</h3>
+      <p class="text-[11px] text-slate-300 mb-3 leading-relaxed">
+        เพื่อให้การเล่นราบรื่นและ UI ไม่บดบังตัวละคร โปรดเลือกรูปแบบที่ต้องการ:
+      </p>
+
+      <div class="flex flex-col gap-2 w-full mb-3">
+        <!-- Option 1: Fullscreen Landscape -->
+        <button id="btnMobileGoLandscape" class="pixel-btn pixel-btn-gold p-2.5 text-left flex items-start gap-2.5 text-slate-950">
+          <span class="text-2xl mt-0.5">🖥️</span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5 font-bold text-xs">
+              <span>เต็มจอแนวนอน (Fullscreen)</span>
+              <span class="text-[9px] bg-amber-950 text-amber-300 px-1 py-0.5 rounded font-mono">แนะนำ</span>
+            </div>
+            <div class="text-[10px] text-slate-800 leading-tight mt-0.5">
+              มุมมองกว้างขวาง เห็นทั้งกระดาน 2.5D และบอร์ดเกมครบถ้วน
+            </div>
+          </div>
+        </button>
+
+        <!-- Option 2: Stay in Portrait -->
+        <button id="btnMobileStayPortrait" class="pixel-btn pixel-btn-blue p-2.5 text-left flex items-start gap-2.5 text-white">
+          <span class="text-2xl mt-0.5">📱</span>
+          <div class="flex-1">
+            <div class="font-bold text-xs text-cyan-200">เล่นแนวตั้งต่อ (Portrait Mode)</div>
+            <div class="text-[10px] text-slate-300 leading-tight mt-0.5">
+              เล่นมือเดียวแนวตั้ง ตัวเกมจะปรับ UI ให้กะทัดรัดพิเศษ ไม่บังกระดาน
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between w-full pt-2 border-t border-slate-800 text-[10px] text-slate-400">
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="chkRememberDisplayChoice" class="accent-amber-400" />
+          <span>จำตัวเลือกนี้ไว้</span>
+        </label>
+        <button id="btnDismissMobileDisplayModal" class="pixel-close px-2 py-1 text-slate-400 hover:text-white">
+          ✕ ปิด
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE ROTATION GUIDE OVERLAY (z-50) -->
+  <div id="mobileRotateGuideOverlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-4 text-center pointer-events-auto">
+    <div class="pixel-box-gold max-w-xs w-full p-4 flex flex-col items-center">
+      <div class="text-4xl mb-2 animate-spin" style="animation-duration: 3s;">🔄</div>
+      <h3 class="text-sm font-bold text-amber-300 mb-1">กรุณาหมุนโทรศัพท์แนวนอน</h3>
+      <p class="text-[11px] text-slate-300 mb-3 leading-relaxed">
+        โปรดหมุนอุปกรณ์ของท่านเพื่อเข้าสู่โหมดเต็มจอแนวนอน
+      </p>
+      <button id="btnCancelRotateGuide" class="pixel-btn px-3 py-1 text-[10px] text-slate-400 hover:text-white">
+        📱 เล่นแนวตั้งต่อแทน
+      </button>
+    </div>
+  </div>
+
+  <!-- MOBILE EDGE DOCK PILLS (z-28) -->
+  <button id="btnMobileToggleFeed" class="mobile-edge-pill pixel-btn pixel-btn-blue text-cyan-200" title="เปิด/ปิดบันทึกเหตุการณ์">
+    <span>📜</span>
+  </button>
+  <button id="btnMobileToggleQuest" class="mobile-edge-pill pixel-btn pixel-btn-gold text-slate-950" title="เปิด/ปิดภารกิจ">
+    <span>👑</span>
+  </button>
+
   <!-- MOBILE ORIENTATION HINT TOAST (z-30) -->
   <div id="orientationHintToast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
     <div class="pixel-box-gold px-3 py-1.5 flex items-center gap-2 text-[10px] text-amber-300 bg-slate-900/95 border-amber-500">
@@ -612,6 +909,9 @@
         </button>
         <button id="btnToggleBgm" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-amber-300 hover:text-white touch-manipulation" title="เปิด/ปิดเพลง">
           🎵
+        </button>
+        <button id="btnMobileDisplayToggle" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-amber-300 hover:text-white touch-manipulation" title="สลับเต็มจอ / มุมมองมือถือ (Fullscreen / Display Mode)">
+          📱⛶
         </button>
         <button id="btnSettings" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-slate-300 hover:text-white touch-manipulation" title="ตั้งค่า">
           ⚙️

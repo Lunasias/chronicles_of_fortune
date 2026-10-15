@@ -9,6 +9,7 @@ import { townManager } from '../.test-build/game/TownManager.js';
 import { darklingSystem } from '../.test-build/game/DarklingSystem.js';
 import { networkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
 import { SaveManager } from '../.test-build/game/SaveManager.js';
+import { mobileDisplayManager } from '../.test-build/ui/MobileDisplayManager.js';
 
 test('Combat Depth: Shatter reaction deals critical bonus damage and clears freeze', () => {
   const hero = {
@@ -420,4 +421,65 @@ test('Town Milestone Perks: town level 2+ provides regeneration for owner', () =
   player.hp = Math.min(player.maxHp, player.hp + healAmount);
 
   assert.equal(player.hp, 88);
+});
+
+test('Mobile Display Manager: manages preferences, orientation checks and drawer anti-overlap', () => {
+  // Test preference storage
+  mobileDisplayManager.setPreference('landscape');
+  assert.equal(mobileDisplayManager.getPreference(), 'landscape');
+
+  mobileDisplayManager.setPreference('portrait');
+  assert.equal(mobileDisplayManager.getPreference(), 'portrait');
+
+  // Stub document and windows
+  const feedEl = {
+    classList: {
+      classes: new Set(['hidden']),
+      add(cls) { this.classes.add(cls); },
+      remove(cls) { this.classes.delete(cls); },
+      contains(cls) { return this.classes.has(cls); }
+    }
+  };
+  const questEl = {
+    classList: {
+      classes: new Set(['hidden']),
+      add(cls) { this.classes.add(cls); },
+      remove(cls) { this.classes.delete(cls); },
+      contains(cls) { return this.classes.has(cls); }
+    }
+  };
+
+  const oldDoc = globalThis.document;
+  globalThis.document = {
+    getElementById(id) {
+      if (id === 'gameEventFeedWindow') return feedEl;
+      if (id === 'questTrackerHUD') return questEl;
+      return null;
+    },
+    body: {
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {}
+      }
+    }
+  };
+
+  // Toggle feed drawer opens feed and closes quest
+  mobileDisplayManager.toggleMobileDrawer('feed');
+  assert.equal(feedEl.classList.contains('hidden'), false);
+  assert.equal(questEl.classList.contains('hidden'), true);
+
+  // Toggle quest drawer opens quest and closes feed (never overlaps!)
+  mobileDisplayManager.toggleMobileDrawer('quest');
+  assert.equal(questEl.classList.contains('hidden'), false);
+  assert.equal(feedEl.classList.contains('hidden'), true);
+
+  // Closing drawer
+  mobileDisplayManager.closeAllDrawers();
+  assert.equal(feedEl.classList.contains('hidden'), true);
+  assert.equal(questEl.classList.contains('hidden'), true);
+
+  // Restore doc
+  globalThis.document = oldDoc;
 });
