@@ -8,7 +8,10 @@
 
 export type NetworkPacketType =
   | 'JOIN_ROOM'
+  | 'REJOIN_ROOM'
+  | 'REJOIN_ACK'
   | 'PEER_CONNECTED'
+  | 'PEER_RECONNECTED'
   | 'PLAYER_UPDATE'
   | 'START_GAME'
   | 'DICE_ROLL'
@@ -33,12 +36,14 @@ export interface NetworkPacket {
 
 export interface ConnectedPeer {
   id: string; // 'host' or guest peer id
+  clientSessionId?: string; // persistent across page refresh
   name: string;
   classKey: string;
   skinVariant: number;
   isHost: boolean;
   isAI?: boolean;
   playerIndex?: number;
+  isDisconnected?: boolean;
 }
 
 export interface RoomInfo {
@@ -51,6 +56,35 @@ export interface RoomInfo {
   gameMode?: string;
   partySize?: number;
   aiDifficulty?: string;
+}
+
+export interface ActiveMPSession {
+  roomCode: string;
+  isHost: boolean;
+  clientSessionId: string;
+  myPeerId: string;
+  playerName: string;
+  classKey: string;
+  skinVariant: number;
+  playerIndex: number;
+  status: 'lobby' | 'playing';
+  gameMode?: string;
+  saveDataSnapshot?: any;
+  lastActiveTime: number;
+}
+
+export function getOrCreateClientSessionId(): string {
+  if (typeof sessionStorage === 'undefined') return 'headless_session';
+  try {
+    let id = sessionStorage.getItem('cf_client_session_id');
+    if (!id) {
+      id = 'cs_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+      sessionStorage.setItem('cf_client_session_id', id);
+    }
+    return id;
+  } catch {
+    return 'headless_session';
+  }
 }
 
 export class NetworkRoomManager {
@@ -66,11 +100,18 @@ export class NetworkRoomManager {
   private seenPacketIds: Set<string> = new Set();
   private packetSeq = 0;
   private localPlayerIndex: number = 0;
+  private reconnectTimer: any = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
-        this.leaveRoom();
+        this.saveSessionSnapshot();
+      });
+      window.addEventListener('online', () => {
+        console.log('[NetworkRoomManager] Browser came back online! Re-establishing room connection...');
+        if (this.currentRoom && !this.currentRoom.isHost) {
+          this.reconnectWebRTC();
+        }
       });
     }
   }
@@ -111,22 +152,82 @@ export class NetworkRoomManager {
     return this.currentRoom;
   }
 
+  public setStatus(status: 'lobby' | 'playing'): void {
+    if (this.currentRoom) {
+      this.currentRoom.status = status;
+      this.saveSessionSnapshot();
+      this.notifyStateChange();
+    }
+  }
+
+  public saveSessionSnapshot(saveData?: any): void {
+    if (typeof sessionStorage === 'undefined' || !this.currentRoom) return;
+    const clientSessionId = getOrCreateClientSessionId();
+    const me = this.currentRoom.connectedPeers.find(p => p.id === this.currentRoom!.myPeerId);
+    const existing = this.getActiveSession();
+
+    const session: ActiveMPSession = {
+      roomCode: this.currentRoom.code,
+      isHost: this.currentRoom.isHost,
+      clientSessionId,
+      myPeerId: this.currentRoom.myPeerId,
+      playerName: me?.name || 'Player',
+      classKey: me?.classKey || 'warrior',
+      skinVariant: me?.skinVariant || 0,
+      playerIndex: this.localPlayerIndex,
+      status: this.currentRoom.status,
+      gameMode: this.currentRoom.gameMode,
+      saveDataSnapshot: saveData || existing?.saveDataSnapshot || null,
+      lastActiveTime: Date.now()
+    };
+
+    try {
+      sessionStorage.setItem('cf_active_mp_session', JSON.stringify(session));
+    } catch (e) {
+      console.warn('[NetworkRoomManager] Failed to save session snapshot:', e);
+    }
+  }
+
+  public getActiveSession(): ActiveMPSession | null {
+    if (typeof sessionStorage === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('cf_active_mp_session');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as ActiveMPSession;
+      if (Date.now() - parsed.lastActiveTime < 1000 * 60 * 60) {
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  public clearSession(): void {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('cf_active_mp_session');
+    }
+  }
+
   /**
-   * Host / Create a new multiplayer game room
+   * Host / Create a new multiplayer game room (or restore with presetRoomCode)
    */
   public createRoom(
     hostPlayerName: string = 'Host',
     hostClassKey: string = 'warrior',
-    hostSkinVariant: number = 0
+    hostSkinVariant: number = 0,
+    presetRoomCode?: string
   ): RoomInfo {
-    this.leaveRoom();
-    const code = this.generateRoomCode();
+    this.leaveRoom(true);
+    const code = presetRoomCode ? presetRoomCode.toUpperCase() : this.generateRoomCode();
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${code}`;
     const myPeerId = 'host';
+    const clientSessionId = getOrCreateClientSessionId();
     this.localPlayerIndex = 0;
 
     const hostPeer: ConnectedPeer = {
       id: myPeerId,
+      clientSessionId,
       name: hostPlayerName,
       classKey: hostClassKey,
       skinVariant: hostSkinVariant,
@@ -148,6 +249,7 @@ export class NetworkRoomManager {
 
     this.setupBroadcastChannel(channelName);
     this.initHostWebRTC(code, hostPlayerName);
+    this.saveSessionSnapshot();
     this.notifyStateChange();
     return this.currentRoom;
   }
@@ -164,13 +266,15 @@ export class NetworkRoomManager {
     const cleanCode = roomCode.trim().toUpperCase();
     if (!cleanCode) return false;
 
-    this.leaveRoom();
+    this.leaveRoom(true);
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
     const myPeerId = 'guest_' + Math.random().toString(36).substring(2, 8);
+    const clientSessionId = getOrCreateClientSessionId();
     this.localPlayerIndex = 1;
 
     const selfPeer: ConnectedPeer = {
       id: myPeerId,
+      clientSessionId,
       name: playerName,
       classKey,
       skinVariant,
@@ -188,7 +292,7 @@ export class NetworkRoomManager {
     };
 
     this.setupBroadcastChannel(channelName);
-    this.initGuestWebRTC(cleanCode, myPeerId, selfPeer);
+    this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, false);
 
     // Broadcast JOIN packet over local broadcast channel
     this.broadcast({
@@ -199,11 +303,71 @@ export class NetworkRoomManager {
       senderName: playerName,
       payload: {
         peer: selfPeer,
+        clientSessionId,
         joinedAt: Date.now()
       },
       timestamp: Date.now()
     });
 
+    this.saveSessionSnapshot();
+    this.notifyStateChange();
+    return true;
+  }
+
+  /**
+   * Rejoin an active multiplayer room session after browser reload or network drop
+   */
+  public rejoinRoom(session: ActiveMPSession): boolean {
+    const cleanCode = session.roomCode.trim().toUpperCase();
+    if (!cleanCode) return false;
+
+    this.leaveRoom(true);
+    const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
+    const myPeerId = 'guest_' + Math.random().toString(36).substring(2, 8);
+    const clientSessionId = session.clientSessionId || getOrCreateClientSessionId();
+    this.localPlayerIndex = session.playerIndex;
+
+    const selfPeer: ConnectedPeer = {
+      id: myPeerId,
+      clientSessionId,
+      name: session.playerName,
+      classKey: session.classKey,
+      skinVariant: session.skinVariant,
+      isHost: false,
+      playerIndex: session.playerIndex
+    };
+
+    this.currentRoom = {
+      code: cleanCode,
+      isHost: false,
+      myPeerId,
+      connectedPeers: [selfPeer],
+      channelName,
+      status: session.status || 'playing',
+      gameMode: session.gameMode
+    };
+
+    this.setupBroadcastChannel(channelName);
+    this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, true);
+
+    // Broadcast REJOIN packet
+    this.broadcast({
+      packetId: this.nextPacketId(),
+      type: 'REJOIN_ROOM',
+      roomCode: cleanCode,
+      senderId: myPeerId,
+      senderName: session.playerName,
+      payload: {
+        peer: selfPeer,
+        clientSessionId,
+        playerIndex: session.playerIndex,
+        previousPeerId: session.myPeerId,
+        rejoinedAt: Date.now()
+      },
+      timestamp: Date.now()
+    });
+
+    this.saveSessionSnapshot();
     this.notifyStateChange();
     return true;
   }
@@ -242,7 +406,14 @@ export class NetworkRoomManager {
   /**
    * Leave the current room and close all communication channels
    */
-  public leaveRoom() {
+  public leaveRoom(preserveSession: boolean = false) {
+    if (!preserveSession) {
+      this.clearSession();
+    }
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.currentRoom) {
       try {
         this.broadcast({
@@ -425,17 +596,15 @@ export class NetworkRoomManager {
         conn.on('close', () => {
           this.connections.delete(conn.peer);
           if (this.currentRoom) {
-            this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== conn.peer);
-            this.notifyStateChange();
-            this.broadcast({
-              packetId: this.nextPacketId(),
-              type: 'PEER_CONNECTED',
-              roomCode: this.currentRoom.code,
-              senderId: 'host',
-              senderName: hostPlayerName,
-              payload: { peers: this.currentRoom.connectedPeers },
-              timestamp: Date.now()
-            });
+            const peerObj = this.currentRoom.connectedPeers.find(p => p.id === conn.peer);
+            if (peerObj) {
+              if (this.currentRoom.status === 'playing') {
+                peerObj.isDisconnected = true;
+              } else {
+                this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== conn.peer);
+              }
+              this.notifyStateChange();
+            }
           }
         });
       });
@@ -448,7 +617,7 @@ export class NetworkRoomManager {
     }
   }
 
-  private async initGuestWebRTC(roomCode: string, myPeerId: string, selfPeer: ConnectedPeer) {
+  private async initGuestWebRTC(roomCode: string, myPeerId: string, selfPeer: ConnectedPeer, isRejoining: boolean = false) {
     if (typeof window === 'undefined' || typeof (window as any).RTCPeerConnection === 'undefined') return;
 
     try {
@@ -474,14 +643,19 @@ export class NetworkRoomManager {
 
         conn.on('open', () => {
           console.log('[NetworkRoomManager] WebRTC DataConnection to host opened!');
-          // Send JOIN_ROOM packet
+          const pktType = isRejoining ? 'REJOIN_ROOM' : 'JOIN_ROOM';
           const pkt: NetworkPacket = {
             packetId: this.nextPacketId(),
-            type: 'JOIN_ROOM',
+            type: pktType,
             roomCode,
             senderId: myPeerId,
             senderName: selfPeer.name,
-            payload: { peer: selfPeer, joinedAt: Date.now() },
+            payload: {
+              peer: selfPeer,
+              clientSessionId: selfPeer.clientSessionId,
+              playerIndex: selfPeer.playerIndex,
+              joinedAt: Date.now()
+            },
             timestamp: Date.now()
           };
           conn.send(pkt);
@@ -493,14 +667,59 @@ export class NetworkRoomManager {
 
         conn.on('close', () => {
           console.log('[NetworkRoomManager] WebRTC connection to host closed');
+          this.hostConnection = null;
+          this.scheduleAutoReconnect();
         });
       });
 
       this.peer.on('error', (err: any) => {
         console.warn('[NetworkRoomManager] Guest Peer error:', err);
+        this.hostConnection = null;
+        this.scheduleAutoReconnect();
       });
     } catch (err) {
       console.warn('[NetworkRoomManager] Could not init WebRTC Guest:', err);
+    }
+  }
+
+  public scheduleAutoReconnect(): void {
+    if (this.reconnectTimer) return;
+    if (!this.currentRoom || this.currentRoom.isHost) return;
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      if (this.currentRoom && !this.hostConnection) {
+        console.log('[NetworkRoomManager] Attempting automatic reconnection to Host...');
+        const me = this.currentRoom.connectedPeers.find(p => p.id === this.currentRoom!.myPeerId) || {
+          id: this.currentRoom.myPeerId,
+          clientSessionId: getOrCreateClientSessionId(),
+          name: 'Guest',
+          classKey: 'warrior',
+          skinVariant: 0,
+          isHost: false,
+          playerIndex: this.localPlayerIndex
+        };
+        this.initGuestWebRTC(this.currentRoom.code, this.currentRoom.myPeerId, me, true);
+      }
+    }, 2500);
+  }
+
+  public reconnectWebRTC(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.currentRoom && !this.currentRoom.isHost) {
+      const me = this.currentRoom.connectedPeers.find(p => p.id === this.currentRoom!.myPeerId) || {
+        id: this.currentRoom.myPeerId,
+        clientSessionId: getOrCreateClientSessionId(),
+        name: 'Guest',
+        classKey: 'warrior',
+        skinVariant: 0,
+        isHost: false,
+        playerIndex: this.localPlayerIndex
+      };
+      this.initGuestWebRTC(this.currentRoom.code, this.currentRoom.myPeerId, me, true);
     }
   }
 
@@ -518,6 +737,7 @@ export class NetworkRoomManager {
       if (packet.type === 'JOIN_ROOM') {
         const guestPeer: ConnectedPeer = packet.payload?.peer || {
           id: packet.senderId,
+          clientSessionId: packet.payload?.clientSessionId,
           name: packet.senderName,
           classKey: 'mage',
           skinVariant: 0,
@@ -546,6 +766,49 @@ export class NetworkRoomManager {
             timestamp: Date.now()
           });
         }
+      } else if (packet.type === 'REJOIN_ROOM') {
+        const clientSessionId = packet.payload?.clientSessionId;
+        const playerIndex = packet.payload?.playerIndex;
+        const playerName = packet.senderName;
+
+        let existingPeer = this.currentRoom.connectedPeers.find(
+          p =>
+            (clientSessionId && p.clientSessionId === clientSessionId) ||
+            (typeof playerIndex === 'number' && p.playerIndex === playerIndex) ||
+            p.name === playerName
+        );
+
+        if (existingPeer) {
+          existingPeer.id = packet.senderId;
+          existingPeer.isDisconnected = false;
+          if (clientSessionId) existingPeer.clientSessionId = clientSessionId;
+        } else {
+          existingPeer = {
+            id: packet.senderId,
+            clientSessionId: clientSessionId || getOrCreateClientSessionId(),
+            name: playerName,
+            classKey: packet.payload?.peer?.classKey || 'warrior',
+            skinVariant: packet.payload?.peer?.skinVariant || 0,
+            isHost: false,
+            playerIndex: typeof playerIndex === 'number' ? playerIndex : this.currentRoom.connectedPeers.length
+          };
+          this.currentRoom.connectedPeers.push(existingPeer);
+        }
+
+        this.notifyStateChange();
+
+        this.broadcast({
+          packetId: this.nextPacketId(),
+          type: 'PEER_RECONNECTED',
+          roomCode: this.currentRoom.code,
+          senderId: 'host',
+          senderName: this.currentRoom.connectedPeers[0]?.name || 'Host',
+          payload: {
+            peer: existingPeer,
+            peers: this.currentRoom.connectedPeers
+          },
+          timestamp: Date.now()
+        });
       } else if (packet.type === 'PLAYER_UPDATE') {
         const p = this.currentRoom.connectedPeers.find(peer => peer.id === packet.senderId);
         if (p && packet.payload) {
@@ -566,17 +829,24 @@ export class NetworkRoomManager {
           });
         }
       } else if (packet.type === 'LEAVE_ROOM') {
-        this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== packet.senderId);
-        this.notifyStateChange();
-        this.broadcast({
-          packetId: this.nextPacketId(),
-          type: 'PEER_CONNECTED',
-          roomCode: this.currentRoom.code,
-          senderId: 'host',
-          senderName: 'Host',
-          payload: { peers: this.currentRoom.connectedPeers },
-          timestamp: Date.now()
-        });
+        const peerObj = this.currentRoom.connectedPeers.find(p => p.id === packet.senderId);
+        if (peerObj) {
+          if (this.currentRoom.status === 'playing') {
+            peerObj.isDisconnected = true;
+          } else {
+            this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== packet.senderId);
+          }
+          this.notifyStateChange();
+          this.broadcast({
+            packetId: this.nextPacketId(),
+            type: 'PEER_CONNECTED',
+            roomCode: this.currentRoom.code,
+            senderId: 'host',
+            senderName: 'Host',
+            payload: { peers: this.currentRoom.connectedPeers },
+            timestamp: Date.now()
+          });
+        }
       } else {
         // Relay in-game packet from one guest to all other peers
         this.connections.forEach((conn, id) => {
@@ -591,7 +861,7 @@ export class NetworkRoomManager {
       }
     } else {
       // Guest handling
-      if (packet.type === 'PEER_CONNECTED') {
+      if (packet.type === 'PEER_CONNECTED' || packet.type === 'PEER_RECONNECTED') {
         if (packet.payload?.peers && Array.isArray(packet.payload.peers)) {
           this.currentRoom.connectedPeers = packet.payload.peers;
           if (packet.payload.partySize) this.currentRoom.partySize = packet.payload.partySize;

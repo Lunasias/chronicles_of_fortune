@@ -29,7 +29,7 @@ import { CasinoUI } from './ui/CasinoUI';
 import { dungeonSystem } from './game/DungeonSystem';
 import { hallOfFameUI } from './ui/HallOfFameUI';
 import { multiplayerRoomUI, MultiplayerStartOptions } from './ui/MultiplayerRoomUI';
-import { networkRoomManager, NetworkPacket } from './engine/NetworkRoomManager';
+import { networkRoomManager, NetworkPacket, ActiveMPSession, getOrCreateClientSessionId } from './engine/NetworkRoomManager';
 import { getNodeEncounterPreview } from './game/MonsterDatabase';
 import { scaleMonster, tierForNode } from './game/BalanceSystem';
 import type { ThreatTier } from './game/BalanceSystem';
@@ -126,6 +126,17 @@ class DokaponApp {
     this.updateTitleSaveStatus();
     this.initGamepadController();
     this.bindNetworkListeners();
+    this.checkPendingMultiplayerRejoin();
+
+    window.addEventListener('beforeunload', () => {
+      if (networkRoomManager.isInRoom()) {
+        const snap = SaveManager.serializeGameState(this.game, {
+          currentHp: this.bossCurrentHp,
+          maxHp: this.bossMaxHp
+        });
+        networkRoomManager.saveSessionSnapshot(snap);
+      }
+    });
   }
 
   public isMyTurn(): boolean {
@@ -139,16 +150,20 @@ class DokaponApp {
       SaveManager.applySaveData(this.game, opts.saveData, false);
       this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
+      networkRoomManager.setStatus('playing');
+      networkRoomManager.saveSessionSnapshot(opts.saveData);
     } else {
       this.game.initGame(opts.partyConfig, opts.winGoal || 'networth');
       this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
       networkRoomManager.setLocalPlayerIndex(0);
+      networkRoomManager.setStatus('playing');
 
       const initialSave = SaveManager.serializeGameState(this.game, {
         currentHp: this.bossCurrentHp,
         maxHp: this.bossMaxHp
       });
+      networkRoomManager.saveSessionSnapshot(initialSave);
 
       networkRoomManager.broadcast({
         packetId: `start_${Date.now()}`,
@@ -203,9 +218,63 @@ class DokaponApp {
       } else if (pkt.type === 'SYNC_STATE') {
         if (pkt.payload?.state && !networkRoomManager.isHost()) {
           SaveManager.applySaveData(this.game, pkt.payload.state, false);
+          networkRoomManager.saveSessionSnapshot(pkt.payload.state);
           this.hud.update();
           this.renderer.centerCameraOn(this.game.activePlayer.gridX, this.game.activePlayer.gridY, this.game.activePlayer.gridZ);
         }
+      } else if (pkt.type === 'REJOIN_ROOM') {
+        if (networkRoomManager.isHost()) {
+          const currentSave = SaveManager.serializeGameState(this.game, {
+            currentHp: this.bossCurrentHp,
+            maxHp: this.bossMaxHp
+          });
+          const targetPlayerIndex = pkt.payload?.playerIndex ?? pkt.payload?.peer?.playerIndex;
+          networkRoomManager.broadcast({
+            packetId: `rejoin_ack_${Date.now()}`,
+            type: 'REJOIN_ACK',
+            roomCode: networkRoomManager.getRoomCode()!,
+            senderId: 'host',
+            senderName: this.game.players[0]?.displayName || 'Host',
+            payload: {
+              saveData: currentSave,
+              playerIndex: targetPlayerIndex,
+              clientSessionId: pkt.payload?.clientSessionId,
+              peerId: pkt.senderId,
+              gameMode: this.game.gameMode,
+              winGoal: this.game.winGoal,
+              aiDifficulty: this.game.aiDifficulty
+            },
+            timestamp: Date.now()
+          });
+        }
+      } else if (pkt.type === 'REJOIN_ACK') {
+        if (!networkRoomManager.isHost() && pkt.payload?.saveData) {
+          const mySessionId = getOrCreateClientSessionId();
+          if (!pkt.payload.clientSessionId || pkt.payload.clientSessionId === mySessionId || pkt.payload.peerId === networkRoomManager.getMyPeerId()) {
+            if (typeof pkt.payload.playerIndex === 'number') {
+              networkRoomManager.setLocalPlayerIndex(pkt.payload.playerIndex);
+            }
+            SaveManager.applySaveData(this.game, pkt.payload.saveData, false);
+            if (pkt.payload.gameMode) this.game.gameMode = pkt.payload.gameMode;
+            if (pkt.payload.aiDifficulty) this.game.aiDifficulty = pkt.payload.aiDifficulty;
+            networkRoomManager.saveSessionSnapshot(pkt.payload.saveData);
+
+            document.getElementById('titleScreen')?.classList.add('hidden');
+            document.getElementById('topHUD')?.classList.remove('hidden');
+            document.getElementById('bottomBar')?.classList.remove('hidden');
+            if (window.innerWidth > 768) {
+              document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+            }
+            this.onTurnStarted();
+            this.hud.update();
+            this.updateMultiplayerHudBadge();
+            this.game.addLog(`⚡ เชื่อมต่อกลับเข้าห้องสำเร็จแล้ว! (Reconnected)`, 'info');
+          }
+        }
+      } else if (pkt.type === 'PEER_RECONNECTED') {
+        const reconnectedName = pkt.payload?.peer?.name || pkt.senderName;
+        this.game.addLog(`🌐 ผู้เล่น [${reconnectedName}] เชื่อมต่อกลับเข้ามาแล้ว!`, 'info');
+        this.updateMultiplayerHudBadge();
       } else if (pkt.type === 'BATTLE_ACTION') {
         if (pkt.payload?.role && pkt.payload?.action) {
           this.battleUI.receiveRemoteBattleAction(pkt.payload.role, pkt.payload.action);
@@ -265,6 +334,7 @@ class DokaponApp {
       currentHp: this.bossCurrentHp,
       maxHp: this.bossMaxHp
     });
+    networkRoomManager.saveSessionSnapshot(snapshot);
     networkRoomManager.broadcast({
       packetId: `sync_${Date.now()}`,
       type: 'SYNC_STATE',
@@ -274,6 +344,102 @@ class DokaponApp {
       payload: { state: snapshot },
       timestamp: Date.now()
     });
+  }
+
+  private checkPendingMultiplayerRejoin() {
+    const session = networkRoomManager.getActiveSession();
+    if (!session || !session.roomCode) return;
+
+    const modal = document.getElementById('mpRejoinModal');
+    if (!modal) return;
+
+    const codeEl = document.getElementById('mpRejoinRoomCode');
+    if (codeEl) codeEl.textContent = session.roomCode;
+    const roleEl = document.getElementById('mpRejoinRole');
+    if (roleEl) roleEl.textContent = session.isHost ? 'หัวหน้าห้อง (Host)' : `ผู้เล่น (P${(session.playerIndex ?? 0) + 1})`;
+    const statusEl = document.getElementById('mpRejoinStatus');
+    if (statusEl) statusEl.textContent = session.status === 'playing' ? 'กำลังเล่น (In Game)' : 'ในล็อบบี้ (Lobby)';
+    const timeEl = document.getElementById('mpRejoinTime');
+    if (timeEl) timeEl.textContent = new Date(session.lastActiveTime).toLocaleTimeString();
+
+    modal.classList.remove('hidden');
+
+    const btnConfirm = document.getElementById('btnConfirmRejoinMP');
+    const btnAbandon = document.getElementById('btnAbandonRejoinMP');
+
+    const cleanup = () => {
+      modal.classList.add('hidden');
+    };
+
+    btnConfirm?.replaceWith(btnConfirm.cloneNode(true));
+    btnAbandon?.replaceWith(btnAbandon.cloneNode(true));
+
+    const newBtnConfirm = document.getElementById('btnConfirmRejoinMP');
+    const newBtnAbandon = document.getElementById('btnAbandonRejoinMP');
+
+    newBtnConfirm?.addEventListener('click', async () => {
+      cleanup();
+      audio.click();
+      await this.executeRejoin(session);
+    });
+
+    newBtnAbandon?.addEventListener('click', () => {
+      cleanup();
+      audio.click();
+      networkRoomManager.clearSession();
+    });
+  }
+
+  private async executeRejoin(session: ActiveMPSession) {
+    if (session.isHost) {
+      networkRoomManager.createRoom(
+        session.playerName || 'Host',
+        session.classKey || 'warrior',
+        session.skinVariant || 0,
+        session.roomCode
+      );
+      networkRoomManager.setStatus('playing');
+
+      if (session.saveDataSnapshot) {
+        SaveManager.applySaveData(this.game, session.saveDataSnapshot, false);
+        if (session.gameMode) this.game.gameMode = session.gameMode as any;
+      }
+
+      document.getElementById('titleScreen')?.classList.add('hidden');
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      if (window.innerWidth > 768) {
+        document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+      }
+
+      this.onTurnStarted();
+      this.hud.update();
+      this.updateMultiplayerHudBadge();
+      this.game.addLog(`⚡ คุณกลับเข้าห้องในฐานะ Host เรียบร้อยแล้ว!`, 'info');
+      this.syncMultiplayerState();
+    } else {
+      // Guest rejoin: restore board visuals immediately from snapshot
+      if (session.saveDataSnapshot) {
+        SaveManager.applySaveData(this.game, session.saveDataSnapshot, false);
+        if (session.gameMode) this.game.gameMode = session.gameMode as any;
+        document.getElementById('titleScreen')?.classList.add('hidden');
+        document.getElementById('topHUD')?.classList.remove('hidden');
+        document.getElementById('bottomBar')?.classList.remove('hidden');
+        if (window.innerWidth > 768) {
+          document.getElementById('gameEventFeedWindow')?.classList.remove('hidden');
+        }
+        this.onTurnStarted();
+        this.hud.update();
+        this.updateMultiplayerHudBadge();
+      }
+
+      const success = networkRoomManager.rejoinRoom(session);
+      if (success) {
+        this.game.addLog(`🔄 กำลังเชื่อมต่อกลับเข้าห้อง ${session.roomCode}...`, 'info');
+      } else {
+        this.game.addLog(`⚠️ ไม่สามารถเชื่อมต่อกลับเข้าห้องได้`, 'info');
+      }
+    }
   }
 
   private handleAITurnStart() {

@@ -23,6 +23,19 @@ globalThis.localStorage = {
   }
 };
 
+const sessionStore = new Map();
+
+globalThis.sessionStorage = {
+  getItem: key => (sessionStore.has(key) ? sessionStore.get(key) : null),
+  setItem: (key, value) => sessionStore.set(key, String(value)),
+  removeItem: key => sessionStore.delete(key),
+  clear: () => sessionStore.clear(),
+  key: index => [...sessionStore.keys()][index] ?? null,
+  get length() {
+    return sessionStore.size;
+  }
+};
+
 /** Sprite sheets never load: onload/onerror simply never fire, which is fine. */
 globalThis.Image = class {
   constructor() {

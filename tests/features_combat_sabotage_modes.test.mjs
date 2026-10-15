@@ -392,6 +392,75 @@ test('Multiplayer State Sync: SaveManager.serializeGameState and applySaveData c
   assert.equal(res.bossState?.currentHp, 800);
 });
 
+test('Multiplayer Reconnection & Session Recovery: saves snapshots, restores session, handles REJOIN_ROOM packet and reconnects', () => {
+  networkRoomManager.clearSession();
+  const room = networkRoomManager.createRoom('Host Valeria', 'warrior', 0);
+  networkRoomManager.setStatus('playing');
+
+  const dummySave = {
+    dayCounter: 7,
+    weekCounter: 1,
+    activePlayerIdx: 0,
+    players: [{ id: 'p1', name: 'Host Valeria', gold: 500, hp: 100 }]
+  };
+
+  networkRoomManager.saveSessionSnapshot(dummySave);
+  const activeSession = networkRoomManager.getActiveSession();
+  assert.ok(activeSession !== null);
+  assert.equal(activeSession.roomCode, room.code);
+  assert.equal(activeSession.isHost, true);
+  assert.equal(activeSession.status, 'playing');
+  assert.equal(activeSession.saveDataSnapshot.dayCounter, 7);
+
+  // Guest rejoins using session
+  const guestSession = {
+    roomCode: room.code,
+    isHost: false,
+    clientSessionId: 'test_client_session_2',
+    myPeerId: 'guest_prev_id',
+    playerName: 'Guest Lyra',
+    classKey: 'mage',
+    skinVariant: 1,
+    playerIndex: 1,
+    status: 'playing',
+    saveDataSnapshot: dummySave,
+    lastActiveTime: Date.now()
+  };
+
+  const rejoinSuccess = networkRoomManager.rejoinRoom(guestSession);
+  assert.equal(rejoinSuccess, true);
+  const guestRoom = networkRoomManager.getRoomInfo();
+  assert.equal(guestRoom?.code, room.code);
+  assert.equal(guestRoom?.isHost, false);
+  assert.equal(networkRoomManager.getLocalPlayerIndex(), 1);
+
+  // Host simulates receiving REJOIN_ROOM from returning guest
+  networkRoomManager.createRoom('Host Valeria', 'warrior', 0, room.code);
+  networkRoomManager.setStatus('playing');
+
+  const hostRoom = networkRoomManager.getRoomInfo();
+  assert.ok(hostRoom);
+  hostRoom.connectedPeers.push({
+    id: 'old_guest_peer',
+    clientSessionId: 'test_client_session_2',
+    name: 'Guest Lyra',
+    classKey: 'mage',
+    skinVariant: 1,
+    isHost: false,
+    playerIndex: 1,
+    isDisconnected: true
+  });
+
+  const targetPeer = hostRoom.connectedPeers.find(p => p.clientSessionId === 'test_client_session_2');
+  assert.ok(targetPeer);
+  assert.equal(targetPeer.isDisconnected, true);
+
+  // Clear session on explicit leave
+  networkRoomManager.clearSession();
+  assert.equal(networkRoomManager.getActiveSession(), null);
+  networkRoomManager.leaveRoom();
+});
+
 test('Town Milestone Perks: town level 2+ provides regeneration for owner', () => {
   const townNode = {
     id: 5,
