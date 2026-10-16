@@ -1,4 +1,9 @@
 import { EquipmentItem, IsoDirection, CharacterAnimState, PrankState } from './PixelSpriteGenerator';
+import { pixelEllipse } from './PixelFx';
+import { animationPoseIndex } from './ArtDirection';
+import { classArtAtlas } from './ClassArtAtlas';
+import { prefersReducedMotion } from '../ui/GraphicsSettings';
+import { JOB_VISUALS } from './JobVisuals';
 
 // =============================================================================
 // ASSET CONFIGURATION & 8-DIRECTIONAL MAPPING FOR HIGH-RES SPRITES
@@ -48,170 +53,32 @@ const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
 export class CustomIsometricHeroRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private imageStore = new Map<string, HTMLImageElement>();
-  private loadedCount = 0;
-  private totalToLoad = 0;
-  private failedCount = 0;
-  private readyNotified = false;
 
   constructor() {
-    this.preloadAllClassSprites();
+    if (typeof window !== 'undefined') window.addEventListener('class-art-loaded', () => {
+      this.cache.clear();
+      window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
+    });
   }
 
   // =========================================================================
   // PRELOAD & ASSET STORAGE
   // =========================================================================
-  private preloadAllClassSprites() {
-    const directions: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
-    const uniqueFolders = Array.from(new Set(Object.values(CLASS_ASSET_FOLDERS)));
-    const animatedFolders = uniqueFolders;
-
-    this.totalToLoad = uniqueFolders.length * directions.length + animatedFolders.length * directions.length * 16;
-
-    for (const folder of uniqueFolders) {
-      for (const dir of directions) {
-        const fileName = DIR_FILE_MAP[dir];
-        const key = `${folder}_${dir}`;
-        const img = new Image();
-        const src = `/assets/${folder}/Idle/rotations/${fileName}`;
-
-        img.onload = () => {
-          this.cache.clear();
-          this.markAssetLoaded();
-        };
-        img.onerror = () => this.markAssetFailed(src);
-        img.src = src;
-        this.imageStore.set(key, img);
-
-        // Preload multi-frame animations for classes with run/attack/idle/cast sheets
-        if (animatedFolders.includes(folder)) {
-          const baseName = fileName.replace('.png', '');
-          for (let f = 0; f < 4; f++) {
-            // Idle state frame
-            const idleKey = `${folder}_idle_${dir}_${f}`;
-            const idleSrc = `/assets/${folder}/Idle/rotations/${baseName}_${f}.png`;
-            const idleImg = new Image();
-            idleImg.onload = () => {
-              this.cache.clear();
-              this.markAssetLoaded();
-            };
-            idleImg.onerror = () => this.markAssetFailed(idleSrc);
-            idleImg.src = idleSrc;
-            this.imageStore.set(idleKey, idleImg);
-
-            // Run state frame
-            const runKey = `${folder}_run_${dir}_${f}`;
-            const runSrc = `/assets/${folder}/Run/rotations/${baseName}_${f}.png`;
-            const runImg = new Image();
-            runImg.onload = () => {
-              this.cache.clear();
-              this.markAssetLoaded();
-            };
-            runImg.onerror = () => this.markAssetFailed(runSrc);
-            runImg.src = runSrc;
-            this.imageStore.set(runKey, runImg);
-
-            // Attack state frame
-            const atkKey = `${folder}_attack_${dir}_${f}`;
-            const atkSrc = `/assets/${folder}/Attack/rotations/${baseName}_${f}.png`;
-            const atkImg = new Image();
-            atkImg.onload = () => {
-              this.cache.clear();
-              this.markAssetLoaded();
-            };
-            atkImg.onerror = () => this.markAssetFailed(atkSrc);
-            atkImg.src = atkSrc;
-            this.imageStore.set(atkKey, atkImg);
-
-            // Cast / Magic state frame
-            const castKey = `${folder}_cast_${dir}_${f}`;
-            const castSrc = `/assets/${folder}/Cast/rotations/${baseName}_${f}.png`;
-            const castImg = new Image();
-            castImg.onload = () => {
-              this.cache.clear();
-              this.markAssetLoaded();
-            };
-            castImg.onerror = () => this.markAssetFailed(castSrc);
-            castImg.src = castSrc;
-            this.imageStore.set(castKey, castImg);
-          }
-        }
-      }
+  private getImage(folder: string, dir: IsoDirection, animState: CharacterAnimState = 'idle', frame = 0): HTMLImageElement | null {
+    const pose = animationPoseIndex(animState, frame);
+    const state = animState === 'run' ? 'Run' : animState === 'attack' || animState === 'strike' ? 'Attack' : animState === 'magic' ? 'Cast' : 'Idle';
+    const file = DIR_FILE_MAP[dir].replace('.png', '');
+    const key = [folder, state, dir, pose].join('_');
+    let image = this.imageStore.get(key);
+    if (!image) {
+      image = new Image(); this.imageStore.set(key, image);
+      image.onload = () => {
+        this.cache.clear();
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
+      };
+      image.src = '/assets/' + folder + '/' + state + '/rotations/' + file + (state === 'Idle' ? '' : '_' + pose) + '.png';
     }
-  }
-
-  /**
-   * Counts a finished sprite request (loaded or failed) and notifies listeners exactly
-   * once, when the whole sheet set has settled.
-   *
-   * Previously every single image cleared the sprite cache and dispatched
-   * `hero-assets-loaded`, which meant 360 cache wipes and 360 listener callbacks during
-   * boot. That threw away freshly rendered sprites and re-rendered the HUD avatar and
-   * every roster preview once per image.
-   */
-  private markAssetLoaded() {
-    this.loadedCount++;
-    if (this.loadedCount < this.totalToLoad || this.readyNotified) return;
-
-    this.readyNotified = true;
-    this.cache.clear();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('hero-assets-loaded'));
-    }
-  }
-
-  private markAssetFailed(src: string) {
-    this.failedCount++;
-    console.warn(`[HeroRenderer] Failed to load sprite: ${src}`);
-    // Still count it so a single missing file can never stall the ready notification.
-    this.markAssetLoaded();
-  }
-
-  private getImage(
-    folder: string,
-    dir: IsoDirection,
-    animState: CharacterAnimState = 'idle',
-    frame: number = 0
-  ): HTMLImageElement | null {
-    const f = frame % 4;
-
-    if (animState === 'run') {
-      const runKey = `${folder}_run_${dir}_${f}`;
-      const img = this.imageStore.get(runKey);
-      if (img && img.complete && img.naturalWidth > 0) {
-        return img;
-      }
-    } else if (animState === 'attack' || animState === 'strike') {
-      const atkKey = `${folder}_attack_${dir}_${f}`;
-      const img = this.imageStore.get(atkKey);
-      if (img && img.complete && img.naturalWidth > 0) {
-        return img;
-      }
-    } else if (animState === 'magic') {
-      const castKey = `${folder}_cast_${dir}_${f}`;
-      const img = this.imageStore.get(castKey);
-      if (img && img.complete && img.naturalWidth > 0) {
-        return img;
-      }
-      // Fallback to attack if cast isn't available
-      const atkKey = `${folder}_attack_${dir}_${f}`;
-      const atkImg = this.imageStore.get(atkKey);
-      if (atkImg && atkImg.complete && atkImg.naturalWidth > 0) {
-        return atkImg;
-      }
-    } else if (animState === 'idle') {
-      const idleKey = `${folder}_idle_${dir}_${f}`;
-      const img = this.imageStore.get(idleKey);
-      if (img && img.complete && img.naturalWidth > 0) {
-        return img;
-      }
-    }
-
-    const key = `${folder}_${dir}`;
-    const img = this.imageStore.get(key);
-    if (img && img.complete && img.naturalWidth > 0) {
-      return img;
-    }
-    return null;
+    return image.complete && image.naturalWidth > 0 ? image : null;
   }
 
   private makeCanvas(w = 144, h = 144): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
@@ -231,7 +98,7 @@ export class CustomIsometricHeroRenderer {
     dir: IsoDirection = 'SE',
     animState: CharacterAnimState = 'idle',
     frame: number = 0,
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null } = {},
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null; shield?: EquipmentItem | null; accessory?: EquipmentItem | null } = {},
     isDarkling: boolean = false,
     prank?: PrankState,
     skinVariant: number = 0
@@ -244,9 +111,9 @@ export class CustomIsometricHeroRenderer {
       ? 'afro'
       : 'none';
 
-    const f = frame % 8;
+    const f = prefersReducedMotion() && animState === 'idle' ? 0 : frame % 8;
     const normClass = this.normalizeClassKey(classKey);
-    const cacheKey = `iso_hero_${isDarkling ? 'darkling_' : ''}${normClass}_s${skinVariant}_${dir}_${animState}_${f}_${weaponId}_${armorId}_${prankKey}`;
+    const cacheKey = `iso_hero_${isDarkling ? 'darkling_' : ''}${classKey}_${normClass}_s${skinVariant}_${dir}_${animState}_${f}_${weaponId}_${armorId}_${equipment.shield?.id || "none"}_${equipment.accessory?.id || "none"}_${prankKey}`;
 
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
@@ -255,24 +122,25 @@ export class CustomIsometricHeroRenderer {
     const { canvas, ctx } = this.makeCanvas(144, 144);
 
     ctx.save();
-    // High-resolution supersampling scale from 96-grid to 144-canvas (1.5x)
-    ctx.scale(1.5, 1.5);
+    // Source artwork is native 64px. Keep its pixels intact inside a roomy FX canvas.
 
     // Dynamic Animation Calculations
     const anim = this.computeAnimation(normClass, dir, animState, f);
 
     // Character center coordinates in 96x96 virtual space
-    const cx = 48 + anim.stepX;
-    const cy = 48 + anim.stepY + anim.bob + anim.jumpY;
+    const cx = 72 + anim.stepX;
+    const cy = 72 + anim.stepY + anim.bob + anim.jumpY;
 
     // 1. DYNAMIC GROUND SHADOW (Anchored to ground plane at cy + 25)
-    this.drawGroundShadow(ctx, cx, 48 + anim.stepY + 25, anim);
+    this.drawGroundShadow(ctx, 72, 97, anim);
 
     // 2. PRE-SPRITE VISUAL EFFECTS (Back auras, magic circles, shockwaves)
     this.renderPreSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
 
     // 3. MAIN 8-DIRECTIONAL SPRITE WITH TRANSFORM & SKIN TINTS
-    this.renderHeroineSprite(ctx, cx, cy, normClass, dir, animState, f, anim, skinVariant, isDarkling);
+    this.renderHeroineSprite(ctx, cx, cy, normClass, dir, animState, f, anim, skinVariant, isDarkling, classKey);
+
+    if (animState !== 'defeat') this.drawClassRegalia(ctx, Math.round(cx), Math.round(cy), classKey, dir, equipment, isDarkling);
 
     // 4. POST-SPRITE VISUAL EFFECTS (Slash arcs, spells, parry sparks, victory stars)
     this.renderPostSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
@@ -285,8 +153,10 @@ export class CustomIsometricHeroRenderer {
     ctx.restore();
 
     const folder = CLASS_ASSET_FOLDERS[normClass] || CLASS_ASSET_FOLDERS['warrior'];
-    const loadedImg = this.getImage(folder, dir, animState, f);
-    if (loadedImg && loadedImg.complete && loadedImg.naturalWidth > 0) {
+    const modernReady = !!classArtAtlas.getFrame(normClass, dir, animState, f, classKey);
+    const loadedImg = modernReady ? null : this.getImage(folder, dir, animState, f);
+    if (modernReady || (loadedImg && loadedImg.complete && loadedImg.naturalWidth > 0)) {
+      if (this.cache.size >= 512) this.cache.delete(this.cache.keys().next().value!);
       this.cache.set(cacheKey, canvas);
     }
     return canvas;
@@ -294,13 +164,79 @@ export class CustomIsometricHeroRenderer {
 
   public normalizeClassKey(rawKey: string): string {
     const k = (rawKey || '').toLowerCase();
-    if (k.includes('spellblade') || k.includes('spell') || k.includes('ดาบเวท') || k.includes('magic_sword')) return 'spellblade';
-    if (k.includes('warrior') || k.includes('knight') || k.includes('hero') || k === 'player') return 'warrior';
-    if (k.includes('magician') || k.includes('mage') || k.includes('wizard') || k.includes('warlock') || k.includes('จอมเวท') || k.includes('witch') || k.includes('แม่มด')) return 'magician';
-    if (k.includes('cleric') || k.includes('priest') || k.includes('monk') || k.includes('นักบวช')) return 'cleric';
+    if (JOB_VISUALS[k]) return JOB_VISUALS[k].base;
+    if (k.includes('rune_master') || k.includes('spellblade') || k.includes('spell') || k.includes('ดาบเวท') || k.includes('magic_sword')) return 'spellblade';
+    if (k.includes('paladin') || k.includes('berserker') || k.includes('warrior') || k.includes('knight') || k.includes('hero') || k === 'player') return 'warrior';
+    if (k.includes('necromancer') || k.includes('magician') || k.includes('mage') || k.includes('wizard') || k.includes('warlock') || k.includes('จอมเวท') || k.includes('witch') || k.includes('แม่มด')) return 'magician';
+    if (k.includes('saint') || k.includes('cleric') || k.includes('priest') || k.includes('monk') || k.includes('นักบวช')) return 'cleric';
     if (k.includes('thief') || k.includes('rogue') || k.includes('ninja') || k.includes('assassin') || k.includes('โจร')) return 'thief';
-    if (k.includes('ranger') || k.includes('archer') || k.includes('hunter')) return 'thief';
+    if (k.includes('ranger') || k.includes('archer') || k.includes('hunter')) return 'ranger';
     return 'warrior';
+  }
+
+  /** Readable job and equipment accents, painted on the same native pixel grid. */
+  private drawClassRegalia(
+    ctx: CanvasRenderingContext2D, x: number, y: number, job: string,
+    dir: IsoDirection, equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null; shield?: EquipmentItem | null; accessory?: EquipmentItem | null },
+    darkling: boolean
+  ) {
+    const promotion = JOB_VISUALS[job];
+    job = promotion?.style || job;
+    const back = dir === 'N' || dir === 'NE' || dir === 'NW';
+    const side = dir === 'W' || dir === 'SW' || dir === 'NW' ? -1 : 1;
+    const dot = (dx: number, dy: number, w: number, h: number, color: string) => {
+      ctx.fillStyle = color; ctx.fillRect(x + dx, y + dy, w, h);
+    };
+    const gold = darkling ? '#c48abb' : '#d9b66e';
+    if (promotion?.tier === 3) {
+      dot(-13, -8, 4, 2, gold); dot(10, -8, 4, 2, gold);
+      dot(-12, -10, 2, 3, '#ead9a7'); dot(11, -10, 2, 3, '#ead9a7');
+    }
+    if (job === 'ranger') {
+      // Bow, string and quiver distinguish a ranger from the rogue source silhouette.
+      for (let i = 0; i < 17; i++) {
+        const bx = Math.round(Math.sin(i / 16 * Math.PI) * 5);
+        dot(side * (13 + bx), -14 + i, 2, 2, '#a17b4f');
+      }
+      dot(side * 13, -14, 1, 18, '#dfd3ac');
+      dot(-side * 9 - 2, -14, 4, 13, '#5c6148');
+      for (let i = 0; i < 3; i++) dot(-side * 9 - 3 + i * 2, -19, 1, 9, '#d7ccaa');
+    }
+    if (['paladin', 'high_priest', 'saint', 'archmage', 'rune_master'].includes(job)) {
+      dot(-9, -6, 5, 3, gold); dot(5, -6, 5, 3, gold);
+      dot(-7, -7, 3, 1, '#f3e1ac'); dot(6, -7, 3, 1, '#f3e1ac');
+      if (back) { dot(-4, -4, 8, 15, '#495e78'); dot(-1, -3, 2, 13, gold); }
+      else { dot(-1, -5, 2, 7, gold); dot(-3, -3, 6, 2, gold); }
+    }
+    if (job === 'berserker' || job === 'assassin' || job === 'ninja') {
+      dot(-10, -7, 5, 2, '#a65c62'); dot(5, -7, 5, 2, '#a65c62');
+      dot(side * 9, -4, 3, 10, '#783f54'); dot(side * 11, 4, 3, 6, '#ba6f70');
+    }
+    if (job === 'necromancer') {
+      dot(-9, -6, 4, 4, '#d6cfad'); dot(6, -6, 4, 4, '#d6cfad');
+      dot(-8, -5, 1, 1, '#283a43'); dot(7, -5, 1, 1, '#283a43');
+      dot(-2, -3, 4, 3, '#89b9a0');
+    }
+    if (equipment.armor) {
+      const metal = equipment.armor.def && equipment.armor.def >= 8 ? '#c5d0c5' : '#829c9c';
+      dot(-10, -5, 4, 3, metal); dot(7, -5, 4, 3, '#647e87');
+    }
+    if (equipment.weapon && !back) {
+      const magic = equipment.weapon.mag && equipment.weapon.mag > (equipment.weapon.atk || 0);
+      // Enchantment accents preserve the authored weapon and its animated hand.
+      const light = magic ? '#a5ded5' : '#eee4bf';
+      dot(side * 15, -5, 1, 3, light); dot(side * 15 - 1, -4, 3, 1, light);
+    }
+    if (equipment.shield && !back) {
+      dot(-side * 11 - 3, 0, 5, 7, '#819c9a'); dot(-side * 11 - 2, 1, 2, 3, gold);
+    }
+    if (equipment.accessory && !back) {
+      dot(-1, -6, 2, 2, '#badfd5');
+    }
+    if (darkling) {
+      dot(-10, -23, 3, 7, '#bc85b2'); dot(8, -23, 3, 7, '#bc85b2');
+      dot(-12, -25, 3, 4, '#e6b3ce'); dot(10, -25, 3, 4, '#e6b3ce');
+    }
   }
 
   // =========================================================================
@@ -442,13 +378,15 @@ export class CustomIsometricHeroRenderer {
     }
 
     return {
-      bob,
-      stepX,
-      stepY,
-      jumpY,
-      scaleX,
-      scaleY,
-      leanAngle,
+      bob: Math.round(bob),
+      stepX: Math.round(stepX),
+      stepY: Math.round(stepY),
+      jumpY: Math.round(jumpY),
+      // Pose changes come from sprite frames. Stretching or rotating the completed
+      // raster would change the pixel grid on every frame.
+      scaleX: 1,
+      scaleY: 1,
+      leanAngle: 0,
       shadowScale,
       isHurt,
       slashProgress
@@ -470,13 +408,13 @@ export class CustomIsometricHeroRenderer {
     // Soft ambient outer occlusion
     ctx.fillStyle = 'rgba(3, 7, 18, 0.28)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 1, rx * 1.15, ry * 1.15, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy + 1, rx * 1.15, ry * 1.15, ctx.fillStyle);
     ctx.fill();
 
     // Sharp inner core ground shadow
     ctx.fillStyle = 'rgba(3, 7, 18, 0.6)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    pixelEllipse(ctx, cx, cy, rx, ry, ctx.fillStyle);
     ctx.fill();
   }
 
@@ -640,10 +578,12 @@ export class CustomIsometricHeroRenderer {
     frame: number,
     anim: ReturnType<typeof this.computeAnimation>,
     skinVariant: number,
-    isDarkling: boolean
+    isDarkling: boolean,
+    visualClass: string
   ) {
     const folder = CLASS_ASSET_FOLDERS[cls] || CLASS_ASSET_FOLDERS['warrior'];
-    const img = this.getImage(folder, dir, animState, frame);
+    const newFrame = classArtAtlas.getFrame(cls, dir, animState, frame, visualClass);
+    const img = newFrame ? null : this.getImage(folder, dir, animState, frame);
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -657,24 +597,18 @@ export class CustomIsometricHeroRenderer {
     // Apply Palette Filter / Tints
     this.applySkinFilter(ctx, skinVariant, isDarkling, anim.isHurt);
 
-    if (img) {
-      const isHighRes = img.naturalWidth > 64;
-      if (isHighRes) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-      }
-
-      // High-res anime hero sprite (balanced at 68x68 for gorgeous silhouette)
-      const drawW = isHighRes ? 68 : 64;
-      const drawH = isHighRes ? 68 : 64;
+    if (newFrame) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(newFrame, -40, -43);
+    } else if (img) {
+      ctx.imageSmoothingEnabled = false;
+      const drawW = 64;
+      const drawH = 64;
       const drawX = -drawW / 2;
       const drawY = -drawH / 2 + 1;
 
       ctx.drawImage(img, drawX, drawY, drawW, drawH);
 
-      if (isHighRes) {
-        ctx.imageSmoothingEnabled = false;
-      }
     } else {
       // Aesthetic fallback mannequin silhouette while asset is loading
       this.drawLoadingSilhouette(ctx, cls);

@@ -1,4 +1,7 @@
 import './styles/tailwind.css';
+import './styles/art-direction.css';
+import { installPixelIcons } from './ui/PixelIcons';
+import { installGraphicsSettings } from './ui/GraphicsSettings';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
 import { HUD } from './ui/HUD';
@@ -41,6 +44,7 @@ import { GamepadController } from './engine/GamepadController';
 import { mobileDisplayManager } from './ui/MobileDisplayManager';
 
 class DokaponApp {
+  private visualReviewActive = false;
   private canvas: HTMLCanvasElement;
   private renderer: IsometricRenderer;
   private game: GameState;
@@ -1494,7 +1498,7 @@ class DokaponApp {
         pCtx.clearRect(0, 0, 48, 48);
         pCtx.imageSmoothingEnabled = false;
         const sprite = pixelSprites.getHeroSprite(ck, 'SE', 'idle', 0, {}, false, undefined, variant);
-        pCtx.drawImage(sprite, -24, -24, 96, 96);
+        pCtx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
       };
 
       classSelect.addEventListener('change', () => {
@@ -2665,6 +2669,7 @@ class DokaponApp {
   }
 
   private saveGameProgress(showToast = true) {
+    if (this.visualReviewActive) return;
     if (this.game.players.length === 0 || this.game.phase === 'TITLE') return;
     const slot = this.getSelectedSaveSlot();
     const success = SaveManager.save(this.game, {
@@ -2857,7 +2862,7 @@ class DokaponApp {
     const netWorth = winner.getNetWorth(this.game.allNodes);
 
     // Save record to Hall of Fame & check trophies
-    hallOfFameUI.recordVictory(winner, netWorth, feat);
+    if (!this.visualReviewActive) hallOfFameUI.recordVictory(winner, netWorth, feat);
 
     // Render The Fortuna Gazette Newspaper
     const gazetteEl = document.getElementById('victoryGazetteContainer');
@@ -3605,6 +3610,42 @@ class DokaponApp {
     });
   }
 
+  /** Local visual fixture: no save import, network session, rewards or turn advancement. */
+  public startVisualReview() {
+    const query = new URLSearchParams(window.location.search);
+    const scene = query.get('art-scene');
+    if (!import.meta.env.DEV || !scene || !['battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
+    const requestedClass = query.get('job') || 'warrior';
+    const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
+    this.visualReviewActive = true;
+    const party = [{ name: 'Valeria', classKey, isAI: false }];
+    if (['pvp', 'report', 'victory'].includes(scene)) party.push({ name: 'Lyra', classKey: 'magician', isAI: false });
+    this.game.initGame(party);
+    if (query.get('companion') === 'true') this.game.activePlayer.companion = createCompanion('pudding');
+    const requestedBiome = query.get('biome') || 'forest';
+    const node = this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
+    this.game.activePlayer.nodeId = node.id;
+    document.getElementById('titleScreen')?.classList.add('hidden');
+    const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; document.getElementById('titleScreen')?.classList.remove('hidden'); };
+    if (!['battle', 'boss', 'pvp'].includes(scene)) {
+      this.hud.update();
+      if (scene === 'town') this.townUI.open(this.game.allNodes.find(n => n.type === 'town')!, finish, () => {});
+      else if (scene.startsWith('shop_')) this.shopUI.open(scene, finish);
+      else if (scene === 'inspect') this.inspectUI.openInspect(this.game.activePlayer);
+      else if (scene === 'report') this.weeklyReportUI.open(finish);
+      else if (scene === 'victory') this.triggerVictoryModal(this.game.activePlayer, 'นำความสงบกลับคืนสู่อาณาจักร');
+      else this.openInventory();
+      return;
+    }
+    this.battleUI.startBattle({
+      name: scene === 'boss' ? 'Dragon Princess Ignis' : scene === 'pvp' ? 'Lyra' : 'Slime Princess Aurelia',
+      hp: 240, maxHp: 240, mp: 60, maxMp: 60,
+      atk: 9, def: 8, mag: 10, spd: 6, luk: 5,
+      isBoss: scene === 'boss', isPvP: scene === 'pvp',
+      ...(scene === 'pvp' ? { playerRef: this.game.players[1], classKey: 'magician' } : {})
+    }, finish);
+  }
+
   public loop(time: number) {
     this.gamepadController?.update();
 
@@ -3631,7 +3672,10 @@ class DokaponApp {
 
 // Start Application on Load
 function startApp() {
+  installPixelIcons();
+  installGraphicsSettings();
   const app = new DokaponApp();
+  app.startVisualReview();
   app.loop(0);
 
   // Register PWA Service Worker

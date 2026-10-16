@@ -38,27 +38,27 @@ export type SkyTime = (typeof SKY_TIMES)[number];
 /** The authored sky ramp per time of day, zenith first. Kept from the gradient the game used. */
 const SKY_STOPS: Record<SkyTime, Array<[number, string]>> = {
   DAWN: [
-    [0.0, '#1e1b4b'],
-    [0.28, '#4338ca'],
-    [0.55, '#818cf8'],
-    [0.76, '#f472b6'],
-    [0.92, '#fb923c'],
-    [1.0, '#fef08a']
+    [0.0, '#39485e'],
+    [0.28, '#646b87'],
+    [0.55, '#9c8b9d'],
+    [0.76, '#c9a4a4'],
+    [0.92, '#dfbc9b'],
+    [1.0, '#e9d9b2']
   ],
   DAY: [
-    [0.0, '#0284c7'],
-    [0.28, '#0ea5e9'],
-    [0.6, '#38bdf8'],
-    [0.85, '#7dd3fc'],
-    [1.0, '#bae6fd']
+    [0.0, '#466d8b'],
+    [0.28, '#638ba4'],
+    [0.6, '#8bafbb'],
+    [0.85, '#aec9cb'],
+    [1.0, '#d3ddd2']
   ],
   DUSK: [
-    [0.0, '#0f172a'],
-    [0.25, '#312e81'],
-    [0.52, '#6b21a8'],
-    [0.74, '#c026d3'],
-    [0.88, '#ea580c'],
-    [1.0, '#fde047']
+    [0.0, '#293447'],
+    [0.25, '#4b5067'],
+    [0.52, '#7f6f82'],
+    [0.74, '#b48a8c'],
+    [0.88, '#ceaa91'],
+    [1.0, '#ead2a7']
   ],
   NIGHT: [
     [0.0, '#030712'],
@@ -227,7 +227,7 @@ function cloudTones(timeOfDay: string): CloudTones {
     case 'DUSK':
       return { lit: '#f3d9f7', mid: '#c79bd8', shade: '#8a5aa8', deep: '#4c3070', rim: '#fb923c' };
     case 'NIGHT':
-      return { lit: '#93a9c9', mid: '#5b7290', shade: '#33415a', deep: '#1b2438', rim: '#bae6fd' };
+      return { lit: '#93a9c9', mid: '#5b7290', shade: '#33415a', deep: '#1b2438', rim: '#d3ddd2' };
     default:
       return { lit: '#ffffff', mid: '#e6f2fb', shade: '#a9c8dd', deep: '#6f92ab', rim: '#fef9c3' };
   }

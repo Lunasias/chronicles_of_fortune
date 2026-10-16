@@ -1151,8 +1151,10 @@ export function paintBuilding(kind: string, ownerColor: string | null = null): I
 
   switch (kind) {
     case 'capital':
-    case 'town':
       castleCitadel(s, ownerColor);
+      break;
+    case 'town':
+      villageSquare(s, ownerColor);
       break;
     case 'shop_weapon':
       blacksmithForge(s);
@@ -1204,5 +1206,35 @@ export function paintBuilding(kind: string, ownerColor: string | null = null): I
   }
   s.outline();
   return s;
+}
+
+/** A settlement has streets and several roofs; the capital keeps its unique citadel. */
+function villageSquare(s: IsoSurface, owner: string | null): void {
+  const stone = faceTones('#9d9a82', .45, .8, .53, .39);
+  isoPlinth(s, 32, 51, 26, 13, 3, stone);
+  s.diamond(31, 48, 21, 10, '#6d7960');
+  s.poly([[25, 53], [29, 55], [43, 48], [39, 46]], '#c4b18a');
+  const cottage = (x: number, y: number, roofColor: string, large = false) => {
+    const hw = large ? 10 : 8, hh = hw / 2, height = large ? 16 : 12;
+    const wall = faceTones(large ? '#d1c5a0' : '#b8b396', .4, .8, .5, .36);
+    const roof = faceTones(roofColor, .45, .82, .5, .35);
+    isoBox(s, x, y, hw, hh, height, wall);
+    // Timber posts and a split roof give recognizable clusters at native 64px.
+    for (let i = 0; i < height - 2; i++) { s.px(x, y + hh - i, '#665445'); s.px(x - hw + 1, y - i, '#87694e'); }
+    isoGableRoof(s, x, y - height, hw, hh, 8, roof, 2);
+    roofTiles(s, x, y - height, hw + 2, hh + 1, 8, shift(roofColor, -.18));
+    isoDoor(s, x - 4, y + 2, 4, 7, '#765c44', '#263538');
+    isoWindow(s, x - 5, y - 7, 3, 3, '#ddc27b', '#f2d99b');
+    isoWindow(s, x + 4, y - 5, 3, 3, '#b1965b', '#d9bb76');
+  };
+  cottage(39, 36, '#586f80', true);
+  cottage(17, 44, '#637f78');
+  cottage(43, 51, '#a57459');
+  // Market canvas, warm lantern and central ownership pennant.
+  s.poly([[20, 45], [27, 42], [32, 44], [25, 48]], '#c4aa6e');
+  for (let y = 45; y <= 51; y++) s.px(20, y, '#705e47');
+  for (let y = 48; y <= 54; y++) s.px(26, y, '#705e47');
+  s.px(18, 51, '#8ba579'); s.px(19, 50, '#bad28b'); s.px(17, 50, '#bac57f');
+  flag(s, 30, 31, 48, owner || '#d8b66b');
 }
 

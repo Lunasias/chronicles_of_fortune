@@ -1,4 +1,6 @@
 import { IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
+import { animationPoseIndex } from './ArtDirection';
+import { monsterArtAtlas } from './MonsterArtAtlas';
 
 // Unit direction vectors for 2:1 Isometric Board and Battle Movement
 const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
@@ -33,29 +35,18 @@ export class CustomIsometricMonsterRenderer {
   private isBack: boolean = false;
 
   constructor() {
-    this.preloadPortraits();
+    if (typeof window !== 'undefined') window.addEventListener('monster-art-loaded', () => this.cache.clear());
   }
 
   /**
    * Preload lightweight portraits for initial UI/modals without flooding network with 1300+ frames.
    */
-  private preloadPortraits() {
-    const archetypes = [
-      'slime_princess', 'goblin_girl', 'beast_maiden', 'dark_knightress',
-      'dragon_princess_ignis', 'sakura_kitsune', 'skeletal_maid', 'yeti_maiden',
-      'siren_demoness', 'clockwork_maid', 'bandit_pirate', 'dragon_wyrm',
-      'kraken_maiden', 'sphinx_queen', 'dryad_nymph', 'arachne_weaver',
-      'vampire_countess', 'ghost_maiden'
-    ];
-
-    for (const arch of archetypes) {
-      const img = new Image();
-      img.src = `/assets/monsters/${arch}.png`;
-      img.onerror = () => {
-        this.failedCount++;
-      };
-      this.monsterImageStore.set(arch, img);
-    }
+  private ensurePortrait(archetype: string) {
+    if (this.monsterImageStore.has(archetype)) return;
+    const image = new Image();
+    image.onload = () => this.cache.clear();
+    image.src = '/assets/monsters/' + archetype + '.png';
+    this.monsterImageStore.set(archetype, image);
   }
 
   /**
@@ -165,16 +156,7 @@ export class CustomIsometricMonsterRenderer {
   ): HTMLCanvasElement {
     this.currentDir = dir;
     this.isBack = dir === 'N' || dir === 'NE' || dir === 'NW';
-    const normAnim: 'idle' | 'attack' | 'strike' | 'magic' | 'hurt' =
-      animState === 'strike'
-        ? 'strike'
-        : animState === 'magic'
-        ? 'magic'
-        : animState === 'attack'
-        ? 'attack'
-        : animState === 'hurt'
-        ? 'hurt'
-        : 'idle';
+    const normAnim: CharacterAnimState = animState;
     const f = frame % 8;
     const cacheKey = `custom_iso_mobfem_${monsterName.toLowerCase()}_${dir}_${normAnim}_${f}`;
 
@@ -182,7 +164,7 @@ export class CustomIsometricMonsterRenderer {
       return this.cache.get(cacheKey)!;
     }
 
-    const { canvas, ctx } = this.makeCanvas(140, 140);
+    const { canvas, ctx } = this.makeCanvas(144, 144);
     const mName = monsterName.toLowerCase();
     const vec = ISO_DIR_VECTORS[dir] || ISO_DIR_VECTORS['SW'];
 
@@ -195,7 +177,7 @@ export class CustomIsometricMonsterRenderer {
     let tilt = 0;
 
     if (normAnim === 'attack') {
-      const lunges = [0, 8, 22, 28, 16, 6, 2, 0];
+      const lunges = [0, 2, 5, 8, 6, 3, 0, 0];
       const l = lunges[f];
       lungeX = l * vec.x;
       lungeY = l * vec.y;
@@ -221,24 +203,26 @@ export class CustomIsometricMonsterRenderer {
       bob = -5;
     }
 
-    const cx = 70 + lungeX;
-    const cy = 70 + lungeY + bob;
+    const cx = 72 + Math.round(lungeX);
+    const cy = 72 + Math.round(lungeY + bob);
 
     const isFacingEast = dir === 'SE' || dir === 'E' || dir === 'NE';
 
     // Route to fresh 8-directional animated Monster Model referencing spellblade model
     const archKey = this.getMonsterArchetypeKey(mName);
-    this.ensureArchetypeLoaded(archKey);
+    const newFrame = monsterArtAtlas.getFrame(archKey, dir, animState, f);
+    if (!newFrame) this.ensurePortrait(archKey);
+    if (monsterArtAtlas.hasFailed(archKey)) this.ensureArchetypeLoaded(archKey);
     let mobImg: HTMLImageElement | undefined;
 
     if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
-      const atkF = f % 4;
+      const atkF = animationPoseIndex(normAnim, f);
       mobImg = this.monsterImageStore.get(`${archKey}_attack_${dir}_${atkF}`);
       if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
         mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
       }
     } else if (animState === 'run') {
-      const runF = f % 4;
+      const runF = animationPoseIndex(normAnim, f);
       mobImg = this.monsterImageStore.get(`${archKey}_run_${dir}_${runF}`);
       if (!mobImg || !mobImg.complete || mobImg.naturalWidth === 0) {
         mobImg = this.monsterImageStore.get(`${archKey}_idle_${dir}`);
@@ -251,27 +235,19 @@ export class CustomIsometricMonsterRenderer {
       mobImg = this.monsterImageStore.get(archKey);
     }
 
-    if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
+    if (newFrame || (mobImg && mobImg.complete && mobImg.naturalWidth > 0)) {
       // 1. Dynamic 2.5D ground shadow
-      this.drawIsoShadow(ctx, cx, cy + 38, 28, 12, 0.45);
+      this.drawIsoShadow(ctx, 72, 97, 18, 7, 0.35);
 
       // 2. Render Monster Model with Directional Transform
       ctx.save();
       ctx.translate(cx, cy);
-      if (tilt !== 0) ctx.rotate(tilt);
-      ctx.scale(scaleX, scaleY);
 
-      // Render 8-directional sprite with high-res smoothing if high resolution
-      const isHighRes = mobImg.naturalWidth > 64;
-      if (isHighRes) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-      }
-      const drawSize = isHighRes ? 104 : 100;
-      ctx.drawImage(mobImg, -drawSize / 2, -drawSize / 2 - 8, drawSize, drawSize);
-      if (isHighRes) {
-        ctx.imageSmoothingEnabled = false;
-      }
+
+      // Match the hero source resolution and foot anchor. No fractional transforms.
+      ctx.imageSmoothingEnabled = false;
+      if (newFrame) ctx.drawImage(newFrame, -56, -55);
+      else ctx.drawImage(mobImg!, -32, -31, 64, 64);
       ctx.restore();
 
       // 3. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX
@@ -340,6 +316,7 @@ export class CustomIsometricMonsterRenderer {
     }
 
     if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
+      if (this.cache.size >= 256) this.cache.delete(this.cache.keys().next().value!);
       this.cache.set(cacheKey, canvas);
     }
     return canvas;

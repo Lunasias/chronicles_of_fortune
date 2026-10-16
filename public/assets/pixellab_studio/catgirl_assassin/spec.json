@@ -1,0 +1,36 @@
+{
+  "name": "catgirl_assassin",
+  "skin": "warm",
+  "hair_color": [
+    35,
+    38,
+    48,
+    255
+  ],
+  "hair_style": "flowing",
+  "eye_color": [
+    52,
+    211,
+    153,
+    255
+  ],
+  "ears": "cat",
+  "tail": "cat",
+  "wings": "none",
+  "horns": "none",
+  "outfit_style": "strappy_harness",
+  "outfit_color": [
+    30,
+    32,
+    40,
+    255
+  ],
+  "outfit_trim": [
+    52,
+    211,
+    153,
+    255
+  ],
+  "weapon_type": "dual_daggers",
+  "weapon_aura": "emerald_poison"
+}

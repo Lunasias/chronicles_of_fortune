@@ -733,7 +733,7 @@ export class GameState {
       p.gridX = startGX + (targetNode.gx - startGX) * t;
       p.gridY = startGY + (targetNode.gy - startGY) * t;
       p.gridZ = startGZ + (targetNode.gz - startGZ) * t;
-      p.walkFrame = (Math.floor(elapsed / Math.max(10, Math.round(30 / this.gameSpeed))) % 6) + 1; // 6-frame run
+      p.walkFrame = (Math.floor(elapsed / Math.max(10, Math.round(30 / this.gameSpeed))) % 8) + 1;
 
       onStepCallback();
 

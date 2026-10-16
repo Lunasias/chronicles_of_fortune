@@ -1,0 +1,49 @@
+{
+  "name": "catgirl_rogue",
+  "prompt": "gorgeous catgirl assassin with raven black hair, emerald glowing daggers, micro bikini, cat ears and cat tail",
+  "spec": {
+    "name": "catgirl_rogue",
+    "skin_tone": "warm",
+    "hair_hue": 0.65,
+    "hair_sat": 0.15,
+    "hair_style": "flowing",
+    "ears": "cat",
+    "wings": "none",
+    "tail": "cat",
+    "outfit_style": "assassin_harness",
+    "outfit_color": [
+      30,
+      32,
+      40
+    ],
+    "outfit_trim": [
+      52,
+      211,
+      153
+    ],
+    "weapon_type": "daggers",
+    "weapon_color": [
+      52,
+      211,
+      153
+    ],
+    "hair_lum_scale": 0.25
+  },
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "states": [
+    "Idle",
+    "Run",
+    "Attack"
+  ],
+  "frameCount": 72,
+  "spritesheet": "spritesheet.png"
+}

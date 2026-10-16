@@ -77,7 +77,7 @@ const isUsableSelector = t =>
   t.length < 60;
 
 // Component classes defined by the project itself in the inline <style> in index.html.
-const inlineStyle = fs.readFileSync('index.html', 'utf8').split('</style>')[0];
+const inlineStyle = fs.readFileSync('index.html', 'utf8').split('</style>')[0] + fs.readFileSync('src/styles/art-direction.css', 'utf8');
 const isCustomClass = t => inlineStyle.includes(`.${t}`) || selectorClasses.has(t);
 
 // Tokens that appear as quoted JS values inside classList.toggle() condition arguments

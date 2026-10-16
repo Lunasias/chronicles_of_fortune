@@ -8,6 +8,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: { game: 'index.html', artReview: 'art-review.html' },
       output: {
         manualChunks(id) {
           if (id.includes('FantasyEventManager')) {

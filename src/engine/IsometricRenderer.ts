@@ -7,6 +7,7 @@ import { isometricTerrainEngine } from './IsometricTerrainEngine';
 import { pixelDisc, pixelEllipse, pixelGlow, pixelRing } from './PixelFx';
 import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
 import { audio } from './AudioSynthesizer';
+import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSettings';
 
 export interface Camera2D {
   x: number;
@@ -177,6 +178,7 @@ export class IsometricRenderer {
   screenToNode(clientX: number, clientY: number, nodes: BoardNode[], priorityIds?: number[]): BoardNode | null {
     if (!this.hasInitializedBoardCache) {
       this.initBoardCache(nodes);
+
     }
 
     const rect = this.canvas.getBoundingClientRect();
@@ -250,6 +252,11 @@ export class IsometricRenderer {
   ) {
     if (!this.hasInitializedBoardCache) {
       this.initBoardCache(nodes);
+      if (activePlayer) {
+        const firstFocus = this.toScreen(activePlayer.gridX, activePlayer.gridY, activePlayer.gridZ);
+        this.camera.x = this.camera.targetX = firstFocus.x;
+        this.camera.y = this.camera.targetY = firstFocus.y;
+      }
     }
 
     const ctx = this.ctx;
@@ -268,6 +275,10 @@ export class IsometricRenderer {
     // worse still - uneven sampling of a regular grid produces moire, which is the large
     // slow-moving interference that reads as "the pixels are making me dizzy".
     this.camera.targetZoom = this.snapZoom(this.camera.targetZoom);
+    if (prefersReducedMotion()) {
+      this.camera.x = this.camera.targetX;
+      this.camera.y = this.camera.targetY;
+    }
     this.camera.x += (this.camera.targetX - this.camera.x) * 0.16;
     this.camera.y += (this.camera.targetY - this.camera.y) * 0.16;
     this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.16;
@@ -284,7 +295,7 @@ export class IsometricRenderer {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Dynamic Fantasy World Sky & Parallax Horizons (Changes with Day/Night cycle)
-    worldBackground.renderSky(ctx, this.camera, w, h, time, ecosystemSystem.timeOfDay);
+    worldBackground.renderSky(ctx, this.camera, w, h, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay);
 
     ctx.save();
     ctx.translate(Math.round(w / 2), Math.round(h / 2));
@@ -292,13 +303,15 @@ export class IsometricRenderer {
     ctx.translate(-camX, -camY);
 
     // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
-    worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
+    if (graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
+      worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
+    }
 
     // 2.4 The cloud sea the floating continent rises out of. Drawn in world space below the
     // board's lowest tile, so the map reads as an island in the sky rather than as a flat
     // continent.
     if (isometricTerrainEngine.isInitialized) {
-      worldBackground.renderCloudSea(ctx, time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
+      worldBackground.renderCloudSea(ctx, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
     }
 
     const halfW = (w / 2) / this.camera.zoom + 200;
@@ -329,7 +342,9 @@ export class IsometricRenderer {
     // 7. Regional Weather Particles & Living Ecosystem
     const activeNode = activePlayer ? nodes.find(n => n.id === activePlayer.nodeId) || nodes[0] : nodes[0];
     const localWeather = ecosystemSystem.getNodeWeather(activeNode);
-    this.renderRegionalWeather(ctx, localWeather, time, activeNode?.biome);
+    if (graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
+      this.renderRegionalWeather(ctx, localWeather, time, activeNode?.biome);
+    }
 
     // 8. Night Glows for Town Torches & Player Lanterns (inside world space)
     const lighting = ecosystemSystem.getLightingOverlay();
@@ -362,100 +377,27 @@ export class IsometricRenderer {
     minY: number,
     maxY: number
   ) {
-    // Reset any line dash state before rendering roadways
-    ctx.setLineDash([]);
-    ctx.lineDashOffset = 0;
-
-    for (let i = 0; i < this.roadwaySegments.length; i++) {
-      const seg = this.roadwaySegments[i];
-
-      // View frustum culling
-      if (
-        Math.max(seg.x1, seg.x2) < minX - 30 ||
-        Math.min(seg.x1, seg.x2) > maxX + 30 ||
-        Math.max(seg.y1, seg.y2) < minY - 30 ||
-        Math.min(seg.y1, seg.y2) > maxY + 30
-      ) {
-        continue;
+    // Native-pixel earth paths with irregular cobbles; no antialiased rails or centre stripe.
+    for (const seg of this.roadwaySegments) {
+      if (Math.max(seg.x1, seg.x2) < minX - 30 || Math.min(seg.x1, seg.x2) > maxX + 30 ||
+          Math.max(seg.y1, seg.y2) < minY - 30 || Math.min(seg.y1, seg.y2) > maxY + 30) continue;
+      const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
+      const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
+      // Finish each entire layer before the next, so stamp shadows never cut
+      // vertical seams through the preceding stone (the old fence-like pattern).
+      for (const layer of [{ color: '#394339', w: 18, h: 8 }, { color: seg.roadColor, w: 16, h: 6 }]) {
+        ctx.fillStyle = layer.color;
+        for (let i = 0; i <= steps; i++) {
+          const x = Math.round(seg.x1 + dx * i / steps), y = Math.round(seg.y1 + dy * i / steps);
+          ctx.fillRect(x - layer.w / 2, y - 3, layer.w, layer.h);
+        }
       }
-
-      const dx = seg.x2 - seg.x1;
-      const dy = seg.y2 - seg.y1;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 1) continue;
-
-      // Layer 1: Soft natural path edge & worn earth embankment with drop shadow
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
-      ctx.lineWidth = 15;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1 + 2.5);
-      ctx.lineTo(seg.x2, seg.y2 + 2.5);
-      ctx.stroke();
-
-      ctx.strokeStyle = seg.edgeColor;
-      ctx.lineWidth = 13;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1);
-      ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
-
-      // Layer 2: Main packed dirt/cobblestone trail bed
-      ctx.strokeStyle = seg.roadColor;
-      ctx.lineWidth = 8.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1);
-      ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
-
-      // Layer 3: Interlocking Isometric Flagstone Pavers along the path
-      const step = 14;
-      const count = Math.max(1, Math.floor(dist / step));
-      ctx.save();
-      for (let p = 1; p < count; p++) {
-        const t = p / count;
-        const cx = seg.x1 + dx * t;
-        const cy = seg.y1 + dy * t;
-
-        // Deterministic stone variation from coordinates
-        const seed = Math.sin(cx * 12.9898 + cy * 78.233) * 43758.5453;
-        const rand1 = seed - Math.floor(seed);
-        const rand2 = (seed * 1.6) - Math.floor(seed * 1.6);
-
-        const jx = (rand1 - 0.5) * 3;
-        const jy = (rand2 - 0.5) * 1.5;
-        const sw = 8.5 + rand1 * 3.5;
-        const sh = sw * 0.5;
-
-        // Paver shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
-        this.drawDiamond(ctx, cx + jx, cy + jy + 1.2, sw + 1, sh + 0.5);
-
-        // Paver stone body
-        ctx.fillStyle = seg.dashColor;
-        this.drawDiamond(ctx, cx + jx, cy + jy, sw, sh);
-
-        // Paver highlight rim (upper-left light)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(cx + jx - sw / 2, cy + jy);
-        ctx.lineTo(cx + jx, cy + jy - sh / 2);
-        ctx.lineTo(cx + jx + sw / 2, cy + jy);
-        ctx.stroke();
+      for (let i = 2; i < steps - 1; i += 5) {
+        const x = Math.round(seg.x1 + dx * i / steps), y = Math.round(seg.y1 + dy * i / steps);
+        const j = (i % 3) - 1;
+        ctx.fillStyle = '#655c49'; ctx.fillRect(x - 3 + j, y - 1, 5, 3);
+        ctx.fillStyle = '#b1a084'; ctx.fillRect(x - 3 + j, y - 2, 4, 2);
       }
-      ctx.restore();
-
-      // Layer 4: Worn pathway rut & central stone fissure
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      ctx.lineWidth = 1.0;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(seg.x1, seg.y1);
-      ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
     }
   }
 
@@ -478,6 +420,17 @@ export class IsometricRenderer {
   ) {
     const renderList = this.depthRenderList;
     renderList.length = 0;
+    const focus = activePlayer ? this.toScreen(activePlayer.gridX, activePlayer.gridY, activePlayer.gridZ) : null;
+    for (const grove of isometricTerrainEngine.groves) {
+      if (grove.x < minX - 64 || grove.x > maxX + 64 || grove.y < minY - 64 || grove.y > maxY + 64) continue;
+      renderList.push({ depth: grove.depth, draw: () => {
+        const tree = pixelSprites.getTreeSprite(grove.species, grove.variant);
+        ctx.save();
+        if (focus && grove.y > focus.y + 4 && grove.y - focus.y < tree.height - 12 && Math.abs(grove.x - focus.x) < tree.width / 2 + 12) ctx.globalAlpha = .35;
+        ctx.drawImage(tree, grove.x - tree.width / 2, grove.y - Number(tree.dataset.footY || 54));
+        ctx.restore();
+      } });
+    }
 
     // 1. Add Isometric Blocks & Props within viewport
     for (let i = 0; i < nodes.length; i++) {
@@ -542,10 +495,21 @@ export class IsometricRenderer {
             ctx.fill();
             ctx.restore();
 
-            const bld = pixelSprites.getBuildingSprite(node.type, ownerColor);
+            const bld = pixelSprites.getBuildingSprite(node.id === 0 ? 'capital' : node.type, ownerColor);
             // 64x64 model whose base diamond is centred at (32, 48) inside the sprite, so the
             // blit is anchored to seat that base exactly on the node's tile centre.
-            ctx.drawImage(bld, px - 32, py - 48, 64, 64);
+            ctx.drawImage(bld, px - bld.width / 2, py - (bld.width === 96 ? 80 : 48));
+
+            // Full names and health belong to the hovered location. Quiet map markers
+            // keep the town's silhouette readable while still showing occupation.
+            if (!isHovered && graphicsPreferences.labels !== 'all') {
+              if (node.townData?.isOccupiedByMonster) {
+                ctx.fillStyle = '#293b42'; ctx.fillRect(px + 21, py - 34, 2, 15);
+                ctx.fillStyle = '#b46b68'; ctx.fillRect(px + 23, py - 34, 7, 5);
+                ctx.fillStyle = '#dfb5a0'; ctx.fillRect(px + 23, py - 34, 5, 1);
+              }
+              return;
+            }
 
             // Overhead High-Contrast Badge / Signboard for Every Building
             interface BadgeConfig {
@@ -800,7 +764,7 @@ export class IsometricRenderer {
 
             // 1:1 blit of the 64x64 model. The anchor keeps the trunk base on the tile centre
             // at (px + 52, py + 6), the same spot the old 68x88 sprite was resampled into.
-            ctx.drawImage(tree, px + 20, py - 48, 64, 64);
+            ctx.drawImage(tree, px + 52 - tree.width / 2, py + 6 - Number(tree.dataset.footY || 54));
           }
         });
       }
@@ -816,25 +780,19 @@ export class IsometricRenderer {
       }
     }
 
-    // Sort environment entities by depth
-    renderList.sort((a, b) => a.depth - b.depth);
-    renderList.forEach(item => item.draw());
-
-    // 2. Animated Players Layer (Dedicated layer rendered on top of scenery so heroes are NEVER obscured!)
-    // Sort players among themselves by isometric depth; active player has slight depth priority when overlapping
-    const sortedPlayers = [...players].sort((a, b) => {
-      const depthA = (a.gridX + a.gridY) * 1000 + a.gridZ * 100 + (a === activePlayer ? 50 : 0);
-      const depthB = (b.gridX + b.gridY) * 1000 + b.gridZ * 100 + (b === activePlayer ? 50 : 0);
-      return depthA - depthB;
-    });
-
-    sortedPlayers.forEach(player => {
+    // Actors and scenery share a depth pass, so walking behind a tree reads as depth.
+    players.forEach(player => {
       const p = this.toScreen(player.gridX, player.gridY, player.gridZ);
       if (p.x < minX - 120 || p.x > maxX + 120 || p.y < minY - 150 || p.y > maxY + 150) {
         return;
       }
-      this.drawPlayerCharacter(ctx, p.x, p.y, player, player === activePlayer, time);
+      renderList.push({
+        depth: (player.gridX + player.gridY) * 1000 + player.gridZ * 100 + (player === activePlayer ? 80 : 50),
+        draw: () => this.drawPlayerCharacter(ctx, p.x, p.y, player, player === activePlayer, time)
+      });
     });
+    renderList.sort((a, b) => a.depth - b.depth);
+    renderList.forEach(item => item.draw());
 
     // 3. Highlighted Reachable Destinations Overhead Pass (Always on top of terrain & buildings, never obscured!)
     this.renderDestinationOverheadMarkers(ctx, nodes, highlightedNodes, minX, maxX, minY, maxY, time);
@@ -850,251 +808,23 @@ export class IsometricRenderer {
     isHovered: boolean,
     time: number
   ) {
-    const hw = this.tileWidth / 2;
-    const hh = this.tileHeight / 2;
-    const blockHeight = 4;
-
-    // Palette per space type
-    let topColor = '#334155';
-    let leftColor = '#1e293b';
-    let rightColor = '#0f172a';
-    let icon = '📍';
-
-    if (node.type === 'town') {
-      topColor = '#78350f';
-      leftColor = '#451a03';
-      rightColor = '#290e02';
-      icon = '🏰';
-    } else if (node.type === 'blue') {
-      topColor = '#1d4ed8';
-      leftColor = '#1e3a8a';
-      rightColor = '#172554';
-      icon = '🪙';
-    } else if (node.type === 'red') {
-      topColor = '#b91c1c';
-      leftColor = '#7f1d1d';
-      rightColor = '#450a0a';
-      icon = '💀';
-    } else if (node.type === 'shop_item') {
-      topColor = '#15803d';
-      leftColor = '#14532d';
-      rightColor = '#052e16';
-      icon = '🧪';
-    } else if (node.type === 'shop_weapon') {
-      topColor = '#c2410c';
-      leftColor = '#9a3412';
-      rightColor = '#431407';
-      icon = '⚔️';
-    } else if (node.type === 'shop_magic') {
-      topColor = '#7e22ce';
-      leftColor = '#581c87';
-      rightColor = '#3b0764';
-      icon = '🔮';
-    } else if (node.type === 'church') {
-      topColor = '#cbd5e1';
-      leftColor = '#94a3b8';
-      rightColor = '#64748b';
-      icon = '✨';
-    } else if (node.type === 'dark_gate') {
-      topColor = '#4a044e';
-      leftColor = '#2e1065';
-      rightColor = '#180527';
-      icon = '😈';
-    } else if (node.type === 'vault') {
-      topColor = '#d97706';
-      leftColor = '#b45309';
-      rightColor = '#78350f';
-      icon = '🎁';
-    } else if (node.type === 'boss') {
-      topColor = '#450a0a';
-      leftColor = '#200505';
-      rightColor = '#100202';
-      icon = '🐉';
-    } else if (node.type === 'tavern') {
-      topColor = '#854d0e';
-      leftColor = '#713f12';
-      rightColor = '#422006';
-      icon = '🍺';
-    } else if (node.type === 'guild') {
-      topColor = '#b45309';
-      leftColor = '#92400e';
-      rightColor = '#451a03';
-      icon = '📜';
-    } else if (node.type === 'fishing') {
-      topColor = '#0284c7';
-      leftColor = '#0369a1';
-      rightColor = '#075985';
-      icon = '🎣';
-    } else if (node.type === 'isekai_event') {
-      topColor = '#a855f7';
-      leftColor = '#7e22ce';
-      rightColor = '#581c87';
-      icon = '⚡';
-    } else if (node.type === 'mystery_chest') {
-      topColor = '#facc15';
-      leftColor = '#d97706';
-      rightColor = '#b45309';
-      icon = '🎁';
+    cx = Math.round(cx); cy = Math.round(cy);
+    const built = !['empty', 'blue', 'red'].includes(node.type);
+    // Buildings already carry foundations. Open spaces get a small inset waystone.
+    if (!built) {
+      pixelEllipse(ctx, cx, cy + 2, 15, 7, '#303f3c');
+      pixelEllipse(ctx, cx, cy, 14, 6, '#8a9275');
+      pixelEllipse(ctx, cx, cy - 1, 12, 5, node.type === 'blue' ? '#496d81' : node.type === 'red' ? '#8b5858' : '#626f67');
+      this.drawNodeSigil(ctx, cx, cy - 1, node.type, '', isHovered, isHighlighted);
     }
-
-    // Dokapon Signature Dark Fantasy 3D Carved Isometric Pedestal & Runic Seal
-    ctx.save();
-    // 1. Soft Ground Occlusion Shadow (Multi-tier depth)
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy + 6, 26, 15, 'rgba(0, 0, 0, 0.42)');
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
-    ctx.fill();
-
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy + 3.5, 23, 13, 'rgba(0, 0, 0, 0.58)');
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.58)';
-    ctx.fill();
-
-    // 2. Extruded 3D Stone Plinth (4.5px height bevel)
-    // Front-left cliff face (lit by upper-left sunlight)
-    ctx.fillStyle = isHovered ? '#1e293b' : leftColor;
-    ctx.beginPath();
-    ctx.moveTo(cx - 24, cy);
-    ctx.lineTo(cx, cy + 13);
-    ctx.lineTo(cx, cy + 17.5);
-    ctx.lineTo(cx - 24, cy + 4.5);
-    ctx.closePath();
-    ctx.fill();
-
-    // Front-right cliff face (shaded)
-    ctx.fillStyle = isHovered ? '#0f172a' : rightColor;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + 13);
-    ctx.lineTo(cx + 24, cy);
-    ctx.lineTo(cx + 24, cy + 4.5);
-    ctx.lineTo(cx, cy + 17.5);
-    ctx.closePath();
-    ctx.fill();
-
-    // Dark bottom foundation contour
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 1.0;
-    ctx.beginPath();
-    ctx.moveTo(cx - 24, cy + 4.5);
-    ctx.lineTo(cx, cy + 17.5);
-    ctx.lineTo(cx + 24, cy + 4.5);
-    ctx.stroke();
-
-    // 3. Weathered Bronze / Iron Outer Rim
-    const rimStroke = isHovered ? '#fde047' : isHighlighted ? '#00f0ff' : '#475569';
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy, 24, 13, '#090d16');
-    ctx.fillStyle = '#090d16';
-    ctx.fill();
-
-    ctx.strokeStyle = rimStroke;
-    ctx.lineWidth = isHovered ? 2.5 : 1.8;
-    ctx.beginPath();
-    pixelRing(ctx, cx, cy, 24, 13, rimStroke, 1);
-    ctx.stroke();
-
-    // 4. Inner Gemstone Core
-    const coreColor = isHovered
-      ? 'rgba(56, 189, 248, 0.95)'
-      : isHighlighted
-      ? 'rgba(0, 240, 255, 0.90)'
-      : topColor;
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy, 18, 9.5, coreColor);
-    ctx.fillStyle = coreColor;
-    ctx.fill();
-
-    // Specular facet glint
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
-    ctx.lineWidth = 1.0;
-    ctx.beginPath();
-    ctx.moveTo(cx - 12, cy - 2);
-    ctx.lineTo(cx, cy - 6.5);
-    ctx.lineTo(cx + 12, cy - 2);
-    ctx.stroke();
-
-    // 5. Stylized Handcrafted Dark Fantasy Sigil
-    this.drawNodeSigil(ctx, cx, cy, node.type, icon, isHovered, isHighlighted);
-    ctx.restore();
-
-
-    // 4. Large Illuminated Ground Target Zone (Reachable Destination Spaces - Surrounds tile floor cleanly)
     if (isHovered || isHighlighted) {
-      const ringColor = isHovered ? '#fde047' : '#00f0ff';
-      const fillGlow = isHovered ? 'rgba(251, 191, 36, 0.40)' : 'rgba(0, 240, 255, 0.35)';
-
-      ctx.save();
-      // 4.1 Large glowing elliptical ground footprint framing the entire tile
-      const groundRx = isHovered ? 36 : 30;
-      const groundRy = isHovered ? 18 : 15;
-
-      // Soft filled inner ambient light
-      ctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.22)' : 'rgba(0, 240, 255, 0.16)';
-      ctx.beginPath();
-      pixelEllipse(ctx, cx, cy, groundRx, groundRy, ctx.fillStyle);
-      ctx.fill();
-
-      // Outer glow aura stroke
-      ctx.strokeStyle = fillGlow;
-      ctx.lineWidth = isHovered ? 5.5 : 4.0;
-      ctx.beginPath();
-      pixelRing(ctx, cx, cy, groundRx, groundRy, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      // Sharp primary boundary ring
-      ctx.strokeStyle = ringColor;
-      ctx.lineWidth = isHovered ? 2.5 : 1.8;
-      ctx.beginPath();
-      pixelRing(ctx, cx, cy, groundRx, groundRy, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      // 4.2 Static Active Runic Accent Ring on Ground (No moving/expanding wave)
-      const pulseRx = groundRx * 1.15;
-      const pulseRy = groundRy * 1.15;
-      ctx.strokeStyle = isHovered ? 'rgba(251, 191, 36, 0.40)' : 'rgba(0, 240, 255, 0.25)';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      pixelRing(ctx, cx, cy, pulseRx, pulseRy, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      // 4.3 Sleek High-Tech / Fantasy Corner Targeting Brackets [ ]
-      const bw = groundRx + (isHovered ? 7 : 5);
-      const bh = groundRy + (isHovered ? 4 : 3);
-      const blx = 9;
-      const bly = 5;
-
-      ctx.strokeStyle = ringColor;
-      ctx.lineWidth = isHovered ? 2.8 : 2.0;
-
-      // West corner bracket
-      ctx.beginPath();
-      ctx.moveTo(cx - bw + blx, cy - bly);
-      ctx.lineTo(cx - bw, cy);
-      ctx.lineTo(cx - bw + blx, cy + bly);
-      ctx.stroke();
-
-      // East corner bracket
-      ctx.beginPath();
-      ctx.moveTo(cx + bw - blx, cy - bly);
-      ctx.lineTo(cx + bw, cy);
-      ctx.lineTo(cx + bw - blx, cy + bly);
-      ctx.stroke();
-
-      // North corner bracket
-      ctx.beginPath();
-      ctx.moveTo(cx - blx, cy - bh + bly);
-      ctx.lineTo(cx, cy - bh);
-      ctx.lineTo(cx + blx, cy - bh + bly);
-      ctx.stroke();
-
-      // South corner bracket
-      ctx.beginPath();
-      ctx.moveTo(cx - blx, cy + bh - bly);
-      ctx.lineTo(cx, cy + bh);
-      ctx.lineTo(cx + blx, cy + bh - bly);
-      ctx.stroke();
-
-      ctx.restore();
+      const color = isHovered ? '#f1d89b' : '#9ed5bf';
+      pixelRing(ctx, cx, cy, built ? 32 : 20, built ? 16 : 10, color, 1);
+      for (const side of [-1, 1]) {
+        ctx.fillStyle = color;
+        ctx.fillRect(cx + side * 35 - 2, cy - 1, 5, 2);
+        ctx.fillRect(cx - 1, cy + side * 18 - 2, 2, 5);
+      }
     }
   }
 
@@ -1581,19 +1311,21 @@ export class IsometricRenderer {
       player.skinVariant
     );
     // Draw sprite elevated so the character stands on the tile surface, never sunken into the floor
-    ctx.drawImage(sprite, px - 57, py - 90, 114, 114);
+    ctx.drawImage(sprite, Math.round(px) - 72, Math.round(py) - 97);
+
+    if (!isActive) return;
 
     // 4. Name Tag (Elevated above hero's head)
     ctx.fillStyle = '#030712';
-    ctx.fillRect(px - 34, py - 100, 68, 16);
+    ctx.fillRect(px - 34, py - 78, 68, 16);
     ctx.strokeStyle = player.isDarkling ? '#c084fc' : player.color;
     ctx.lineWidth = 1.2;
-    ctx.strokeRect(px - 34, py - 100, 68, 16);
+    ctx.strokeRect(px - 34, py - 78, 68, 16);
 
     ctx.fillStyle = player.isDarkling ? '#f43f5e' : player.color;
     ctx.font = '8px Silkscreen';
     ctx.textAlign = 'center';
-    ctx.fillText(player.displayName.substring(0, 8), px, py - 88);
+    ctx.fillText(player.displayName.substring(0, 8), px, py - 66);
   }
 
   private renderDustPuffs(ctx: CanvasRenderingContext2D) {

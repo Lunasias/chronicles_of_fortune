@@ -1,4 +1,6 @@
 import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelGlow, pixelVignette } from './PixelFx';
+import { prefersReducedMotion } from '../ui/GraphicsSettings';
+import { MAGIC_PALETTES, type MagicElement } from './MagicArt';
 
 export interface Particle {
   x: number;
@@ -348,7 +350,8 @@ export class CombatVFXEngine {
   // =========================================================================
   // 3. MAGIC: FLAT ISOMETRIC RUNIC PENTAGRAM & VOID EXPLOSION
   // =========================================================================
-  spawnMagicHit(monsterX: number, monsterY: number, isHeal = false) {
+  spawnMagicHit(monsterX: number, monsterY: number, isHeal = false, element: MagicElement = 'arcane') {
+    const palette = MAGIC_PALETTES[isHeal ? 'nature' : element];
     this.triggerScreenShake(isHeal ? 5 : 18);
 
     // Nested 2.5D Isometric Runic Ring
@@ -356,7 +359,7 @@ export class CombatVFXEngine {
       x: monsterX,
       y: monsterY + 32,
       radius: 46,
-      color: isHeal ? '#22c55e' : '#a855f7',
+      color: palette[0],
       angle: 0,
       alpha: 1.0,
       decay: 0.022,
@@ -364,7 +367,7 @@ export class CombatVFXEngine {
     });
 
     // Swirling magical void souls
-    const pCount = isHeal ? 24 : 45;
+    const pCount = prefersReducedMotion() ? 10 : isHeal ? 24 : 36;
     for (let i = 0; i < pCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 3 + Math.random() * 9;
@@ -372,19 +375,19 @@ export class CombatVFXEngine {
         x: monsterX,
         y: monsterY,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (isHeal ? 2.5 : 0),
-        color: isHeal ? '#86efac' : Math.random() > 0.5 ? '#c084fc' : '#38bdf8',
-        size: 3.5 + Math.random() * 4.5,
+        vy: Math.sin(angle) * speed - (isHeal || element === 'flame' ? 2.5 : 0),
+        color: palette[i % palette.length],
+        size: 2 + i % 4,
         alpha: 1.0,
         decay: 0.03,
-        gravity: isHeal ? -0.12 : 0.04
+        gravity: isHeal || element === 'flame' ? -0.12 : element === 'frost' ? .15 : 0.04
       });
     }
 
     if (!isHeal) {
       this.monsterStaggerX = 20;
       this.monsterFlashAlpha = 0.95;
-      this.monsterFlashColor = '#c084fc';
+      this.monsterFlashColor = palette[1];
     }
   }
 
@@ -1270,7 +1273,7 @@ export class CombatVFXEngine {
   }
 
   private renderImpactFlash(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    if (this.impactFlashAlpha <= 0.01) return;
+    if (this.impactFlashAlpha <= 0.01 || prefersReducedMotion()) return;
     ctx.save();
     ctx.fillStyle = this.impactFlashColor;
     ctx.globalAlpha = Math.min(1.0, this.impactFlashAlpha);
@@ -1279,7 +1282,7 @@ export class CombatVFXEngine {
   }
 
   private renderSpeedLines(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    if (this.speedLinesAlpha <= 0.01) return;
+    if (this.speedLinesAlpha <= 0.01 || prefersReducedMotion()) return;
     ctx.save();
     ctx.strokeStyle = this.speedLinesColor;
     ctx.globalAlpha = Math.min(1.0, this.speedLinesAlpha * 0.85);

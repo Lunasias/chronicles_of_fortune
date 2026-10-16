@@ -1,8 +1,8 @@
 import { GameState } from '../game/GameState';
-import { EquipmentItem, pixelSprites } from '../engine/PixelSpriteGenerator';
+import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
-import {pixelDisc, pixelVerticalRamp } from '../engine/PixelFx';
+import { drawSettlementScenery, refreshSettlementOnLoad } from '../engine/SettlementScenery';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Multi-Spinners (Tiers 1-5)
@@ -78,6 +78,9 @@ export class ShopUI {
 
   constructor(game: GameState) {
     this.game = game;
+    refreshSettlementOnLoad('shopDioramaCanvas', 'shopModal', () => {
+      this.renderShopInteriorDiorama(document.getElementById('shopDioramaCanvas') as HTMLCanvasElement, this.currentType);
+    });
     this.bindButtons();
   }
 
@@ -347,89 +350,6 @@ export class ShopUI {
   // PROCEDURAL 2.5D ISOMETRIC SHOP INTERIOR DIORAMA
   // =========================================================================
   private renderShopInteriorDiorama(canvas: HTMLCanvasElement, shopType: string) {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
-
-    // 1. Cozy Shop Chamber Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#090d16'], [0.5, '#1e293b'], [1, '#0b1120']]);
-
-    // 2. 2.5D Isometric Flagstone Floor
-    const tw = 48;
-    const th = 24;
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 12; col++) {
-        const cx = (col - row) * (tw / 2) + w * 0.35;
-        const cy = (col + row) * (th / 2) + 30;
-
-        ctx.fillStyle = (row + col) % 2 === 0 ? '#334155' : '#1e293b';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - th / 2);
-        ctx.lineTo(cx + tw / 2, cy);
-        ctx.lineTo(cx, cy + th / 2);
-        ctx.lineTo(cx - tw / 2, cy);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.25)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // 3. Wooden Shop Counter
-    const counterX = w * 0.28;
-    const counterY = h * 0.52;
-    const counterW = w * 0.44;
-    const counterH = 26;
-
-    ctx.fillStyle = '#78350f'; // Warm oak
-    ctx.fillRect(counterX, counterY, counterW, counterH);
-    ctx.fillStyle = '#b45309'; // Countertop highlight
-    ctx.fillRect(counterX - 4, counterY - 4, counterW + 8, 6);
-    ctx.strokeStyle = '#d97706';
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(counterX - 4, counterY - 4, counterW + 8, counterH + 4);
-
-    // 4. Shopkeeper (Hero sprite) behind counter
-    const merchantClass = shopType === 'shop_magic' ? 'magician' : shopType === 'shop_weapon' ? 'warrior' : 'thief';
-    const merchant = pixelSprites.getHeroSprite(merchantClass, 'SW', 'idle', 0);
-    ctx.drawImage(merchant, w * 0.45, h * 0.12, 70, 70);
-
-    // 5. Thematic Items on Counter / Shelves
-    if (shopType === 'shop_weapon') {
-      // Iron anvil on the left
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(w * 0.12, h * 0.42, 32, 22);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(w * 0.10, h * 0.38, 36, 6);
-
-      // Weapons displayed on counter
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(counterX + 16, counterY - 2, 24, 3);
-      ctx.fillRect(counterX + 50, counterY - 2, 28, 3);
-    } else if (shopType === 'shop_magic') {
-      // Arcane glowing orbs on counter
-      ctx.fillStyle = '#38bdf8';
-      ctx.shadowColor = '#38bdf8';
-      ctx.beginPath();
-      pixelDisc(ctx, counterX + 22, counterY - 2, 6, ctx.fillStyle);
-      pixelDisc(ctx, counterX + counterW - 22, counterY - 2, 6, ctx.fillStyle);
-      ctx.fill();
-    } else {
-      // Potions & gold pouch on counter
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(counterX + 16, counterY - 8, 8, 10);
-      ctx.fillStyle = '#10b981';
-      ctx.fillRect(counterX + 30, counterY - 8, 8, 10);
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath();
-      pixelDisc(ctx, counterX + counterW - 20, counterY - 4, 7, ctx.fillStyle);
-      ctx.fill();
-    }
+    drawSettlementScenery(canvas, shopType);
   }
 }

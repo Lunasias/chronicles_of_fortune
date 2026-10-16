@@ -14,6 +14,8 @@
     "src/engine/IsometricTerrainPainter.ts",
     "src/engine/IsometricPropPainter.ts",
     "src/engine/PixelScale.ts",
+    "src/engine/AtlasSprites.ts",
+    "src/engine/MagicArt.ts",
     "src/engine/SkyPainter.ts",
     "src/engine/NetworkRoomManager.ts",
     "src/game/BalanceSystem.ts",

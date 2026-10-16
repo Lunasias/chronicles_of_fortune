@@ -1,0 +1,25 @@
+{
+  "name": "lightning_spellblade",
+  "class": "Lightning Spellblade (สาวดาบเวทสายฟ้า)",
+  "hair": "Pure White / Long Loose",
+  "skin": "Porcelain Fair White",
+  "eyes": "Glowing Electric Blue",
+  "weapon": "Massive Blue Greatsword with Crackling Lightning",
+  "view": "Top-down Isometric 8 Directions (Zero Morphing)",
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "total_frames": 72,
+  "files": {
+    "turnaround_strip": "turnaround_8dir_sheet.png",
+    "turnaround_gif": "turnaround_360.gif",
+    "master_spritesheet": "master_spritesheet_72f.png"
+  }
+}

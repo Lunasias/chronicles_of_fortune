@@ -6,6 +6,7 @@ import {
   resolveCompanionKey
 } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
+import { atlasSprite } from './AtlasSprites';
 
 /**
  * Serves the 64x64 pixel-art models for the companions defined in `companions.json`.
@@ -21,9 +22,21 @@ export class CompanionSpriteRenderer {
   private loadedCount = 0;
   private totalToLoad = 0;
   private readyNotified = false;
+  private atlas: HTMLImageElement | null = null;
+  private atlasReady = false;
 
   constructor() {
     this.preload();
+  }
+
+  private ensureAtlas() {
+    if (this.atlas) return;
+    this.atlas = new Image();
+    this.atlas.onload = () => {
+      this.atlasReady = true; this.cache.clear();
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('companion-assets-loaded'));
+    };
+    this.atlas.src = '/assets/art-v2/companions-atlas.png';
   }
 
   private preload() {
@@ -58,6 +71,19 @@ export class CompanionSpriteRenderer {
     return this.readyNotified;
   }
 
+  /** The last three cells are the kingdom's hosts, separate from collectible companions. */
+  public getHostSprite(role: 'king' | 'innkeeper' | 'blacksmith'): HTMLCanvasElement | null {
+    this.ensureAtlas();
+    if (!this.atlasReady || !this.atlas) return null;
+    const key = `host_${role}`;
+    const cached = this.cache.get(key);
+    if (cached) return cached;
+    const col = role === 'king' ? 3 : role === 'innkeeper' ? 4 : 5;
+    const sprite = atlasSprite(this.atlas, col, 4, 6, 5, 64);
+    this.cache.set(key, sprite);
+    return sprite;
+  }
+
   /**
    * The 64x64 model for a companion, or null while its file is still loading. Callers should
    * treat null as "draw the emoji fallback" rather than a failure.
@@ -67,9 +93,17 @@ export class CompanionSpriteRenderer {
   }
 
   public getSpriteByKey(key: string): HTMLCanvasElement | null {
+    this.ensureAtlas();
     const resolved = getCompanionProfile(key).key;
     const cached = this.cache.get(resolved);
     if (cached) return cached;
+
+    const index = allCompanionKeys().indexOf(resolved);
+    if (this.atlasReady && this.atlas && index >= 0) {
+      const canvas = atlasSprite(this.atlas, index % 6, Math.floor(index / 6), 6, 5, 64);
+      this.cache.set(resolved, canvas);
+      return canvas;
+    }
 
     const img = this.images.get(resolved);
     if (!img || !img.complete || img.naturalWidth === 0) return null;

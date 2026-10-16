@@ -274,6 +274,7 @@ export class HUD {
 
   private renderAvatar() {
     const p = this.game.activePlayer;
+    if (!p) return;
     this.avatarCtx.clearRect(0, 0, 48, 48);
     this.avatarCtx.imageSmoothingEnabled = false;
 
@@ -287,7 +288,7 @@ export class HUD {
       p.prank,
       p.skinVariant
     );
-    this.avatarCtx.drawImage(sprite, -16, -16, 80, 80);
+    this.avatarCtx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
   }
 
   private renderMinimap() {

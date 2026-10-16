@@ -13,6 +13,11 @@ import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
 import { networkRoomManager } from '../engine/NetworkRoomManager';
+import { actorScaleForViewport } from '../engine/ArtDirection';
+import { prefersReducedMotion } from './GraphicsSettings';
+import { drawBattleScenery } from '../engine/BattleScenery';
+import { magicElementForJob, MAGIC_PALETTES } from '../engine/MagicArt';
+import { IsoSurface, isoBox, faceTones } from '../engine/IsometricBuildingPainter';
 
 export class BattleUI {
   private game: GameState;
@@ -38,6 +43,7 @@ export class BattleUI {
    * of decorative elements actually animate with `time`, so the layers are re-rendered a
    * few times per second and blitted every frame instead of being rebuilt at 60 fps.
    */
+  private daisSprites = new Map<string, HTMLCanvasElement>();
   private sceneryLayers = new Map<string, { canvas: HTMLCanvasElement; key: string; at: number }>();
   private static readonly SCENERY_REFRESH_MS = 100;
 
@@ -71,7 +77,7 @@ export class BattleUI {
     const fadeOut = Math.min(1, (summon.duration - elapsed) / 420);
     const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
     const rise = Math.round((1 - fadeIn) * 14);
-    const scale = 1.5 + (1 - fadeIn) * 0.25;
+    const scale = this.canvas.width >= 900 ? 2 : 1;
 
     const w = COMPANION_SPRITE_SIZE * scale;
     const h = COMPANION_SPRITE_SIZE * scale;
@@ -88,7 +94,7 @@ export class BattleUI {
     ctx.fill();
 
     ctx.globalAlpha = alpha;
-    ctx.drawImage(sprite, summon.x - w / 2, summon.y - h * 0.62 - rise, w, h);
+    ctx.drawImage(sprite, Math.round(summon.x - w / 2), Math.round(summon.y - h * 0.84 - rise), w, h);
     ctx.restore();
   }
 
@@ -1088,7 +1094,7 @@ export class BattleUI {
 
     // Set dash animation pose
     this.attackerAnim = (atkAction === 'strike' || atkAction === 'burst') ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
-    this.defenderAnim = defAction === 'counter' ? 'counter' : 'idle';
+    this.defenderAnim = 'counter';
 
     // Start Phase 1: Dash forward across the arena! (340ms)
     this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
@@ -1214,10 +1220,10 @@ export class BattleUI {
             atkBaseY + targetAtkDY - 80,
             hitX,
             hitY - 60,
-            b.attacker.classKey === 'cleric' ? '#fde047' : '#c084fc',
+            MAGIC_PALETTES[magicElementForJob(b.attacker.classKey)][1],
             22
           );
-          combatVFX.spawnMagicHit(hitX, hitY - 60, b.attacker.classKey === 'cleric');
+          combatVFX.spawnMagicHit(hitX, hitY - 60, false, magicElementForJob(b.attacker.classKey));
         } else {
           if (defAction === 'defend') {
             audio.defendBlock();
@@ -1432,7 +1438,7 @@ export class BattleUI {
 
     ctx.save();
     // Dynamic Screen Shake on Heavy Impacts
-    ctx.translate(combatVFX.screenShakeX, combatVFX.screenShakeY);
+    if (!prefersReducedMotion()) ctx.translate(Math.round(combatVFX.screenShakeX), Math.round(combatVFX.screenShakeY));
 
     const arenaCX = w * 0.50;
     const arenaCY = h * 0.50;
@@ -1441,11 +1447,8 @@ export class BattleUI {
     const arenaDrop = 36;
 
     // Camera micro-zoom punch around arena center during impact
-    if (Math.abs(this.cutscene.zoomFactor - 1.0) > 0.005) {
-      ctx.translate(arenaCX, arenaCY);
-      ctx.scale(this.cutscene.zoomFactor, this.cutscene.zoomFactor);
-      ctx.translate(-arenaCX, -arenaCY);
-    }
+    // Keep the scene pixel grid fixed during impacts; anticipation and hit-stop
+    // supply the emphasis instead of continuously resampling the entire arena.
 
     // -----------------------------------------------------------------------
     // 1. DYNAMIC LOCATION / BIOME COMBAT ARENA BACKDROP
@@ -1462,7 +1465,7 @@ export class BattleUI {
       w,
       h,
       time,
-      `${w}x${h}|${biome}|${currentNode?.type ?? 'empty'}|${isBoss ? 1 : 0}`,
+      `${w}x${h}|${biome}|${ecosystemSystem.timeOfDay}|${currentNode?.type ?? 'empty'}|${isBoss ? 1 : 0}`,
       layerCtx => this.drawDynamicLocationBackdrop(layerCtx, w, h, time, currentNode, isBoss)
     );
     ctx.drawImage(backdropLayer, 0, 0);
@@ -1470,26 +1473,6 @@ export class BattleUI {
     // -----------------------------------------------------------------------
     // 2. GRAND EXPANSIVE 2.5D ISOMETRIC ARENA FLOOR THEMED BY BIOME
     // -----------------------------------------------------------------------
-    const floorLayer = this.getSceneryLayer(
-      'arenaFloor',
-      w,
-      h,
-      time,
-      `${w}x${h}|${biome}|${arenaCX}|${arenaCY}|${arenaW}|${arenaH}|${arenaDrop}`,
-      layerCtx =>
-        this.drawGrandIsometricColosseumFloor(
-          layerCtx,
-          arenaCX,
-          arenaCY,
-          arenaW,
-          arenaH,
-          arenaDrop,
-          time,
-          biome
-        )
-    );
-    ctx.drawImage(floorLayer, 0, 0);
-
     const pxCenter = arenaCX - arenaW * 0.22;
     const pyCenter = arenaCY + arenaH * 0.12;
     const exCenter = arenaCX + arenaW * 0.22;
@@ -1555,7 +1538,7 @@ export class BattleUI {
     const py =
       pyCenter + pRowDY +
       (isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
-      Math.sin(time * 0.005) * 3;
+      0;
 
     const ex =
       exCenter + eRowDX +
@@ -1567,8 +1550,8 @@ export class BattleUI {
       combatVFX.monsterStaggerY +
       Math.sin(time * 0.005 + 1) * 3;
 
-    const pAnim = isPlayerAtk ? this.attackerAnim : this.defenderAnim;
-    const eAnim = isPlayerAtk ? this.defenderAnim : this.attackerAnim;
+    const pAnim: CharacterAnimState = playerCombatant.hp <= 0 ? 'defeat' : enemyCombatant.hp <= 0 && !this.cutscene.active ? 'victory' : isPlayerAtk ? this.attackerAnim : this.defenderAnim;
+    const eAnim: CharacterAnimState = enemyCombatant.hp <= 0 ? 'defeat' : playerCombatant.hp <= 0 && !this.cutscene.active ? 'victory' : isPlayerAtk ? this.defenderAnim : this.attackerAnim;
 
     // Dynamic 8-Directional Combat Stance & Orientation: Always face directly towards each other!
     let heroDir: IsoDirection = this.getIsoDirection(px, py, ex, ey);
@@ -1618,13 +1601,15 @@ export class BattleUI {
 
     // Sizing: Responsive anime combatants (scaled proportionally with arena width for mobile & tablet)
     const scaleFactor = Math.min(1.0, Math.max(0.55, arenaW / 650));
-    const heroW = Math.round(240 * scaleFactor);
-    const heroH = Math.round(240 * scaleFactor);
-    const enemyW = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
-    const enemyH = Math.round((enemyCombatant.isBoss ? 290 : 240) * scaleFactor);
+    const pixelScale = actorScaleForViewport(w, h);
+    const heroW = 144 * pixelScale;
+    const heroH = heroW;
+    const enemyScale = enemyCombatant.isBoss && w >= 1100 ? 3 : pixelScale;
+    const enemyW = 144 * enemyScale;
+    const enemyH = enemyW;
     // Exact foot anchor offsets so combatants' feet firmly plant onto the diamond stone dais surface
-    const heroYOffset = Math.round(183 * scaleFactor);
-    const enemyYOffset = Math.round((enemyCombatant.isBoss ? 224 : 185) * scaleFactor);
+    const heroYOffset = 97 * pixelScale;
+    const enemyYOffset = 97 * enemyScale;
     const ringYOffset = Math.round(4 * scaleFactor);
 
     let enemySprite: HTMLCanvasElement;
@@ -1701,7 +1686,7 @@ export class BattleUI {
     // Anchored so characters stand proudly with feet planted on the dais diamond!
     const drawHero = () => {
       this.drawUnitTeamRing(ctx, px, py - ringYOffset, '#06b6d4', 0.9 * scaleFactor, true);
-      ctx.drawImage(heroSprite, px - heroW / 2, py - heroYOffset, heroW, heroH);
+      ctx.drawImage(heroSprite, Math.round(px - heroW / 2), Math.round(py - heroYOffset), heroW, heroH);
       this.drawStatusOverheadBadges(ctx, px, py - heroYOffset - 8, playerCombatant);
     };
 
@@ -1714,18 +1699,15 @@ export class BattleUI {
       const ringColor = enemyCombatant.isBoss ? '#ef4444' : (enemyCombatant.playerRef ? '#f43f5e' : '#f59e0b');
       this.drawUnitTeamRing(ctx, ex, ey - ringYOffset, ringColor, 0.95 * scaleFactor, true);
 
-      // The combatant on the right dais MUST always face towards the left (towards the opponent on the left dais)!
-      ctx.save();
-      ctx.translate(ex, 0);
-      ctx.scale(-1, 1);
+      // The directional asset already faces its opponent. Mirroring it again reverses
+      // its weapon hand and sends its face away from the hero.
       ctx.drawImage(
         enemySprite,
-        -enemyW / 2,
-        ey - enemyYOffset,
+        Math.round(ex - enemyW / 2),
+        Math.round(ey - enemyYOffset),
         enemyW,
         enemyH
       );
-      ctx.restore();
 
       ctx.restore();
 
@@ -1927,31 +1909,7 @@ export class BattleUI {
     const biome = node?.biome || 'grass';
     const type = node?.type || 'empty';
 
-    if (isBoss || type === 'boss') {
-      this.drawBossDragonThroneBackdrop(ctx, w, h, time);
-    } else if (type === 'town' || biome === 'castle') {
-      this.drawCastlePalaceBackdrop(ctx, w, h, time, node);
-    } else if (biome === 'forest' || biome === 'grass') {
-      this.drawEnchantedForestBackdrop(ctx, w, h, time, biome === 'forest');
-    } else if (biome === 'fairy_grove') {
-      this.drawFairyBlossomBackdrop(ctx, w, h, time);
-    } else if (biome === 'snow') {
-      this.drawFrostpeakSnowBackdrop(ctx, w, h, time);
-    } else if (biome === 'volcano') {
-      this.drawVolcanicCalderaBackdrop(ctx, w, h, time);
-    } else if (biome === 'desert') {
-      this.drawDesertDunesBackdrop(ctx, w, h, time);
-    } else if (biome === 'cavern' || biome === 'crystal_cavern') {
-      this.drawCrystalCavernBackdrop(ctx, w, h, time);
-    } else if (biome === 'coral' || type === 'fishing') {
-      this.drawCoralOceanBackdrop(ctx, w, h, time);
-    } else if (biome === 'abyss' || type === 'dark_gate') {
-      this.drawAbyssalVoidBackdrop(ctx, w, h, time);
-    } else if (biome === 'celestial') {
-      this.drawCelestialSanctumBackdrop(ctx, w, h, time);
-    } else {
-      this.drawCastlePalaceBackdrop(ctx, w, h, time, node);
-    }
+    drawBattleScenery(ctx, w, h, biome, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isBoss || type === 'boss', type === 'town');
   }
 
   // 1. CASTLE & ROYAL PALACE INTERIOR (ปราสาทและพระราชวังหลวง)
@@ -2957,115 +2915,30 @@ export class BattleUI {
     sideColor: string,
     rimColor: string
   ) {
-    ctx.save();
-    const hw = width / 2;
-    const hh = height / 2;
-
-    // 1. Drop Shadow under Dais
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy + dropHeight + 8, hw + 14, (hh + dropHeight) * 0.45, ctx.fillStyle);
-    ctx.fill();
-
-    // 2. Left Cliff Drop Face (Shadowed)
-    ctx.fillStyle = sideColor;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw, cy);
-    ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx, cy + hh + dropHeight);
-    ctx.lineTo(cx - hw, cy + dropHeight);
-    ctx.closePath();
-    ctx.fill();
-
-    // Left Masonry Texture Lines
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw, cy + dropHeight * 0.5);
-    ctx.lineTo(cx, cy + hh + dropHeight * 0.5);
-    ctx.stroke();
-
-    // 3. Right Cliff Drop Face (Lighted side)
-    const rightSideGrad = ctx.createLinearGradient(cx, cy, cx + hw, cy + dropHeight);
-    rightSideGrad.addColorStop(0, sideColor);
-    rightSideGrad.addColorStop(1, '#1e293b');
-    ctx.fillStyle = rightSideGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + hh);
-    ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx + hw, cy + dropHeight);
-    ctx.lineTo(cx, cy + hh + dropHeight);
-    ctx.closePath();
-    ctx.fill();
-
-    // Right Masonry Texture Lines
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + hh + dropHeight * 0.5);
-    ctx.lineTo(cx + hw, cy + dropHeight * 0.5);
-    ctx.stroke();
-
-    // 4. Stepped Lower Border Rim (Drop Depth accent)
-    ctx.strokeStyle = rimColor;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw, cy + dropHeight);
-    ctx.lineTo(cx, cy + hh + dropHeight);
-    ctx.lineTo(cx + hw, cy + dropHeight);
-    ctx.stroke();
-
-    // 5. Top Diamond Stone Flagstone Surface
-    ctx.fillStyle = topColor;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - hh);
-    ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx - hw, cy);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top Flagstone Grid Chisel Lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    // Diagonal seams
-    ctx.moveTo(cx, cy - hh);
-    ctx.lineTo(cx, cy + hh);
-    ctx.moveTo(cx - hw, cy);
-    ctx.lineTo(cx + hw, cy);
-    ctx.stroke();
-
-    // 6. Glowing Inner Runic Diamond Border
-    const runePulse = 0.75 + Math.sin(Date.now() * 0.005) * 0.25;
-    ctx.save();
-    ctx.strokeStyle = runeColor;
-    ctx.lineWidth = 2;
-    ctx.shadowColor = runeColor;
-    ctx.globalAlpha = 0.85 * runePulse;
-
-    const innerHw = hw - 10;
-    const innerHh = hh - 5;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - innerHh);
-    ctx.lineTo(cx + innerHw, cy);
-    ctx.lineTo(cx, cy + innerHh);
-    ctx.lineTo(cx - innerHw, cy);
-    ctx.closePath();
-    ctx.stroke();
-
-    // 4 Corner Runic Sigils
-    ctx.fillStyle = runeColor;
-    ctx.fillRect(cx - 2, cy - innerHh - 2, 4, 4);
-    ctx.fillRect(cx + innerHw - 2, cy - 2, 4, 4);
-    ctx.fillRect(cx - 2, cy + innerHh - 2, 4, 4);
-    ctx.fillRect(cx - innerHw - 2, cy - 2, 4, 4);
-    ctx.restore();
-
-    ctx.restore();
+    const ww = Math.round(width), hh = Math.round(height), drop = 8;
+    const key = [ww, hh, runeColor].join('_');
+    let canvas = this.daisSprites.get(key);
+    if (!canvas) {
+      const surface = new IsoSurface(ww + 8, hh + drop + 8);
+      const x = Math.round(ww / 2) + 4, y = Math.round(hh / 2) + 4;
+      const stone = faceTones('#a3ac99', .32, .75, .54, .4);
+      isoBox(surface, x, y + drop, ww / 2, hh / 2, drop, stone);
+      surface.diamond(x, y, ww / 2 - 1, hh / 2 - 1, runeColor === '#06b6d4' ? '#90b6aa' : '#bf9b8d');
+      surface.diamond(x, y, ww / 2 - 4, hh / 2 - 3, '#8c9c8d');
+      for (let yy = 8; yy < hh - 4; yy += 8) for (let xx = 8; xx < ww; xx += 12) {
+        if (Math.abs(xx - x) / (ww / 2 - 6) + Math.abs(yy - y) / (hh / 2 - 4) > .95) continue;
+        const tint = (xx + yy) % 5 ? '#95a391' : '#788c80';
+        surface.px(xx, yy, tint); surface.px(xx + 1, yy, tint); surface.px(xx + 2, yy, tint);
+      }
+      surface.outline();
+      canvas = document.createElement('canvas'); canvas.width = surface.w; canvas.height = surface.h;
+      const out = canvas.getContext('2d')!, pixels = out.createImageData(surface.w, surface.h);
+      pixels.data.set(surface.data); out.putImageData(pixels, 0, 0);
+      this.daisSprites.set(key, canvas);
+    }
+    ctx.drawImage(canvas, Math.round(cx - ww / 2 - 4), Math.round(cy - hh / 2 - 4));
   }
 
-  // =========================================================================
-  // HELPER: BROWN DUST 2 3X3 TACTICAL ISOMETRIC GRID SLOTS & BRACKETS [ ]
-  // =========================================================================
   private drawTacticalGridSlots(
     ctx: CanvasRenderingContext2D,
     cx: number,

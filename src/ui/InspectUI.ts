@@ -327,7 +327,7 @@ export class InspectUI {
         player.prank,
         player.skinVariant
       );
-      ctx.drawImage(sprite, -16, -16, 80, 80);
+      ctx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
     }
 
     document.getElementById('btnCloseInspectModal')?.addEventListener('click', () => {

@@ -21,7 +21,7 @@ export interface EquipmentItem {
 
 export type IsoDirection = 'SE' | 'SW' | 'NE' | 'NW' | 'S' | 'N' | 'E' | 'W';
 
-export type CharacterAnimState = 'idle' | 'run' | 'attack' | 'strike' | 'magic' | 'counter' | 'hurt' | 'victory';
+export type CharacterAnimState = 'idle' | 'run' | 'attack' | 'strike' | 'magic' | 'counter' | 'hurt' | 'victory' | 'defeat';
 
 export interface PrankState {
   hasGraffiti: boolean;
@@ -474,7 +474,7 @@ export class PixelSpriteGenerator {
     dir: IsoDirection = 'SE',
     animState: CharacterAnimState = 'idle',
     frame: number = 0,
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null } = {},
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null; shield?: EquipmentItem | null; accessory?: EquipmentItem | null } = {},
     isDarkling: boolean = false,
     prank?: PrankState,
     skinVariant: number = 0
@@ -501,7 +501,7 @@ export class PixelSpriteGenerator {
     stepY: number,
     lean: number,
     frame: number,
-    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null }
+    equipment: { weapon?: EquipmentItem | null; armor?: EquipmentItem | null; shield?: EquipmentItem | null; accessory?: EquipmentItem | null }
   ) {
     const isFacingFront = dir === 'SE' || dir === 'SW';
     const isFacingRight = dir === 'SE' || dir === 'NE';

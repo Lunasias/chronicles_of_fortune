@@ -1,0 +1,22 @@
+{
+  "name": "catgirl_rogue",
+  "engine": "PixelLab 3D Math Engine (Zero Morphing)",
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "states": [
+    "Idle",
+    "Run",
+    "Attack"
+  ],
+  "total_frames": 72,
+  "spritesheet": "master_spritesheet_3d.png",
+  "turnaround_gif": "turnaround_360.gif"
+}

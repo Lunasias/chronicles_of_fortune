@@ -18,6 +18,7 @@ export interface TerrainTile {
   hasEastCliff: boolean;
   hasWestCliff: boolean;
   hasNorthCliff: boolean;
+  edgeBiomes?: readonly (string | null)[];
 }
 
 export interface EnvironmentProp {
@@ -35,6 +36,7 @@ export interface EnvironmentProp {
 }
 
 export class IsometricTerrainEngine {
+  public groves: Array<{ x: number; y: number; depth: number; species: string; variant: number }> = [];
   public tileWidth = 96;
   public tileHeight = 48;
   public elevationStep = 24;
@@ -212,6 +214,12 @@ export class IsometricTerrainEngine {
     });
 
     // Sort terrain tiles by depth for correct 3D overlap
+    for (const tile of this.terrainTiles) {
+      tile.edgeBiomes = [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([dx, dy]) => {
+        const neighbor = this.tileGrid.get(`${tile.gx + dx},${tile.gy + dy}`);
+        return neighbor && neighbor.gz === tile.gz && neighbor.biome !== tile.biome ? neighbor.biome : null;
+      });
+    }
     this.terrainTiles.sort((a, b) => a.depth - b.depth);
 
     // 4. Generate Environmental Clutter (Rocks, Grass, Wildflowers, Shrubs, Crystals)
@@ -267,6 +275,11 @@ export class IsometricTerrainEngine {
   // Generate natural environment props (rocks, grass clumps, flowers) on off-road terrain
   private generateEnvironmentClutter(nodes: BoardNode[]) {
     const nodeCoords = new Set(nodes.map(n => `${n.gx},${n.gy}`));
+    const routes = nodes.flatMap(n => n.neighbors.filter(id => id > n.id).map(id => {
+      const other = nodes.find(candidate => candidate.id === id)!;
+      return { a: this.toScreen(n.gx, n.gy, n.gz), b: this.toScreen(other.gx, other.gy, other.gz) };
+    }));
+    this.groves = [];
 
     let propId = 0;
     this.terrainTiles.forEach(tile => {
@@ -279,6 +292,22 @@ export class IsometricTerrainEngine {
       const rand1 = seed - Math.floor(seed);
       const rand2 = (seed * 1.5) - Math.floor(seed * 1.5);
       const rand3 = (seed * 2.3) - Math.floor(seed * 2.3);
+
+      const wooded = ['grass', 'forest', 'waterfall_forest', 'snow', 'sakura_shrine', 'fairy_grove'].includes(tile.biome);
+      const clusterSeed = Math.sin(Math.floor(tile.gx / 3) * 31.73 + Math.floor(tile.gy / 3) * 17.17) * 19451.17;
+      const cluster = clusterSeed - Math.floor(clusterSeed);
+      if (wooded && cluster > .35 && rand1 < (tile.biome === 'forest' ? .48 : .22)) {
+        const clear = routes.every(({ a, b }) => {
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const t = Math.max(0, Math.min(1, ((tile.x - a.x) * dx + (tile.y - a.y) * dy) / Math.max(1, dx * dx + dy * dy)));
+          return Math.hypot(tile.x - a.x - dx * t, tile.y - a.y - dy * t) > 28;
+        });
+        if (clear) this.groves.push({
+          x: Math.round(tile.x), y: Math.round(tile.y), depth: tile.depth + 25,
+          species: tile.biome === 'snow' ? 'frost_pine' : tile.biome === 'sakura_shrine' ? 'blood_willow' : tile.biome === 'fairy_grove' ? 'gloom_spore' : 'dark_oak',
+          variant: Math.floor(rand3 * 4)
+        });
+      }
 
       // Rich scattering of natural environment props (38% density on off-node terrain)
       if (rand1 < 0.38) {
@@ -373,7 +402,9 @@ export class IsometricTerrainEngine {
       // variant count, which spreads the four layouts evenly rather than banding them by row.
       const variant =
         (((tile.gx * 7 + tile.gy * 13) % TERRAIN_VARIANTS) + TERRAIN_VARIANTS) % TERRAIN_VARIANTS;
-      const sprite = this.getTileSprite(tile.biome, hasCliffs, isNight, variant);
+      const sprite = isometricTerrainRenderer.getTileSprite(tile.biome, {
+        cliffs: hasCliffs, night: isNight, variant, edgeBiomes: tile.edgeBiomes
+      });
       ctx.drawImage(sprite, tile.x - TERRAIN_BLIT_X, tile.y - TERRAIN_BLIT_Y);
     }
   }

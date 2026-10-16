@@ -24,6 +24,7 @@ const BUILD = path.join('.test-build', 'engine', 'IsometricBuildingPainter.js');
  * `dark_gate`, so exporting them separately would only create duplicate files.
  */
 const KINDS = [
+  'capital',
   'town',
   'shop_weapon',
   'shop_magic',

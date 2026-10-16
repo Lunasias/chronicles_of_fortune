@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fortuna — Art Review</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#101e2a;color:#e9dfc6;font:15px system-ui,sans-serif}
+    header,main{max-width:1220px;margin:auto;padding:24px}header{border-bottom:2px solid #7c8068}
+    h1{font:24px monospace;letter-spacing:3px;color:#e6c583}p{color:#a9beb7;line-height:1.7}
+    nav{display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin:20px 0}
+    label{display:grid;gap:6px;font-size:13px}select,button,input{font:inherit;color:inherit}
+    select,button{padding:10px 14px;border:1px solid #89947a;background:#263e48;min-height:44px}
+    button{cursor:pointer}button:hover{background:#3b575c}a{color:#d4bf8c}
+    canvas{display:block;width:100%;height:auto;background:#172b38;border:2px solid #667e77;image-rendering:pixelated}
+    #reviewStatus{font:12px monospace;color:#a8c8b7;padding:12px 0}
+    .swatches{display:flex;gap:8px;flex-wrap:wrap}.swatches span{display:inline-block;padding:12px;border:1px solid #82938b}
+    @media(max-width:600px){header,main{padding:16px}h1{font-size:20px}nav label{flex:1 1 42%}}
+  </style>
+</head>
+<body>
+  <header><h1>FORTUNA / ART REVIEW</h1><p>ฉากมาตรฐานและแกลเลอรีภาพจากตัววาดที่เกมใช้งานจริง · <a href="/">กลับเข้าเกม</a></p></header>
+  <main>
+    <nav aria-label="ตัวเลือกตรวจงานภาพ">
+      <label>หมวดภาพ<select id="reviewCategory"><option value="reference">ฉากมาตรฐาน</option><option value="heroes">อาชีพ / 8 ทิศ</option><option value="promotions">อาชีพขั้นสูง</option><option value="skins">สกิน / จอมมาร</option><option value="effects">เอฟเฟกต์ธาตุ</option><option value="settlements">เมือง / ร้านค้า</option><option value="monsters">มอนสเตอร์ / ท่าต่อสู้</option><option value="buildings">สิ่งปลูกสร้าง</option><option value="foliage">ต้นไม้ / ทุกสายพันธุ์</option><option value="terrain">พื้น / ทุกภูมิภาค</option><option value="companions">เพื่อนร่วมทาง</option></select></label>
+      <label>ท่าทาง<select id="reviewAnimation"><option value="idle">ยืน</option><option value="run">วิ่ง</option><option value="attack">โจมตี</option><option value="strike">โจมตีหนัก</option><option value="magic">ร่ายเวท</option><option value="counter">ป้องกัน</option><option value="hurt">บาดเจ็บ</option><option value="victory">ฉลองชัย</option><option value="defeat">พ่ายแพ้</option></select></label>
+      <label id="reviewMonsterGroupLabel" hidden>กลุ่มมอนสเตอร์<select id="reviewMonsterGroup"><option value="wild">ป่าและอาณาจักร</option><option value="frontier">ดินแดนชายขอบ</option><option value="mythic">อสูรในตำนาน</option></select></label>
+      <label>ช่วงเวลา<select id="reviewTime"><option value="DAY">กลางวัน</option><option value="DAWN">รุ่งเช้า</option><option value="DUSK">เย็น</option><option value="NIGHT">กลางคืน</option></select></label>
+      <label>ภูมิภาคตัวอย่าง<select id="reviewBiome"></select></label>
+      <label>เฟรม<input id="reviewFrame" type="range" min="0" max="7" value="0"></label>
+      <button id="reviewPause" type="button">หยุดภาพ</button>
+      <button id="reviewExport" type="button">บันทึกภาพ PNG</button>
+      <a id="reviewBattleLink" href="/?art-scene=battle" hidden>ทดสอบฉากต่อสู้จริง</a>
+    </nav>
+    <canvas id="reviewCanvas" width="1152" height="720" aria-label="ภาพตัวอย่างจากระบบกราฟิกของเกม"></canvas>
+    <div id="reviewStatus" role="status"></div>
+    <p>ตรวจที่ขนาดใช้งานจริงและขยายจำนวนเต็ม: ตำแหน่งเท้า ทิศอาวุธ ความชัดของอาชีพ แสงจากซ้ายบน รอยต่อพื้น และวัตถุบังกันตามความลึก</p>
+    <div class="swatches"><span style="background:#142330">Ink #142330</span><span style="background:#b99b60;color:#142330">Brass #b99b60</span><span style="background:#92c6a0;color:#142330">Jade #92c6a0</span><span style="background:#f2e5c6;color:#142330">Cream #f2e5c6</span></div>
+  </main>
+  <script type="module" src="/src/art-review.ts"></script>
+</body>
+</html>

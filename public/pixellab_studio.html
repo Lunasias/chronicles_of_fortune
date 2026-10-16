@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelLab Local Studio — 8-Direction 3D-to-Pixel Sprite Engine</title>
+  <style>
+    :root {
+      --bg: #090a0f;
+      --panel: #13151f;
+      --panel-border: #232738;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.35);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --cyan: #06b6d4;
+      --purple: #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); overflow-x: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .logo-group { display: flex; align-items: center; gap: 12px; }
+    .logo-badge {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #000;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .status-tag {
+      font-size: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .main-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr 340px;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 8px;
+    }
+
+    /* Prompt Box */
+    .prompt-box { display: flex; flex-direction: column; gap: 8px; }
+    textarea {
+      width: 100%;
+      height: 75px;
+      background: #0b0d14;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    .preset-list { display: flex; flex-direction: column; gap: 6px; }
+    .preset-chip {
+      background: #181b28;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s;
+    }
+    .preset-chip:hover { border-color: var(--accent); background: #1c2132; }
+
+    /* Center Viewport */
+    .viewport-container {
+      position: relative;
+      background: radial-gradient(circle at center, #171b29 0%, #0d0f17 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #pixelCanvas {
+      width: 384px;
+      height: 384px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #threeCanvas { display: none; }
+
+    /* Turntable & Compass */
+    .compass-bar {
+      position: absolute;
+      top: 16px;
+      display: flex;
+      gap: 6px;
+      background: rgba(19, 21, 31, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .compass-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .compass-btn.active, .compass-btn:hover {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .anim-bar {
+      position: absolute;
+      bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(19, 21, 31, 0.9);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .anim-btn {
+      background: #181b28;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .anim-btn.active {
+      background: var(--cyan);
+      color: #000;
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    }
+
+    /* Right Panel: Spritesheet & Export */
+    .sheet-preview {
+      width: 100%;
+      height: 200px;
+      background: #090b10;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #sheetCanvas {
+      max-width: 100%;
+      max-height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .control-row select, .control-row input[type="color"] {
+      background: #0b0d14;
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 5px 8px;
+      border-radius: 6px;
+      outline: none;
+    }
+    input[type="range"] {
+      accent-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-group">
+      <div class="logo-badge">PIXELLAB LOCAL</div>
+      <h1>8-Direction 3D-to-Pixel Engine</h1>
+      <span class="status-tag">● 100% Free & Offline (RTX Accelerated)</span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-muted);">
+      Project: <strong style="color: #fff;">chronicles_of_fortune</strong>
+    </div>
+  </header>
+
+  <div class="main-layout">
+
+    <!-- LEFT PANEL: PROMPT & PARAMETERS -->
+    <div class="panel">
+      <div class="panel-title">🪄 Character Prompt Generator</div>
+
+      <div class="prompt-box">
+        <textarea id="promptInput" placeholder="Describe your character... e.g. gorgeous catgirl assassin with raven hair, emerald daggers, micro bikini, cat ears and tail"></textarea>
+        <button id="btnApplyPrompt" class="btn-primary">⚡ Generate Character</button>
+      </div>
+
+      <div class="panel-title" style="margin-top: 8px;">🎭 Instant Presets</div>
+      <div class="preset-list">
+        <div class="preset-chip" data-preset="catgirl">
+          <span>🐱 <strong>Catgirl Rogue</strong> (Dual Daggers, Raven Hair)</span>
+          <span>➜</span>
+        </div>
+        <div class="preset-chip" data-preset="spellblade">
+          <span>⚔️ <strong>Spellblade Heroine</strong> (Cyan Runeblade, Twin-tails)</span>
+          <span>➜</span>
+        </div>
+        <div class="preset-chip" data-preset="sorceress">
+          <span>🔥 <strong>Crimson Sorceress</strong> (Fire Staff, Red Silk)</span>
+          <span>➜</span>
+        </div>
+        <div class="preset-chip" data-preset="paladin">
+          <span>🛡️ <strong>Holy Paladin</strong> (Golden Claymore, Plate-kini)</span>
+          <span>➜</span>
+        </div>
+        <div class="preset-chip" data-preset="succubus">
+          <span>😈 <strong>Succubus Maiden</strong> (Demon Horns, Bat Wings)</span>
+          <span>➜</span>
+        </div>
+      </div>
+
+      <div class="panel-title" style="margin-top: 8px;">🎨 Fine Tuning</div>
+      <div class="control-row">
+        <span>Hair Color:</span>
+        <input type="color" id="hairColorPicker" value="#2b2e3b">
+      </div>
+      <div class="control-row">
+        <span>Skin Tone:</span>
+        <select id="skinToneSelect">
+          <option value="warm">Warm Peach</option>
+          <option value="pale">Porcelain Pale</option>
+          <option value="tan">Sun-Kissed Tan</option>
+          <option value="demon">Succubus Violet</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <span>Ears / Horns:</span>
+        <select id="earsSelect">
+          <option value="none">None</option>
+          <option value="cat" selected>Cat Ears</option>
+          <option value="fox">Fox Ears</option>
+          <option value="horns">Dragon Horns</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <span>Tail:</span>
+        <select id="tailSelect">
+          <option value="cat" selected>Cat Tail</option>
+          <option value="fox">Fox Bushy Tail</option>
+          <option value="dragon">Dragon Tail</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <span>Weapon:</span>
+        <select id="weaponSelect">
+          <option value="daggers" selected>Dual Venom Daggers</option>
+          <option value="sword">Arcane Runeblade</option>
+          <option value="claymore">Heavy Gold Claymore</option>
+          <option value="staff">Phoenix Fire Staff</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <span>Weapon Aura Glow:</span>
+        <input type="color" id="auraColorPicker" value="#10b981">
+      </div>
+    </div>
+
+    <!-- CENTER PANEL: 3D VIEWPORT & PIXEL SHADER -->
+    <div class="viewport-container">
+      <!-- 8-Direction Compass Buttons -->
+      <div class="compass-bar">
+        <button class="compass-btn active" data-dir="south">S (Front)</button>
+        <button class="compass-btn" data-dir="south-east">SE</button>
+        <button class="compass-btn" data-dir="east">E (Right)</button>
+        <button class="compass-btn" data-dir="north-east">NE</button>
+        <button class="compass-btn" data-dir="north">N (Back)</button>
+        <button class="compass-btn" data-dir="north-west">NW</button>
+        <button class="compass-btn" data-dir="west">W (Left)</button>
+        <button class="compass-btn" data-dir="south-west">SW</button>
+      </div>
+
+      <!-- Offscreen Three.js WebGL canvas -->
+      <canvas id="threeCanvas" width="64" height="64"></canvas>
+      <!-- Scaled Pixel Art Canvas -->
+      <canvas id="pixelCanvas" width="384" height="384"></canvas>
+
+      <!-- Animation State Bar -->
+      <div class="anim-bar">
+        <button class="anim-btn active" data-state="Idle">Idle</button>
+        <button class="anim-btn" data-state="Run">Run</button>
+        <button class="anim-btn" data-state="Attack">Attack</button>
+        <button class="anim-btn" data-state="Cast">Cast</button>
+        <div style="height: 16px; width: 1px; background: rgba(255,255,255,0.2);"></div>
+        <button id="btnPlayPause" class="anim-btn" style="padding: 6px 10px;">⏸ Pause</button>
+        <button id="btnTurntable" class="anim-btn" style="padding: 6px 10px;">🔄 360° Spin</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: MASTER SPRITESHEET & GAME EXPORT -->
+    <div class="panel">
+      <div class="panel-title">📦 Master 8-Dir Spritesheet</div>
+      <div class="sheet-preview">
+        <canvas id="sheetCanvas" width="512" height="576"></canvas>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+        • 8 Directions: S, SE, E, NE, N, NW, W, SW<br>
+        • 72 Total Frames (Idle, Run x4, Attack x4)<br>
+        • 100% 3D Rigged Math — Zero Morphing!
+      </div>
+
+      <button id="btnBakeSheet" class="btn-primary" style="background: linear-gradient(135deg, #06b6d4, #0284c7);">
+        🖼️ Bake Master Spritesheet (72 Frames)
+      </button>
+
+      <div class="panel-title" style="margin-top: 10px;">🚀 Export to Chronicles of Fortune</div>
+      <div class="control-row">
+        <span>Folder Name:</span>
+        <input type="text" id="exportName" value="catgirl_rogue" style="background: #0b0d14; border: 1px solid var(--panel-border); color: #fff; padding: 5px 8px; border-radius: 6px; width: 150px;">
+      </div>
+
+      <button id="btnExportGame" class="btn-primary">
+        🎮 Save Sprites to Game Assets
+      </button>
+
+      <div id="exportStatus" style="font-size: 12px; color: #34d399; display: none; background: rgba(16,185,129,0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.2);">
+        ✓ Exported all 72 frames to public/assets/!
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Three.js Module Import -->
+  <script type="module">
+    import * as THREE from './lib/three.module.js';
+
+    // State Variables
+    let currentDir = 'south';
+    let currentAnim = 'Idle';
+    let isPlaying = true;
+    let isTurntable = false;
+    let animTime = 0;
+    let currentAngle = 0;
+    let targetAngle = 0;
+
+    const DIR_ANGLES = {
+      'south': 0,
+      'south-east': Math.PI * 0.25,
+      'east': Math.PI * 0.5,
+      'north-east': Math.PI * 0.75,
+      'north': Math.PI,
+      'north-west': Math.PI * 1.25,
+      'west': Math.PI * 1.5,
+      'south-west': Math.PI * 1.75
+    };
+
+    // DOM Elements
+    const threeCanvas = document.getElementById('threeCanvas');
+    const pixelCanvas = document.getElementById('pixelCanvas');
+    const pixelCtx = pixelCanvas.getContext('2d');
+    pixelCtx.imageSmoothingEnabled = false;
+
+    // Three.js Scene Setup (Low-res 64x64 buffer for true pixel art)
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const camera = new THREE.OrthographicCamera(-1.4, 1.4, 1.4, -1.4, 0.1, 50);
+    camera.position.set(0, 1.2, 5);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: false, preserveDrawingBuffer: true, alpha: true });
+    renderer.setSize(64, 64);
+    renderer.setPixelRatio(1);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    dirLight.position.set(2, 4, 3);
+    scene.add(dirLight);
+
+    // Character Rig Root
+    const characterGroup = new THREE.Group();
+    scene.add(characterGroup);
+
+    // Character Parts & Materials
+    let matSkin, matHair, matOutfit, matAura, matEyes;
+
+    function initMaterials() {
+      matSkin = new THREE.MeshToonMaterial({ color: 0xffdfd0 });
+      matHair = new THREE.MeshToonMaterial({ color: 0x222634 });
+      matOutfit = new THREE.MeshToonMaterial({ color: 0x181a24 });
+      matAura = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.85 });
+      matEyes = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    }
+    initMaterials();
+
+    // Body Hierarchy Nodes
+    let hips, waist, bustL, bustR, head, hairGroup, earL, earR, tailGroup, armL, armR, legL, legR, weaponL, weaponR;
+
+    function build3DCharacter() {
+      // Clear existing
+      while(characterGroup.children.length > 0){
+        characterGroup.remove(characterGroup.children[0]);
+      }
+
+      // 1. Hips (Voluptuous 3D Sphere/Capsule)
+      hips = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), matSkin);
+      hips.scale.set(1.15, 0.85, 0.95);
+      hips.position.y = 0.0;
+      characterGroup.add(hips);
+
+      // Micro-bikini bottom
+      const bikiniB = new THREE.Mesh(new THREE.SphereGeometry(0.33, 10, 10), matOutfit);
+      bikiniB.scale.set(1.05, 0.45, 0.85);
+      bikiniB.position.y = -0.05;
+      hips.add(bikiniB);
+
+      // 2. Slim Waist
+      waist = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.35, 10), matSkin);
+      waist.position.y = 0.28;
+      hips.add(waist);
+
+      // 3. Voluptuous Bust (Two distinct 3D spheres)
+      bustL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), matSkin);
+      bustL.position.set(-0.13, 0.45, 0.16);
+      bustR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), matSkin);
+      bustR.position.set(0.13, 0.45, 0.16);
+      hips.add(bustL);
+      hips.add(bustR);
+
+      // Micro Bra Cups
+      const braL = new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 8), matOutfit);
+      braL.scale.set(0.85, 0.85, 0.85);
+      bustL.add(braL);
+      const braR = new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 8), matOutfit);
+      braR.scale.set(0.85, 0.85, 0.85);
+      bustR.add(braR);
+
+      // 4. Head & Face
+      head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 12), matSkin);
+      head.scale.set(1.0, 1.05, 0.95);
+      head.position.y = 0.82;
+      hips.add(head);
+
+      // Anime Eyes
+      const eyeGeom = new THREE.SphereGeometry(0.065, 8, 8);
+      const eyeL = new THREE.Mesh(eyeGeom, matEyes);
+      eyeL.position.set(-0.13, 0.02, 0.28);
+      const eyeR = new THREE.Mesh(eyeGeom, matEyes);
+      eyeR.position.set(0.13, 0.02, 0.28);
+      head.add(eyeL);
+      head.add(eyeR);
+
+      // 5. Hair Mass (Bangs + Volumetric Twin-tails / Locks)
+      hairGroup = new THREE.Group();
+      head.add(hairGroup);
+
+      // Crown / Bangs
+      const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 10), matHair);
+      hairCrown.scale.set(1.08, 1.0, 1.12);
+      hairCrown.position.set(0, 0.08, -0.04);
+      hairGroup.add(hairCrown);
+
+      // Long Back Locks
+      const hairBack = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.4, 0.9, 10), matHair);
+      hairBack.position.set(0, -0.4, -0.22);
+      hairBack.rotation.x = -0.15;
+      hairGroup.add(hairBack);
+
+      // 6. Cat Ears
+      earL = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.28, 4), matHair);
+      earL.position.set(-0.24, 0.38, 0.02);
+      earL.rotation.z = 0.35;
+      head.add(earL);
+
+      earR = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.28, 4), matHair);
+      earR.position.set(0.24, 0.38, 0.02);
+      earR.rotation.z = -0.35;
+      head.add(earR);
+
+      // 7. Cat Tail (Originates strictly at sacrum)
+      tailGroup = new THREE.Group();
+      tailGroup.position.set(0, -0.05, -0.25);
+      hips.add(tailGroup);
+
+      let prevJoint = tailGroup;
+      for (let i = 0; i < 6; i++) {
+        const seg = new THREE.Mesh(new THREE.SphereGeometry(0.07 - i * 0.006, 6, 6), matHair);
+        seg.position.set(0, -0.08, -0.09);
+        prevJoint.add(seg);
+        prevJoint = seg;
+      }
+
+      // 8. Arms & Dual Daggers
+      armL = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.5, 6), matSkin);
+      armL.position.set(-0.35, 0.32, 0);
+      hips.add(armL);
+
+      armR = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.5, 6), matSkin);
+      armR.position.set(0.35, 0.32, 0);
+      hips.add(armR);
+
+      // Daggers
+      const bladeGeom = new THREE.ConeGeometry(0.07, 0.45, 4);
+      weaponL = new THREE.Mesh(bladeGeom, matAura);
+      weaponL.position.set(0, -0.3, 0.1);
+      weaponL.rotation.x = Math.PI * 0.7;
+      armL.add(weaponL);
+
+      weaponR = new THREE.Mesh(bladeGeom, matAura);
+      weaponR.position.set(0, -0.3, 0.1);
+      weaponR.rotation.x = Math.PI * 0.7;
+      armR.add(weaponR);
+
+      // 9. Voluptuous Legs
+      legL = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.08, 0.8, 8), matSkin);
+      legL.position.set(-0.16, -0.55, 0);
+      hips.add(legL);
+
+      legR = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.08, 0.8, 8), matSkin);
+      legR.position.set(0.16, -0.55, 0);
+      hips.add(legR);
+    }
+
+    build3DCharacter();
+
+    // Real-Time Animation Logic
+    function updateAnimation(delta) {
+      if (!isPlaying) return;
+      animTime += delta * 6.0;
+
+      if (currentAnim === 'Idle') {
+        const breath = Math.sin(animTime * 0.8) * 0.03;
+        hips.position.y = breath;
+        bustL.scale.set(1 + breath * 0.5, 1 + breath * 0.5, 1);
+        bustR.scale.set(1 + breath * 0.5, 1 + breath * 0.5, 1);
+        tailGroup.rotation.y = Math.sin(animTime) * 0.4;
+        tailGroup.rotation.x = -0.2 + Math.cos(animTime * 0.8) * 0.15;
+        armL.rotation.x = 0.1 + Math.sin(animTime * 0.6) * 0.08;
+        armR.rotation.x = 0.1 - Math.sin(animTime * 0.6) * 0.08;
+        legL.rotation.x = 0;
+        legR.rotation.x = 0;
+      } else if (currentAnim === 'Run') {
+        const runCycle = animTime * 1.5;
+        const stride = Math.sin(runCycle) * 0.65;
+        hips.position.y = Math.abs(Math.cos(runCycle)) * 0.08;
+        legL.rotation.x = stride;
+        legR.rotation.x = -stride;
+        armL.rotation.x = -stride * 0.8;
+        armR.rotation.x = stride * 0.8;
+        tailGroup.rotation.y = Math.sin(runCycle) * 0.6;
+        hairGroup.rotation.x = -0.2 - Math.abs(Math.sin(runCycle)) * 0.15;
+      } else if (currentAnim === 'Attack') {
+        const atkCycle = (animTime * 1.8) % 4.0;
+        if (atkCycle < 1.0) {
+          armR.rotation.x = -1.2;
+          weaponR.scale.set(1, 1, 1);
+        } else if (atkCycle < 2.5) {
+          armR.rotation.x = 1.6;
+          weaponR.scale.set(1.4, 1.8, 1.4); // blade smear
+        } else {
+          armR.rotation.x = 0.2;
+          weaponR.scale.set(1, 1, 1);
+        }
+      } else if (currentAnim === 'Cast') {
+        const pulse = Math.sin(animTime * 2.0) * 0.15;
+        armL.rotation.x = -1.4 + pulse;
+        armR.rotation.x = -1.4 + pulse;
+        hips.position.y = 0.15 + pulse * 0.5;
+      }
+    }
+
+    // Render & Pixel-Shader Pass (Draws to 64x64, then upscales with sharp pixels)
+    function renderScene() {
+      // Smooth Turntable rotation
+      if (isTurntable) {
+        currentAngle += 0.02;
+        characterGroup.rotation.y = currentAngle;
+      } else {
+        characterGroup.rotation.y = THREE.MathUtils.lerp(characterGroup.rotation.y, targetAngle, 0.2);
+      }
+
+      // Render 3D WebGL
+      renderer.render(scene, camera);
+
+      // Blit to 384x384 canvas with nearest-neighbor
+      pixelCtx.clearRect(0, 0, 384, 384);
+      pixelCtx.drawImage(threeCanvas, 0, 0, 64, 64, 0, 0, 384, 384);
+    }
+
+    let lastTime = performance.now();
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const delta = (now - lastTime) / 1000;
+      lastTime = now;
+
+      updateAnimation(delta);
+      renderScene();
+    }
+    requestAnimationFrame(animate);
+
+    // Compass Controls
+    document.querySelectorAll('.compass-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        isTurntable = false;
+        document.querySelectorAll('.compass-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const dir = btn.dataset.dir;
+        currentDir = dir;
+        targetAngle = DIR_ANGLES[dir];
+      });
+    });
+
+    // Animation Buttons
+    document.querySelectorAll('.anim-btn[data-state]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.anim-btn[data-state]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAnim = btn.dataset.state;
+      });
+    });
+
+    document.getElementById('btnPlayPause').addEventListener('click', (e) => {
+      isPlaying = !isPlaying;
+      e.target.innerText = isPlaying ? '⏸ Pause' : '▶ Play';
+    });
+
+    document.getElementById('btnTurntable').addEventListener('click', () => {
+      isTurntable = !isTurntable;
+    });
+
+    // Color Pickers
+    document.getElementById('hairColorPicker').addEventListener('input', (e) => {
+      matHair.color.set(e.target.value);
+    });
+    document.getElementById('auraColorPicker').addEventListener('input', (e) => {
+      matAura.color.set(e.target.value);
+      matEyes.color.set(e.target.value);
+    });
+
+    // Presets
+    const PRESETS = {
+      catgirl: { hair: '#232634', aura: '#10b981', skin: 0xffdfd0, outfit: 0x181a24, ears: true, tail: true },
+      spellblade: { hair: '#e2e8f0', aura: '#06b6d4', skin: 0xffe4e6, outfit: 0x334155, ears: false, tail: false },
+      sorceress: { hair: '#dc2626', aura: '#f59e0b', skin: 0xffedd5, outfit: 0x581c87, ears: false, tail: false },
+      paladin: { hair: '#fbbf24', aura: '#facc15', skin: 0xfef3c7, outfit: 0xe2e8f0, ears: false, tail: false },
+      succubus: { hair: '#7c3aed', aura: '#ec4899', skin: 0xede9fe, outfit: 0x0f172a, ears: true, tail: true }
+    };
+
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const p = PRESETS[chip.dataset.preset];
+        if (!p) return;
+        matHair.color.set(p.hair);
+        matAura.color.set(p.aura);
+        matEyes.color.set(p.aura);
+        matSkin.color.setHex(p.skin);
+        matOutfit.color.setHex(p.outfit);
+        earL.visible = p.ears;
+        earR.visible = p.ears;
+        tailGroup.visible = p.tail;
+        document.getElementById('hairColorPicker').value = p.hair;
+        document.getElementById('auraColorPicker').value = p.aura;
+      });
+    });
+
+    // Prompt Parser
+    document.getElementById('btnApplyPrompt').addEventListener('click', () => {
+      const p = document.getElementById('promptInput').value.toLowerCase();
+      if (p.includes('cat')) {
+        earL.visible = true; earR.visible = true; tailGroup.visible = true;
+      }
+      if (p.includes('black') || p.includes('raven')) matHair.color.set('#1e2230');
+      else if (p.includes('silver') || p.includes('white')) matHair.color.set('#e2e8f0');
+      else if (p.includes('red') || p.includes('crimson')) matHair.color.set('#ef4444');
+      else if (p.includes('blonde') || p.includes('gold')) matHair.color.set('#fbbf24');
+      else if (p.includes('purple') || p.includes('violet')) matHair.color.set('#a855f7');
+
+      if (p.includes('green') || p.includes('emerald')) {
+        matAura.color.set('#10b981'); matEyes.color.set('#10b981');
+      } else if (p.includes('cyan') || p.includes('blue')) {
+        matAura.color.set('#06b6d4'); matEyes.color.set('#06b6d4');
+      } else if (p.includes('fire') || p.includes('flame')) {
+        matAura.color.set('#f97316'); matEyes.color.set('#f97316');
+      }
+    });
+
+    // Master Spritesheet Baker (72 Frames: 8 columns x 9 rows)
+    const sheetCanvas = document.getElementById('sheetCanvas');
+    const sheetCtx = sheetCanvas.getContext('2d');
+    sheetCtx.imageSmoothingEnabled = false;
+
+    function bakeSpritesheet() {
+      const DIRS = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west'];
+      const STATES = ['Idle', 'Run', 'Attack'];
+
+      sheetCtx.clearRect(0, 0, 512, 576);
+
+      let savedAnim = currentAnim;
+      let savedAngle = characterGroup.rotation.y;
+      isPlaying = false;
+
+      let row = 0;
+      // Row 0: Idle
+      currentAnim = 'Idle';
+      animTime = 0;
+      updateAnimation(0);
+      DIRS.forEach((d, col) => {
+        characterGroup.rotation.y = DIR_ANGLES[d];
+        renderer.render(scene, camera);
+        sheetCtx.drawImage(threeCanvas, 0, 0, 64, 64, col * 64, 0, 64, 64);
+      });
+      row++;
+
+      // Rows 1..4: Run frames
+      currentAnim = 'Run';
+      for (let f = 0; f < 4; f++) {
+        animTime = (f / 4.0) * Math.PI * 2;
+        updateAnimation(0);
+        DIRS.forEach((d, col) => {
+          characterGroup.rotation.y = DIR_ANGLES[d];
+          renderer.render(scene, camera);
+          sheetCtx.drawImage(threeCanvas, 0, 0, 64, 64, col * 64, row * 64, 64, 64);
+        });
+        row++;
+      }
+
+      // Rows 5..8: Attack frames
+      currentAnim = 'Attack';
+      for (let f = 0; f < 4; f++) {
+        animTime = f;
+        updateAnimation(0);
+        DIRS.forEach((d, col) => {
+          characterGroup.rotation.y = DIR_ANGLES[d];
+          renderer.render(scene, camera);
+          sheetCtx.drawImage(threeCanvas, 0, 0, 64, 64, col * 64, row * 64, 64, 64);
+        });
+        row++;
+      }
+
+      // Restore
+      currentAnim = savedAnim;
+      characterGroup.rotation.y = savedAngle;
+      isPlaying = true;
+    }
+
+    document.getElementById('btnBakeSheet').addEventListener('click', bakeSpritesheet);
+
+    // Initial Bake
+    setTimeout(bakeSpritesheet, 500);
+
+    // Game Export Button
+    document.getElementById('btnExportGame').addEventListener('click', () => {
+      const name = document.getElementById('exportName').value.trim() || 'custom_heroine';
+      bakeSpritesheet();
+
+      // Trigger PNG download of sheet
+      const link = document.createElement('a');
+      link.download = `${name}_spritesheet.png`;
+      link.href = sheetCanvas.toDataURL('image/png');
+      link.click();
+
+      const status = document.getElementById('exportStatus');
+      status.style.display = 'block';
+      status.innerText = `✓ Spritesheet downloaded and ready to import into chronicles_of_fortune!`;
+    });
+  </script>
+</body>
+</html>

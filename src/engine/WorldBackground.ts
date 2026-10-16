@@ -413,10 +413,10 @@ export class WorldBackground {
 
     switch (timeOfDay) {
       case 'DAWN':
-        layer1Color = 'rgba(99, 102, 241, 0.42)';
-        layer2Color = 'rgba(109, 40, 217, 0.62)';
-        mistColor1 = 'rgba(251, 146, 60, 0.28)';
-        mistColor2 = 'rgba(244, 114, 182, 0.35)';
+        layer1Color = 'rgba(91, 104, 132, 0.42)';
+        layer2Color = 'rgba(79, 96, 105, 0.62)';
+        mistColor1 = 'rgba(211, 177, 143, 0.28)';
+        mistColor2 = 'rgba(200, 173, 167, 0.35)';
         break;
       case 'DAY':
         layer1Color = 'rgba(30, 58, 138, 0.38)';
@@ -425,11 +425,11 @@ export class WorldBackground {
         mistColor2 = 'rgba(224, 242, 254, 0.35)';
         break;
       case 'DUSK':
-        layer1Color = 'rgba(76, 29, 149, 0.65)';
-        layer2Color = 'rgba(67, 16, 42, 0.78)';
-        mistColor1 = 'rgba(234, 88, 12, 0.32)';
-        mistColor2 = 'rgba(192, 38, 211, 0.42)';
-        rimLightColor = 'rgba(251, 191, 36, 0.55)';
+        layer1Color = 'rgba(77, 77, 103, 0.65)';
+        layer2Color = 'rgba(71, 68, 78, 0.78)';
+        mistColor1 = 'rgba(190, 142, 117, 0.26)';
+        mistColor2 = 'rgba(164, 136, 147, 0.28)';
+        rimLightColor = 'rgba(218, 186, 137, 0.45)';
         break;
       case 'NIGHT':
         layer1Color = 'rgba(15, 23, 42, 0.78)';

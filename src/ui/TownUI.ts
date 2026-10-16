@@ -3,8 +3,7 @@ import { BoardNode } from '../game/BoardMap';
 import { townManager } from '../game/TownManager';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
-import { pixelSprites } from '../engine/PixelSpriteGenerator';
-import { pixelVerticalRamp } from '../engine/PixelFx';
+import { drawSettlementScenery, refreshSettlementOnLoad } from '../engine/SettlementScenery';
 
 export class TownUI {
   private game: GameState;
@@ -15,6 +14,12 @@ export class TownUI {
   constructor(game: GameState) {
     this.game = game;
     this.bindButtons();
+    refreshSettlementOnLoad('townDioramaCanvas', 'townModal', () => {
+      if (!this.currentTown) return;
+      const owner = this.game.players.find(p => p.id === this.currentTown?.townData?.ownerId);
+      this.renderTownPlazaDiorama(document.getElementById('townDioramaCanvas') as HTMLCanvasElement,
+        this.currentTown.name, this.currentTown.townData?.level || 1, owner?.color || null);
+    });
   }
 
   private bindButtons() {
@@ -229,63 +234,11 @@ export class TownUI {
     townLevel: number,
     ownerColor: string | null
   ) {
+    drawSettlementScenery(canvas, 'town', ownerColor);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
-
-    // 1. Sky & Atmospheric Backdrop Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060a14'], [0.5, '#0f172a'], [1, '#020617']]);
-
-    // 2. 2.5D Isometric Flagstone Ground Paving
-    const tw = 48;
-    const th = 24;
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 12; col++) {
-        const cx = (col - row) * (tw / 2) + w * 0.35;
-        const cy = (col + row) * (th / 2) + 20;
-
-        ctx.fillStyle = (row + col) % 2 === 0 ? '#1e293b' : '#0f172a';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - th / 2);
-        ctx.lineTo(cx + tw / 2, cy);
-        ctx.lineTo(cx, cy + th / 2);
-        ctx.lineTo(cx - tw / 2, cy);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(71, 85, 105, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // 3. Central Town Citadel Fortress (64x64 model, base seated on the plaza)
-    const citadel = pixelSprites.getBuildingSprite('town', ownerColor);
-    ctx.drawImage(citadel, w * 0.44 - 32, h * 0.48 - 32, 64, 64);
-
-    // 4. City Watch Guard (Hero sprite)
-    const guard = pixelSprites.getHeroSprite('warrior', 'SE', 'idle', 0);
-    ctx.drawImage(guard, w * 0.22, h * 0.35, 60, 60);
-
-    // 5. Merchant Traveler (Hero sprite)
-    const merchant = pixelSprites.getHeroSprite('thief', 'SW', 'idle', 0);
-    ctx.drawImage(merchant, w * 0.72, h * 0.35, 60, 60);
-
-    // 6. Town Nameplate Ribbon
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-    ctx.strokeStyle = ownerColor || '#fbbf24';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(14, 10, 220, 26, 6);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = ownerColor || '#fde047';
-    ctx.font = 'bold 9px Silkscreen, sans-serif';
-    ctx.fillText(`🏰 ${townName} (LV ${townLevel})`, 22, 26);
+    ctx.fillStyle = '#142b36'; ctx.fillRect(10, 8, 250, 23);
+    ctx.fillStyle = '#e9d7ad'; ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(townName + ' · LV ' + townLevel, 18, 24);
   }
 }

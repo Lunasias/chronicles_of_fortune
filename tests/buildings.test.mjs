@@ -15,9 +15,10 @@ import png from '../scripts/lib/png.cjs';
 const { encodePNG } = png;
 const MODEL_DIR = path.join('public', 'assets', 'buildings');
 
-/** `capital` and `boss` paint identically to `town` and `dark_gate`, so only the canonical set
+/** The boss gate shares its dark portal model; the capital has its own citadel. The canonical set
  *  is exported. */
 const KINDS = [
+  'capital',
   'town',
   'shop_weapon',
   'shop_magic',
@@ -33,7 +34,7 @@ const KINDS = [
   'home'
 ];
 
-const ALIASES = { capital: 'town', boss: 'dark_gate' };
+const ALIASES = { boss: 'dark_gate' };
 
 const SOLID_ALPHA = 200;
 const luminance = (r, g, b) => (r * 0.299 + g * 0.587 + b * 0.114) / 255;

@@ -13,8 +13,8 @@
 // Geometry. The projection is 2:1 dimetric with a 96x48 tile, so the top face is a rhombus whose
 // diagonals are exactly horizontal and vertical: half-width 48, half-height 24. A 96x48 tile is
 // not negotiable — it is what makes adjacent tiles tile the plane exactly — so unlike the
-// structures (64x64) and trees (64x64) the floor sprite is 104x82 with the diamond centred at
-// (52, 28) and two 18px cliff faces below it.
+// structures and trees (96x96) the floor sprite is 104x96 with the diamond centred at
+// (52, 28) and two 32px cliff faces below it.
 //
 // Style rules:
 //
@@ -36,7 +36,7 @@ import type { BiomeType } from '../game/BoardMap';
 // geometry
 // ---------------------------------------------------------------------------
 export const TERRAIN_SPRITE_W = 104;
-export const TERRAIN_SPRITE_H = 82;
+export const TERRAIN_SPRITE_H = 96;
 /** Half-width of the top-face rhombus. */
 export const TERRAIN_HW = 48;
 /** Half-height of the top-face rhombus. */
@@ -45,7 +45,7 @@ export const TERRAIN_HH = 24;
 export const TERRAIN_CX = 52;
 export const TERRAIN_CY = 28;
 /** Depth of the exposed cliff faces below the top face. */
-export const TERRAIN_CLIFF_H = 18;
+export const TERRAIN_CLIFF_H = 32;
 
 /** The renderer blits the sprite at this offset from the tile's world position. */
 export const TERRAIN_BLIT_X = TERRAIN_CX;
@@ -87,24 +87,24 @@ interface BiomePalette {
 }
 
 const DAY: Record<BiomeType, BiomePalette> = {
-  grass: { top: '#276239', accent: '#39834e', cliffLeft: '#382012', cliffRight: '#4d2d19', border: '#1b4327' },
+  grass: { top: '#527452', accent: '#718b5f', cliffLeft: '#514135', cliffRight: '#3c3430', border: '#405b43' },
   forest: {
-    top: '#174728',
-    accent: '#226038',
+    top: '#365c47',
+    accent: '#54765a',
     cliffLeft: '#2a1a10',
     cliffRight: '#3b2516',
     border: '#11331c',
     glow: '#6ee7b7'
   },
   snow: {
-    top: '#e2e8f0',
-    accent: '#f8fafc',
+    top: '#c7d6d7',
+    accent: '#e2e8df',
     cliffLeft: '#475569',
     cliffRight: '#64748b',
     border: '#cbd5e1',
     glow: '#ffffff'
   },
-  desert: { top: '#d97706', accent: '#f59e0b', cliffLeft: '#652b09', cliffRight: '#883b0c', border: '#b45309' },
+  desert: { top: '#b79b69', accent: '#d6bd85', cliffLeft: '#786047', cliffRight: '#614b3c', border: '#977e56' },
   volcano: {
     top: '#27272a',
     accent: '#ea580c',
@@ -117,20 +117,20 @@ const DAY: Record<BiomeType, BiomePalette> = {
     top: '#334155',
     accent: '#475569',
     cliffLeft: '#090d16',
-    cliffRight: '#1e293b',
-    border: '#1e293b',
-    glow: '#38bdf8'
+    cliffRight: '#3a485c',
+    border: '#3a485c',
+    glow: '#96bdc9'
   },
   coral: {
-    top: '#0891b2',
-    accent: '#22d3ee',
+    top: '#3b7b80',
+    accent: '#70acaa',
     cliffLeft: '#042f2e',
     cliffRight: '#0d9488',
     border: '#0891b2',
-    glow: '#22d3ee'
+    glow: '#a0c6c9'
   },
   celestial: {
-    top: '#fef08a',
+    top: '#d5c99c',
     accent: '#ffffff',
     cliffLeft: '#cbd5e1',
     cliffRight: '#e2e8f0',
@@ -138,75 +138,75 @@ const DAY: Record<BiomeType, BiomePalette> = {
     glow: '#fef08a'
   },
   fairy_grove: {
-    top: '#ec4899',
-    accent: '#f472b6',
-    cliffLeft: '#831843',
-    cliffRight: '#9d174d',
-    border: '#db2777',
-    glow: '#f472b6'
+    top: '#7b6b79',
+    accent: '#b697b0',
+    cliffLeft: '#503d4c',
+    cliffRight: '#674e5c',
+    border: '#8d657d',
+    glow: '#b697b0'
   },
   crystal_cavern: {
-    top: '#0284c7',
-    accent: '#38bdf8',
+    top: '#3d6b83',
+    accent: '#7cabb6',
     cliffLeft: '#0369a1',
     cliffRight: '#075985',
-    border: '#0ea5e9',
-    glow: '#38bdf8'
+    border: '#6d98ac',
+    glow: '#96bdc9'
   },
-  castle: { top: '#475569', accent: '#64748b', cliffLeft: '#1e293b', cliffRight: '#334155', border: '#334155' },
+  castle: { top: '#475569', accent: '#64748b', cliffLeft: '#3a485c', cliffRight: '#334155', border: '#334155' },
   steampunk: {
-    top: '#78350f',
-    accent: '#fbbf24',
-    cliffLeft: '#451a03',
-    cliffRight: '#5b2204',
-    border: '#d97706',
-    glow: '#fbbf24'
+    top: '#796048',
+    accent: '#d3b378',
+    cliffLeft: '#493d35',
+    cliffRight: '#59463a',
+    border: '#ae8659',
+    glow: '#d3b378'
   },
   waterfall_forest: {
-    top: '#047857',
-    accent: '#10b981',
-    cliffLeft: '#065f46',
-    cliffRight: '#047857',
-    border: '#34d399',
-    glow: '#67e8f9'
+    top: '#3b6b60',
+    accent: '#769982',
+    cliffLeft: '#334b45',
+    cliffRight: '#3b6b60',
+    border: '#8cbcac',
+    glow: '#b9d9cd'
   },
   sakura_shrine: {
-    top: '#831843',
+    top: '#503d4c',
     accent: '#fbcfe8',
     cliffLeft: '#500724',
     cliffRight: '#700c35',
-    border: '#f43f5e',
+    border: '#ae798a',
     glow: '#fbcfe8'
   },
   abyss: {
-    top: '#250e4f',
-    accent: '#a855f7',
+    top: '#39334b',
+    accent: '#9a85b0',
     cliffLeft: '#090214',
     cliffRight: '#180527',
-    border: '#4c1d95',
-    glow: '#a855f7'
+    border: '#685779',
+    glow: '#9a85b0'
   }
 };
 
 const NIGHT: Record<BiomeType, BiomePalette> = {
-  grass: { top: '#0e2917', accent: '#164324', cliffLeft: '#141210', cliffRight: '#1d1917', border: '#0a1d10' },
+  grass: { top: '#293f35', accent: '#3d5847', cliffLeft: '#141210', cliffRight: '#1d1917', border: '#0a1d10' },
   forest: {
-    top: '#081f12',
-    accent: '#10301c',
+    top: '#223c32',
+    accent: '#335044',
     cliffLeft: '#0f141f',
     cliffRight: '#17202e',
     border: '#06160d',
     glow: '#6ee7b7'
   },
   snow: {
-    top: '#1e293b',
-    accent: '#38bdf8',
+    top: '#3a485c',
+    accent: '#96bdc9',
     cliffLeft: '#090d16',
-    cliffRight: '#0f172a',
-    border: '#38bdf8',
+    cliffRight: '#293545',
+    border: '#96bdc9',
     glow: '#7dd3fc'
   },
-  desert: { top: '#3f2512', accent: '#78350f', cliffLeft: '#261205', cliffRight: '#451a03', border: '#78350f' },
+  desert: { top: '#3f2512', accent: '#796048', cliffLeft: '#261205', cliffRight: '#493d35', border: '#796048' },
   volcano: {
     top: '#18181b',
     accent: '#ea580c',
@@ -216,77 +216,77 @@ const NIGHT: Record<BiomeType, BiomePalette> = {
     glow: '#f97316'
   },
   cavern: {
-    top: '#0f172a',
-    accent: '#38bdf8',
+    top: '#293545',
+    accent: '#96bdc9',
     cliffLeft: '#090d16',
-    cliffRight: '#1e293b',
-    border: '#1e293b',
-    glow: '#38bdf8'
+    cliffRight: '#3a485c',
+    border: '#3a485c',
+    glow: '#96bdc9'
   },
   coral: {
-    top: '#083344',
+    top: '#294652',
     accent: '#0e7490',
     cliffLeft: '#042f2e',
     cliffRight: '#0d9488',
     border: '#0891b2',
-    glow: '#22d3ee'
+    glow: '#a0c6c9'
   },
   celestial: {
-    top: '#1e1b4b',
+    top: '#303449',
     accent: '#818cf8',
-    cliffLeft: '#0f172a',
-    cliffRight: '#1e293b',
-    border: '#4338ca',
+    cliffLeft: '#293545',
+    cliffRight: '#3a485c',
+    border: '#727496',
     glow: '#a5b4fc'
   },
   fairy_grove: {
-    top: '#2e1065',
-    accent: '#d946ef',
-    cliffLeft: '#1e1b4b',
-    cliffRight: '#312e81',
+    top: '#343348',
+    accent: '#a083ab',
+    cliffLeft: '#303449',
+    cliffRight: '#414360',
     border: '#a21caf',
-    glow: '#e879f9'
+    glow: '#c2aac9'
   },
   crystal_cavern: {
-    top: '#083344',
-    accent: '#06b6d4',
+    top: '#294652',
+    accent: '#82acb5',
     cliffLeft: '#082f49',
     cliffRight: '#0c4a6e',
-    border: '#0284c7',
-    glow: '#22d3ee'
+    border: '#547f98',
+    glow: '#a0c6c9'
   },
-  castle: { top: '#1e293b', accent: '#334155', cliffLeft: '#0f172a', cliffRight: '#1e293b', border: '#0f172a' },
+  castle: { top: '#3a485c', accent: '#334155', cliffLeft: '#293545', cliffRight: '#3a485c', border: '#293545' },
   steampunk: {
     top: '#29180b',
-    accent: '#d97706',
+    accent: '#ae8659',
     cliffLeft: '#170c05',
     cliffRight: '#261205',
     border: '#b45309',
-    glow: '#fbbf24'
+    glow: '#d3b378'
   },
   waterfall_forest: {
     top: '#064e3b',
-    accent: '#34d399',
+    accent: '#8cbcac',
     cliffLeft: '#022c22',
     cliffRight: '#064e3b',
     border: '#059669',
-    glow: '#67e8f9'
+    glow: '#b9d9cd'
   },
   sakura_shrine: {
-    top: '#2e1026',
-    accent: '#f472b6',
-    cliffLeft: '#1a0815',
-    cliffRight: '#240a1d',
-    border: '#db2777',
+    top: '#3f303f',
+    accent: '#b697b0',
+    cliffLeft: '#272b32',
+    cliffRight: '#352f3b',
+    border: '#8d657d',
     glow: '#f9a8d4'
   },
   abyss: {
-    top: '#150624',
-    accent: '#a855f7',
+    top: '#252636',
+    accent: '#9a85b0',
     cliffLeft: '#090214',
     cliffRight: '#180527',
-    border: '#4c1d95',
-    glow: '#c084fc'
+    border: '#685779',
+    glow: '#bca8c7'
   }
 };
 
@@ -917,6 +917,8 @@ function drawSurface(
 // entry point
 // ---------------------------------------------------------------------------
 export interface TerrainPaintOptions {
+  /** Neighboring biomes at +gx, +gy, -gx, -gy. Optional for standalone exported tiles. */
+  edgeBiomes?: readonly (string | null)[];
   /** Draw the two exposed cliff faces. False for a tile hemmed in by neighbours. */
   cliffs?: boolean;
   night?: boolean;
@@ -978,5 +980,27 @@ export function paintTerrainTile(biome: string, options: TerrainPaintOptions = {
   drawTopFace(s, t);
   if (options.detail !== false) drawSurface(s, kind, t, night, seed, dx, dy);
   drawContour(s, t);
+  if (options.edgeBiomes) blendBiomeEdges(s, kind, night, options.edgeBiomes);
   return s;
+}
+
+/** Low contrast, clustered transition bands; equal mixtures meet at a shared boundary. */
+function blendBiomeEdges(s: IsoSurface, biome: BiomeType, night: boolean, neighbors: readonly (string | null)[]) {
+  const base = terrainPalette(biome, night).top;
+  const rgb = (color: string) => [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
+  const a = rgb(base);
+  for (let y = 5; y <= 51; y++) for (let x = 5; x <= 99; x++) {
+    const u = (x - TERRAIN_CX) / TERRAIN_HW + (y - TERRAIN_CY) / TERRAIN_HH;
+    const v = (y - TERRAIN_CY) / TERRAIN_HH - (x - TERRAIN_CX) / TERRAIN_HW;
+    if (Math.abs(u) > 1 || Math.abs(v) > 1) continue;
+    const distances = [1 - u, 1 - v, 1 + u, 1 + v];
+    const edge = distances.indexOf(Math.min(...distances));
+    const other = neighbors[edge];
+    if (!other || resolveBiome(other) === biome || distances[edge] > .3) continue;
+    const b = rgb(terrainPalette(resolveBiome(other), night).top);
+    const mix = Math.round((.5 - distances[edge] * 1.5) * 4) / 4;
+    const color = '#' + a.map((n, i) => Math.round(n + (b[i] - n) * mix).toString(16).padStart(2, '0')).join('');
+    // Leave a few existing clusters visible, rather than a noisy one-pixel dither seam.
+    if (noise2(Math.floor(x / 3), Math.floor(y / 2), 41) < .8 || distances[edge] < .06) s.px(x, y, color);
+  }
 }
