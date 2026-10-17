@@ -1,3 +1,4 @@
+import { enrichEnvironmentPixels } from './VibrantPalette';
 /** Isolate a sprite from small detached pieces crossing a generated atlas cell boundary. */
 export function isolateAtlasCell(data: Uint8ClampedArray, width: number, height: number): void {
   const visited = new Uint8Array(width * height);
@@ -31,6 +32,7 @@ export function atlasSprite(image: HTMLImageElement, col: number, row: number, c
   ctx.drawImage(image, x, y, right - x, bottom - y, 0, 0, size, size);
   const pixels = ctx.getImageData(0, 0, size, size);
   isolateAtlasCell(pixels.data, size, size);
+  enrichEnvironmentPixels(pixels.data);
   ctx.putImageData(pixels, 0, 0);
   return canvas;
 }

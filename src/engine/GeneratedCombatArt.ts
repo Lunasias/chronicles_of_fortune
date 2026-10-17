@@ -21,7 +21,17 @@ export function combatArtFrame(age:number,duration:number,reduced=false):number 
   return t<.08?0:t<.2?1:t<.34?2:t<.59?3:t<.78?4:5;
 }
 interface Sheet {image:HTMLImageElement; ready:boolean; promise:Promise<boolean>}
-/** Only copies generated PNG pixels. No procedural effect, recolor, alpha stripping or island removal. */
+/** Remove the near-transparent matte and atlas-edge bleed, retaining every
+ * disconnected spark. RGB pixels remain the generated artwork. */
+export function cleanCombatFrame(data: Uint8ClampedArray, width: number, height: number): void {
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    const i = (y * width + x) * 4 + 3;
+    const edge = Math.min(x, y, width - 1 - x, height - 1 - y);
+    const alpha = Math.max(0, (data[i] - 24) * 255 / 231);
+    data[i] = Math.round(alpha * Math.min(1, edge / 3));
+  }
+}
+/** Generated PNG playback with a clean transparent gutter around each frame. */
 export class GeneratedCombatArt {
   private sheets=new Map<number,Sheet>();
   private frames=new Map<string,HTMLCanvasElement>();
@@ -46,6 +56,9 @@ export class GeneratedCombatArt {
     const ctx=canvas.getContext('2d')!;ctx.imageSmoothingEnabled=false;
     const cw=source.image.naturalWidth/6,ch=source.image.naturalHeight/4;
     ctx.drawImage(source.image,Math.round(frame*cw),Math.round(profile.row*ch),Math.round(cw),Math.round(ch),0,0,128,128);
+    const pixels = ctx.getImageData(0, 0, 128, 128);
+    cleanCombatFrame(pixels.data, 128, 128);
+    ctx.putImageData(pixels, 0, 0);
     this.frames.set(key,canvas);if(this.frames.size>144)this.frames.delete(this.frames.keys().next().value!);
     return canvas;
   }

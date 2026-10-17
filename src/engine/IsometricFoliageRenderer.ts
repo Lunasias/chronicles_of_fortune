@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import { FOLIAGE_SIZE, paintFoliage } from './IsometricFoliagePainter';
 import { atlasSprite } from './AtlasSprites';
 
@@ -16,7 +17,7 @@ export class IsometricFoliageRenderer {
   private ensureAtlas() {
     if (this.atlas) return;
     if (typeof Image === 'undefined') return;
-    this.atlas = new Image();
+    this.atlas = createArtworkImage();
     this.atlas.onload = () => { this.atlasReady = true; this.cache.clear(); };
     this.atlas.src = '/assets/art-v2/kingdom-foliage-atlas.png';
   }

@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import { BUILDING_SIZE, paintBuilding } from './IsometricBuildingPainter';
 import { atlasSprite } from './AtlasSprites';
 
@@ -21,7 +22,7 @@ export class IsometricBuildingRenderer {
   private ensureAtlas() {
     if (this.atlas) return;
     if (typeof Image === 'undefined') return;
-    this.atlas = new Image();
+    this.atlas = createArtworkImage();
     this.atlas.onload = () => {
       this.atlasReady = true;
       this.cache.clear();

@@ -1,3 +1,5 @@
+import { createArtworkImage } from './ArtworkLoading';
+import { vibrantChannel } from './VibrantPalette';
 export const MATERIAL_ORDER = ['grass', 'forest', 'snow', 'desert', 'volcano', 'cavern', 'coral', 'celestial', 'abyss', 'fairy_grove', 'crystal_cavern', 'castle', 'steampunk', 'waterfall_forest', 'sakura_shrine', 'path'];
 
 /** Project a real pixel material onto the same 96×48 diamond used by actors and buildings. */
@@ -12,7 +14,7 @@ export function projectGroundMaterial(target: Uint8ClampedArray, source: Uint8Cl
     if (!target[to + 3]) continue;
     const blend = Math.min(.84, (1 - Math.abs(dx) - Math.abs(dy)) * 7);
     for (let c = 0; c < 3; c++) {
-      const lit = source[from + c] * (night ? [.49, .58, .72][c] : 1);
+      const lit = vibrantChannel(source[from], source[from + 1], source[from + 2], c) * (night ? [.49, .58, .72][c] : 1);
       target[to + c] = Math.round(target[to + c] * (1 - blend) + lit * blend);
     }
   }
@@ -41,7 +43,7 @@ export class GroundMaterials {
 
   apply(data: Uint8ClampedArray, biome: string, variant: number, night: boolean) {
     if (!this.image) {
-      this.image = new Image();
+      this.image = createArtworkImage();
       this.image.onload = () => { this.ready = true; this.onReady(); window.dispatchEvent(new CustomEvent('world-art-loaded')); };
       this.image.src = '/assets/art-v2/world-ground-materials.png';
     }

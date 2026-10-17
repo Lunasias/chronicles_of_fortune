@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import { isolateAtlasCell } from './AtlasSprites';
 import type { CharacterAnimState, IsoDirection } from './PixelSpriteGenerator';
 import { JOB_VISUALS } from './JobVisuals';
@@ -61,7 +62,7 @@ class ClassArtAtlas {
     const atlasKey = `${job}_${supplemental ? 'actions' : 'motion'}`;
     let atlas = this.atlases.get(atlasKey);
     if (!atlas) {
-      const image = new Image();
+      const image = createArtworkImage();
       atlas = { image, cuts: [], ready: false };
       this.atlases.set(atlasKey, atlas);
       const entry = atlas;
@@ -73,6 +74,7 @@ class ClassArtAtlas {
         window.dispatchEvent(new CustomEvent('class-art-loaded'));
       };
       image.src = `/assets/art-v2/${job}-${supplemental ? 'actions' : 'motion'}-atlas.png`;
+      if (!supplemental) this.getFrame(job, dir, 'magic', 0, visualClass);
     }
     if (!atlas.ready) return null;
     const row = supplemental ? actionPoseRow(state, frame) : classPoseRow(state, frame, job === 'cleric');

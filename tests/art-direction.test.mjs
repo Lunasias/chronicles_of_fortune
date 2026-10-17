@@ -129,7 +129,7 @@ test('promoted magic retains its elemental identity and each element has a disti
 });
 
 test('combat spells use generated image frames and preserve the caller canvas state', () => {
-  const fx=new CombatVFXEngine();fx.spawnMagicHit(100,120,false,'frost');fx.spawnCompanionSummonPortal(180,190);for(let i=0;i<20;i++)fx.update();
+  const fx=new CombatVFXEngine();fx.spawnMagicHit(100,120,false,'frost');fx.spawnCompanionSummonPortal(450,190);for(let i=0;i<20;i++)fx.update();
   let depth=0,draws=0;const original=generatedCombatArt.frame;generatedCombatArt.frame=()=>({width:128,height:128});
   const ctx=new Proxy({}, {get:(t,k)=>k==='save'?()=>depth++:k==='restore'?()=>{assert.ok(depth>0);depth--;}:k==='drawImage'?()=>draws++:k==='fillRect'?()=>assert.fail('procedural spell art must not be drawn'):t[k]??(()=>{}),set:(t,k,v)=>{t[k]=v;return true;}});
   try{fx.render(ctx,800,450);assert.equal(depth,0);assert.equal(draws,2);}finally{generatedCombatArt.frame=original;}

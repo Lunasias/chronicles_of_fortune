@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import {
   COMPANION_SPRITE_SIZE,
   allCompanionKeys,
@@ -8,7 +9,7 @@ import {
 import type { CompanionData } from '../game/Player';
 import { atlasSprite } from './AtlasSprites';
 
-/** Native companion/host atlas, loaded on first use; individual legacy PNGs are fallback. */
+/** Native companion/host atlas, loaded before its first visible appearance. */
 export class CompanionSpriteRenderer {
   private images = new Map<string, HTMLImageElement>();
   private cache = new Map<string, HTMLCanvasElement>();
@@ -33,7 +34,7 @@ export class CompanionSpriteRenderer {
 
   private ensureAtlas() {
     if (this.atlas) return;
-    this.atlas = new Image();
+    this.atlas = createArtworkImage();
     this.atlas.onload = () => {
       this.atlasReady = true; this.cache.clear();
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('companion-assets-loaded'));
@@ -43,7 +44,7 @@ export class CompanionSpriteRenderer {
 
   private ensureFallback(key: string) {
     if (this.images.has(key)) return;
-    const image = new Image(); this.images.set(key, image);
+    const image = createArtworkImage(); this.images.set(key, image);
     image.onload = () => {
       this.readyNotified = true; this.cache.delete(key);
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('companion-assets-loaded'));
@@ -90,20 +91,7 @@ export class CompanionSpriteRenderer {
       return canvas;
     }
 
-    this.ensureFallback(resolved);
-    const img = this.images.get(resolved);
-    if (!img || !img.complete || img.naturalWidth === 0) return null;
-
-    if (typeof document === 'undefined') return null;
-    const canvas = document.createElement('canvas');
-    canvas.width = COMPANION_SPRITE_SIZE;
-    canvas.height = COMPANION_SPRITE_SIZE;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, 0, 0, COMPANION_SPRITE_SIZE, COMPANION_SPRITE_SIZE);
-    this.cache.set(resolved, canvas);
-    return canvas;
+    return null;
   }
 
   /**

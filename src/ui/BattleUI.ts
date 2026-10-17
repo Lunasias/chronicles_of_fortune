@@ -16,7 +16,7 @@ import { networkRoomManager } from '../engine/NetworkRoomManager';
 import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
 import { prefersReducedMotion } from './GraphicsSettings';
 import { drawBattleScenery, battleGroundLayout } from '../engine/BattleScenery';
-import { magicElementForJob, MAGIC_PALETTES } from '../engine/MagicArt';
+import { magicElementForJob } from '../engine/MagicArt';
 
 export class BattleUI {
   private game: GameState;
@@ -241,6 +241,7 @@ export class BattleUI {
   }
 
   constructor(game: GameState) {
+    window.addEventListener('artwork-ready', () => this.sceneryLayers.clear());
     this.game = game;
     this.canvas = document.getElementById('battleCanvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
@@ -800,9 +801,9 @@ export class BattleUI {
 
     // Spawn magical companion warp portal
     combatVFX.setOwner({companionKey:resolveCompanionKey(companion)});
-    combatVFX.spawnCompanionSummonPortal(summonX, summonY, companion.color || '#ec4899');
+    combatVFX.choreography.clear();
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${companion.name}!`, 'crit');
-    combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, isPAtk ? enemyX : summonGround.playerX, isPAtk ? enemyY : summonGround.playerY, 'mage', false);
+    combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, isPAtk ? enemyX : summonGround.playerX, (isPAtk ? enemyY : summonGround.playerY) - 36, 'mage', false);
 
     if (isPAtk) {
       // Offensive Companion Assist
@@ -812,7 +813,6 @@ export class BattleUI {
       enemy.hp = Math.max(0, enemy.hp - dmg);
 
       setTimeout(() => {
-        combatVFX.spawnMagicLaserBeam(summonX, summonY - 50, enemyX, enemyY - 50, companion.color || '#f43f5e', 22);
         combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${dmg} HP!`, 'crit');
         combatVFX.triggerImpactFlash('#ffffff', 0.85);
         audio.strikeHit();
@@ -840,7 +840,6 @@ export class BattleUI {
       player.cleanseAilments();
 
       setTimeout(() => {
-        combatVFX.spawnMagicHit(summonX, summonY - 20, true);
         combatVFX.spawnFloatingCombatText(summonX, summonY - 60, `+${healAmount} HP (CLEANSED)`, 'heal');
         combatVFX.triggerImpactFlash('#38bdf8', 0.7);
         audio.relicChime();
@@ -991,6 +990,9 @@ export class BattleUI {
     combatVFX.setOwner(artOwner);
     await combatVFX.preloadOwner(artOwner);
     if(this.game.activeBattle!==b){this.isExecutingRound=false;return;}
+    combatVFX.choreography.clear();
+    combatVFX.activeCutscene = null;
+    combatVFX.cutsceneDimAlpha = 0;
 
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -1099,7 +1101,7 @@ export class BattleUI {
       targetAtkDY = fullDY - (isPAtk ? 28 : -28);
     } else if (atkAction === 'skill') {
       // High-speed skill clash: Charge directly into defender's frontline face-to-face!
-      const margin = isPAtk ? 45 : -45;
+      const margin = (isPAtk ? 1 : -1) * Math.max(80, actorScaleForViewport(w, h) * 58);
       targetAtkDX = fullDX - margin;
       targetAtkDY = fullDY - (isPAtk ? 18 : -18);
     } else {
@@ -1142,6 +1144,9 @@ export class BattleUI {
 
     // Phase 2: Impact & Combat Resolution (after dash completes at 340ms)
     setTimeout(() => {
+      this.cutscene.bannerAlpha = 0;
+      this.cutscene.targetBannerAlpha = 0;
+      combatVFX.activeCutInBanner = null;
       if (b.attacker.playerRef) aiSystem.recordMove(b.attacker.playerRef.id, atkAction);
       if (b.defender.playerRef) aiSystem.recordMove(b.defender.playerRef.id, defAction);
 
@@ -1222,28 +1227,20 @@ export class BattleUI {
             atkBaseX + targetAtkDX + (isPAtk ? 25 : -25),
             atkBaseY + targetAtkDY - 80,
             hitX,
-            hitY - 60,
+            hitY - 36,
             b.attacker.classKey || 'warrior',
             b.attacker.playerRef?.isDarkling || false
           );
         } else if (result.isStrikeSuccess) {
           audio.strikeHit();
-          combatVFX.spawnStrikeHit(hitX, hitY - 50);
+          combatVFX.spawnStrikeHit(hitX, hitY - 36);
         } else if (atkAction === 'magic') {
           if (result.isMagicBlocked) {
             audio.magicGuardBlock();
           } else {
             audio.magicHit();
           }
-          combatVFX.spawnMagicLaserBeam(
-            atkBaseX + targetAtkDX + (isPAtk ? 25 : -25),
-            atkBaseY + targetAtkDY - 80,
-            hitX,
-            hitY - 60,
-            MAGIC_PALETTES[magicElementForJob(b.attacker.classKey)][1],
-            22
-          );
-          combatVFX.spawnMagicHit(hitX, hitY - 60, false, magicElementForJob(b.attacker.classKey));
+          combatVFX.spawnMagicHit(hitX, hitY - 36, false, magicElementForJob(b.attacker.classKey));
         } else {
           if (defAction === 'defend') {
             audio.defendBlock();
@@ -1251,27 +1248,26 @@ export class BattleUI {
             audio.attackHit();
           }
           if (isPAtk) {
-            combatVFX.spawnAttackHit(hitX, hitY - 50);
+            combatVFX.spawnAttackHit(hitX, hitY - 36);
           } else {
             combatVFX.spawnMonsterAttack(
               atkBaseX + targetAtkDX,
               atkBaseY + targetAtkDY - 50,
               hitX,
-              hitY - 50,
+              hitY - 36,
               b.attacker.name,
               atkAction
             );
           }
         }
 
-        if (!result.isMiss && (defAction === 'defend' || result.isMagicBlocked)) combatVFX.spawnGuard(hitX,hitY-50,result.isMagicBlocked);
-        if (result.isCritical || result.isShatter || result.isDuoBurst) combatVFX.choreography.emit('smash',hitX,hitY-45,{power:1.6,delay:6});
-        if (result.isChainShock) combatVFX.choreography.emit('storm',hitX,hitY-50,{power:1.3,delay:10});
-        if (result.isShatter) combatVFX.choreography.emit('frost',hitX,hitY-45,{power:1.3,delay:6});
-        if (b.defender.hp <= 0 && result.damageToDefender > 0) combatVFX.choreography.emit('nova',hitX,hitY-45,{power:1.3,delay:15});
-        if (result.burnDamage) combatVFX.choreography.emit('flame',hitX,hitY-40,{power:.7,delay:12});
-        if (result.curseInflicted) combatVFX.choreography.emit('shadow',hitX,hitY-40,{power:.8,delay:12});
-        if (result.vampiricHeal) combatVFX.choreography.emit('heal',atkBaseX,atkBaseY,{power:.7,delay:16});
+        // One readable aftermath, after the signature has finished. A critical
+        // hit/kill already has a full impact in the owner's generated animation.
+        const aftermath = result.isMagicBlocked || defAction === 'defend' ? 'guard'
+          : result.isShatter ? 'frost' : result.isChainShock ? 'storm'
+          : result.burnDamage ? 'flame' : result.curseInflicted ? 'shadow' : null;
+        if (!result.isMiss && aftermath) combatVFX.choreography.emit(aftermath,hitX,hitY-36,{power:.65,delay:76,duration:28});
+        if (result.vampiricHeal) combatVFX.choreography.emit('heal',atkBaseX,atkBaseY,{power:.65,delay:110,duration:24});
         if (result.damageToDefender > 0) {
           audio.hurt();
         }
@@ -1373,7 +1369,7 @@ export class BattleUI {
           this.updateCommandMenu();
           this.checkAITurn();
         }, this.getSpeedDelay(460));
-      }, this.getSpeedDelay(480));
+      }, this.getSpeedDelay(result.vampiricHeal ? 2300 : result.isShatter || result.isChainShock || result.burnDamage || result.curseInflicted || result.isMagicBlocked || defAction === 'defend' ? 1800 : 1100));
     }, this.getSpeedDelay(340));
   }
 
@@ -1426,7 +1422,7 @@ export class BattleUI {
     ctx.imageSmoothingEnabled = false;
 
     const now = performance.now();
-    for (let step = this.effectClock.advance(now); step > 0; step--) combatVFX.update();
+    for (let step = this.effectClock.advance(now) * ((this.game.gameSpeed || 1) * this.battleSpeedMultiplier); step > 0; step--) combatVFX.update();
 
     // -----------------------------------------------------------------------
     // Update Cutscene Tweens (60 FPS Silky Smooth)
@@ -1623,55 +1619,9 @@ export class BattleUI {
     }
 
     // -----------------------------------------------------------------------
-    // 4. MOTION GHOST AFTERIMAGE TRAILS
-    // -----------------------------------------------------------------------
-    if (this.cutscene.active && (this.cutscene.phase === 'dash' || this.cutscene.phase === 'leap_back')) {
-      if (now - this.cutscene.lastGhostTime > 40) {
-        this.cutscene.lastGhostTime = now;
-        if (isPlayerAtk) {
-          this.cutscene.ghostTrails.push({
-            x: px,
-            y: py - Math.round(100 * scaleFactor),
-            sprite: heroSprite,
-            w: heroW,
-            h: heroH,
-            alpha: 0.6,
-            decay: 0.045
-          });
-        } else {
-          this.cutscene.ghostTrails.push({
-            x: ex,
-            y: ey - Math.round((enemyCombatant.isBoss ? 120 : 100) * scaleFactor),
-            sprite: enemySprite,
-            w: enemyW,
-            h: enemyH,
-            alpha: 0.6,
-            decay: 0.045,
-            isFlipped: true
-          });
-        }
-      }
-    }
+    // Generated attack artwork supplies the trail; keep the actor silhouette singular.
+    this.cutscene.ghostTrails.length = 0;
 
-    for (let i = this.cutscene.ghostTrails.length - 1; i >= 0; i--) {
-      const gt = this.cutscene.ghostTrails[i];
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, gt.alpha);
-      if (gt.isFlipped) {
-        ctx.translate(gt.x, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(gt.sprite, -gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
-      } else {
-        ctx.drawImage(gt.sprite, gt.x - gt.w / 2, gt.y - gt.h / 2, gt.w, gt.h);
-      }
-      ctx.restore();
-      gt.alpha -= gt.decay;
-      if (gt.alpha <= 0) {
-        this.cutscene.ghostTrails.splice(i, 1);
-      }
-    }
-
-    // -----------------------------------------------------------------------
     // 5. DRAW COMBATANTS (PERFECTLY CENTERED ON DIAMOND DAIS CELLS)
     // -----------------------------------------------------------------------
     // In our 2.5D Isometric projection, the dais top surface is centered at (px, py).
@@ -1789,20 +1739,20 @@ export class BattleUI {
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    const by = Math.max(116, Math.round(h * .13));
+    if (h < 320) return;
+    const by = w < 600 ? 110 : 150;
     const bh = 54;
     const bw = Math.round(Math.min(w - 24, 580));
     const bx = Math.round((w - bw) / 2);
 
     // Dark gothic translucent box
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
+    ctx.fillStyle = '#102d59';
     ctx.fillRect(bx, by, bw, bh);
 
     // Glowing border in bannerColor
     ctx.strokeStyle = this.cutscene.bannerColor;
     ctx.lineWidth = 2.0;
     ctx.shadowColor = this.cutscene.bannerColor;
-    ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
 
     // Speed-lines / slash accent ribbons
     ctx.fillStyle = this.cutscene.bannerColor;

@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import { atlasSprite } from './AtlasSprites';
 
 export const WORLD_DETAIL_NAMES = ['fern', 'berry_thicket', 'fallen_log', 'moss_boulder', 'ruined_arch', 'ivy_pillar', 'woodland_cottage', 'camp', 'fence', 'well', 'market', 'lantern_sign', 'ice_crag', 'crystal_geode', 'mushrooms', 'obsidian_thorns', 'cactus', 'lava_crag', 'coral_reef', 'celestial_ruin', 'gearworks', 'shrine_garden', 'waterfall', 'mountain_crag'] as const;
@@ -9,7 +10,7 @@ class WorldDetails {
   private cache = new Map<string, HTMLCanvasElement>();
   get(kind: WorldDetailName, night = false): HTMLCanvasElement | null {
     if (!this.image) {
-      this.image = new Image();
+      this.image = createArtworkImage();
       this.image.onload = () => { this.ready = true; this.cache.clear(); window.dispatchEvent(new CustomEvent('world-art-loaded')); };
       this.image.src = '/assets/art-v2/world-details-atlas.png';
     }

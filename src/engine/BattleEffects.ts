@@ -9,7 +9,7 @@ export interface BattleEffect {
 /** Playback of generated raster animation only. The source images provide every visible effect pixel. */
 export class BattleEffects {
   public active:BattleEffect[]=[];
-  emit(kind:BattleEffectKind,x:number,y:number,options:Partial<Pick<BattleEffect,'fromX'|'fromY'|'power'|'color'|'delay'|'artId'>>={}) {
+  emit(kind:BattleEffectKind,x:number,y:number,options:Partial<Pick<BattleEffect,'fromX'|'fromY'|'power'|'color'|'delay'|'duration'|'artId'>>={}) {
     if(![x,y,options.fromX??x,options.fromY??y].every(Number.isFinite))return;
     this.active.push({kind,x,y,fromX:x,fromY:y,age:0,duration:kind==='slash'?32:kind==='evade'?30:64,power:1,delay:0,artId:'common_'+kind,...options});
     if(this.active.length>40)this.active.splice(0,this.active.length-40);
@@ -18,20 +18,27 @@ export class BattleEffects {
   clear(){this.active.length=0;}
   render(ctx:CanvasRenderingContext2D,w:number,h:number,reduced=false,balanced=false){
     ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.imageSmoothingEnabled=false;
-    // Secondary accents remain below the primary art in a bounded stack during multi-hit bursts.
-    for(const e of this.active.slice(balanced?-8:-14)){
+    // A signature is a complete composition. Suppress other full compositions in
+    // the same hit zone instead of piling shields, novas and beams over it.
+    const visible = this.active.filter(e => e.age >= e.delay && e.age < e.delay + e.duration)
+      .sort((a,b) => (Number(!b.artId.startsWith('common_')) * 10 + b.power) - (Number(!a.artId.startsWith('common_')) * 10 + a.power));
+    const painted: BattleEffect[] = [];
+    for(const e of visible){
+      if (painted.length >= (balanced ? 2 : 4)) break;
+      if (painted.some(p => Math.hypot(p.x-e.x,p.y-e.y) < 96 * Math.min(2, actorScaleForViewport(w,h)))) continue;
       const age=e.age-e.delay;if(age<0)continue;
       const frame=combatArtFrame(age,e.duration,reduced),image=generatedCombatArt.frame(e.artId,frame);if(!image)continue;
       const profile=combatArtProfile(e.artId),base=actorScaleForViewport(w,h);
       const foot=e.y+(e.kind==='summon'||e.kind==='heal'?0:36);
       // Whole-pixel sizing also keeps the top of tall wings/columns inside the arena.
       const fit=Math.max(1,Math.floor(foot/profile.footY));
-      const scale=Math.max(1,Math.min(fit,base+1,e.power>=1.4?base+1:e.power<.8?base-1:base));
+      const scale=Math.max(1,Math.min(fit,2,e.power<.8?base-1:base));
       const size=128*scale;
       ctx.globalAlpha=Math.max(0,Math.min(1,age/Math.max(1,reduced?8:3), (e.duration-age)/Math.max(1,reduced?18:7)));
       const dx=Math.round(e.x-size/2),dy=Math.round(foot-profile.footY*scale);
       if(e.kind==='beam'&&e.fromX>e.x){ctx.save();ctx.translate(Math.round(e.x)*2,0);ctx.scale(-1,1);ctx.drawImage(image,dx,dy,size,size);ctx.restore();}
       else ctx.drawImage(image,dx,dy,size,size);
+      painted.push(e);
     }
     ctx.restore();
   }

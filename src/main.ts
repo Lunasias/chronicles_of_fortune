@@ -3628,7 +3628,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
     this.visualReviewActive = true;
@@ -3672,7 +3672,8 @@ class DokaponApp {
     const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; this.visualReviewMeter?.remove(); this.visualReviewMeter = null; document.getElementById('titleScreen')?.classList.remove('hidden'); };
     if (!['battle', 'boss', 'pvp'].includes(scene)) {
       this.hud.update();
-      if (scene === 'town') this.townUI.open(this.game.allNodes.find(n => n.type === 'town')!, finish, () => {});
+      if (scene === 'fantasy_guild') this.fantasyEventUI.openEvent(this.game.activePlayer, this.game.allNodes.find(n => n.type === 'guild')!, finish);
+      else if (scene === 'town') this.townUI.open(this.game.allNodes.find(n => n.type === 'town')!, finish, () => {});
       else if (scene.startsWith('shop_')) this.shopUI.open(scene, finish);
       else if (scene === 'inspect') this.inspectUI.openInspect(this.game.activePlayer);
       else if (scene === 'report') this.weeklyReportUI.open(finish);

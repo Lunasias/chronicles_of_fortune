@@ -2,11 +2,11 @@
    static screens and runtime-generated panels share the same component system. */
 :root {
   --ui-ink: #101e29;
-  --ui-panel: #172b36;
-  --ui-raised: #223b45;
-  --ui-line: #496064;
-  --ui-gold: #c9ab72;
-  --ui-paper: #f4e9cf;
+  --ui-panel: #153866;
+  --ui-raised: #245294;
+  --ui-line: #5c8dc0;
+  --ui-gold: #f3bf53;
+  --ui-paper: #fff3d7;
   --ui-muted: #a9b9b7;
   --ui-shadow: 0 4px 0 #08131c, 0 12px 28px #030c1466;
 }
@@ -285,4 +285,54 @@ body #battleScreen .hidden { display: none; }
   body #minimapCanvasWrapper { width: 100px; height: 100px; }
   body #bottomBar { bottom: 8px; }
   body #bottomBar button { min-height: 40px; }
+}
+
+/* All frame variants need an actual surface, not only accent variables. */
+body :is(.pixel-box, .pixel-box-gold, .pixel-box-pink, .pixel-box-purple, .pixel-box-blue, .pixel-box-green, .pixel-box-red, .pixel-box-darkling) {
+  background-color: #153866;
+  border: 1px solid #6a9ac7;
+  box-shadow: inset 0 0 0 3px #0b2244, inset 0 0 0 4px #8dbeed33, 0 4px #07182e;
+}
+body [id$='Modal'] > div:first-child[class*='pixel-box'] {
+  background: #153866;
+  border: 2px solid #f2bd54;
+  padding: 24px;
+  max-height: 90dvh;
+  box-shadow: inset 0 0 0 3px #0b2244, 0 5px #07182e;
+}
+body #fantasyEventModal > div:first-child { background: #25356a; border-color: #ec90ec; }
+body :is(#topHUD > .pixel-box:first-child, #topHUD > div:nth-child(3) > .pixel-box:first-child, #hudRosterStrip, #bottomBar > div, #minimapBox) { background: #123565; border-color: #e6b956; }
+body :is(.pixel-btn, .command-card) { background-color: #275a91; border-color: #77b3d6; color: #fff4db; }
+body :is(.pixel-btn, .command-card):hover:not(:disabled) { background-color: #3576ad; border-color: #ffe09a; }
+body :is(.pixel-btn-gold, #btnRollDice, #btnCmdStrike, #btnCmdBurst) { background: #f1bd50; border-color: #ffe6a0; color: #25243a; box-shadow: inset 0 2px #ffeac4, inset 0 -3px #b67b2d, 0 2px #07152e; }
+body :is(.pixel-btn-gold, #btnRollDice, #btnCmdStrike, #btnCmdBurst):hover:not(:disabled) { background: #ffd274; }
+body :is(.pixel-btn-purple, .pixel-btn-pink, #btnFieldMagic, #btnCmdMagic, #btnCmdSkill) { background: #654695; border-color: #ba98ee; }
+body :is(.pixel-btn-green, #btnInventory, #btnCmdDefend) { background: #196d68; border-color: #76d4b5; }
+body :is(.pixel-btn-red, #btnCmdAttack, #btnCmdCounter) { background: #9d4358; border-color: #ed93a0; }
+body #battleScreen :is(#btnCmdAttack, #btnCmdCounter) { background: #9d4358; border-color: #ed93a0; }
+body :is(#btnWorldMap, #btnInspectHero) { background: #265a91; color: #fff4db; }
+body #battleCommandDock { background: #12315a; border-color: #efbe60; }
+body #battleNarrationPanel { background: #0c2549; border-color: #5d87b3; }
+body #battleScreen > div:first-child > div:first-of-type > .pixel-box { background: #123461; }
+body :is(#hudHPBar, #battlePlayerHP) { background: #ef667b; }
+body :is(#hudMPBar, #battlePlayerMP) { background: #39b9f2; }
+body #battleEnemyHP { background: #32cf99; }
+body #battlePlayerBurst { background: #ffcb46; }
+body .text-slate-400 { color: #bed6ec; }
+body :is(.text-amber-300, .text-amber-400) { color: #ffda79; }
+body :is(#titleScreen > .text-center, #titleButtonsBlock) { background: #102e58; border-color: #edbd67; }
+body #titleScreen h2 { color: #ffce67; }
+body #titleScreen::before { background: linear-gradient(90deg, #08172200 25%, #08172222 58%, #08172299 100%); }
+#artworkLoading { position: fixed; inset: 0; z-index: 100; background: #0d2850; display: grid; place-items: center; color: #fff1d4; padding: 24px; text-align: center; pointer-events: auto; }
+#artworkLoading[hidden] { display: none; }
+#artworkLoading > div { width: min(420px, 100%); padding: 32px 24px; background: #153866; border: 2px solid #e8bb66; box-shadow: inset 0 0 0 4px #0b2244; }
+#artworkLoading span { color: #ffd370; font: 10px 'Silkscreen', sans-serif; letter-spacing: 1px; }
+#artworkLoading h2 { font-size: 22px; margin: 18px 0 8px; }
+#artworkLoading p { color: #b9d5ef; font-size: 13px; margin-bottom: 24px; }
+#artworkLoading progress { width: 100%; height: 12px; accent-color: #ffd061; }
+#artworkLoading button { margin-top: 20px; padding: 10px 20px; }
+#artworkLoading button[hidden] { display: none; }
+body :is(#mobileDisplayModal, #mobileRotateGuideOverlay) { z-index: 80; }
+@media (max-width: 768px) {
+  body [id$='Modal'] > div:first-child[class*='pixel-box'] { padding: 16px; }
 }

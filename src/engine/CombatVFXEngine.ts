@@ -1,4 +1,4 @@
-import { pixelRing, pixelStroke, pixelVignette } from './PixelFx';
+import { pixelRing, pixelStroke } from './PixelFx';
 import { resolveCombatArt, generatedCombatArt, type CombatArtOwner } from './GeneratedCombatArt';
 import { BattleEffects } from './BattleEffects';
 import { magicElementForJob } from './MagicArt';
@@ -128,7 +128,7 @@ export class CombatVFXEngine {
   public readonly choreography = new BattleEffects();
   public owner:CombatArtOwner={};
   setOwner(owner:CombatArtOwner){this.owner=owner;}
-  preloadOwner(owner:CombatArtOwner){return generatedCombatArt.preload([resolveCombatArt(owner),'common_guard','common_slash','common_beam','common_summon']);}
+  preloadOwner(owner:CombatArtOwner){return generatedCombatArt.preload([resolveCombatArt(owner),'common_guard','common_slash','common_beam','common_summon','common_heal','common_frost','common_storm','common_flame','common_shadow']);}
 
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
@@ -616,7 +616,6 @@ export class CombatVFXEngine {
   ) {
     const job = classKey.toLowerCase();
     const kind = isDarkling ? 'shadow' : /warrior|knight|fighter|duelist|gladiator/.test(job) ? 'smash' : /thief|rogue/.test(job) ? 'slash' : /magician|mage|sorcer|archmage/.test(job) ? 'nova' : magicElementForJob(job);
-    this.choreography.emit('summon', casterX, casterY + 40, {power: 1.25, color: MAGIC_PALETTES[magicElementForJob(job)][1]});
     this.choreography.emit(kind, targetX, targetY, {power: 1.75, delay: 10, fromX: casterX, fromY: casterY,artId:resolveCombatArt(this.owner.name||this.owner.companionKey||this.owner.job?this.owner:{job:classKey,isDarkling})});
     this.activeCutscene = {
       skillName,
@@ -834,7 +833,7 @@ export class CombatVFXEngine {
     // 5. Update Cutscene
     if (this.activeCutscene) {
       this.activeCutscene.elapsed++;
-      this.cutsceneDimAlpha = Math.sin((this.activeCutscene.elapsed / this.activeCutscene.totalDuration) * Math.PI) * 0.75;
+      this.cutsceneDimAlpha = 0;
       if (this.activeCutscene.elapsed >= this.activeCutscene.totalDuration) {
         this.activeCutscene = null;
         this.cutsceneDimAlpha = 0;
@@ -914,28 +913,7 @@ export class CombatVFXEngine {
   }
 
   render(ctx: CanvasRenderingContext2D, arenaWidth: number = 800, arenaHeight: number = 450) {
-    // 0. Cinematic Vignette Dimming during Skill Cutscene
-    if (this.cutsceneDimAlpha > 0) {
-      ctx.save();
-      // Banded dimming rather than a radial gradient: the arena is drawn at pixel scale, so a
-      // screen-sized gradient would be the only soft ramp in the battle.
-      pixelVignette(ctx, arenaWidth, arenaHeight, '#0f0208', 6, Math.min(0.85, this.cutsceneDimAlpha * 0.85));
-      ctx.fillStyle = `rgba(0, 0, 0, ${this.cutsceneDimAlpha * 0.3})`;
-      ctx.fillRect(0, 0, arenaWidth, arenaHeight);
-
-      // Gothic Skill Title Banner
-      if (this.activeCutscene) {
-        const title = fitEffectText(ctx, this.activeCutscene.skillName.toUpperCase(), arenaWidth - 24, 20);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#fde047';
-        ctx.shadowColor = '#e11d48';
-        ctx.fillText(title, Math.round(arenaWidth * .5), arenaWidth < 600 ? 128 : 112);
-
-        // Class choreography now supplies the staged, native-pixel skill geometry.
-      }
-      ctx.restore();
-    }
-
+    // BattleUI owns the action title. No duplicate text or banded frame overlay.
     this.choreography.render(ctx, arenaWidth, arenaHeight, prefersReducedMotion(), graphicsPreferences.quality === 'balanced');
 
     // 5. Draw Bouncing Floating Combat Numbers & Text

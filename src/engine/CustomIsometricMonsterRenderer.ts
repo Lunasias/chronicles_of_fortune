@@ -211,8 +211,8 @@ export class CustomIsometricMonsterRenderer {
     // Route to fresh 8-directional animated Monster Model referencing spellblade model
     const archKey = this.getMonsterArchetypeKey(mName);
     const newFrame = monsterArtAtlas.getFrame(archKey, dir, animState, f);
-    if (!newFrame) this.ensurePortrait(archKey);
-    if (monsterArtAtlas.hasFailed(archKey)) this.ensureArchetypeLoaded(archKey);
+    // The production atlas is authoritative. The loading gate handles pending
+    // or failed sheets instead of momentarily replacing the monster's design.
     let mobImg: HTMLImageElement | undefined;
 
     if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {

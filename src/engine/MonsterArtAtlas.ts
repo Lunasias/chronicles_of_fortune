@@ -1,3 +1,4 @@
+import { createArtworkImage } from './ArtworkLoading';
 import { atlasRowCuts } from './ClassArtAtlas';
 import { isolateAtlasCell } from './AtlasSprites';
 import type { CharacterAnimState, IsoDirection } from './PixelSpriteGenerator';
@@ -24,7 +25,7 @@ class MonsterArtAtlas {
     const sheetKey = `${group}_${actions ? 'actions' : 'motion'}`;
     let sheet = this.sheets.get(sheetKey);
     if (!sheet) {
-      const image = new Image(); sheet = { image, cuts: [], ready: false }; this.sheets.set(sheetKey, sheet);
+      const image = createArtworkImage(); sheet = { image, cuts: [], ready: false }; this.sheets.set(sheetKey, sheet);
       const entry = sheet;
       image.onload = () => {
         const scratch = document.createElement('canvas'); scratch.width = image.naturalWidth; scratch.height = image.naturalHeight;
@@ -35,6 +36,7 @@ class MonsterArtAtlas {
       };
       image.onerror = () => { if (!actions) this.failed.add(group); };
       image.src = `/assets/art-v2/monsters-${group}${actions ? '-actions' : ''}-atlas.png`;
+      if (!actions) this.getFrame(archetype, dir, 'magic', 0);
     }
     if (!sheet.ready) return actions ? this.getFrame(archetype, dir, state === 'magic' ? 'attack' : state === 'defeat' ? 'hurt' : 'idle', frame) : null;
     const beat = ((Math.floor(frame) % 8) + 8) % 8;

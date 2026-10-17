@@ -10,6 +10,10 @@ The game now has a unified brass-and-midnight fantasy interface: a new title men
 world HUD, combat deck, satchel grid and responsive shop panels.
 [Interface screenshots and validation](docs/art-review/interface-v4/README.md).
 
+The latest polish fixes overlapping skill compositions, frame-edge mattes, transparent
+event dialogs and unfinished-art flashes, and adds a brighter palette.
+[Current screenshots and regression checks](docs/art-review/visual-fixes/README.md).
+
 ---
 
 ## 🌟 Key Features

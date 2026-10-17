@@ -609,9 +609,7 @@ export class CustomIsometricHeroRenderer {
     isDarkling: boolean,
     visualClass: string
   ) {
-    const folder = CLASS_ASSET_FOLDERS[cls] || CLASS_ASSET_FOLDERS['warrior'];
     const newFrame = classArtAtlas.getFrame(cls, dir, animState, frame, visualClass);
-    const img = newFrame ? null : this.getImage(folder, dir, animState, frame);
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -628,15 +626,6 @@ export class CustomIsometricHeroRenderer {
     if (newFrame) {
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(newFrame, -40, -43);
-    } else if (img) {
-      ctx.imageSmoothingEnabled = false;
-      const drawW = 64;
-      const drawH = 64;
-      const drawX = -drawW / 2;
-      const drawY = -drawH / 2 + 1;
-
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
-
     } else {
       // Aesthetic fallback mannequin silhouette while asset is loading
       this.drawLoadingSilhouette(ctx, cls);

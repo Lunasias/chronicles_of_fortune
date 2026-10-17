@@ -99,10 +99,10 @@ select, input[type='text'] {
 #bottomBar { padding-bottom: env(safe-area-inset-bottom, 0px); }
 #bottomBar > div { background: #122431f5; border-color: #a08c62; padding: 8px; gap: 6px; }
 #bottomBar button { background-color: #263e48; color: #e8dec5; min-height: 42px; }
-#bottomBar #btnRollDice { background-color: #c6a568; color: #172a2d; min-width: 168px; }
-#bottomBar #btnFieldMagic { background-color: #3d425c; }
-#bottomBar #btnInventory { background-color: #3b4741; }
-#bottomBar #btnWorldMap { background-color: #254a4b; }
+#bottomBar #btnRollDice { background-color: #f1bd50; color: #172a2d; min-width: 168px; }
+#bottomBar #btnFieldMagic { background-color: #654695; }
+#bottomBar #btnInventory { background-color: #196d68; }
+#bottomBar #btnWorldMap { background-color: #265a91; }
 #turnStartBanner { top: 23% !important; }
 #floatingEventToast { top: auto !important; bottom: 90px; max-width: min(440px, 85vw); }
 #inspectHeroModal > div, #inspectModal > div { border-color: #a48d62; }
@@ -111,9 +111,9 @@ select, input[type='text'] {
 #hudHPText, #hudMPText, #battlePlayerHPText, #battleEnemyHPText, #battlePlayerMPText, #battleEnemyMPText { font-size: 10px; line-height: 1; }
 #battleCommandDock { background: #152a36; border-color: #8d855e; }
 #battleScreen .command-card { background-color: #283e4b; border-color: #718880; color: #eee3c9; min-height: 64px; }
-#battleScreen #btnCmdStrike, #battleScreen #btnCmdBurst { background-color: #b39357; color: #142630; }
-#battleScreen #btnCmdMagic, #battleScreen #btnCmdSkill { background-color: #40465e; }
-#battleScreen #btnCmdDefend { background-color: #30514e; }
+#battleScreen #btnCmdStrike, #battleScreen #btnCmdBurst { background-color: #f1bd50; color: #142630; }
+#battleScreen #btnCmdMagic, #battleScreen #btnCmdSkill { background-color: #654695; }
+#battleScreen #btnCmdDefend { background-color: #196d68; }
 #battleScreen .command-card .pixel-icon { width: 24px; height: 24px; }
 #characterInspectModal > div { background: #142936f5; border-color: #b59a68; max-width: 720px; }
 #characterInspectModal #inspectAvatarCanvas { width: 96px; height: 96px; }
