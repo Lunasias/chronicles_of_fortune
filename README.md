@@ -217,3 +217,7 @@ tests/      node:test suites (compiled from src by npm run pretest)
 
 ## 📜 License
 MIT License - see [LICENSE](LICENSE).
+
+### Battle effects
+
+The new [battle effects suite](docs/art-review/BATTLE_EFFECTS.md) includes sixteen pixel geometry families and class/element choreography. Open `/effects-review.html` for action playback, frame scrubbing and reduced-motion comparison.

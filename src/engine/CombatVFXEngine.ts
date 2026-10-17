@@ -1,5 +1,7 @@
-import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelGlow, pixelVignette } from './PixelFx';
-import { prefersReducedMotion } from '../ui/GraphicsSettings';
+import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelVignette } from './PixelFx';
+import { BattleEffects } from './BattleEffects';
+import { magicElementForJob } from './MagicArt';
+import { prefersReducedMotion, graphicsPreferences } from '../ui/GraphicsSettings';
 import { MAGIC_PALETTES, type MagicElement } from './MagicArt';
 
 /** Fit whole-pixel type, then ellipsize; never stretch finished text to a fractional scale. */
@@ -122,6 +124,7 @@ export interface CutInBanner {
 }
 
 export class CombatVFXEngine {
+  public readonly choreography = new BattleEffects();
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
   public groundCracks: GroundCrack[] = [];
@@ -163,12 +166,27 @@ export class CombatVFXEngine {
 
   constructor() {}
 
+  reset() {
+    this.choreography.clear();
+    this.particles.length = this.slashArcs.length = this.groundCracks.length = this.runicRings.length = 0;
+    this.floatingTexts.length = this.magicLaserBeams.length = this.summonPortals.length = 0;
+    this.activeCutscene = null; this.activeCutInBanner = null;
+    this.hitstopTimer = this.screenShakeAmount = this.screenShakeX = this.screenShakeY = 0;
+    this.monsterStaggerX = this.monsterStaggerY = this.monsterFlashAlpha = this.heroStaggerX = this.heroFlashAlpha = 0;
+    this.cutsceneDimAlpha = this.speedLinesAlpha = this.speedLinesTimer = this.impactFlashAlpha = 0;
+  }
+
+  spawnGuard(x: number, y: number, magic = false) {
+    this.choreography.emit('guard', x, y, {color: magic ? '#c7afff' : '#84dbef'});
+  }
+
+
   triggerHitstop(frames = 4) {
     this.hitstopTimer = frames;
   }
 
   triggerScreenShake(intensity = 14) {
-    this.screenShakeAmount = intensity;
+    this.screenShakeAmount = prefersReducedMotion() ? 0 : Math.min(18, intensity);
   }
 
   triggerSpeedLines(color = '#ffffff', durationFrames = 18) {
@@ -275,6 +293,7 @@ export class CombatVFXEngine {
   // 1. ATTACK: DIAGONAL ISOMETRIC SLASH & BLOOD/SPARK BURST
   // =========================================================================
   spawnAttackHit(monsterX: number, monsterY: number, isRightToLeft = false) {
+    this.choreography.emit('slash', monsterX, monsterY, {fromX: monsterX + (isRightToLeft ? 100 : -100)});
     this.triggerScreenShake(10);
 
     // Diagonal blade arc sliced along isometric perspective
@@ -317,6 +336,7 @@ export class CombatVFXEngine {
   // 2. STRIKE: 2.5D ISOMETRIC CRATER & SPLINTERING BONE DEBRIS
   // =========================================================================
   spawnStrikeHit(monsterX: number, monsterY: number) {
+    this.choreography.emit('smash', monsterX, monsterY, {power: 1.35});
     this.triggerScreenShake(26);
 
     // 2.5D Flat Isometric Fracture Crater
@@ -368,6 +388,7 @@ export class CombatVFXEngine {
   // 3. MAGIC: FLAT ISOMETRIC RUNIC PENTAGRAM & VOID EXPLOSION
   // =========================================================================
   spawnMagicHit(monsterX: number, monsterY: number, isHeal = false, element: MagicElement = 'arcane') {
+    this.choreography.emit(isHeal ? 'heal' : element, monsterX, monsterY, {power: isHeal ? 1 : 1.2});
     const palette = MAGIC_PALETTES[isHeal ? 'nature' : element];
     this.triggerScreenShake(isHeal ? 5 : 18);
 
@@ -413,6 +434,8 @@ export class CombatVFXEngine {
   // 4. COUNTER: PARRY DIAMOND SPARK & REVERSE CROSS-SLASH
   // =========================================================================
   spawnCounterHit(clashX: number, clashY: number, attackerX: number, attackerY: number) {
+    this.choreography.emit('parry', clashX, clashY, {power: 1.3});
+    this.choreography.emit('slash', attackerX, attackerY, {delay: 8, fromX: clashX});
     this.triggerScreenShake(20);
 
     // Parry sparks
@@ -466,6 +489,7 @@ export class CombatVFXEngine {
     const isBoss = lowerName.includes('dragon') || lowerName.includes('boss') || lowerName.includes('ignis') || lowerName.includes('wyrm');
     const isMagic = atkType === 'magic' || lowerName.includes('lich') || lowerName.includes('ghost') || lowerName.includes('witch');
 
+    this.choreography.emit(isBoss ? 'nova' : isMagic ? 'shadow' : 'slash', targetX, targetY, {power: isBoss ? 1.7 : 1, fromX});
     if (isBoss) {
       // Abyssal Dragon Hellfire Eruption on Player
       const crackPoints: Array<{ x: number; y: number }> = [];
@@ -585,6 +609,10 @@ export class CombatVFXEngine {
     classKey = 'warrior',
     isDarkling = false
   ) {
+    const job = classKey.toLowerCase();
+    const kind = isDarkling ? 'shadow' : /warrior|knight|fighter|duelist|gladiator/.test(job) ? 'smash' : /thief|rogue/.test(job) ? 'slash' : /magician|mage|sorcer|archmage/.test(job) ? 'nova' : magicElementForJob(job);
+    this.choreography.emit('summon', casterX, casterY + 40, {power: 1.25, color: MAGIC_PALETTES[magicElementForJob(job)][1]});
+    this.choreography.emit(kind, targetX, targetY, {power: 1.75, delay: 10, fromX: casterX, fromY: casterY});
     this.activeCutscene = {
       skillName,
       casterX,
@@ -710,6 +738,7 @@ export class CombatVFXEngine {
     this.triggerScreenShake(18);
     this.triggerSpeedLines(color, 24);
 
+    this.choreography.emit('beam', targetX, targetY, {fromX: casterX, fromY: casterY, color, power: Math.min(1.5,width/16)});
     this.magicLaserBeams.push({
       casterX,
       casterY,
@@ -748,6 +777,7 @@ export class CombatVFXEngine {
   // 7. COMPANION WARP SUMMON PORTAL WITH LIGHT PILLAR
   // =========================================================================
   spawnCompanionSummonPortal(x: number, y: number, color = '#ec4899') {
+    this.choreography.emit('summon', x, y, {color, power: 1.4});
     this.triggerScreenShake(12);
     this.triggerSpeedLines(color, 20);
 
@@ -782,6 +812,7 @@ export class CombatVFXEngine {
   // 8. EXPLOSION NOVA SHOCKWAVE
   // =========================================================================
   spawnExplosionNova(x: number, y: number, color = '#f59e0b') {
+    this.choreography.emit('nova', x, y, {color, power: 1.65});
     this.triggerScreenShake(22);
     this.triggerSpeedLines(color, 25);
 
@@ -815,11 +846,19 @@ export class CombatVFXEngine {
   }
 
   update() {
+    // Bound accumulated legacy debris as well as the new timeline during multi-hit chains.
+    const cap = prefersReducedMotion() ? 120 : graphicsPreferences.quality === 'balanced' ? 280 : 600;
+    if (this.floatingTexts.length > 60) this.floatingTexts.splice(0,this.floatingTexts.length-60);
+    if (this.particles.length > cap) this.particles.splice(0, this.particles.length - cap);
+    for (const list of [this.slashArcs, this.groundCracks, this.runicRings, this.magicLaserBeams, this.summonPortals]) if (list.length > 40) list.splice(0,list.length-40);
+
     // 0. Hitstop micro-pause
     if (this.hitstopTimer > 0) {
       this.hitstopTimer--;
       return;
     }
+
+    this.choreography.update();
 
     // 1. Screen Shake dampening
     if (this.screenShakeAmount > 0) {
@@ -964,7 +1003,7 @@ export class CombatVFXEngine {
         ctx.shadowColor = '#e11d48';
         ctx.fillText(title, Math.round(arenaWidth * .5), arenaWidth < 600 ? 128 : 112);
 
-        this.renderSkillCinematic(ctx, arenaWidth, arenaHeight, this.activeCutscene);
+        // Class choreography now supplies the staged, native-pixel skill geometry.
       }
       ctx.restore();
     }
@@ -1078,6 +1117,8 @@ export class CombatVFXEngine {
       ctx.restore();
     });
 
+    this.choreography.render(ctx, arenaWidth, arenaHeight, prefersReducedMotion(), graphicsPreferences.quality === 'balanced');
+
     // 5. Draw Bouncing Floating Combat Numbers & Text
     this.floatingTexts.forEach(ft => {
       ctx.save();
@@ -1162,7 +1203,7 @@ export class CombatVFXEngine {
     if (this.impactFlashAlpha <= 0.01 || prefersReducedMotion()) return;
     ctx.save();
     ctx.fillStyle = this.impactFlashColor;
-    ctx.globalAlpha = Math.min(1.0, this.impactFlashAlpha);
+    ctx.globalAlpha = Math.min(.18, this.impactFlashAlpha);
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
   }
@@ -1188,176 +1229,6 @@ export class CombatVFXEngine {
     ctx.restore();
   }
 
-  private renderSkillCinematic(
-    ctx: CanvasRenderingContext2D,
-    arenaWidth: number,
-    arenaHeight: number,
-    cut: SkillCutscene
-  ) {
-    const cls = cut.classKey.toLowerCase();
-
-    if (cls === 'magician') {
-      // 1. Megumin Explosion Dome
-      const progress = Math.min(1.0, cut.elapsed / 45);
-      const maxR = 150;
-      const currentR = maxR * Math.sin(progress * Math.PI * 0.5);
-
-      ctx.save();
-      // Blinding nuclear flash at impact start
-      if (cut.elapsed < 10) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${(10 - cut.elapsed) / 10 * 0.8})`;
-        ctx.fillRect(0, 0, arenaWidth, arenaHeight);
-      }
-
-      // Expanding Fireball Core: concentric stepped discs rather than a five-stop radial
-      // gradient. White hot at the centre, through gold and red to nothing, in four hard rings.
-      const coreY = cut.targetY - 25;
-      const coreRings: Array<[number, string, number]> = [
-        [1.0, '#7f1d1d', 0.7],
-        [0.78, '#ef4444', 0.85],
-        [0.5, '#fef08a', 0.9],
-        [0.22, '#ffffff', 0.95]
-      ];
-      for (const [k, colour, alpha] of coreRings) {
-        pixelDisc(ctx, cut.targetX, coreY, Math.max(4, currentR * k), colour, alpha);
-      }
-
-      // Shockwave ring: two stepped rings, the outer one dashed so it reads as a wave front.
-      pixelRing(ctx, cut.targetX, cut.targetY, currentR * 1.3, currentR * 0.55, '#fef08a', 3, true, cut.elapsed * 0.4);
-
-      ctx.restore();
-    } else if (cls === 'cleric') {
-      // 2. Giant Radiant Cross descending from heaven
-      const progress = Math.min(1.0, cut.elapsed / 22);
-      const crossY = cut.targetY - 240 + (progress * 200);
-
-      ctx.save();
-      // Holy Light Pillar
-      // Holy Light Pillar: a bright core band with two dimmer shoulders, instead of a horizontal
-      // gradient. Hard vertical edges are what make it read as a shaft of light.
-      ctx.fillStyle = '#fef08a';
-      ctx.globalAlpha = 0.75;
-      ctx.fillRect(cut.targetX - 30, 0, 60, arenaHeight);
-      ctx.globalAlpha = 0.32;
-      ctx.fillRect(cut.targetX - 44, 0, 14, arenaHeight);
-      ctx.fillRect(cut.targetX + 30, 0, 14, arenaHeight);
-      ctx.globalAlpha = 1;
-
-      // Giant Radiant Golden Cross
-      ctx.fillStyle = '#fef08a';
-      ctx.shadowColor = '#eab308';
-
-      // Vertical beam
-      ctx.fillRect(cut.targetX - 12, crossY, 24, 150);
-      // Horizontal crossbar
-      ctx.fillRect(cut.targetX - 55, crossY + 38, 110, 22);
-
-      // Radiant Holy Halo Rings
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      pixelRing(ctx, cut.targetX, crossY + 49, 36, 36, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      ctx.restore();
-    } else if (cls === 'warrior' || cut.isDarkling) {
-      // 3. Colossal Phantom Broadsword
-      const progress = Math.min(1.0, cut.elapsed / 18);
-      const swordAngle = -Math.PI * 0.35 + (progress * Math.PI * 0.45);
-      const swordDropY = -120 + progress * (cut.targetY + 80);
-
-      ctx.save();
-      ctx.translate(cut.targetX, Math.min(cut.targetY, swordDropY));
-      ctx.rotate(swordAngle);
-
-      // Phantom Giant Broadsword Blade
-      ctx.fillStyle = cut.isDarkling ? '#be123c' : '#38bdf8';
-      ctx.shadowColor = cut.isDarkling ? '#e11d48' : '#60a5fa';
-
-      // Blade (Colossal Titan Size!)
-      ctx.beginPath();
-      ctx.moveTo(-18, -130);
-      ctx.lineTo(18, -130);
-      ctx.lineTo(16, 30);
-      ctx.lineTo(0, 55); // Tip impaling
-      ctx.lineTo(-16, 30);
-      ctx.closePath();
-      ctx.fill();
-
-      // Crossguard & Hilt
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(-35, -135, 70, 14);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-6, -175, 12, 40);
-
-      ctx.restore();
-    } else if (cls === 'thief') {
-      // 4. 5-Shadow Clones surrounding target
-      ctx.save();
-      for (let i = 0; i < 5; i++) {
-        const angle = (i / 5) * Math.PI * 2 + (cut.elapsed * 0.05);
-        const dist = Math.max(30, 95 - (cut.elapsed * 1.6));
-        const cloneX = cut.targetX + Math.cos(angle) * dist;
-        const cloneY = cut.targetY + Math.sin(angle) * (dist * 0.5);
-
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.75)';
-        ctx.shadowColor = '#10b981';
-
-        ctx.beginPath();
-        pixelDisc(ctx, cloneX, cloneY - 20, 10, ctx.fillStyle);
-        ctx.fill();
-
-        ctx.fillRect(cloneX - 7, cloneY - 10, 14, 20);
-
-        ctx.strokeStyle = '#34d399';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(cloneX, cloneY);
-        ctx.lineTo(cut.targetX, cut.targetY);
-        ctx.stroke();
-      }
-      ctx.restore();
-    } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
-      // 5. Screen-Wide Horizontal Lightning Slicer
-      const waveY = cut.targetY - 20;
-
-      ctx.save();
-      // Blinding horizontal lightning energy beam across full screen width
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 14 + Math.sin(cut.elapsed * 0.5) * 6;
-      ctx.shadowColor = '#0284c7';
-
-      ctx.beginPath();
-      ctx.moveTo(0, waveY);
-      for (let x = 0; x <= arenaWidth; x += 40) {
-        const jitter = (Math.random() - 0.5) * 16;
-        ctx.lineTo(x, waveY + jitter);
-      }
-      ctx.stroke();
-
-      // White core beam
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(0, waveY);
-      ctx.lineTo(arenaWidth, waveY);
-      ctx.stroke();
-
-      // Lightning branches
-      for (let k = 0; k < 6; k++) {
-        const rx = (cut.elapsed * 55 + k * 140) % arenaWidth;
-        ctx.strokeStyle = k % 2 === 0 ? '#38bdf8' : '#e0f2fe';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(rx, waveY);
-        ctx.lineTo(rx + (Math.random() - 0.5) * 30, waveY - 45);
-        ctx.lineTo(rx + (Math.random() - 0.5) * 50, waveY - 70);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-  }
 }
 
 export const combatVFX = new CombatVFXEngine();

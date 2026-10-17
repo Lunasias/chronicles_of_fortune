@@ -388,6 +388,7 @@ export class BattleUI {
     enemy: Combatant,
     onBattleEnd: (winner: Combatant, loser: Combatant) => void
   ) {
+    combatVFX.reset();
     const p = this.game.activePlayer;
     const playerCombatant: Combatant = {
       name: p.displayName,
@@ -1202,7 +1203,9 @@ export class BattleUI {
         const hitX = defBaseX + targetDefDX;
         const hitY = defBaseY + targetDefDY;
 
-        if (atkAction === 'skill') {
+        if (result.isMiss) {
+          combatVFX.choreography.emit('evade', hitX, hitY - 50);
+        } else if (atkAction === 'skill' || atkAction === 'burst') {
           audio.skillCast();
           combatVFX.triggerSkillCutscene(
             b.attacker.skillName || 'DARK CLEAVE',
@@ -1251,6 +1254,14 @@ export class BattleUI {
           }
         }
 
+        if (!result.isMiss && (defAction === 'defend' || result.isMagicBlocked)) combatVFX.spawnGuard(hitX,hitY-50,result.isMagicBlocked);
+        if (result.isCritical || result.isShatter || result.isDuoBurst) combatVFX.choreography.emit('smash',hitX,hitY-45,{power:1.6,delay:6});
+        if (result.isChainShock) combatVFX.choreography.emit('storm',hitX,hitY-50,{power:1.3,delay:10});
+        if (result.isShatter) combatVFX.choreography.emit('frost',hitX,hitY-45,{power:1.3,delay:6});
+        if (b.defender.hp <= 0 && result.damageToDefender > 0) combatVFX.choreography.emit('nova',hitX,hitY-45,{power:1.3,delay:15});
+        if (result.burnDamage) combatVFX.choreography.emit('flame',hitX,hitY-40,{power:.7,delay:12});
+        if (result.curseInflicted) combatVFX.choreography.emit('shadow',hitX,hitY-40,{power:.8,delay:12});
+        if (result.vampiricHeal) combatVFX.choreography.emit('heal',atkBaseX,atkBaseY,{power:.7,delay:16});
         if (result.damageToDefender > 0) {
           audio.hurt();
         }
