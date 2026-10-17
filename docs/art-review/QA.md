@@ -97,3 +97,10 @@ The full verification run passes 181 tests, production build, typecheck and CSS 
 New regressions cover all 312 ground anchors, large-world minimap fitting, clear walking
 corridors, material projection, opaque RGB decoding, and all 24 new detail sprite cells.
 Actual play rolled three, selected a visible destination and entered its NPC event.
+
+## Dense battle scenery — 2026-10-17
+
+- Replaced eight isolated props with three interleaved rear layers, irregular side/foreground clusters and low floor details, using existing biome-specific native art.
+- Re-enabled vegetation in industrial/castle/arid encounters and reduced the flat floor overlay to retain material detail.
+- Large dressing is sorted by ground contact and excludes both fighter silhouettes at phone and desktop dimensions. No battle rules or UI controls changed.
+- Production build, typecheck and CSS coverage pass; all 182 tests pass, including deterministic placement and full sprite bounds around fighters. Browser-reviewed forest and steampunk fixtures; screenshots: battle-dense-forest.png and battle-dense-steampunk.png. Physical mobile performance has not been measured.

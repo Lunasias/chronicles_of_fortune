@@ -5,9 +5,10 @@ import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import type { TimeOfDay } from '../game/EcosystemSystem';
 import { foliageForBiome } from './BiomeArt';
 import { resolveBiome, terrainPalette } from './IsometricTerrainPainter';
-import { drawDungeonRoom, drawGroundClusters, drawRegionalProps } from './EnvironmentArt';
+import { drawDungeonRoom, drawGroundClusters } from './EnvironmentArt';
 import { worldDetails } from './WorldDetails';
-import { BIOME_DRESSING } from './WorldEcology';
+import { BIOME_DRESSING, SETTLEMENT_DRESSING, worldNoise } from './WorldEcology';
+import type { WorldDetailName } from './WorldDetails';
 
 /** All scenery and combatants share this ground plane, without separate raised platforms. */
 export function battleGroundLayout(w: number, h: number) {
@@ -16,6 +17,35 @@ export function battleGroundLayout(w: number, h: number) {
   const depth = Math.round(Math.min(48, w * .055));
   return { floorY, playerX: Math.round(w / 2) - spread, playerY: floorY + depth,
     enemyX: Math.round(w / 2) + spread, enemyY: floorY - depth };
+}
+
+/** Dense scenery surrounds a clearing; full sprite bounds avoid combat silhouettes. */
+export function battleDressingLayout(w: number, h: number) {
+  const ground = battleGroundLayout(w, h);
+  const horizon = ground.floorY - Math.max(4, Math.round(h * .22 / 24)) * 24 + 12;
+  const scale = w >= 760 ? 2 : 1;
+  const placements: { x: number; y: number; scale: number; tree: boolean; seed: number }[] = [];
+  const clear = (x: number, y: number, size: number) =>
+    [[ground.playerX, ground.playerY], [ground.enemyX, ground.enemyY]].every(([fx, fy]) =>
+      x + size / 2 < fx - 76 || x - size / 2 > fx + 76 || y < fy - 160 || y - size > fy + 26) &&
+    (x + size / 2 < ground.playerX - 76 || x - size / 2 > ground.enemyX + 76 ||
+      y < ground.enemyY - 60 || y - size > ground.playerY + 32);
+  for (let row = 0; row < 3; row++) {
+    const size = row === 0 ? 1 : scale, step = row === 0 ? 70 : 96 * scale * .62;
+    for (let i = -1; i <= Math.ceil(w / step); i++) {
+      const x = Math.round(i * step + (row % 2) * step / 2);
+      const y = Math.round(horizon - 20 + row * 28 + worldNoise(i, row, 4) * 18);
+      if (clear(x, y, 96 * size)) placements.push({ x, y, scale: size, tree: (i + row) % 3 === 0, seed: i + row * 29 });
+    }
+  }
+  for (let row = 0; row < 5; row++) {
+    const y = Math.round(horizon + 90 + row * (h - horizon - 70) / 4);
+    for (let i = 0; i < Math.ceil(w / (78 * scale)); i++) {
+      const x = Math.round((i + .3 + worldNoise(i, row, 8) * .5) * 78 * scale);
+      if (clear(x, y, 96 * scale)) placements.push({ x, y, scale, tree: row < 3 && i % 3 === 0, seed: i + row * 37 + 100 });
+    }
+  }
+  return placements.sort((a, b) => a.y - b.y);
 }
 
 /** Arena scenery shares the board's pixels, materials, light and vegetation. */
@@ -42,7 +72,7 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     ctx.drawImage(tile, x - 52, y - 28);
   }
   // Quiet the repeating board texture so fighters remain the visual focus.
-  ctx.fillStyle = palette.top; ctx.globalAlpha = .48; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.fillStyle = palette.top; ctx.globalAlpha = .22; ctx.fillRect(0, horizon, w, h - horizon);
   ctx.restore();
   drawGroundClusters(ctx, w, h, horizon, palette.top, palette.cliffLeft);
   // A worn approach links architecture to the arena, leaving the center clear.
@@ -52,28 +82,28 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     ctx.fillRect(x, y, 38 + i % 3 * 4, 6); ctx.fillRect(x + 8, y + 6, 22, 3);
   }
   ctx.globalAlpha = 1;
-  drawRegionalProps(ctx, w, horizon, biome);
-  drawRegionalProps(ctx, w, h + 8, biome);
-  // Use the same detailed world dressing in encounters, framing a clear playable center.
   const dressing = BIOME_DRESSING[biome] || BIOME_DRESSING.grass;
-  for(let i=0;i<8;i++){
-    const image=worldDetails.get(dressing[i%dressing.length],night);
-    if(!image)continue;
-    const foreground=i>=6, x=Math.round(foreground?(i===6?12:w-12):w*(.04+i*.18));
-    const y=foreground?h+24:horizon+12+(i%3)*9;
-    ctx.drawImage(image,x-48,y-Number(image.dataset.footY||80));
+  const settlement = SETTLEMENT_DRESSING[biome] || ['fence', 'lantern_sign', 'well'] as const;
+  const ground = battleGroundLayout(w, h);
+  // Low plants and debris interrupt the floor without concealing contact shadows.
+  for (let i = 0; i < Math.ceil(w * h / 7000); i++) {
+    const x = Math.round(worldNoise(i, 1, 31) * w);
+    const y = Math.round(horizon + 35 + worldNoise(i, 2, 31) * (h - horizon - 35));
+    if ([[ground.playerX, ground.playerY], [ground.enemyX, ground.enemyY]].some(([fx, fy]) => Math.abs(x - fx) < 92 && Math.abs(y - fy) < 62)) continue;
+    const image = worldDetails.get(dressing[i % dressing.length], night);
+    if (!image) continue;
+    const size = 32 + (i % 3) * 8, scale = size / 96;
+    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - Number(image.dataset.footY || 80) * scale), size, size);
   }
   const species = foliageForBiome(biome);
-  const treeCount = ['castle', 'steampunk', 'volcano', 'desert'].includes(biome) ? 0 : biome === 'snow' ? 2 : 4;
-  if (species) for (let i = 0; i < treeCount; i++) {
-    const offset = i % 3;
-    const spread = Math.min(350, w * .39), step = Math.min(40, w * .045);
-    const x = Math.round(i % 2 === 0 ? w / 2 - spread - offset * step * .3 : w / 2 + spread + offset * step * .3);
-    const y = horizon + 12 + offset * 10;
-    const tree = isometricFoliageRenderer.getTreeSprite(species, i % 4);
-    const scale = w >= 760 ? 2 : 1;
-    const size = tree.width * scale;
-    ctx.drawImage(tree, x - size / 2, y - Number(tree.dataset.footY || 54) * scale, size, size);
+  for (const placement of battleDressingLayout(w, h)) {
+    const { x, y, scale, seed } = placement;
+    const index = Math.abs(seed);
+    const kind: WorldDetailName = index % 5 === 0 ? settlement[index % settlement.length] : dressing[index % dressing.length];
+    const image = placement.tree && species ? isometricFoliageRenderer.getTreeSprite(species, index % 4) : worldDetails.get(kind, night);
+    if (!image) continue;
+    const size = image.width * scale;
+    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - Number(image.dataset.footY || 80) * scale), size, size);
   }
   const landmark = boss ? 'dark_gate' : town ? 'capital' : biome === 'castle' ? 'town' : biome === 'steampunk' ? 'shop_weapon' : biome === 'sakura_shrine' ? 'isekai_event' : biome === 'coral' ? 'fishing' : biome === 'celestial' ? 'monument' : null;
   if (landmark) {

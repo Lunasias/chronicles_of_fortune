@@ -1,7 +1,7 @@
 import './_browser-stubs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { battleGroundLayout } from '../.test-build/engine/BattleScenery.js';
+import { battleGroundLayout, battleDressingLayout } from '../.test-build/engine/BattleScenery.js';
 
 test('battle contact points stay inside the shared floor on phones and desktop', () => {
   for (const [w, h] of [[390, 550], [1280, 540], [1920, 770]]) {
@@ -11,5 +11,18 @@ test('battle contact points stay inside the shared floor on phones and desktop',
     assert.ok(ground.enemyY > h * .42 && ground.playerY < h - 24);
     assert.ok(ground.playerY > ground.enemyY);
     assert.equal(ground.playerX + ground.enemyX, Math.round(w / 2) * 2);
+  }
+});
+
+
+test('dense battle dressing preserves fighter silhouettes across viewport sizes', () => {
+  for (const [w, h] of [[390,550], [1280,540], [1920,770]]) {
+    const ground = battleGroundLayout(w,h), props = battleDressingLayout(w,h);
+    assert.ok(props.length >= 14, 'arena has layered scenery');
+    assert.deepEqual(props, battleDressingLayout(w,h), 'scenery does not flicker between frames');
+    for (const p of props) for (const [x,y] of [[ground.playerX,ground.playerY],[ground.enemyX,ground.enemyY]]) {
+      const size = 96*p.scale;
+      assert.ok(p.x+size/2<x-76 || p.x-size/2>x+76 || p.y<y-160 || p.y-size>y+26, 'full sprite avoids the fighter');
+    }
   }
 });
