@@ -22,7 +22,7 @@ export function battleGroundLayout(w: number, h: number) {
 /** Dense scenery surrounds a clearing; full sprite bounds avoid combat silhouettes. */
 export function battleDressingLayout(w: number, h: number) {
   const ground = battleGroundLayout(w, h);
-  const horizon = ground.floorY - Math.max(4, Math.round(h * .22 / 24)) * 24 + 12;
+  const horizon = ground.floorY - (Math.max(4, Math.round(h * .22 / 24)) + 2) * 24 + 12;
   const scale = w >= 760 ? 2 : 1;
   const placements: { x: number; y: number; scale: number; tree: boolean; seed: number }[] = [];
   const clear = (x: number, y: number, size: number) =>
@@ -34,18 +34,49 @@ export function battleDressingLayout(w: number, h: number) {
     const size = row === 0 ? 1 : scale, step = row === 0 ? 70 : 96 * scale * .62;
     for (let i = -1; i <= Math.ceil(w / step); i++) {
       const x = Math.round(i * step + (row % 2) * step / 2);
-      const y = Math.round(horizon - 20 + row * 28 + worldNoise(i, row, 4) * 18);
+      const y = Math.round(horizon + 12 + row * 28 + worldNoise(i, row, 4) * 18);
       if (clear(x, y, 96 * size)) placements.push({ x, y, scale: size, tree: (i + row) % 3 === 0, seed: i + row * 29 });
     }
   }
   for (let row = 0; row < 5; row++) {
     const y = Math.round(horizon + 90 + row * (h - horizon - 70) / 4);
+    // Narrow screens keep partial edge clusters rather than crowding the fighters.
+    if (w < 760) for (const x of [-24, w + 24]) {
+      if (clear(x, y, 96)) placements.push({ x, y, scale: 1, tree: row < 3, seed: row * 17 + x });
+    }
     for (let i = 0; i < Math.ceil(w / (78 * scale)); i++) {
       const x = Math.round((i + .3 + worldNoise(i, row, 8) * .5) * 78 * scale);
       if (clear(x, y, 96 * scale)) placements.push({ x, y, scale, tree: row < 3 && i % 3 === 0, seed: i + row * 37 + 100 });
     }
   }
   return placements.sort((a, b) => a.y - b.y);
+}
+
+const sceneryFeet = new WeakMap<HTMLCanvasElement, number>();
+/** Anchor visible pixels rather than transparent canvas padding, with a tight contact shadow. */
+function drawGroundedScenery(ctx: CanvasRenderingContext2D, image: HTMLCanvasElement, x: number, y: number, scale: number, night: boolean) {
+  let foot = Number(image.dataset.footY);
+  if (!Number.isFinite(foot)) {
+    foot = sceneryFeet.get(image) ?? -1;
+    if (foot < 0) {
+      const data = image.getContext('2d')!.getImageData(0, 0, image.width, image.height).data;
+      foot = image.height - 1;
+      findFoot: for (let row = image.height - 1; row >= 0; row--) for (let col = 0; col < image.width; col++) {
+        if (data[(row * image.width + col) * 4 + 3] >= 80) { foot = row; break findFoot; }
+      }
+      sceneryFeet.set(image, foot);
+    }
+  }
+  ctx.save();
+  ctx.fillStyle = night ? '#101923' : '#20271e';
+  ctx.globalAlpha = .32;
+  const rx = Math.max(5, image.width * scale * .23), ry = Math.max(2, Math.round(scale * 4));
+  for (let row = -ry; row <= ry; row++) {
+    const half = Math.round(rx * Math.sqrt(Math.max(0, 1 - (row / (ry + 1)) ** 2)));
+    ctx.fillRect(Math.round(x - half), Math.round(y + row), half * 2, 1);
+  }
+  ctx.restore();
+  ctx.drawImage(image, Math.round(x - image.width * scale / 2), Math.round(y - foot * scale), image.width * scale, image.height * scale);
 }
 
 /** Arena scenery shares the board's pixels, materials, light and vegetation. */
@@ -60,7 +91,7 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
   const { floorY } = battleGroundLayout(w, h), night = timeOfDay === 'NIGHT';
   // Extend the floor beyond the viewport. A visible diamond edge makes the arena look airborne.
   const columns = Math.ceil(w / 96) + 2;
-  const rearDepth = -Math.max(4, Math.round(h * .22 / 24));
+  const rearDepth = -(Math.max(4, Math.round(h * .22 / 24)) + 2);
   const frontDepth = Math.ceil((h - floorY) / 24) + 2;
   const horizon = floorY + rearDepth * 24 + 12;
   const palette = terrainPalette(resolveBiome(biome), night);
@@ -93,7 +124,7 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     const image = worldDetails.get(dressing[i % dressing.length], night);
     if (!image) continue;
     const size = 32 + (i % 3) * 8, scale = size / 96;
-    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - Number(image.dataset.footY || 80) * scale), size, size);
+    drawGroundedScenery(ctx, image, x, y, scale, night);
   }
   const species = foliageForBiome(biome);
   for (const placement of battleDressingLayout(w, h)) {
@@ -102,14 +133,12 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     const kind: WorldDetailName = index % 5 === 0 ? settlement[index % settlement.length] : dressing[index % dressing.length];
     const image = placement.tree && species ? isometricFoliageRenderer.getTreeSprite(species, index % 4) : worldDetails.get(kind, night);
     if (!image) continue;
-    const size = image.width * scale;
-    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - Number(image.dataset.footY || 80) * scale), size, size);
+    drawGroundedScenery(ctx, image, x, y, scale, night);
   }
   const landmark = boss ? 'dark_gate' : town ? 'capital' : biome === 'castle' ? 'town' : biome === 'steampunk' ? 'shop_weapon' : biome === 'sakura_shrine' ? 'isekai_event' : biome === 'coral' ? 'fishing' : biome === 'celestial' ? 'monument' : null;
   if (landmark) {
-    const building = isometricBuildingRenderer.getBuildingSprite(landmark), size = building.width * 2;
+    const building = isometricBuildingRenderer.getBuildingSprite(landmark);
     // Foundation sits on the same tiled plane behind the fighters.
-    const foot = building.width >= 96 ? 80 : 48;
-    ctx.drawImage(building, Math.round(w / 2 - size / 2), Math.round(horizon + 24 - foot * 2), size, size);
+    drawGroundedScenery(ctx, building, w / 2, horizon + 24, 2, night);
   }
 }

@@ -104,3 +104,7 @@ Actual play rolled three, selected a visible destination and entered its NPC eve
 - Re-enabled vegetation in industrial/castle/arid encounters and reduced the flat floor overlay to retain material detail.
 - Large dressing is sorted by ground contact and excludes both fighter silhouettes at phone and desktop dimensions. No battle rules or UI controls changed.
 - Production build, typecheck and CSS coverage pass; all 182 tests pass, including deterministic placement and full sprite bounds around fighters. Browser-reviewed forest and steampunk fixtures; screenshots: battle-dense-forest.png and battle-dense-steampunk.png. Physical mobile performance has not been measured.
+
+### Battle grounding correction
+
+Rear scenery anchors previously extended above the rendered floor horizon. Extended the floor two rows rearward and placed every dressing foot at least 12px inside it. Scenery and landmarks now use their actual visible pixel base, with cached fallback anchor detection and tight pixel contact shadows. The viewport regression check also rejects scenery feet in the sky. Refreshed both battle screenshots after browser inspection.
