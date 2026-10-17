@@ -20,9 +20,11 @@ class MonsterArtAtlas {
     if (typeof document === 'undefined') return null;
     const group = Object.keys(GROUPS).find(key => GROUPS[key].includes(archetype));
     if (!group) return null;
-    let sheet = this.sheets.get(group);
+    const actions = ['magic', 'defeat', 'victory'].includes(state);
+    const sheetKey = `${group}_${actions ? 'actions' : 'motion'}`;
+    let sheet = this.sheets.get(sheetKey);
     if (!sheet) {
-      const image = new Image(); sheet = { image, cuts: [], ready: false }; this.sheets.set(group, sheet);
+      const image = new Image(); sheet = { image, cuts: [], ready: false }; this.sheets.set(sheetKey, sheet);
       const entry = sheet;
       image.onload = () => {
         const scratch = document.createElement('canvas'); scratch.width = image.naturalWidth; scratch.height = image.naturalHeight;
@@ -31,16 +33,17 @@ class MonsterArtAtlas {
         entry.ready = true;
         window.dispatchEvent(new CustomEvent('monster-art-loaded'));
       };
-      image.onerror = () => this.failed.add(group);
-      image.src = `/assets/art-v2/monsters-${group}-atlas.png`;
+      image.onerror = () => { if (!actions) this.failed.add(group); };
+      image.src = `/assets/art-v2/monsters-${group}${actions ? '-actions' : ''}-atlas.png`;
     }
-    if (!sheet.ready) return null;
+    if (!sheet.ready) return actions ? this.getFrame(archetype, dir, state === 'magic' ? 'attack' : state === 'defeat' ? 'hurt' : 'idle', frame) : null;
     const beat = ((Math.floor(frame) % 8) + 8) % 8;
-    const pose = state === 'hurt' || state === 'defeat' ? 3 : ['attack', 'strike', 'magic'].includes(state) ? [0, 0, 1, 2, 2, 2, 1, 0][beat] : 0;
-    const sourceFacesRight = archetype === 'goblin_girl' || archetype === 'dark_knightress';
+    const pose = actions ? state === 'defeat' ? 2 : state === 'victory' ? 3 : beat < 3 ? 0 : 1
+      : state === 'hurt' ? 3 : state === 'counter' ? 1 : ['attack', 'strike'].includes(state) ? [0, 0, 1, 2, 2, 2, 1, 0][beat] : 0;
+    const sourceFacesRight = !actions && (archetype === 'goblin_girl' || archetype === 'dark_knightress');
     const facingRight = ['E', 'SE', 'NE', 'S'].includes(dir);
     const flip = facingRight !== sourceFacesRight;
-    const row = GROUPS[group].indexOf(archetype), key = `${archetype}_${pose}_${flip}`;
+    const row = GROUPS[group].indexOf(archetype), key = `${archetype}_${actions}_${pose}_${flip}`;
     const cached = this.frames.get(key); if (cached) return cached;
     const image = sheet.image, top = sheet.cuts[row], bottom = sheet.cuts[row + 1];
     const left = Math.round(pose * image.naturalWidth / 4), right = Math.round((pose + 1) * image.naturalWidth / 4);

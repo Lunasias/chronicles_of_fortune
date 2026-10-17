@@ -16,6 +16,8 @@
     "src/engine/PixelScale.ts",
     "src/engine/AtlasSprites.ts",
     "src/engine/MagicArt.ts",
+    "src/engine/BiomeArt.ts",
+    "src/engine/CombatVFXEngine.ts",
     "src/engine/SkyPainter.ts",
     "src/engine/NetworkRoomManager.ts",
     "src/game/BalanceSystem.ts",

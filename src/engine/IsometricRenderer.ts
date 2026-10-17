@@ -4,10 +4,11 @@ import { worldBackground } from './WorldBackground';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
-import { pixelDisc, pixelEllipse, pixelGlow, pixelRing } from './PixelFx';
+import { pixelDisc, pixelEllipse, pixelGlow, pixelRing, pixelStroke } from './PixelFx';
 import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
 import { audio } from './AudioSynthesizer';
 import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSettings';
+import { foliageForBiome } from './BiomeArt';
 
 export interface Camera2D {
   x: number;
@@ -741,20 +742,11 @@ export class IsometricRenderer {
       }
 
       // Foliage / Tree Props (Only on open path nodes, never clipping through buildings)
-      if (node.id % 2 === 0 && !hasBuilding) {
+      if (node.id % 2 === 0 && !hasBuilding && foliageForBiome(node.biome)) {
         renderList.push({
           depth: depth + 20,
           draw: () => {
-            const treeType =
-              node.biome === 'snow'
-                ? 'frost_pine'
-                : node.biome === 'abyss' || node.biome === 'cavern'
-                ? 'gloom_spore'
-                : node.biome === 'volcano' || node.biome === 'desert'
-                ? 'ash_thorn'
-                : node.biome === 'forest'
-                ? (node.id % 4 === 0 ? 'gloom_spore' : 'dark_oak')
-                : 'dark_oak';
+            const treeType = foliageForBiome(node.biome)!;
             const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
             // Ambient ground contact shadow at trunk base
             ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
@@ -1437,8 +1429,7 @@ export class IsometricRenderer {
         if (p.x > 1600) p.x = -1600;
         if (p.x < -1600) p.x = 1600;
 
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - 3, p.y + 12);
+        pixelStroke(ctx, p.x, p.y, p.x - 3, p.y + 12, 1, '#8db6bd', .55);
       });
       ctx.stroke();
 
@@ -1472,7 +1463,7 @@ export class IsometricRenderer {
         if (p.x < -1600) p.x = 1600;
 
         ctx.fillStyle = 'rgba(251, 191, 36, 0.55)';
-        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, Math.round(p.size)), Math.max(1, Math.round(p.size)));
       });
     } else if (weather === 'miasma') {
       // Purple spore motes & dark crimson embers
@@ -1512,7 +1503,7 @@ export class IsometricRenderer {
         if (p.x < -1600) p.x = 1600;
 
         ctx.fillStyle = idx % 3 === 0 ? '#ef4444' : idx % 3 === 1 ? '#f97316' : '#fbbf24';
-        ctx.fillRect(p.x, p.y, p.size * 0.9, p.size * 0.9);
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, Math.round(p.size * 0.9)), Math.max(1, Math.round(p.size * 0.9)));
       });
     } else if (activeBiome === 'sakura_shrine') {
       // Drifting Sakura Petals
@@ -1538,7 +1529,7 @@ export class IsometricRenderer {
         if (p.x < -1600) p.x = 1600;
 
         ctx.fillStyle = idx % 2 === 0 ? '#38bdf8' : '#c084fc';
-        ctx.fillRect(p.x, p.y, p.size * 0.75, p.size * 0.75);
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, Math.round(p.size * 0.75)), Math.max(1, Math.round(p.size * 0.75)));
       });
     } else {
       // Clear Skies / Sunny: Gentle golden pollen / leaf motes
@@ -1550,7 +1541,7 @@ export class IsometricRenderer {
         if (p.x < -1600) p.x = 1600;
 
         ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, Math.round(p.size)), Math.max(1, Math.round(p.size)));
       });
     }
   }

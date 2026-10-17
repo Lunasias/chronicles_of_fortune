@@ -169,7 +169,7 @@ export class CustomIsometricMonsterRenderer {
     const vec = ISO_DIR_VECTORS[dir] || ISO_DIR_VECTORS['SW'];
 
     // Animation offsets and dynamic physics
-    let bob = Math.sin((f / 8) * Math.PI * 2) * 2.2;
+    let bob = 0; // Standing and defeated bodies retain their ground contact point.
     let lungeX = 0;
     let lungeY = 0;
     let scaleX = 1.0;
@@ -251,7 +251,7 @@ export class CustomIsometricMonsterRenderer {
       ctx.restore();
 
       // 3. Render 8-Directional Archetype-Specific Combat Attack Animation & VFX
-      if (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic') {
+      if (!newFrame && (normAnim === 'attack' || normAnim === 'strike' || normAnim === 'magic')) {
         this.renderMonsterCombatVFX(ctx, cx, cy, archKey, dir, f, normAnim, this.isBack);
       }
     } else {

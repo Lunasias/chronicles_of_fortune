@@ -3,6 +3,7 @@ import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
 import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import type { TimeOfDay } from '../game/EcosystemSystem';
+import { foliageForBiome } from './BiomeArt';
 
 /** Arena scenery shares the board's pixels, materials, light and vegetation. */
 export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: number, biome: string, time: number, timeOfDay: TimeOfDay, boss = false, town = false) {
@@ -26,8 +27,8 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     const tile = isometricTerrainRenderer.getTileSprite(biome, { cliffs: gx === 4 || gy === 4, night, variant: Math.abs(gx * 7 + gy * 13) % 4 });
     ctx.drawImage(tile, x - 52, y - 28);
   }
-  const species = biome === 'snow' ? 'frost_pine' : ['volcano', 'desert', 'steampunk'].includes(biome) ? 'ash_thorn' : biome === 'sakura_shrine' ? 'blood_willow' : ['fairy_grove', 'cavern', 'crystal_cavern', 'abyss'].includes(biome) ? 'gloom_spore' : 'dark_oak';
-  if (biome !== 'coral' && biome !== 'celestial') for (let i = 0; i < 6; i++) {
+  const species = foliageForBiome(biome);
+  if (species) for (let i = 0; i < 6; i++) {
     const offset = i % 3;
     const spread = Math.min(350, w * .39), step = Math.min(40, w * .045);
     const x = Math.round(i < 3 ? w / 2 - spread + offset * step : w / 2 + spread - offset * step);

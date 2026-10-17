@@ -4,11 +4,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isolateAtlasCell } from '../.test-build/engine/AtlasSprites.js';
 import { atlasRowCuts, classPoseRow } from '../.test-build/engine/ClassArtAtlas.js';
-import { normalizeGraphicsPreferences, animationPoseIndex, actorScaleForViewport } from '../.test-build/engine/ArtDirection.js';
+import { normalizeGraphicsPreferences, animationPoseIndex, actorScaleForViewport, EffectClock } from '../.test-build/engine/ArtDirection.js';
 import { customIsometricHeroRenderer } from '../.test-build/engine/CustomIsometricHeroRenderer.js';
 import { JOB_PROMOTIONS, TIER3_PROMOTIONS } from '../.test-build/game/Player.js';
 import png from '../scripts/lib/png.cjs';
 import { MAGIC_PALETTES, magicElementForJob } from '../.test-build/engine/MagicArt.js';
+import { CombatVFXEngine, fitEffectText } from '../.test-build/engine/CombatVFXEngine.js';
+import { foliageForBiome } from '../.test-build/engine/BiomeArt.js';
 
 test('atlas extraction discards detached neighbor fragments and retains the full main sprite', () => {
   const pixels = new Uint8ClampedArray(10 * 10 * 4);
@@ -35,6 +37,19 @@ test('attack timing reaches impact and recovery without repeating the wind-up', 
   for (const [w, h] of [[390, 844], [768, 600], [1280, 720], [1920, 1080]]) assert.equal(Number.isInteger(actorScaleForViewport(w, h)), true);
 });
 
+test('effect duration is consistent at 30, 60, 144 and 240 Hz and bounds resume catch-up', () => {
+  for (const hz of [30, 60, 144, 240]) {
+    const clock = new EffectClock();
+    clock.reset(0);
+    let total = 0;
+    for (let frame = 1; frame <= hz; frame++) total += clock.advance(frame * 1000 / hz);
+    assert.equal(total, 60, `${hz} Hz`);
+    assert.equal(clock.advance(11000), 6);
+    clock.reset(12000);
+    assert.equal(clock.advance(12000), 0);
+  }
+});
+
 test('job rendering preserves ranger identity and maps promoted knight bases', () => {
   assert.equal(customIsometricHeroRenderer.normalizeClassKey('ranger'), 'ranger');
   assert.equal(customIsometricHeroRenderer.normalizeClassKey('paladin'), 'warrior');
@@ -54,6 +69,14 @@ test('every promoted job keeps the silhouette of its original playable class', (
 
 test('the cleric run cycle never picks the prayer or casting row', () => {
   for (let frame = 0; frame < 8; frame++) assert.ok(classPoseRow('run', frame, true) <= 2);
+});
+
+test('world and battle vegetation preserve the identity of special realms', () => {
+  for (const realm of ['abyss', 'cavern', 'crystal_cavern', 'fairy_grove']) assert.equal(foliageForBiome(realm), 'gloom_spore');
+  for (const realm of ['coral', 'celestial']) assert.equal(foliageForBiome(realm), null);
+  assert.equal(foliageForBiome('sakura_shrine'), 'blood_willow');
+  assert.equal(foliageForBiome('snow'), 'frost_pine');
+  assert.equal(foliageForBiome('forest'), 'dark_oak');
 });
 
 test('all shipped class atlases contain an occupied sprite in every direction and pose cell', () => {
@@ -77,6 +100,7 @@ test('supplemental actions, monsters and companions have no empty production cel
   const sheets = [
     ...['warrior', 'magician', 'thief', 'cleric', 'spellblade', 'ranger'].map(job => [`${job}-actions`, 8, 6]),
     ...['wild', 'frontier', 'mythic'].map(group => [`monsters-${group}`, 4, 6]),
+    ...['wild', 'frontier', 'mythic'].map(group => [`monsters-${group}-actions`, 4, 6]),
     ['companions', 6, 5], ['kingdom-buildings', 4, 4], ['kingdom-foliage', 4, 5]
   ];
   for (const [name, cols, rows] of sheets) {
@@ -99,4 +123,32 @@ test('promoted magic retains its elemental identity and each element has a disti
   assert.equal(magicElementForJob('ranger'), 'nature');
   assert.equal(magicElementForJob(undefined), 'arcane');
   assert.equal(new Set(Object.values(MAGIC_PALETTES).map(ramp => ramp.join())).size, 7);
+});
+
+test('core spell and summon effects keep integer pixels and balance the caller canvas stack', () => {
+  const fx = new CombatVFXEngine();
+  fx.runicRings.push({ x: 101.4, y: 120.6, radius: 32, color: '#acbcca', alpha: .8, decay: .1, angle: .3, isNested: true });
+  fx.summonPortals.push({ x: 180.2, y: 190.7, radius: 24, color: '#8fb9a1', alpha: .6, decay: .1, angle: .5, pillarHeight: 80 });
+  fx.magicLaserBeams.push({ casterX: 10.4, casterY: 29.7, targetX: 190.2, targetY: 110.8, width: 12, color: '#a9b8ca', alpha: .7, decay: .1, rings: 2 });
+  fx.groundCracks.push({ x: 100, y: 100, radius: 20, alpha: .7, decay: .1, points: [{ x: 97.2, y: 101.6 }, { x: 110.4, y: 118.2 }, { x: 121.8, y: 100.2 }] });
+  let depth = 0, blocks = 0;
+  const ctx = new Proxy({}, { get: (target, key) => {
+    if (key === 'save') return () => { depth++; };
+    if (key === 'restore') return () => { assert.ok(depth > 0, 'effect restored its caller canvas state'); depth--; };
+    if (key === 'rotate' || key === 'scale' || key === 'transform') return () => assert.fail('core FX must rasterize directly to world pixels');
+    if (key === 'fillRect') return (...values) => { blocks++; for (const value of values) assert.ok(Number.isInteger(value), `fractional FX rectangle: ${values}`); };
+    return target[key] ?? (() => {});
+  }, set: (target, key, value) => { target[key] = value; return true; } });
+  fx.render(ctx, 800, 450);
+  assert.equal(depth, 0);
+  assert.ok(blocks > 100, 'expected visible rasterized spells');
+});
+
+test('long combat announcements fit a narrow phone without stretching the text', () => {
+  const ctx = { font: '', measureText(text) { return { width: Array.from(text).length * Number(this.font.match(/(\d+)px/)[1]) * .65 }; } };
+  for (const width of [120, 240, 366]) {
+    const text = fitEffectText(ctx, 'สไลม์สาวใสบริสุทธิ์ พุดดิ้ง (Slime Girl Pudding) Gelatin Shield Blast', width, 28);
+    assert.ok(ctx.measureText(text).width <= width);
+    assert.ok(Number.isInteger(Number(ctx.font.match(/(\d+)px/)[1])));
+  }
 });

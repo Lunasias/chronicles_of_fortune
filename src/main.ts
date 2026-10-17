@@ -45,6 +45,9 @@ import { mobileDisplayManager } from './ui/MobileDisplayManager';
 
 class DokaponApp {
   private visualReviewActive = false;
+  private visualReviewMeter: HTMLElement | null = null;
+  private visualReviewSamples = 0;
+  private visualReviewSampleAt = 0;
   private canvas: HTMLCanvasElement;
   private renderer: IsometricRenderer;
   private game: GameState;
@@ -128,7 +131,6 @@ class DokaponApp {
     this.initCanvasResize();
     this.bindDOMEvents();
     this.bindInteractiveTileSelection();
-    this.renderRosterSetup(3);
     this.updateTitleSaveStatus();
     this.initGamepadController();
     this.bindNetworkListeners();
@@ -841,6 +843,7 @@ class DokaponApp {
     // Title Screen Start
     document.getElementById('btnStartAdventure')?.addEventListener('click', () => {
       audio.click();
+      if (!document.querySelector('#playerSetupRoster .player-setup-card')) this.renderRosterSetup(3);
       document.getElementById('titleButtonsBlock')?.classList.add('hidden');
       document.getElementById('playerSetupBlock')?.classList.remove('hidden');
     });
@@ -3618,6 +3621,14 @@ class DokaponApp {
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
     this.visualReviewActive = true;
+    if (query.get('metrics') === 'true') {
+      this.visualReviewMeter = document.createElement('output');
+      this.visualReviewMeter.id = 'visualReviewMetrics';
+      this.visualReviewMeter.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:9999;padding:6px;background:#142330;color:#eee2c8;font:12px monospace;pointer-events:none';
+      this.visualReviewMeter.textContent = 'ART REVIEW · measuring…';
+      document.body.append(this.visualReviewMeter);
+      this.visualReviewSampleAt = performance.now();
+    }
     const party = [{ name: 'Valeria', classKey, isAI: false }];
     if (['pvp', 'report', 'victory'].includes(scene)) party.push({ name: 'Lyra', classKey: 'magician', isAI: false });
     this.game.initGame(party);
@@ -3626,7 +3637,7 @@ class DokaponApp {
     const node = this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
-    const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; document.getElementById('titleScreen')?.classList.remove('hidden'); };
+    const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; this.visualReviewMeter?.remove(); this.visualReviewMeter = null; document.getElementById('titleScreen')?.classList.remove('hidden'); };
     if (!['battle', 'boss', 'pvp'].includes(scene)) {
       this.hud.update();
       if (scene === 'town') this.townUI.open(this.game.allNodes.find(n => n.type === 'town')!, finish, () => {});
@@ -3647,6 +3658,14 @@ class DokaponApp {
   }
 
   public loop(time: number) {
+    if (this.visualReviewActive && this.visualReviewMeter) {
+      this.visualReviewSamples++;
+      const now = performance.now(), elapsed = now - this.visualReviewSampleAt;
+      if (elapsed >= 1500) {
+        this.visualReviewMeter.textContent = `ART REVIEW · ${Math.round(this.visualReviewSamples * 1000 / elapsed)} FPS · ${this.canvas.width} × ${this.canvas.height}`;
+        this.visualReviewSamples = 0; this.visualReviewSampleAt = now;
+      }
+    }
     this.gamepadController?.update();
 
     if (this.game.phase !== 'TITLE') {

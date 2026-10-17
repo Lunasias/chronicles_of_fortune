@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fortuna — Art Review</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#101e2a;color:#e9dfc6;font:15px system-ui,sans-serif}
+    *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#101e2a;color:#e9dfc6;font:15px system-ui,sans-serif}
     header,main{max-width:1220px;margin:auto;padding:24px}header{border-bottom:2px solid #7c8068}
     h1{font:24px monospace;letter-spacing:3px;color:#e6c583}p{color:#a9beb7;line-height:1.7}
     nav{display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin:20px 0}
@@ -13,6 +13,7 @@
     select,button{padding:10px 14px;border:1px solid #89947a;background:#263e48;min-height:44px}
     button{cursor:pointer}button:hover{background:#3b575c}a{color:#d4bf8c}
     canvas{display:block;width:100%;height:auto;background:#172b38;border:2px solid #667e77;image-rendering:pixelated}
+    .canvas-window{width:100%;overflow:auto}
     #reviewStatus{font:12px monospace;color:#a8c8b7;padding:12px 0}
     .swatches{display:flex;gap:8px;flex-wrap:wrap}.swatches span{display:inline-block;padding:12px;border:1px solid #82938b}
     @media(max-width:600px){header,main{padding:16px}h1{font-size:20px}nav label{flex:1 1 42%}}
@@ -28,11 +29,13 @@
       <label>ช่วงเวลา<select id="reviewTime"><option value="DAY">กลางวัน</option><option value="DAWN">รุ่งเช้า</option><option value="DUSK">เย็น</option><option value="NIGHT">กลางคืน</option></select></label>
       <label>ภูมิภาคตัวอย่าง<select id="reviewBiome"></select></label>
       <label>เฟรม<input id="reviewFrame" type="range" min="0" max="7" value="0"></label>
+      <label>ขนาดภาพ<select id="reviewScale"><option value="fit">พอดีหน้าจอ</option><option value="1">1× พิกเซลจริง</option><option value="2">2× พิกเซลจริง</option></select></label>
+      <label>อุปกรณ์<input id="reviewEquipment" type="checkbox" aria-label="แสดงอุปกรณ์ระดับสูง"></label>
       <button id="reviewPause" type="button">หยุดภาพ</button>
       <button id="reviewExport" type="button">บันทึกภาพ PNG</button>
       <a id="reviewBattleLink" href="/?art-scene=battle" hidden>ทดสอบฉากต่อสู้จริง</a>
     </nav>
-    <canvas id="reviewCanvas" width="1152" height="720" aria-label="ภาพตัวอย่างจากระบบกราฟิกของเกม"></canvas>
+    <div class="canvas-window"><canvas id="reviewCanvas" width="1152" height="720" aria-label="ภาพตัวอย่างจากระบบกราฟิกของเกม"></canvas></div>
     <div id="reviewStatus" role="status"></div>
     <p>ตรวจที่ขนาดใช้งานจริงและขยายจำนวนเต็ม: ตำแหน่งเท้า ทิศอาวุธ ความชัดของอาชีพ แสงจากซ้ายบน รอยต่อพื้น และวัตถุบังกันตามความลึก</p>
     <div class="swatches"><span style="background:#142330">Ink #142330</span><span style="background:#b99b60;color:#142330">Brass #b99b60</span><span style="background:#92c6a0;color:#142330">Jade #92c6a0</span><span style="background:#f2e5c6;color:#142330">Cream #f2e5c6</span></div>

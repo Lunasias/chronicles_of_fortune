@@ -3,7 +3,7 @@ import { BattleEngine, AttackerAction, DefenderAction, Combatant, CombatGridPosi
 import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelSpriteGenerator';
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
-import { combatVFX } from '../engine/CombatVFXEngine';
+import { combatVFX, fitEffectText } from '../engine/CombatVFXEngine';
 import {pixelDisc, pixelEllipse, pixelRing, pixelVerticalRamp } from '../engine/PixelFx';
 import { BoardNode } from '../game/BoardMap';
 import { ecosystemSystem } from '../game/EcosystemSystem';
@@ -13,7 +13,7 @@ import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
 import { networkRoomManager } from '../engine/NetworkRoomManager';
-import { actorScaleForViewport } from '../engine/ArtDirection';
+import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
 import { prefersReducedMotion } from './GraphicsSettings';
 import { drawBattleScenery } from '../engine/BattleScenery';
 import { magicElementForJob, MAGIC_PALETTES } from '../engine/MagicArt';
@@ -45,6 +45,7 @@ export class BattleUI {
    */
   private daisSprites = new Map<string, HTMLCanvasElement>();
   private sceneryLayers = new Map<string, { canvas: HTMLCanvasElement; key: string; at: number }>();
+  private effectClock = new EffectClock();
   private static readonly SCENERY_REFRESH_MS = 100;
 
   /**
@@ -423,6 +424,8 @@ export class BattleUI {
     // Never carry a summon over from a previous battle.
     this.activeSummon = null;
 
+    this.effectClock.reset(performance.now());
+
     // Switch to battle chiptune theme
     if (enemy.isBoss) {
       audio.playBgm('boss');
@@ -742,8 +745,8 @@ export class BattleUI {
         // Show the companion's 64x64 model; fall back to the emoji only if the file has not
         // loaded yet, so the button is never blank.
         const spriteEl = document.getElementById('battleCompanionSprite') as HTMLCanvasElement | null;
-        const painted = spriteEl ? companionSprites.paintInto(spriteEl, activeP.companion) : false;
         const iconEl = document.getElementById('battleCompanionIcon');
+        const painted = spriteEl ? companionSprites.paintInto(spriteEl, activeP.companion, iconEl) : false;
         if (iconEl) {
           iconEl.innerText = activeP.companion.avatar;
           iconEl.classList.toggle('hidden', painted);
@@ -968,6 +971,12 @@ export class BattleUI {
     return 'NE';
   }
 
+  private bannerPortrait(combatant: Combatant): HTMLCanvasElement {
+    const hero = combatant.playerRef;
+    return hero ? customIsometricHeroRenderer.getHeroSprite(hero.classKey, 'SE', 'idle', 0, hero.equipment, hero.isDarkling, hero.prank, hero.skinVariant)
+      : customIsometricMonsterRenderer.getMonsterSprite(combatant.name, 'SW', 'idle', 0);
+  }
+
   private executeRoundWithAnimation(atkAction: AttackerAction, defAction: DefenderAction) {
     const b = this.game.activeBattle;
     if (!b) return;
@@ -1015,7 +1024,9 @@ export class BattleUI {
         '#f59e0b',
         comp?.avatar,
         comp?.name,
-        45
+        45,
+        this.bannerPortrait(b.attacker),
+        comp ? companionSprites.getCompanionSprite(comp) || undefined : undefined
       );
       combatVFX.triggerImpactFlash('#ffffff', 0.85);
     } else if (atkAction === 'strike') {
@@ -1038,7 +1049,8 @@ export class BattleUI {
           '#ec4899',
           undefined,
           undefined,
-          36
+          36,
+          this.bannerPortrait(b.attacker)
         );
       }
     } else {
@@ -1394,14 +1406,15 @@ export class BattleUI {
     const w = this.canvas.width;
     const h = this.canvas.height;
     if (w <= 0 || h <= 0) return;
+    // Resizing a canvas resets drawing state, including nearest-neighbor sampling.
+    ctx.imageSmoothingEnabled = false;
 
-    // Update VFX Engine
-    combatVFX.update();
+    const now = performance.now();
+    for (let step = this.effectClock.advance(now); step > 0; step--) combatVFX.update();
 
     // -----------------------------------------------------------------------
     // Update Cutscene Tweens (60 FPS Silky Smooth)
     // -----------------------------------------------------------------------
-    const now = performance.now();
     if (this.cutscene.active) {
       const elapsed = now - this.cutscene.phaseStartTime;
       const p = Math.min(1.0, Math.max(0, elapsed / Math.max(1, this.cutscene.phaseDuration)));
@@ -1547,8 +1560,7 @@ export class BattleUI {
     const ey =
       eyCenter + eRowDY +
       (!isPlayerAtk ? this.cutscene.attackerOffsetY : this.cutscene.defenderOffsetY) +
-      combatVFX.monsterStaggerY +
-      Math.sin(time * 0.005 + 1) * 3;
+      combatVFX.monsterStaggerY;
 
     const pAnim: CharacterAnimState = playerCombatant.hp <= 0 ? 'defeat' : enemyCombatant.hp <= 0 && !this.cutscene.active ? 'victory' : isPlayerAtk ? this.attackerAnim : this.defenderAnim;
     const eAnim: CharacterAnimState = enemyCombatant.hp <= 0 ? 'defeat' : playerCombatant.hp <= 0 && !this.cutscene.active ? 'victory' : isPlayerAtk ? this.defenderAnim : this.attackerAnim;
@@ -1582,7 +1594,7 @@ export class BattleUI {
           pFrame = flinchFrame;
         }
       } else if (this.cutscene.phase === 'dash' || this.cutscene.phase === 'leap_back') {
-        const moveFrame = Math.floor(progress * 8) % 4;
+        const moveFrame = Math.min(7, Math.floor(progress * 8));
         if (isPlayerAtk) pFrame = moveFrame;
         else eFrame = moveFrame;
       }
@@ -1790,28 +1802,27 @@ export class BattleUI {
   // HELPER: CINEMATIC COMBAT ACTION CUTSCENE BANNER
   // =========================================================================
   private drawCinematicCutsceneBanner(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    if (combatVFX.activeCutInBanner) return;
     const alpha = Math.min(1.0, Math.max(0, this.cutscene.bannerAlpha));
     if (alpha <= 0.01) return;
 
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    const by = h * 0.13;
+    const by = Math.max(116, Math.round(h * .13));
     const bh = 54;
-    const bw = Math.min(w * 0.74, 580);
-    const bx = (w - bw) / 2;
+    const bw = Math.round(Math.min(w - 24, 580));
+    const bx = Math.round((w - bw) / 2);
 
     // Dark gothic translucent box
     ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6);
-    ctx.fill();
+    ctx.fillRect(bx, by, bw, bh);
 
     // Glowing border in bannerColor
     ctx.strokeStyle = this.cutscene.bannerColor;
     ctx.lineWidth = 2.0;
     ctx.shadowColor = this.cutscene.bannerColor;
-    ctx.stroke();
+    ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
 
     // Speed-lines / slash accent ribbons
     ctx.fillStyle = this.cutscene.bannerColor;
@@ -1819,16 +1830,16 @@ export class BattleUI {
     ctx.fillRect(bx + bw - 16, by + 10, 4, bh - 20);
 
     // Title text
-    ctx.font = 'bold 13px Silkscreen';
+    const title = fitEffectText(ctx, this.cutscene.bannerText, bw - 56, 13);
     ctx.textAlign = 'center';
     ctx.fillStyle = this.cutscene.bannerColor;
     ctx.shadowColor = '#000000';
-    ctx.fillText(this.cutscene.bannerText, w / 2, by + 24);
+    ctx.fillText(title, Math.round(w / 2), by + 24);
 
     // Subtitle text
-    ctx.font = '9px Silkscreen';
+    const subtitle = fitEffectText(ctx, this.cutscene.bannerSubtext, bw - 24, 10, 'Kanit, sans-serif');
     ctx.fillStyle = '#f8fafc';
-    ctx.fillText(this.cutscene.bannerSubtext, w / 2, by + 42);
+    ctx.fillText(subtitle, Math.round(w / 2), by + 42);
 
     ctx.restore();
   }

@@ -31,6 +31,25 @@ import png from '../scripts/lib/png.cjs';
 const { encodePNG } = png;
 const MODEL_DIR = path.join('public', 'assets', 'terrain');
 
+test('biome transitions blend only the border without changing the interior, cliffs or opacity', () => {
+  for (const night of [false, true]) {
+    const base = paintTerrainTile('grass', { cliffs: true, night });
+    const mixed = paintTerrainTile('grass', { cliffs: true, night, edgeBiomes: ['snow', 'forest', 'desert', 'castle'] });
+    let changed = 0;
+    for (let y = 0; y < base.h; y++) for (let x = 0; x < base.w; x++) {
+      const i = (y * base.w + x) * 4;
+      assert.equal(mixed.data[i + 3], base.data[i + 3], `opacity at ${x},${y}`);
+      const different = [0, 1, 2].some(c => base.data[i + c] !== mixed.data[i + c]);
+      if (!different) continue;
+      changed++;
+      const distance = Math.abs(x - TERRAIN_CX) / TERRAIN_HW + Math.abs(y - TERRAIN_CY) / TERRAIN_HH;
+      assert.ok(distance >= .69 && distance <= 1.001, `border paint escaped into interior or cliff at ${x},${y}`);
+    }
+    assert.ok(changed > 100, 'border must visibly blend');
+    assert.deepEqual(paintTerrainTile('grass', { night, edgeBiomes: ['grass', null, null, null] }).data, paintTerrainTile('grass', { night }).data);
+  }
+});
+
 /** All four variants are drawn by the game: interior tiles, edge tiles, and day/night. */
 const VARIANTS = [
   { suffix: 'flat_day', options: { cliffs: false, night: false } },

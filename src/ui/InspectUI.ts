@@ -12,6 +12,7 @@ export class InspectUI {
   private duelScoutModal: HTMLElement;
   private monsterScoutModal: HTMLElement;
   private destinationTooltip: HTMLElement;
+  private inspectedPlayer: Player | null = null;
 
   constructor(game: GameState) {
     this.game = game;
@@ -55,6 +56,9 @@ export class InspectUI {
       document.body.appendChild(tipEl);
     }
     this.destinationTooltip = tipEl;
+    window.addEventListener('hero-assets-loaded', () => {
+      if (this.inspectedPlayer && !this.inspectModal.classList.contains('hidden')) this.paintInspectAvatar(this.inspectedPlayer);
+    });
   }
 
 
@@ -68,6 +72,7 @@ export class InspectUI {
   }
 
   private renderInspectModal(player: Player) {
+    this.inspectedPlayer = player;
     const netWorth = player.getNetWorth(this.game.allNodes);
     const ownedTownNames = player.townDeeds.map(id => {
       const node = this.game.allNodes.find(n => n.id === id);
@@ -311,7 +316,20 @@ export class InspectUI {
       </div>
     `;
 
-    // Render Avatar Canvas
+    this.paintInspectAvatar(player);
+
+    document.getElementById('btnCloseInspectModal')?.addEventListener('click', () => {
+      audio.click();
+      this.inspectModal.classList.add('hidden');
+    });
+
+    document.getElementById('btnOpenPromotionModal')?.addEventListener('click', () => {
+      audio.click();
+      this.openPromotionModal(player);
+    });
+  }
+
+  private paintInspectAvatar(player: Player) {
     const canvas = document.getElementById('inspectAvatarCanvas') as HTMLCanvasElement;
     if (canvas) {
       const ctx = canvas.getContext('2d')!;
@@ -330,15 +348,6 @@ export class InspectUI {
       ctx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
     }
 
-    document.getElementById('btnCloseInspectModal')?.addEventListener('click', () => {
-      audio.click();
-      this.inspectModal.classList.add('hidden');
-    });
-
-    document.getElementById('btnOpenPromotionModal')?.addEventListener('click', () => {
-      audio.click();
-      this.openPromotionModal(player);
-    });
   }
 
   private openPromotionModal(player: Player) {

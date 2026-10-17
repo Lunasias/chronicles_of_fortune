@@ -2,6 +2,18 @@ import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelGlow, pixelVignet
 import { prefersReducedMotion } from '../ui/GraphicsSettings';
 import { MAGIC_PALETTES, type MagicElement } from './MagicArt';
 
+/** Fit whole-pixel type, then ellipsize; never stretch finished text to a fractional scale. */
+export function fitEffectText(ctx: CanvasRenderingContext2D, text: string, width: number, maxSize: number, family = 'Silkscreen, monospace'): string {
+  let size = Math.max(9, Math.floor(maxSize));
+  const available = Math.max(12, width);
+  ctx.font = `bold ${size}px ${family}`;
+  while (size > 9 && ctx.measureText(text).width > available) ctx.font = `bold ${--size}px ${family}`;
+  const chars = Array.from(text);
+  let fitted = text;
+  while (chars.length && ctx.measureText(fitted).width > available) { chars.pop(); fitted = chars.join('') + '…'; }
+  return fitted;
+}
+
 export interface Particle {
   x: number;
   y: number;
@@ -12,6 +24,7 @@ export interface Particle {
   alpha: number;
   decay: number;
   gravity?: number;
+  shape?: 'ember' | 'shard' | 'spark' | 'leaf' | 'cross' | 'wisp';
 }
 
 export interface SlashArc {
@@ -96,6 +109,8 @@ export interface SummonPortal {
 }
 
 export interface CutInBanner {
+  portrait?: HTMLCanvasElement;
+  companionPortrait?: HTMLCanvasElement;
   title: string;
   subtitle: string;
   avatar: string;
@@ -174,7 +189,9 @@ export class CombatVFXEngine {
     color = '#f59e0b',
     companionAvatar?: string,
     companionName?: string,
-    durationFrames = 42
+    durationFrames = 42,
+    portrait?: HTMLCanvasElement,
+    companionPortrait?: HTMLCanvasElement
   ) {
     this.activeCutInBanner = {
       title,
@@ -184,7 +201,7 @@ export class CombatVFXEngine {
       companionAvatar,
       companionName,
       durationFrames,
-      elapsed: 0
+      elapsed: 0, portrait, companionPortrait
     };
     this.triggerSpeedLines(color, durationFrames);
     this.triggerScreenShake(10);
@@ -378,6 +395,7 @@ export class CombatVFXEngine {
         vy: Math.sin(angle) * speed - (isHeal || element === 'flame' ? 2.5 : 0),
         color: palette[i % palette.length],
         size: 2 + i % 4,
+        shape: isHeal || element === 'nature' ? 'leaf' : element === 'flame' ? 'ember' : element === 'frost' ? 'shard' : element === 'storm' ? 'spark' : element === 'holy' ? 'cross' : 'wisp',
         alpha: 1.0,
         decay: 0.03,
         gravity: isHeal || element === 'flame' ? -0.12 : element === 'frost' ? .15 : 0.04
@@ -940,118 +958,55 @@ export class CombatVFXEngine {
 
       // Gothic Skill Title Banner
       if (this.activeCutscene) {
-        ctx.font = 'bold 20px Silkscreen';
+        const title = fitEffectText(ctx, this.activeCutscene.skillName.toUpperCase(), arenaWidth - 24, 20);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fde047';
         ctx.shadowColor = '#e11d48';
-        ctx.fillText(`⚡ ${this.activeCutscene.skillName.toUpperCase()} ⚡`, arenaWidth * 0.5, 60);
+        ctx.fillText(title, Math.round(arenaWidth * .5), arenaWidth < 600 ? 128 : 112);
 
         this.renderSkillCinematic(ctx, arenaWidth, arenaHeight, this.activeCutscene);
       }
       ctx.restore();
     }
 
-    // 1. Draw 2.5D Isometric Ground Cracks
+    // World-pixel geometry: no scaled or rotated canvas paths in the core effects.
     this.groundCracks.forEach(c => {
-      ctx.save();
-      ctx.strokeStyle = `rgba(239, 68, 68, ${c.alpha})`;
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = '#b91c1c';
-      ctx.beginPath();
-      c.points.forEach((pt, idx) => {
-        if (idx === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      });
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
+      for (let i = 0; i < c.points.length; i++) {
+        const from = c.points[i], to = c.points[(i + 1) % c.points.length];
+        pixelStroke(ctx, from.x, from.y, to.x, to.y, 3, '#ba6d65', c.alpha);
+      }
     });
-
-    // 2. Draw 2.5D Flat Isometric Runic Summoning Arrays
     this.runicRings.forEach(r => {
-      ctx.save();
-      ctx.translate(r.x, r.y);
-      ctx.scale(1, 0.48); // True 2.5D Isometric Ground Plane!
-
-      ctx.strokeStyle = r.color;
-      ctx.globalAlpha = r.alpha;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = r.color;
-
-      // Outer Runic Ring
-      ctx.beginPath();
-      pixelRing(ctx, 0, 0, r.radius, r.radius, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      // Inner Pentagram / Hex lines
+      ctx.save(); ctx.globalAlpha = r.alpha;
+      pixelRing(ctx, r.x, r.y, r.radius, r.radius / 2, r.color, 2);
       if (r.isNested) {
-        ctx.beginPath();
-        pixelRing(ctx, 0, 0, r.radius * 0.65, r.radius * 0.65, ctx.strokeStyle, 1);
-        ctx.stroke();
-
-        ctx.save();
-        ctx.rotate(r.angle);
-        ctx.beginPath();
+        pixelRing(ctx, r.x, r.y, r.radius * .65, r.radius * .325, r.color, 1);
         for (let i = 0; i < 5; i++) {
-          const a1 = (i / 5) * Math.PI * 2;
-          const a2 = ((i + 2) / 5) * Math.PI * 2;
-          ctx.moveTo(Math.cos(a1) * r.radius * 0.65, Math.sin(a1) * r.radius * 0.65);
-          ctx.lineTo(Math.cos(a2) * r.radius * 0.65, Math.sin(a2) * r.radius * 0.65);
+          const a = i / 5 * Math.PI * 2 + r.angle, b = (i + 2) / 5 * Math.PI * 2 + r.angle;
+          pixelStroke(ctx, r.x + Math.cos(a) * r.radius * .65, r.y + Math.sin(a) * r.radius * .325,
+            r.x + Math.cos(b) * r.radius * .65, r.y + Math.sin(b) * r.radius * .325, 2, r.color, r.alpha);
         }
-        ctx.stroke();
-        ctx.restore();
       }
-
       ctx.restore();
     });
 
-    // 2.5 Draw Summon Portals & Rising Light Pillars
+    // Summoning discs preserve the same native 2:1 plane as the board.
     this.summonPortals.forEach(p => {
-      ctx.save();
-      // Ground Runic Disc
-      ctx.translate(p.x, p.y);
-      ctx.scale(1, 0.48);
-      ctx.strokeStyle = p.color;
-      ctx.globalAlpha = p.alpha;
-      ctx.lineWidth = 4;
-      ctx.shadowColor = p.color;
-
-      ctx.beginPath();
-      pixelRing(ctx, 0, 0, p.radius, p.radius, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      ctx.beginPath();
-      pixelRing(ctx, 0, 0, p.radius * 0.7, p.radius * 0.7, ctx.strokeStyle, 1);
-      ctx.stroke();
-
-      // Rotating glyphs
-      ctx.save();
-      ctx.rotate(p.angle);
+      ctx.save(); ctx.globalAlpha = p.alpha;
+      pixelRing(ctx, p.x, p.y, p.radius, p.radius / 2, p.color, 2);
+      pixelRing(ctx, p.x, p.y, p.radius * .7, p.radius * .35, p.color, 1);
       for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * p.radius * 0.7, Math.sin(a) * p.radius * 0.7);
-        ctx.lineTo(Math.cos(a) * p.radius, Math.sin(a) * p.radius);
-        ctx.stroke();
+        const a = i / 6 * Math.PI * 2 + p.angle;
+        pixelStroke(ctx, p.x + Math.cos(a) * p.radius * .7, p.y + Math.sin(a) * p.radius * .35,
+          p.x + Math.cos(a) * p.radius, p.y + Math.sin(a) * p.radius / 2, 2, p.color, p.alpha);
       }
-      ctx.restore();
-      ctx.restore();
-
-      // Rising Light Pillar: stepped bands from the base colour up to white, instead of a
-      // three-stop gradient. A beam that fades by getting sparser reads as light; one that fades
-      // by interpolating reads as a CSS effect.
-      const bands = 8;
-      const pillarX = p.x - p.radius * 0.6;
-      const pillarW = Math.max(1, Math.round(p.radius * 1.2));
-      for (let b = 0; b < bands; b++) {
-        const t = b / bands;
-        const y = p.y - p.pillarHeight * ((b + 1) / bands);
-        const h = Math.max(1, Math.ceil(p.pillarHeight / bands));
-        ctx.globalAlpha = p.alpha * 0.75 * (1 - t * 0.65);
-        ctx.fillStyle = t < 0.4 ? p.color : '#ffffff';
-        ctx.fillRect(Math.round(pillarX), Math.round(y), pillarW, h);
+      for (let band = 0; band < 8; band++) {
+        const t = band / 8;
+        ctx.globalAlpha = p.alpha * .65 * (1 - t * .65);
+        ctx.fillStyle = t < .4 ? p.color : '#eae7ce';
+        ctx.fillRect(Math.round(p.x - p.radius * .6), Math.round(p.y - p.pillarHeight * ((band + 1) / 8)),
+          Math.max(1, Math.round(p.radius * 1.2)), Math.max(1, Math.ceil(p.pillarHeight / 8)));
       }
-      ctx.globalAlpha = 1;
       ctx.restore();
     });
 
@@ -1087,73 +1042,15 @@ export class CombatVFXEngine {
       ctx.restore();
     });
 
-    // 3.5 Draw Magic Laser Beams
+    // Beams are three stepped strokes, with native pixel flares at their endpoints.
     this.magicLaserBeams.forEach(b => {
-      ctx.save();
-      const dx = b.targetX - b.casterX;
-      const dy = b.targetY - b.casterY;
-      const dist = Math.hypot(dx, dy);
-      const angle = Math.atan2(dy, dx);
-
-      ctx.translate(b.casterX, b.casterY);
-      ctx.rotate(angle);
-
-      // Outer Glow
-      ctx.globalAlpha = b.alpha * 0.5;
-      ctx.strokeStyle = b.color;
-      ctx.lineWidth = b.width * 2.2;
-      ctx.shadowColor = b.color;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(dist, 0);
-      ctx.stroke();
-
-      // Intense Beam Body
-      ctx.globalAlpha = b.alpha * 0.9;
-      ctx.strokeStyle = b.color;
-      ctx.lineWidth = b.width;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(dist, 0);
-      ctx.stroke();
-
-      // White-hot core
-      ctx.globalAlpha = b.alpha;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = b.width * 0.4;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(dist, 0);
-      ctx.stroke();
-
-      // Spiral Energy Rings
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#ffffff';
-      const ringSpacing = 35;
-      for (let rx = 20; rx < dist - 15; rx += ringSpacing) {
-        ctx.beginPath();
-        pixelRing(ctx, rx, 0, 8, b.width * 0.75, ctx.strokeStyle, 1);
-        ctx.stroke();
-      }
-
-      // Muzzle flare
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      pixelDisc(ctx, 0, 0, b.width * 0.8, ctx.fillStyle);
-      ctx.fill();
-
-      // Target impact flare
-      ctx.fillStyle = b.color;
-      ctx.beginPath();
-      pixelDisc(ctx, dist, 0, b.width * 1.5, ctx.fillStyle);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      pixelDisc(ctx, dist, 0, b.width * 0.7, ctx.fillStyle);
-      ctx.fill();
-
-      ctx.restore();
+      const width = prefersReducedMotion() ? Math.min(12, b.width) : b.width;
+      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width * 2, b.color, b.alpha * .25);
+      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width, b.color, b.alpha * .85);
+      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width * .3, '#eee9d0', b.alpha);
+      pixelDisc(ctx, b.casterX, b.casterY, width * .6, '#eee9d0', b.alpha);
+      pixelDisc(ctx, b.targetX, b.targetY, width, b.color, b.alpha * .75);
+      pixelDisc(ctx, b.targetX, b.targetY, width * .4, '#eee9d0', b.alpha);
     });
 
     // 4. Draw Particles
@@ -1162,26 +1059,41 @@ export class CombatVFXEngine {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.alpha;
       ctx.shadowColor = p.color;
-      ctx.beginPath();
-      pixelDisc(ctx, p.x, p.y, p.size, ctx.fillStyle);
-      ctx.fill();
+      const x = Math.round(p.x), y = Math.round(p.y), s = Math.max(2, Math.round(p.size));
+      if (p.shape === 'cross') {
+        ctx.fillRect(x - 1, y - s, 2, s * 2 + 1); ctx.fillRect(x - s, y - 1, s * 2 + 1, 2);
+      } else if (p.shape === 'shard') {
+        for (let dy = -s; dy <= s; dy++) { const width = Math.max(1, s - Math.abs(dy)); ctx.fillRect(x - width, y + dy, width * 2, 1); }
+      } else if (p.shape === 'spark') {
+        pixelStroke(ctx, x - 2, y - s * 2, x + 1, y, 2, p.color, p.alpha);
+        pixelStroke(ctx, x + 1, y, x - 1, y + s, 2, p.color, p.alpha);
+      } else if (p.shape === 'leaf') {
+        ctx.fillRect(x, y - 2, s, 2); ctx.fillRect(x - 2, y, s + 2, 2); ctx.fillRect(x - 2, y + 2, s, 2);
+      } else if (p.shape === 'ember') {
+        ctx.fillRect(x, y - s, 2, s * 2); ctx.fillRect(x - 1, y - 1, 4, s);
+      } else if (p.shape === 'wisp') {
+        ctx.fillRect(x - s, y - 1, s * 2, 2); ctx.fillRect(x - 1, y - s, 2, s * 2);
+        ctx.fillRect(x + s, y + 1, 2, 2);
+      } else pixelDisc(ctx, x, y, s, ctx.fillStyle, p.alpha);
       ctx.restore();
     });
 
     // 5. Draw Bouncing Floating Combat Numbers & Text
     this.floatingTexts.forEach(ft => {
       ctx.save();
-      ctx.font = `bold ${ft.size}px Silkscreen, monospace`;
+      const text = fitEffectText(ctx, ft.text, arenaWidth - 24, ft.size);
+      const half = ctx.measureText(text).width / 2;
+      const x = Math.round(Math.max(half + 10, Math.min(arenaWidth - half - 10, ft.x))), y = Math.round(ft.y);
       ctx.textAlign = 'center';
       ctx.globalAlpha = Math.max(0, ft.alpha);
       // Dark outline
       ctx.lineWidth = 4;
       ctx.strokeStyle = '#000000';
-      ctx.strokeText(ft.text, ft.x, ft.y);
+      ctx.strokeText(text, x, y);
       // Colored core with glow
       ctx.fillStyle = ft.color;
       ctx.shadowColor = ft.shadowColor;
-      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.fillText(text, x, y);
       ctx.restore();
     });
 
@@ -1226,48 +1138,22 @@ export class CombatVFXEngine {
     ctx.fillRect(0, bannerY - bannerH / 2, w, 3);
     ctx.fillRect(0, bannerY + bannerH / 2 - 3, w, 3);
 
-    // Diagonal hazard stripes on edges
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
     for (let x = -bannerH; x < w + bannerH; x += 32) {
-      ctx.beginPath();
-      ctx.moveTo(x + (banner.elapsed * 4) % 32, bannerY - bannerH / 2);
-      ctx.lineTo(x + 16 + (banner.elapsed * 4) % 32, bannerY - bannerH / 2);
-      ctx.lineTo(x - 8 + (banner.elapsed * 4) % 32, bannerY + bannerH / 2);
-      ctx.lineTo(x - 24 + (banner.elapsed * 4) % 32, bannerY + bannerH / 2);
-      ctx.fill();
+      const drift = banner.elapsed * 2 % 32;
+      pixelStroke(ctx, x + drift + 20, bannerY - bannerH / 2, x + drift - 20, bannerY + bannerH / 2, 10, '#c0c6b6', alpha * .05);
     }
-
-    // Avatar Box (Hero Avatar + Optional Companion Avatar)
-    const avBoxX = w * 0.22 + slideX;
-    ctx.font = '36px "Segoe UI Emoji", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(banner.avatar, avBoxX, bannerY);
-
-    if (banner.companionAvatar) {
-      ctx.font = '24px "Segoe UI Emoji", sans-serif';
-      ctx.fillText('💖', avBoxX + 38, bannerY);
-      ctx.font = '32px "Segoe UI Emoji", sans-serif';
-      ctx.fillText(banner.companionAvatar, avBoxX + 76, bannerY);
-    }
-
-    // Text Content (Title & Subtitle)
-    const textX = (banner.companionAvatar ? avBoxX + 130 : avBoxX + 60);
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    // Title text
-    ctx.font = 'bold 22px Silkscreen, monospace';
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = banner.color || '#f59e0b';
-    ctx.shadowBlur = 10;
-    ctx.fillText(banner.title.toUpperCase(), textX, bannerY - 14);
-
-    // Subtitle text
-    ctx.font = 'bold 12px "Kanit", sans-serif';
-    ctx.fillStyle = banner.color || '#fde047';
-    ctx.shadowBlur = 0;
-    ctx.fillText(banner.subtitle, textX, bannerY + 16);
+    ctx.globalAlpha = alpha;
+    const avatarX = Math.round((w < 600 ? 10 : w * .13) + slideX);
+    if (banner.portrait) ctx.drawImage(banner.portrait, 48, 32, 48, 48, avatarX, Math.round(bannerY - 24), 48, 48);
+    else pixelRing(ctx, avatarX + 24, Math.round(bannerY), 14, 14, banner.color, 2);
+    if (banner.companionPortrait) ctx.drawImage(banner.companionPortrait, avatarX + 52, Math.round(bannerY - 32));
+    const textX = avatarX + (banner.companionPortrait ? 124 : 64);
+    const available = Math.max(50, w - (w < 600 ? 10 : w * .13) - (banner.companionPortrait ? 124 : 64) - 14);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const title = fitEffectText(ctx, banner.title.toUpperCase(), available, w < 600 ? 15 : 22);
+    ctx.fillStyle = '#eee4c8'; ctx.fillText(title, textX, Math.round(bannerY - 13));
+    const subtitle = fitEffectText(ctx, banner.subtitle, available, 12, 'Kanit, sans-serif');
+    ctx.fillStyle = banner.color || '#dbc48e'; ctx.fillText(subtitle, textX, Math.round(bannerY + 15));
 
     ctx.restore();
   }

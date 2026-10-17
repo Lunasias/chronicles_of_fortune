@@ -1,0 +1,160 @@
+{
+  "version": 2,
+  "provider": "OpenAI image generation",
+  "assets": [
+    {
+      "name": "cleric-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2892325,
+      "sha256": "85ebd85ee459afd8680f9c52b4b03c6613512c5ad4fdf7afb098e3dda5201a89"
+    },
+    {
+      "name": "cleric-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2933903,
+      "sha256": "3444f66a942a2996df9b03977e8401bacef2a11d9700de967cd1ec675ab37731"
+    },
+    {
+      "name": "companions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3049650,
+      "sha256": "f0a4077bb541fba167568b159494a4a116e5252641508beda8fc3daf411a30f1"
+    },
+    {
+      "name": "kingdom-buildings-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2689610,
+      "sha256": "d5b845d3fb0907ea2bf163e330b771613a65e822a6644fc282bff2a9698b9de3"
+    },
+    {
+      "name": "kingdom-foliage-atlas.png",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 2936148,
+      "sha256": "e6259f222d883771abbb2cd2f7dc74f11dfb65b0d39d6705bf065becd07c1aab"
+    },
+    {
+      "name": "kingdom-title.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3023136,
+      "sha256": "cd44f2de4d936acdc15c337742546c38343fc0989e191ac2e0ca99762c0e294b"
+    },
+    {
+      "name": "magician-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2488046,
+      "sha256": "eb9248a31d2b177cfedc0dc94d493cc95aea718cba43fa072f8c546552bc2106"
+    },
+    {
+      "name": "magician-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2983274,
+      "sha256": "1883402a396799317a9ad0af3cad2bdbebd95d8c7e41291d9898188657273c43"
+    },
+    {
+      "name": "monsters-frontier-actions-atlas.png",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 3277291,
+      "sha256": "2125a4549ce976cc3ecfa8e6146f05cc4da84d396a111de658f84242d61f286b"
+    },
+    {
+      "name": "monsters-frontier-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2736388,
+      "sha256": "c1cf36bdd7d168e5e4f61727c3d003aac09c1761159247800eddd123576c2fcf"
+    },
+    {
+      "name": "monsters-mythic-actions-atlas.png",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 3274575,
+      "sha256": "10b3d5d951b5990d1deceb2c2e143b53ad5d1388f976e4546930438763ae97d5"
+    },
+    {
+      "name": "monsters-mythic-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3236324,
+      "sha256": "d103b40e5a87e5ed01206752fb9706aceb506c28a4eec900d1f5e25f3d2996bb"
+    },
+    {
+      "name": "monsters-wild-actions-atlas.png",
+      "width": 1295,
+      "height": 1214,
+      "bytes": 2843162,
+      "sha256": "ee72e10dba33204597c53e004fae3b1d844d54fafe9a9a71fa5f135b23593a9e"
+    },
+    {
+      "name": "monsters-wild-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2909337,
+      "sha256": "0eaede6f9b4e771b0fc32dfb14cb46abecd56b5c5067bbc08a5711a99b4195dd"
+    },
+    {
+      "name": "ranger-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2525381,
+      "sha256": "3f8581fa1228de56d4819351167edbe33fea92cf45ffb901946ed8fb20e05cae"
+    },
+    {
+      "name": "ranger-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2725013,
+      "sha256": "2945e0a5745ce671ec8fc3003f18c88ef241f884ed93eb767accf9984cc04f6d"
+    },
+    {
+      "name": "spellblade-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2751619,
+      "sha256": "fd327529ec0421d0a56c9cc5a8e6b68fc0b56fc1e72c2498b86419a1ff90d57d"
+    },
+    {
+      "name": "spellblade-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3006349,
+      "sha256": "30a1d2c542245d8e95c924dcaec8a6b61ac340a7bb94c6e7bed8a37a7ef96c8c"
+    },
+    {
+      "name": "thief-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2013435,
+      "sha256": "37a208a91e2270d4d93e32b3d1a46cd75c1d351f5388e64825f58956a1f4f9be"
+    },
+    {
+      "name": "thief-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2152342,
+      "sha256": "100bf61f4336a8c8d0dc0cd6577f123f2d3edc38d05af438391fe7035ce0ca06"
+    },
+    {
+      "name": "warrior-actions-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2130057,
+      "sha256": "e928d5ddee235a51f0ce00f518f3f353b58aae92b9caef5e641ae0d8282d88fc"
+    },
+    {
+      "name": "warrior-motion-atlas.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2364964,
+      "sha256": "5b8725bf5319cafed25bd309403797300e64c92d83e80c5612f9d0ca119f31cd"
+    }
+  ]
+}

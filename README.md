@@ -1,10 +1,10 @@
 # ⚔️ Chronicles of Fortune (บันทึกแห่งโชคชะตา)
 
-A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring **Brown Dust 2** style HD Chibi Pixel Art, tactical combat dioramas, and competitive party mechanics.
+A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring original fantasy pixel art, tactical combat dioramas, and competitive party mechanics.
 
 Single-player board campaign against up to 3 AI rivals (local hot-seat play is also supported).
 
-![Dokapon Kingdom x Brown Dust 2 Style](https://raw.githubusercontent.com/Lunasias/chronicles_of_fortune/main/public/favicon.ico)
+![Fortuna pixel-art world](docs/art-review/reference-day.png)
 
 ---
 
@@ -22,58 +22,22 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
   - Lagging behind? Make a demonic pact with Overlord Rico! Sacrifice your belongings for 3-dice rolls, 3x stats, and cast global calamities.
 - **Royal Weekly Report**: Weekly net worth ceremonies hosted by the King.
 
-### 2. 🎨 Brown Dust 2 Style Visual Overhaul
-- **Enchanted Mushroom Forest Diorama**:
-  - Giant Fly Agaric red polka-dot mushrooms, sapphire blue, yellow, and glowing purple caps.
-  - Diagonal **Prismatic Rainbow God-Ray Beam** with screen blend refraction and floating fireflies/spores.
-- **3x3 Tactical Isometric Battle Grids**:
-  - Tactical 3x3 grids for player and enemy teams with signature white corner bracket markers `[ ]` on each diamond tile.
-  - 3D diorama earthen platform slabs with layered rock cliffs and dangling hanging vines.
-- **Elemental Slime Spirits**:
-  - Flame Slime (fiery hair, burning aura), Frost Slime (crystal spikes), Sun Slime (floral wreath), Blossom Slime (cherry blossoms), and Gold King Slime.
-- **Party Formation & Combat Queue**:
-  - 4-member party line-up facing NE (Hero, Ranger/Archer, Priestess, Mage).
-  - Brown Dust 2 style side turn queues with HP numbers and "BATTLE START >>" pill button.
-- **64×64 Isometric Map Models**:
-  - **13 structures** — capital citadel, blacksmith, arcane spire, cathedral, general goods, tavern,
-    guild hall, fishing pier, isekai shrine, dark gate, treasure vault, wonder chest and cottages.
-  - **5 tree species × 4 silhouettes** — ancient dark oak, snow-laden frost pine, bioluminescent
-    gloomspore, ember-lit ash thorn and weeping blood willow.
-  - Every model is painted from a plain RGBA buffer by
-    `src/engine/IsometricBuildingPainter.ts` and `src/engine/IsometricFoliagePainter.ts`, so the
-    same art is drawn at runtime *and* exportable as a PNG. Nothing is a scaled-down vector
-    shape: each model is a true 64×64 pixel-art sprite blitted 1:1.
-  - All of them obey one light source (top-left): top face brightest, left face mid, right face
-    darkest, plus a `valley` tone 10–15% darker than the darkest face for concave corners, and a
-    colour-shifted sel-out outline that is never pure black. `npm test` measures the light
-    direction on every single model.
-- **Pixel-art World Floor**:
-  - **15 biomes × flat/cliff × day/night = 60 floor tiles**, painted by
-    `src/engine/IsometricTerrainPainter.ts` and exported to `public/assets/terrain/`.
-  - A horizontal face has no wall normal, so its light direction comes from bevelled edges plus a
-    4×4 Bayer ordered dither that thins the lit tone from the west and thickens the shaded tone
-    toward the east. A gradient would band across 312 repeated tiles; a flat fill would read as a
-    colour swatch.
-  - **Floor clutter** — boulders, grass tufts, wildflower patches, shrubs and magic crystals, in
-    5 types × 15 biomes × 4 shapes × 3 sizes × day/night — is painted by
-    `src/engine/IsometricPropPainter.ts` and blitted from a canvas cache instead of being redrawn
-    with a dozen path calls per prop per frame.
-- **Pixel-art Sky, Weather and the Cloud Sea**:
-  - The sky is **18 discrete colour bands**, not a gradient, joined by a 4×4 ordered dither. It is
-    a 64px tile that wraps seamlessly and stretches to any viewport, so a full-height sky costs one
-    small canvas per time of day.
-  - Suns and the crescent moon are painted discs inside five ordered-dither halo rings, and the
-    clouds are baked sprites at three fixed sizes — nothing in the background is ever rescaled.
-  - **The cloud sea under the map**: three world-space rows drawn below the continent's lowest
-    tile, so the board reads as a floating island in the sky rather than as a map printed on a wall.
-- **Pixel-art UI**:
-  - Every panel, button, bar, tab and scrollbar is built from integer-stepped shading — a 2px ink
-    outline, a 2px accent ring, a 2px inset bevel and a hard 4px drop shadow with no blur radius —
-    with no `border-radius`, no `backdrop-filter` and no eased transitions anywhere.
-  - Stat bars are sunken wells with 6px-segmented fills, so a half-full bar reads as a count rather
-    than as a smooth length. Buttons press by exactly 3px and their shadow shrinks by the same 3px.
-  - `npm run check:css` fails the build if any glass utility (`rounded-lg`, `backdrop-blur`,
-    `shadow-2xl`, `bg-gradient-to-…`) reappears in the built markup.
+### 2. 🎨 Fortuna pixel-art overhaul
+- Original versioned art in `public/assets/art-v2/`: six hero bases, eight directions,
+  motion and action sheets; eighteen monster families, combat poses; twenty-seven companions
+  and three town hosts; sixteen building cells and twenty tree silhouettes.
+- Hero promotion identity follows all eighteen tier-2/tier-3 jobs, with equipment accents,
+  four appearance variants and Darkling regalia. Finished actor sprites retain native pixels.
+- The floating kingdom uses 96×48 terrain projection, authored palettes for fifteen biomes,
+  day/night tiles, clustered vegetation, transition edges, quiet roads and depth-sorted actors.
+- Battles share the world's materials, sky, vegetation and landmarks. Seven elemental effect
+  ramps use pixel particles. Ink/brass/jade UI includes pixel pictograms and responsive panels.
+- Atlases load on demand; bounded frame caches, cached scenery, balanced atmosphere and reduced
+  motion keep the artwork usable on smaller screens. Existing artwork remains as fallback.
+- Open `http://localhost:5173/art-review.html` after `npm run dev` for the actual runtime
+  art gallery: directions, poses, promotions, skins, monsters, terrain, structures, effects,
+  settlements and PNG export. Inspect at 1×/2× or fit the gallery to the viewport.
+- Production rules, coverage and remaining verification are recorded in [ART_DIRECTION.md](ART_DIRECTION.md).
 
 ### 3. 🗺️ The World
 A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
@@ -148,9 +112,12 @@ npm run preview
 
 **Always run `npm run verify` before pushing.** CI runs the same command.
 
-### Reviewing art without an image viewer
+### Reviewing art
 
-`scripts/lib/preview_companion.cjs` renders any folder of same-sized sprites as ASCII, which is
+The browser gallery at `/art-review.html` is the primary visual review surface.
+It uses the same renderers as the game; PNG export preserves the canvas at native resolution.
+
+For a terminal-only fallback, `scripts/lib/preview_companion.cjs` renders any folder of same-sized sprites as ASCII, which is
 how the models are checked in a terminal:
 
 ```bash

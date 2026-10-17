@@ -104,8 +104,8 @@ export class HomeUI {
         // Show the companion's 64x64 model; the emoji is only a fallback for the moment
         // before the file has finished loading.
         const spriteEl = document.getElementById('homeCompanionSprite') as HTMLCanvasElement | null;
-        const painted = spriteEl ? companionSprites.paintInto(spriteEl, player.companion) : false;
         const avatarEl = document.getElementById('homeCompanionAvatar')!;
+        const painted = spriteEl ? companionSprites.paintInto(spriteEl, player.companion, avatarEl) : false;
         avatarEl.innerText = player.companion.avatar;
         avatarEl.classList.toggle('hidden', painted);
         spriteEl?.classList.toggle('hidden', !painted);

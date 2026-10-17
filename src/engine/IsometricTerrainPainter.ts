@@ -153,7 +153,7 @@ const DAY: Record<BiomeType, BiomePalette> = {
     border: '#6d98ac',
     glow: '#96bdc9'
   },
-  castle: { top: '#475569', accent: '#64748b', cliffLeft: '#3a485c', cliffRight: '#334155', border: '#334155' },
+  castle: { top: '#66746f', accent: '#8a9790', cliffLeft: '#3a485c', cliffRight: '#334155', border: '#4f605d' },
   steampunk: {
     top: '#796048',
     accent: '#d3b378',
@@ -233,11 +233,11 @@ const NIGHT: Record<BiomeType, BiomePalette> = {
   },
   celestial: {
     top: '#303449',
-    accent: '#818cf8',
+    accent: '#a5adc3',
     cliffLeft: '#293545',
     cliffRight: '#3a485c',
     border: '#727496',
-    glow: '#a5b4fc'
+    glow: '#c6cedb'
   },
   fairy_grove: {
     top: '#343348',
@@ -794,20 +794,19 @@ function drawSurface(
     }
 
     case 'castle': {
-      // Flagstones: two seams each way, following the iso axes so the paving is square in world
-      // space rather than on screen.
-      for (const step of [-8, 10]) {
-        for (let x = CX - TERRAIN_HW; x <= CX + TERRAIN_HW; x++) {
-          tpx(s, x, edgeNW(x) + 14 + step, t.cliffFoot, 0.5);
+      // Small worn paving clusters leave the scene quiet; full-height black seams read as
+      // graph paper across a whole arena and compete with the actual board routes.
+      for (let i = 0; i < 15; i++) {
+        const x = CX - 34 + Math.floor(noise2(i, 17, seed) * 68);
+        const y = CY - 15 + Math.floor(noise2(i, 29, seed) * 30);
+        if (!onTile(x - 5, y - 3) || !onTile(x + 5, y + 3)) continue;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -4; dx <= 4; dx++) {
+          if (Math.abs(dx) + Math.abs(dy) * 2 > 5) continue;
+          tpx(s, x + dx, y + dy, dy < 0 ? t.fleck : t.accentLo, .2);
         }
+        tpx(s, x + 1, y + 2, t.cliffFoot, .55);
+        tpx(s, x + 2, y + 2, t.cliffFoot, .4);
       }
-      for (let x = CX - TERRAIN_HW; x <= CX + TERRAIN_HW; x += 16) {
-        for (let y = CY - TERRAIN_HH; y <= CY + TERRAIN_HH; y++) {
-          if (!onTile(x, y)) continue;
-          s.px(x, y, t.cliffFoot, 0.4);
-        }
-      }
-      cluster(s, CX - 6, CY + 8, 4, 2, t.cliffMid, t.accent, seed + 9, 0.3);
       break;
     }
 

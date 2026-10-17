@@ -12,6 +12,7 @@ import { JOB_VISUALS } from './engine/JobVisuals';
 import { drawSettlementScenery } from './engine/SettlementScenery';
 import { CombatVFXEngine } from './engine/CombatVFXEngine';
 import { MAGIC_PALETTES, type MagicElement } from './engine/MagicArt';
+import { SHOP_CATALOG } from './ui/ShopUI';
 import { ecosystemSystem, type TimeOfDay } from './game/EcosystemSystem';
 import type { IsoDirection, CharacterAnimState } from './engine/PixelSpriteGenerator';
 
@@ -22,6 +23,10 @@ const animation = document.querySelector<HTMLSelectElement>('#reviewAnimation')!
 const timeSelect = document.querySelector<HTMLSelectElement>('#reviewTime')!;
 const frameSlider = document.querySelector<HTMLInputElement>('#reviewFrame')!;
 const status = document.querySelector<HTMLDivElement>('#reviewStatus')!;
+document.querySelector<HTMLSelectElement>('#reviewScale')!.addEventListener('change', event => {
+  const value = (event.target as HTMLSelectElement).value;
+  canvas.style.width = value === 'fit' ? '100%' : `${canvas.width * Number(value)}px`;
+});
 if (import.meta.env.DEV) document.querySelector<HTMLAnchorElement>('#reviewBattleLink')!.hidden = false;
 const dirs: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
 const jobs = ['warrior', 'magician', 'thief', 'cleric', 'spellblade', 'ranger'];
@@ -32,7 +37,8 @@ const settlementPreviews = ['town', 'shop_weapon', 'shop_item', 'shop_magic'].ma
   return { kind, canvas };
 });
 const biomes = ['grass', 'forest', 'snow', 'desert', 'volcano', 'cavern', 'coral', 'celestial', 'abyss', 'fairy_grove', 'crystal_cavern', 'castle', 'steampunk', 'waterfall_forest', 'sakura_shrine'];
-const structureKinds = ['capital', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'church', 'tavern', 'guild', 'fishing', 'isekai_event', 'dark_gate', 'vault', 'mystery_chest', 'home'];
+const structureKinds = ['capital', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'church', 'tavern', 'guild', 'fishing', 'isekai_event', 'dark_gate', 'vault', 'mystery_chest', 'home', 'monument', 'bridge'];
+const reviewEquipment = Object.fromEntries(['weapon', 'armor', 'shield', 'accessory'].map(type => [type, SHOP_CATALOG.filter(item => item.type === type).at(-1)]));
 const monsterGroups: Record<string, string[]> = {
   wild: ['Slime Princess Aurelia', 'Goblin Girl', 'Beast Maiden', 'Dark Knightress', 'Dragon Princess Ignis', 'Sakura Kitsune'],
   frontier: ['Skeleton Maid', 'Yeti Maiden', 'Siren Demoness', 'Clockwork Maid', 'Bandit Pirate', 'Dragon Wyrm'],
@@ -74,12 +80,13 @@ document.querySelector('#reviewExport')!.addEventListener('click', () => {
 function label(text: string, x: number, y: number) {
   ctx.fillStyle = '#c9d5c1'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText(text, x, y);
 }
-function paint(now: number) {
-  requestAnimationFrame(paint);
+function paint(now: number, schedule = true) {
+  if (schedule) requestAnimationFrame(paint);
   if (now - previousPaint < 100) return;
   previousPaint = now;
   if (!paused) { frame = Math.floor(now / 140) % 8; frameSlider.value = String(frame); }
   const state = animation.value as CharacterAnimState;
+  const equipment = document.querySelector<HTMLInputElement>('#reviewEquipment')!.checked ? reviewEquipment : {};
   document.querySelector<HTMLLabelElement>('#reviewMonsterGroupLabel')!.hidden = category.value !== 'monsters';
   const night = timeSelect.value === 'NIGHT';
   ctx.imageSmoothingEnabled = false;
@@ -95,23 +102,25 @@ function paint(now: number) {
     reference.render(nodes, [actor], actor, [], [], paused ? frame * 140 : now);
   } else if (category.value === 'heroes' || category.value === 'monsters') {
     const rows = category.value === 'heroes' ? jobs : monsterGroups[document.querySelector<HTMLSelectElement>('#reviewMonsterGroup')!.value];
-    rows.forEach((name, row) => dirs.forEach((dir, col) => {
+    rows.forEach((name, row) => dirs.forEach((direction, col) => {
       const x = col * 144, y = row * 118;
-      const image = category.value === 'heroes' ? heroes.getHeroSprite(name, dir, state, frame) : monsters.getMonsterSprite(name, dir, state, frame);
+      const dir = category.value === 'heroes' ? direction : col % 2 ? 'NE' : 'SW';
+      const pose: CharacterAnimState = category.value === 'heroes' ? state : (['idle', state, 'hurt', 'defeat'] as CharacterAnimState[])[Math.floor(col / 2)];
+      const image = category.value === 'heroes' ? heroes.getHeroSprite(name, dir, pose, frame, equipment) : monsters.getMonsterSprite(name, dir, pose, frame);
       ctx.drawImage(image, x, y);
-      label(`${name.split(' ')[0]} / ${dir}`, x + 72, y + 117);
+      label(category.value === 'heroes' ? `${name} / ${dir}` : `${name.split(' ')[0]} ${pose} ${dir}`, x + 72, y + 117);
     }));
   } else if (category.value === 'promotions') {
     promotions.forEach((job, i) => {
       const x = (i % 6) * 192 + 24, y = Math.floor(i / 6) * 232;
-      ctx.drawImage(heroes.getHeroSprite(job, 'SE', state, frame), x, y);
+      ctx.drawImage(heroes.getHeroSprite(job, 'SE', state, frame, equipment), x, y);
       label(job, x + 72, y + 156);
     });
   } else if (category.value === 'skins') {
     jobs.forEach((job, row) => {
       for (let skin = 0; skin < 5; skin++) {
         const x = skin * 220 + 16, y = row * 118;
-        ctx.drawImage(heroes.getHeroSprite(job, 'SE', state, frame, {}, skin === 4, undefined, skin % 4), x, y);
+        ctx.drawImage(heroes.getHeroSprite(job, 'SE', state, frame, equipment, skin === 4, undefined, skin % 4), x, y);
         label(`${job} / ${skin === 4 ? 'Darkling' : skin}`, x + 72, y + 117);
       }
     });
@@ -131,9 +140,10 @@ function paint(now: number) {
     });
   } else if (category.value === 'buildings') {
     structureKinds.forEach((kind, i) => {
-      const x = 40 + (i % 5) * 220, y = 30 + Math.floor(i / 5) * 220;
-      ctx.drawImage(buildings.getBuildingSprite(kind), x, y, 192, 192);
-      label(kind, x + 96, y + 204);
+      const x = 50 + (i % 4) * 280, y = 15 + Math.floor(i / 4) * 175;
+      const image = buildings.getBuildingSprite(kind);
+      ctx.drawImage(image, x + 48, y, image.width, image.height);
+      label(kind, x + 96, y + 125);
     });
   } else if (category.value === 'terrain') {
     biomes.forEach((biome, i) => {
@@ -161,4 +171,8 @@ function paint(now: number) {
   status.textContent = `${category.value.toUpperCase()} · ${timeSelect.value} · FRAME ${frame + 1}/8 · NATIVE PIXELS · ${paused ? 'PAUSED' : 'PLAYING'}`;
   document.querySelector<HTMLAnchorElement>('#reviewBattleLink')!.href = `/?art-scene=battle&biome=${encodeURIComponent(biomeSelect.value)}`;
 }
+const refreshPreview = () => { previousPaint = -Infinity; paint(performance.now(), false); };
+document.querySelector('nav')!.addEventListener('change', refreshPreview);
+document.querySelector('nav')!.addEventListener('input', refreshPreview);
+document.querySelector('#reviewPause')!.addEventListener('click', refreshPreview);
 requestAnimationFrame(paint);

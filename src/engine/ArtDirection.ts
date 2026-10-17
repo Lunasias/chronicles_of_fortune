@@ -28,3 +28,19 @@ export function animationPoseIndex(state: string, frame: number): number {
 export function actorScaleForViewport(width: number, height: number): number {
   return width >= 760 && height >= 360 ? 2 : 1;
 }
+
+/** Advance frame-authored effects at 60 Hz, independent of display refresh rate. */
+export class EffectClock {
+  private previous = 0;
+  private remainder = 0;
+
+  reset(now: number) { this.previous = now; this.remainder = 0; }
+
+  advance(now: number): number {
+    this.remainder += Math.max(0, Math.min(100, now - this.previous));
+    this.previous = now;
+    const steps = Math.floor((this.remainder + 1e-7) / (1000 / 60));
+    this.remainder = Math.max(0, this.remainder - steps * (1000 / 60));
+    return steps;
+  }
+}

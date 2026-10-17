@@ -8,25 +8,27 @@ import {
 import type { CompanionData } from '../game/Player';
 import { atlasSprite } from './AtlasSprites';
 
-/**
- * Serves the 64x64 pixel-art models for the companions defined in `companions.json`.
- *
- * The PNGs are produced by `scripts/generate_companion_sprites.cjs`, which reads the same
- * JSON, so a companion cannot exist in the game without a model. Loading follows the same
- * pattern as the hero and monster renderers: preload once, clear the canvas cache a single
- * time when the whole set has settled, and hand out a cached canvas after that.
- */
+/** Native companion/host atlas, loaded on first use; individual legacy PNGs are fallback. */
 export class CompanionSpriteRenderer {
   private images = new Map<string, HTMLImageElement>();
   private cache = new Map<string, HTMLCanvasElement>();
-  private loadedCount = 0;
-  private totalToLoad = 0;
   private readyNotified = false;
   private atlas: HTMLImageElement | null = null;
   private atlasReady = false;
+  private portraits = new Map<HTMLCanvasElement, {
+    companion: Pick<CompanionData, 'id' | 'spriteKey' | 'name'>;
+    fallback: HTMLElement | null;
+  }>();
 
   constructor() {
-    this.preload();
+    if (typeof window !== 'undefined') window.addEventListener('companion-assets-loaded', () => {
+      for (const [canvas, entry] of this.portraits) {
+        if (!canvas.isConnected) { this.portraits.delete(canvas); continue; }
+        const painted = this.paintInto(canvas, entry.companion, entry.fallback);
+        canvas.classList.toggle('hidden', !painted);
+        entry.fallback?.classList.toggle('hidden', painted);
+      }
+    });
   }
 
   private ensureAtlas() {
@@ -39,36 +41,19 @@ export class CompanionSpriteRenderer {
     this.atlas.src = '/assets/art-v2/companions-atlas.png';
   }
 
-  private preload() {
-    const keys = allCompanionKeys();
-    this.totalToLoad = keys.length;
-
-    for (const key of keys) {
-      const img = new Image();
-      img.onload = () => this.markSettled();
-      img.onerror = () => {
-        console.warn(`[CompanionRenderer] Failed to load model: ${companionSpritePath(key)}`);
-        // Count failures too so one missing file cannot stall the ready notification.
-        this.markSettled();
-      };
-      img.src = companionSpritePath(key);
-      this.images.set(key, img);
-    }
+  private ensureFallback(key: string) {
+    if (this.images.has(key)) return;
+    const image = new Image(); this.images.set(key, image);
+    image.onload = () => {
+      this.readyNotified = true; this.cache.delete(key);
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('companion-assets-loaded'));
+    };
+    image.src = companionSpritePath(key);
   }
 
-  private markSettled() {
-    this.loadedCount++;
-    if (this.loadedCount < this.totalToLoad || this.readyNotified) return;
-    this.readyNotified = true;
-    this.cache.clear();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('companion-assets-loaded'));
-    }
-  }
-
-  /** True once every model has finished loading or failed. */
+  /** True once a production atlas or requested fallback is available. */
   public get isReady(): boolean {
-    return this.readyNotified;
+    return this.atlasReady || this.readyNotified;
   }
 
   /** The last three cells are the kingdom's hosts, separate from collectible companions. */
@@ -105,6 +90,7 @@ export class CompanionSpriteRenderer {
       return canvas;
     }
 
+    this.ensureFallback(resolved);
     const img = this.images.get(resolved);
     if (!img || !img.complete || img.naturalWidth === 0) return null;
 
@@ -124,7 +110,8 @@ export class CompanionSpriteRenderer {
    * Draws a companion into a DOM canvas element, keeping the pixel grid crisp. Used by the
    * home-estate panel and the in-battle companion button.
    */
-  public paintInto(target: HTMLCanvasElement, companion: Pick<CompanionData, 'id' | 'spriteKey' | 'name'>): boolean {
+  public paintInto(target: HTMLCanvasElement, companion: Pick<CompanionData, 'id' | 'spriteKey' | 'name'>, fallback: HTMLElement | null = null): boolean {
+    this.portraits.set(target, { companion, fallback });
     const sprite = this.getCompanionSprite(companion);
     if (!sprite) return false;
 

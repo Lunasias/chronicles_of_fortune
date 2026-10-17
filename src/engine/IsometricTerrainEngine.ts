@@ -3,6 +3,7 @@ import { TimeOfDay } from '../game/EcosystemSystem';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H, TERRAIN_VARIANTS } from './IsometricTerrainPainter';
 import { PROP_BASE_X, PROP_BASE_Y } from './IsometricPropPainter';
+import { foliageForBiome } from './BiomeArt';
 
 export interface TerrainTile {
   gx: number;
@@ -304,7 +305,7 @@ export class IsometricTerrainEngine {
         });
         if (clear) this.groves.push({
           x: Math.round(tile.x), y: Math.round(tile.y), depth: tile.depth + 25,
-          species: tile.biome === 'snow' ? 'frost_pine' : tile.biome === 'sakura_shrine' ? 'blood_willow' : tile.biome === 'fairy_grove' ? 'gloom_spore' : 'dark_oak',
+          species: foliageForBiome(tile.biome)!,
           variant: Math.floor(rand3 * 4)
         });
       }

@@ -113,6 +113,7 @@ export class CustomIsometricHeroRenderer {
 
     const f = prefersReducedMotion() && animState === 'idle' ? 0 : frame % 8;
     const normClass = this.normalizeClassKey(classKey);
+    const modernSprite = classArtAtlas.getFrame(normClass, dir, animState, f, classKey);
     const cacheKey = `iso_hero_${isDarkling ? 'darkling_' : ''}${classKey}_${normClass}_s${skinVariant}_${dir}_${animState}_${f}_${weaponId}_${armorId}_${equipment.shield?.id || "none"}_${equipment.accessory?.id || "none"}_${prankKey}`;
 
     if (this.cache.has(cacheKey)) {
@@ -135,7 +136,7 @@ export class CustomIsometricHeroRenderer {
     this.drawGroundShadow(ctx, 72, 97, anim);
 
     // 2. PRE-SPRITE VISUAL EFFECTS (Back auras, magic circles, shockwaves)
-    this.renderPreSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
+    if (!modernSprite || isDarkling) this.renderPreSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
 
     // 3. MAIN 8-DIRECTIONAL SPRITE WITH TRANSFORM & SKIN TINTS
     this.renderHeroineSprite(ctx, cx, cy, normClass, dir, animState, f, anim, skinVariant, isDarkling, classKey);
@@ -143,7 +144,7 @@ export class CustomIsometricHeroRenderer {
     if (animState !== 'defeat') this.drawClassRegalia(ctx, Math.round(cx), Math.round(cy), classKey, dir, equipment, isDarkling);
 
     // 4. POST-SPRITE VISUAL EFFECTS (Slash arcs, spells, parry sparks, victory stars)
-    this.renderPostSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
+    if (!modernSprite || isDarkling) this.renderPostSpriteFX(ctx, cx, cy, normClass, dir, animState, f, anim, isDarkling);
 
     // 5. PRANK OVERLAYS (Graffiti, clown nose, afro)
     if (prank && (prank.hasGraffiti || prank.hasAfro) && !isDarkling) {
@@ -188,9 +189,30 @@ export class CustomIsometricHeroRenderer {
       ctx.fillStyle = color; ctx.fillRect(x + dx, y + dy, w, h);
     };
     const gold = darkling ? '#c48abb' : '#d9b66e';
+    // Job silhouettes remain readable at board scale, beyond a cloth recolour.
+    if (job === 'paladin') {
+      dot(-7, -30, 14, 2, gold); dot(-7, -34, 2, 5, gold); dot(-1, -36, 2, 7, '#efdeaa'); dot(5, -34, 2, 5, gold);
+    } else if (job === 'berserker') {
+      for (const sign of [-1, 1]) { dot(sign * 11 - 2, -21, 4, 8, '#a26360'); dot(sign * 14 - 1, -23, 3, 5, '#dbc4a1'); }
+    } else if (job === 'archmage') {
+      dot(-3, -39, 6, 8, '#8eaeb6'); dot(-1, -42, 2, 14, '#d9dfbc'); dot(-6, -36, 12, 2, gold);
+    } else if (job === 'necromancer') {
+      for (const sign of [-1, 1]) { dot(sign * 11 - 1, -33, 3, 12, '#b6bea0'); dot(sign * 14 - 1, -35, 3, 6, '#d7d7b4'); }
+    } else if (job === 'high_priest') {
+      dot(-6, -32, 12, 6, '#e7d6a8'); dot(-4, -37, 8, 5, '#d8c69c'); dot(-1, -36, 2, 9, '#aa8f58');
+    } else if (job === 'saint') {
+      dot(-8, -38, 16, 2, '#e1cc91'); dot(-11, -36, 3, 3, '#c8b779'); dot(8, -36, 3, 3, '#c8b779'); dot(-8, -33, 16, 1, '#c8b779');
+    } else if (job === 'ninja') {
+      dot(-side * 17 - 4, -18, 12, 3, '#a65c62'); dot(-side * 22 - 3, -21, 7, 3, '#ce8c78');
+    } else if (job === 'assassin') {
+      dot(-10, -24, 4, 9, '#443447'); dot(7, -24, 4, 9, '#443447'); dot(-9, -25, 19, 2, '#9f6b84');
+    } else if (job === 'rune_master') {
+      for (const sign of [-1, 1]) { dot(sign * 17 - 1, -24, 2, 10, '#a3c6ba'); dot(sign * 17 - 3, -22, 6, 2, '#d8ddbc'); }
+    }
     if (promotion?.tier === 3) {
       dot(-13, -8, 4, 2, gold); dot(10, -8, 4, 2, gold);
       dot(-12, -10, 2, 3, '#ead9a7'); dot(11, -10, 2, 3, '#ead9a7');
+      for (const sign of [-1, 1]) { dot(sign * 14 - 2, -9, 5, 3, '#e4d9b5'); dot(sign * 18 - 1, -12, 3, 3, gold); }
     }
     if (job === 'ranger') {
       // Bow, string and quiver distinguish a ranger from the rogue source silhouette.
@@ -218,8 +240,10 @@ export class CustomIsometricHeroRenderer {
       dot(-2, -3, 4, 3, '#89b9a0');
     }
     if (equipment.armor) {
-      const metal = equipment.armor.def && equipment.armor.def >= 8 ? '#c5d0c5' : '#829c9c';
+      const defense = equipment.armor.def || 0;
+      const metal = defense >= 24 ? '#dec78e' : defense >= 12 ? '#c5d0c5' : '#95775f';
       dot(-10, -5, 4, 3, metal); dot(7, -5, 4, 3, '#647e87');
+      dot(-9, -3, 3, 5, metal); dot(7, -3, 3, 5, metal);
     }
     if (equipment.weapon && !back) {
       const magic = equipment.weapon.mag && equipment.weapon.mag > (equipment.weapon.atk || 0);
@@ -228,7 +252,9 @@ export class CustomIsometricHeroRenderer {
       dot(side * 15, -5, 1, 3, light); dot(side * 15 - 1, -4, 3, 1, light);
     }
     if (equipment.shield && !back) {
-      dot(-side * 11 - 3, 0, 5, 7, '#819c9a'); dot(-side * 11 - 2, 1, 2, 3, gold);
+      const royal = (equipment.shield.def || 0) >= 24;
+      dot(-side * 11 - 4, -1, 8, 9, royal ? '#c9b27c' : '#819c9a');
+      dot(-side * 11 - 3, 0, 6, 7, '#3d5864'); dot(-side * 11 - 1, 1, 2, 5, royal ? '#b9dacb' : gold);
     }
     if (equipment.accessory && !back) {
       dot(-1, -6, 2, 2, '#badfd5');
@@ -623,7 +649,7 @@ export class CustomIsometricHeroRenderer {
     isDarkling: boolean,
     isHurt: boolean
   ) {
-    if (isHurt) {
+    if (isHurt && !prefersReducedMotion()) {
       // Crimson damage hit flash
       ctx.filter = 'brightness(1.4) saturate(5) hue-rotate(-50deg) sepia(0.8)';
       return;

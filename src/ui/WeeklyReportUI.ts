@@ -2,6 +2,7 @@ import { GameState } from '../game/GameState';
 import { audio } from '../engine/AudioSynthesizer';
 import { darklingSystem } from '../game/DarklingSystem';
 import { escapeHtml } from '../util/Html';
+import { companionSprites } from '../engine/CompanionSpriteRenderer';
 
 export class WeeklyReportUI {
   private game: GameState;
@@ -10,6 +11,16 @@ export class WeeklyReportUI {
   constructor(game: GameState) {
     this.game = game;
     this.bindButtons();
+    window.addEventListener('companion-assets-loaded', () => {
+      if (!document.getElementById('weeklyReportModal')?.classList.contains('hidden')) this.paintKing();
+    });
+  }
+
+  private paintKing() {
+    const canvas = document.getElementById('weeklyKingPortrait') as HTMLCanvasElement | null;
+    const sprite = companionSprites.getHostSprite('king');
+    const ctx = canvas?.getContext('2d');
+    if (ctx && sprite) { ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, 64, 64); ctx.drawImage(sprite, 0, 0); }
   }
 
   private bindButtons() {
@@ -46,6 +57,7 @@ export class WeeklyReportUI {
     audio.fanfare();
 
     const modal = document.getElementById('weeklyReportModal')!;
+    this.paintKing();
     document.getElementById('weeklyWeekTitle')!.innerText = `End of Week ${this.game.weekCounter} Royal Ceremony`;
 
     // Sort players by Net Worth
