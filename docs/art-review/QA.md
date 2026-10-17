@@ -62,3 +62,13 @@ actual source directions. Companion/NPC art is full-body portrait art with runti
 motion. Original source PNGs total about 58 MiB and load on demand; performance on physical
 low-end phones and slow networks has not been measured. Existing user artwork is preserved.
 These contracts are also recorded in ART_DIRECTION.md and the source asset manifest.
+
+## Dungeon visibility regression — 2026-10-17
+Fixed surface-only camera bounds clipping dungeon destinations (world Y above 4400),
+stale terrain/road caches after late dungeon insertion or board replacement, and the
+rift entry button focusing the catacombs even when another dungeon was selected.
+Browser checks show the player and ground in catacombs, volcanic spire and frozen labyrinth.
+The added regression exercises all three entries, camera clamping, late terrain refresh,
+return to the surface and board reset. npm run verify passes all 172 tests.
+Screenshot: dungeon-fixed.png. Development fixture: /?art-scene=dungeon&realm=abyss
+(or sunfire/frostpeak); fixture saves are disabled.

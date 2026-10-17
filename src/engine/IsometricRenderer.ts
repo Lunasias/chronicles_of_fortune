@@ -53,6 +53,9 @@ export class IsometricRenderer {
     edgeColor: string;
   }> = [];
   public hasInitializedBoardCache = false;
+  private cachedNodes: BoardNode[] | null = null;
+  private cachedNodeCount = 0;
+  private cameraBounds = { minX: -3200, maxX: 5400, minY: -200, maxY: 4400 };
   private particles: Array<{
     x: number;
     y: number;
@@ -114,6 +117,17 @@ export class IsometricRenderer {
       const depth = (n.gx + n.gy) * 1000 + n.gz * 100;
       this.nodeScreenCache.set(n.id, { x: p.x, y: p.y, depth });
     });
+    if (nodes.length) {
+      const points = [...this.nodeScreenCache.values()];
+      this.cameraBounds = {
+        minX: Math.min(...points.map(p => p.x)) - 480,
+        maxX: Math.max(...points.map(p => p.x)) + 480,
+        minY: Math.min(...points.map(p => p.y)) - 360,
+        maxY: Math.max(...points.map(p => p.y)) + 360
+      };
+    }
+    this.cachedNodes = nodes;
+    this.cachedNodeCount = nodes.length;
 
     nodes.forEach(node => {
       const p1 = this.nodeScreenCache.get(node.id)!;
@@ -177,7 +191,7 @@ export class IsometricRenderer {
   // ISOMETRIC RAYCASTING: Detect which tile was hovered or clicked
   // =========================================================================
   screenToNode(clientX: number, clientY: number, nodes: BoardNode[], priorityIds?: number[]): BoardNode | null {
-    if (!this.hasInitializedBoardCache) {
+    if (!this.hasInitializedBoardCache || this.cachedNodes !== nodes || this.cachedNodeCount !== nodes.length) {
       this.initBoardCache(nodes);
 
     }
@@ -251,7 +265,7 @@ export class IsometricRenderer {
     previewPath: number[] = [],
     time: number = 0
   ) {
-    if (!this.hasInitializedBoardCache) {
+    if (!this.hasInitializedBoardCache || this.cachedNodes !== nodes || this.cachedNodeCount !== nodes.length) {
       this.initBoardCache(nodes);
       if (activePlayer) {
         const firstFocus = this.toScreen(activePlayer.gridX, activePlayer.gridY, activePlayer.gridZ);
@@ -1598,11 +1612,8 @@ export class IsometricRenderer {
   }
 
   public clampCameraBounds() {
-    // Keep camera within playable continental boundaries
-    const minX = -3200;
-    const maxX = 5400;
-    const minY = -200;
-    const maxY = 4400;
+    // Dungeon islands live beyond the surface continent's original fixed bounds.
+    const { minX, maxX, minY, maxY } = this.cameraBounds;
     this.camera.targetX = Math.max(minX, Math.min(maxX, this.camera.targetX));
     this.camera.targetY = Math.max(minY, Math.min(maxY, this.camera.targetY));
     this.camera.x = Math.max(minX, Math.min(maxX, this.camera.x));
@@ -1615,6 +1626,11 @@ export class IsometricRenderer {
 
   centerCameraOn(gx: number, gy: number, gz: number) {
     const p = this.toScreen(gx, gy, gz);
+    // A teleport can precede the next render/cache rebuild. Keep its actual destination reachable.
+    this.cameraBounds.minX = Math.min(this.cameraBounds.minX, p.x - 480);
+    this.cameraBounds.maxX = Math.max(this.cameraBounds.maxX, p.x + 480);
+    this.cameraBounds.minY = Math.min(this.cameraBounds.minY, p.y - 360);
+    this.cameraBounds.maxY = Math.max(this.cameraBounds.maxY, p.y + 360);
     this.camera.targetX = p.x;
     this.camera.targetY = p.y;
     this.clampCameraBounds();
@@ -1622,10 +1638,7 @@ export class IsometricRenderer {
 
   // Smooth cinematic camera focus onto player at turn start
   focusOnPlayer(gx: number, gy: number, gz: number) {
-    const p = this.toScreen(gx, gy, gz);
-    this.camera.targetX = p.x;
-    this.camera.targetY = p.y;
-    this.clampCameraBounds();
+    this.centerCameraOn(gx, gy, gz);
   }
 
   // Smooth analog panning from gamepad or keys

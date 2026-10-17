@@ -9,6 +9,8 @@
     "allowImportingTsExtensions": false
   },
   "include": [
+    "src/engine/IsometricRenderer.ts",
+    "src/game/DungeonSystem.ts",
     "src/engine/IsometricBuildingPainter.ts",
     "src/engine/IsometricFoliagePainter.ts",
     "src/engine/IsometricTerrainPainter.ts",

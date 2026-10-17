@@ -2440,7 +2440,7 @@ class DokaponApp {
       audio.click();
       riftModal?.classList.add('hidden');
       dungeonSystem.enterDungeon(player, this.game);
-      const startNode = this.game.allNodes.find(n => n.id === 1000);
+      const startNode = this.game.allNodes.find(n => n.id === player.nodeId);
       if (startNode) {
         this.renderer.centerCameraOn(startNode.gx, startNode.gy, startNode.gz);
       }
@@ -3617,7 +3617,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
     this.visualReviewActive = true;
@@ -3637,6 +3637,15 @@ class DokaponApp {
     const node = this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
+    if (scene === 'dungeon') {
+      // Build the surface first, then use the real late-loading teleport path.
+      this.renderer.initBoardCache(this.game.allNodes);
+      dungeonSystem.enterDungeon(this.game.activePlayer, this.game, query.get('realm') || 'abyss');
+      const player = this.game.activePlayer;
+      this.renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ);
+      this.hud.update();
+      return;
+    }
     const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; this.visualReviewMeter?.remove(); this.visualReviewMeter = null; document.getElementById('titleScreen')?.classList.remove('hidden'); };
     if (!['battle', 'boss', 'pvp'].includes(scene)) {
       this.hud.update();
