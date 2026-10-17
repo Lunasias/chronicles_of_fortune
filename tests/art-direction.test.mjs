@@ -35,6 +35,8 @@ test('attack timing reaches impact and recovery without repeating the wind-up', 
   assert.equal(classPoseRow('attack', 5), 6);
   assert.equal(classPoseRow('attack', 5, true), 5);
   for (const [w, h] of [[390, 844], [768, 600], [1280, 720], [1920, 1080]]) assert.equal(Number.isInteger(actorScaleForViewport(w, h)), true);
+  assert.equal(actorScaleForViewport(1920, 770), 3);
+  assert.equal(actorScaleForViewport(1920, 350), 1);
 });
 
 test('effect duration is consistent at 30, 60, 144 and 240 Hz and bounds resume catch-up', () => {

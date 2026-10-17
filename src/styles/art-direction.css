@@ -109,7 +109,7 @@ select, input[type='text'] {
 #settingsModal, #inventoryModal, #shopModal, #townModal { color: #eee2c8; }
 #settingsModal { z-index: 45; }
 #hudHPText, #hudMPText, #battlePlayerHPText, #battleEnemyHPText, #battlePlayerMPText, #battleEnemyMPText { font-size: 10px; line-height: 1; }
-#battleScreen > div:last-child { background: #152a36; border-color: #8d855e; }
+#battleCommandDock { background: #152a36; border-color: #8d855e; }
 #battleScreen .command-card { background-color: #283e4b; border-color: #718880; color: #eee3c9; min-height: 64px; }
 #battleScreen #btnCmdStrike, #battleScreen #btnCmdBurst { background-color: #b39357; color: #142630; }
 #battleScreen #btnCmdMagic, #battleScreen #btnCmdSkill { background-color: #40465e; }
@@ -165,4 +165,28 @@ body[data-reduced-motion='true'] *, body[data-reduced-motion='true'] *::before, 
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}
+
+/* Readable action hierarchy: a compact command dock, rather than a large empty log panel. */
+#battleScreen .command-card { min-height: 78px; padding: 8px; gap: 3px; }
+#battleScreen .command-card > span:nth-child(2) { font-size: 13px; line-height: 1.4; }
+#battleScreen .command-card > span:last-child { font-size: 11px; line-height: 1.35; }
+#battleSkillDescription { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
+#battleNarration { font-size: 13px; line-height: 1.65; max-height: 64px; }
+#battlePlayerName, #battleEnemyName { font-size: 13px; }
+#shopDioramaCanvas { height: auto; image-rendering: pixelated; }
+#shopModal .text-xs, #shopModal .text-\[10px\] { font-size: 12px; line-height: 1.6; }
+@media (min-width: 900px) {
+  #battleCommandDock { height: auto; min-height: 145px; max-height: 185px; display: flex; gap: 8px; }
+  #battleCommandRow { display: grid; grid-template-columns: minmax(420px, 1.5fr) minmax(280px, 1fr); gap: 14px; }
+  #battleFormationRow { margin: 0; padding-bottom: 5px; }
+  #attackerCommandGroup, #defenderCommandGroup { grid-column: 1; grid-row: 2; }
+  #attackerCommandGroup, #defenderCommandGroup { grid-row: 1; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
+  #battleNarrationPanel { grid-column: 2; grid-row: 1; min-height: 78px; }
+}
+@media (max-width: 768px) {
+  #battleScreen .command-card { min-height: 72px; }
+  #battleScreen .command-card > span:nth-child(2) { font-size: 12px; }
+  #battleNarration { font-size: 12px; max-height: 42px; }
+  #shopModal .text-xs { font-size: 12px; }
 }

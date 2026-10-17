@@ -438,7 +438,10 @@ export class BattleUI {
       this.canvas.width = this.canvas.parentElement.clientWidth || 800;
       this.canvas.height = this.canvas.parentElement.clientHeight || 450;
     }
-    document.getElementById('battleSkillLabel')!.innerText = (p.skillName || 'SKILL').toUpperCase();
+    document.getElementById('battleSkillLabel')!.innerText = 'ท่าอาชีพ';
+    document.getElementById('btnCmdSkill')!.title = p.skillName || 'ท่าอาชีพ';
+    document.getElementById('btnCmdSkill')!.setAttribute('aria-label', p.skillName || 'ท่าอาชีพ');
+    document.getElementById('battleSkillDescription')!.textContent = (p.skillName || 'เฉพาะอาชีพ').split('(')[0].trim();
 
     this.updateUI();
     this.updateCommandMenu();
@@ -547,7 +550,7 @@ export class BattleUI {
       const skillLbl = document.getElementById('battleSkillLabel');
       if (skillBtn && skillLbl) {
         skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
-        skillLbl.innerText = `${(b.attacker.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
+        skillLbl.innerText = 'ท่าอาชีพ · ใช้แล้ว';
       }
     }
 
@@ -713,10 +716,10 @@ export class BattleUI {
     if (skillBtn && skillLbl) {
       if (this.playerSkillUsedThisBattle) {
         skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
-        skillLbl.innerText = `${(p.skillName || 'SKILL').toUpperCase()} (ใช้แล้ว 1/1)`;
+        skillLbl.innerText = 'ท่าอาชีพ · ใช้แล้ว';
       } else {
         skillBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
-        skillLbl.innerText = (p.skillName || 'SKILL').toUpperCase();
+        skillLbl.innerText = 'ท่าอาชีพ';
       }
     }
 
@@ -2970,18 +2973,18 @@ export class BattleUI {
     pulse = false
   ) {
     ctx.save();
-    const r = pulse ? 50 + Math.sin(Date.now() * 0.006) * 4 : 46;
+    const r = 34;
     ctx.strokeStyle = color;
     ctx.lineWidth = pulse ? 2.8 : 2.0;
     ctx.shadowColor = color;
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = alpha * .35;
 
     ctx.beginPath();
     pixelRing(ctx, cx, cy, r, r * 0.44, ctx.strokeStyle, 1);
     ctx.stroke();
 
     // Ground contact shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fillStyle = 'rgba(15, 25, 31, 0.16)';
     ctx.beginPath();
     pixelEllipse(ctx, cx, cy, r * 0.85, r * 0.38, ctx.fillStyle);
     ctx.fill();

@@ -84,3 +84,9 @@ node survives save/load, and loading an in-dungeon save restores dungeon route g
 Legacy saves without a stored return node fall back to the capital. Verification: 174 tests,
 typecheck, production build and CSS checks pass. Screenshots: battle-ground-fixed.png,
 dungeon-exit.png. Fixture exit view: /?art-scene=dungeon&realm=frostpeak&room=exit.
+
+## Ten-point graphics polish — 2026-10-17
+See POLISH.md for the implementation and visual evidence for all ten review findings.
+Final npm run verify passes 177 tests, production build, typecheck and stylesheet checks.
+New screenshots: polish-battle.png, polish-dungeon.png, polish-mobile.png, polish-shop.png.
+Browser tests also exercised actual mobile casting and the full-screen PvP handover shield.

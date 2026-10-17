@@ -1208,7 +1208,7 @@
     </div>
 
     <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
-    <div class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col gap-2 border-t-2 border-slate-800 overflow-y-auto">
+    <div id="battleCommandDock" class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col gap-2 border-t-2 border-slate-800 overflow-y-auto">
       
       <!-- Brown Dust 2 3x3 Tactical Formation Row -->
       <div id="battleFormationRow" class="w-full flex flex-wrap items-center justify-between pb-1 mb-1 border-b border-slate-800 text-[11px] gap-1">
@@ -1223,7 +1223,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col md:flex-row gap-2 sm:gap-3 flex-1">
+      <div id="battleCommandRow" class="flex flex-col md:flex-row gap-2 sm:gap-3 flex-1">
       <!-- Attacker 4-Choice Cards + Companion Summon + EX Burst -->
       <div id="attackerCommandGroup" class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 sm:gap-2 flex-1">
         <!-- Attack -->
@@ -1248,7 +1248,7 @@
         <button id="btnCmdSkill" class="command-card pixel-btn-purple p-1.5 sm:p-2 flex flex-col items-center justify-center text-white min-h-[50px] sm:min-h-[64px] touch-manipulation">
           <span class="text-lg sm:text-xl mb-0.5">🌟</span>
           <span class="text-[11px] sm:text-xs font-bold truncate max-w-full" id="battleSkillLabel">ท่าไม้ตาย</span>
-          <span class="text-[8px] opacity-80 text-purple-200">เฉพาะอาชีพ</span>
+          <span id="battleSkillDescription" class="text-[8px] opacity-80 text-purple-200">เฉพาะอาชีพ</span>
         </button>
         <!-- EX Burst Limit Break -->
         <button id="btnCmdBurst" class="hidden command-card pixel-btn-gold p-1.5 sm:p-2 flex flex-col items-center justify-center text-slate-950 border-2 border-amber-300 min-h-[50px] sm:min-h-[64px] touch-manipulation">
@@ -1300,7 +1300,7 @@
       </div>
 
       <!-- Narration & RPS Hint Box -->
-      <div class="flex-1 pixel-box p-2 sm:p-3 bg-slate-950 flex flex-col justify-between text-[10px] sm:text-xs text-slate-300 border-slate-700 min-h-[50px]">
+      <div id="battleNarrationPanel" class="flex-1 pixel-box p-2 sm:p-3 bg-slate-950 flex flex-col justify-between text-[10px] sm:text-xs text-slate-300 border-slate-700 min-h-[50px]">
         <div id="battleNarration" class="overflow-y-auto max-h-12 md:max-h-20 pr-1 leading-relaxed text-[10px] sm:text-[11px]">
           ดวลศึกแห่งโชคชะตา! ชาร์จฟันชนะป้องกัน, สวนกลับทำลายชาร์จฟัน!
         </div>
@@ -1833,7 +1833,7 @@
       </div>
 
       <!-- 2.5D Isometric Shop Interior Diorama -->
-      <canvas id="shopDioramaCanvas" width="560" height="95" class="w-full h-20 sm:h-24 block border border-slate-700 bg-slate-950 mb-2.5"></canvas>
+      <canvas id="shopDioramaCanvas" width="560" height="144" class="w-full h-20 sm:h-24 block border border-slate-700 bg-slate-950 mb-2.5"></canvas>
 
       <div class="flex gap-2 mb-2.5">
         <button id="btnShopTabBuy" class="pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950">

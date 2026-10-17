@@ -31,8 +31,16 @@ test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize
     assert.equal(renderer.camera.x, target.x);
     assert.equal(renderer.camera.y, target.y);
     assert.ok(isometricTerrainEngine.terrainTiles.some(t => t.gx === player.gridX && t.gy === player.gridY));
+    assert.equal(renderer.nodeScreenCache.size, 7, 'only the current dungeon is drawn');
+    assert.ok(isometricTerrainEngine.terrainTiles.every(t => Math.abs(t.gx - player.gridX) <= 10));
     renderer.clampCameraBounds();
     assert.equal(renderer.camera.targetY, target.y);
+    const surface = game.allNodes.find(n => n.id === surfaceId);
+    renderer.centerCameraOn(surface.gx, surface.gy, surface.gz);
+    assert.throws(() => renderer.render(game.allNodes, game.players, player), err => err === drawn);
+    assert.ok(isometricTerrainEngine.terrainTiles.every(t => t.gx < 140), 'roster focus can inspect a surface player from inside a dungeon');
+    renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ);
+    assert.throws(() => renderer.render(game.allNodes, game.players, player), err => err === drawn);
     dungeon.exitDungeon(player, game);
     assert.equal(player.nodeId, surfaceId);
     renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ);

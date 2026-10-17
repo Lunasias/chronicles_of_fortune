@@ -26,6 +26,7 @@ export function animationPoseIndex(state: string, frame: number): number {
 }
 
 export function actorScaleForViewport(width: number, height: number): number {
+  if (width >= 1500 && height >= 600) return 3;
   return width >= 760 && height >= 360 ? 2 : 1;
 }
 

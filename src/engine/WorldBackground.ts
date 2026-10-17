@@ -1,5 +1,6 @@
 import { TimeOfDay } from '../game/EcosystemSystem';
 import { SKY_TILE_W, skyRenderer } from './SkyRenderer';
+import { drawPixelRidge } from './EnvironmentArt';
 
 export interface CameraViewport {
   x: number;
@@ -236,10 +237,10 @@ export class WorldBackground {
     timeOfDay: TimeOfDay
   ) {
     const config = {
-      DAWN: { x: 0.72, y: 0.38, r: 40, bob: 6, crescent: false },
-      DAY: { x: 0.76, y: 0.24, r: 46, bob: 8, crescent: false },
-      DUSK: { x: 0.7, y: 0.62, r: 44, bob: 10, crescent: false },
-      NIGHT: { x: 0.76, y: 0.2, r: 34, bob: 5, crescent: true }
+      DAWN: { x: 0.78, y: 0.28, r: 20, bob: 2, crescent: false },
+      DAY: { x: 0.82, y: 0.18, r: 20, bob: 2, crescent: false },
+      DUSK: { x: 0.78, y: 0.32, r: 23, bob: 3, crescent: false },
+      NIGHT: { x: 0.82, y: 0.18, r: 18, bob: 2, crescent: true }
     }[timeOfDay as 'DAWN' | 'DAY' | 'DUSK' | 'NIGHT'];
 
     const bob = Math.round(Math.sin(time * 0.0004) * config.bob);
@@ -403,107 +404,10 @@ export class WorldBackground {
     time: number,
     timeOfDay: TimeOfDay
   ) {
-    const horizonY = h * 0.68;
-
-    let layer1Color = 'rgba(79, 70, 229, 0.45)';
-    let layer2Color = 'rgba(91, 33, 182, 0.65)';
-    let mistColor1 = 'rgba(251, 146, 60, 0.25)';
-    let mistColor2 = 'rgba(244, 114, 182, 0.4)';
-    let rimLightColor: string | null = null;
-
-    switch (timeOfDay) {
-      case 'DAWN':
-        layer1Color = 'rgba(91, 104, 132, 0.42)';
-        layer2Color = 'rgba(79, 96, 105, 0.62)';
-        mistColor1 = 'rgba(211, 177, 143, 0.28)';
-        mistColor2 = 'rgba(200, 173, 167, 0.35)';
-        break;
-      case 'DAY':
-        layer1Color = 'rgba(30, 58, 138, 0.38)';
-        layer2Color = 'rgba(20, 83, 45, 0.65)';
-        mistColor1 = 'rgba(186, 230, 253, 0.22)';
-        mistColor2 = 'rgba(224, 242, 254, 0.35)';
-        break;
-      case 'DUSK':
-        layer1Color = 'rgba(77, 77, 103, 0.65)';
-        layer2Color = 'rgba(71, 68, 78, 0.78)';
-        mistColor1 = 'rgba(190, 142, 117, 0.26)';
-        mistColor2 = 'rgba(164, 136, 147, 0.28)';
-        rimLightColor = 'rgba(218, 186, 137, 0.45)';
-        break;
-      case 'NIGHT':
-        layer1Color = 'rgba(15, 23, 42, 0.78)';
-        layer2Color = 'rgba(10, 18, 36, 0.88)';
-        mistColor1 = 'rgba(30, 58, 138, 0.25)';
-        mistColor2 = 'rgba(15, 23, 42, 0.55)';
-        rimLightColor = 'rgba(147, 197, 253, 0.65)';
-        break;
-    }
-
-    const ridge = (
-      color: string,
-      parallax: number,
-      baseline: number,
-      lift: number,
-      freq: { a: number; b: number; phase: number },
-      fillToBottom: boolean
-    ): number[] => {
-      const p = camera.x * parallax;
-      const heights: number[] = [];
-      ctx.fillStyle = color;
-      for (let x = -200; x <= w + 200; x++) {
-        const wx = x + p;
-        const peak =
-          Math.sin(wx * freq.a) * 125 + Math.cos(wx * freq.b + freq.phase) * 60;
-        const y = Math.round(baseline - lift - peak);
-        heights.push(y);
-        // One integer column per screen pixel: a stair-stepped ridge, drawn with fillRect so it
-        // cannot antialias.
-        ctx.fillRect(x, y, 1, fillToBottom ? h - y : 0);
-      }
-      return heights;
-    };
-
-    // Layer 1: distant peaks, silhouette only.
-    const far = ridge(layer1Color, 0.04, horizonY, 150, { a: 0.003, b: 0.008, phase: 0 }, true);
-
-    // Layer 2: mid ridges, filled down to the bottom of the screen.
-    const near = ridge(layer2Color, 0.09, horizonY + 30, 70, { a: 0.006, b: 0.014, phase: 1.2 }, true);
-
-    // Rim light along the near ridge: a dotted one-pixel line, so a lit peak reads without a
-    // Gaussian blur.
-    if (rimLightColor) {
-      ctx.fillStyle = rimLightColor;
-      for (let x = 0; x < w; x++) {
-        const y = near[x + 200];
-        if (y === undefined) continue;
-        // Denser along the upper edges, sparser down the slopes.
-        if (x % 3 === 0 || near[x + 199] !== y || near[x + 201] !== y) ctx.fillRect(x, y, 1, 1);
-      }
-    }
-
-    // Valley mist: four dithered bands. A gradient here would be the only smooth ramp left in the
-    // whole background.
-    const mistTop = Math.round(horizonY - 50);
-    const mistRows = h - mistTop;
-    const bands = [mistColor1, mistColor1, mistColor2, mistColor2];
-    for (let i = 0; i < bands.length; i++) {
-      const y0 = mistTop + Math.round((mistRows * i) / bands.length);
-      const y1 = mistTop + Math.round((mistRows * (i + 1)) / bands.length);
-      ctx.fillStyle = bands[i];
-      for (let y = y0; y < y1; y++) ctx.fillRect(0, y, w, 1);
-    }
-    // The deepest band is the fog the continent rises out of.
-    ctx.fillStyle = 'rgba(10, 15, 30, 0.7)';
-    for (let y = mistTop + Math.round(mistRows * 0.75); y < h; y++) ctx.fillRect(0, y, w, 1);
-
-    // A bright waterline where the mist meets the horizon, so the far ridge does not just stop.
-    ctx.fillStyle = mistColor2;
-    for (let x = 0; x < w; x += 2) {
-      const y = far[x + 200];
-      if (y === undefined) continue;
-      ctx.fillRect(x, y + 1, 1, 1);
-    }
+    const night = timeOfDay === 'NIGHT';
+    const dusk = timeOfDay === 'DUSK';
+    drawPixelRidge(ctx, w, h, night ? '#26384c' : dusk ? '#777081' : '#6e8d9c', Math.round(camera.x * .04), 0);
+    drawPixelRidge(ctx, w, h, night ? '#20323b' : dusk ? '#59646b' : '#4d7374', Math.round(camera.x * .08), 1);
     void time;
   }
 

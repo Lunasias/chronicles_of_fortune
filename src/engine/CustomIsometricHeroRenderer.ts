@@ -1,5 +1,6 @@
 import { EquipmentItem, IsoDirection, CharacterAnimState, PrankState } from './PixelSpriteGenerator';
 import { pixelEllipse } from './PixelFx';
+import { drawPromotionSilhouette } from './PromotionSilhouette';
 import { animationPoseIndex } from './ArtDirection';
 import { classArtAtlas } from './ClassArtAtlas';
 import { prefersReducedMotion } from '../ui/GraphicsSettings';
@@ -132,6 +133,7 @@ export class CustomIsometricHeroRenderer {
     const cx = 72 + anim.stepX;
     const cy = 72 + anim.stepY + anim.bob + anim.jumpY;
 
+    if (animState !== 'defeat') drawPromotionSilhouette(ctx, cx, cy, classKey, ['N', 'NE', 'NW'].includes(dir));
     // 1. DYNAMIC GROUND SHADOW (Anchored to ground plane at cy + 25)
     this.drawGroundShadow(ctx, 72, 97, anim);
 
@@ -428,17 +430,17 @@ export class CustomIsometricHeroRenderer {
     cy: number,
     anim: ReturnType<typeof this.computeAnimation>
   ) {
-    const rx = 18 * anim.shadowScale;
-    const ry = 8 * anim.shadowScale;
+    const rx = 14 * anim.shadowScale;
+    const ry = 5 * anim.shadowScale;
 
     // Soft ambient outer occlusion
-    ctx.fillStyle = 'rgba(3, 7, 18, 0.28)';
+    ctx.fillStyle = 'rgba(3, 7, 18, 0.12)';
     ctx.beginPath();
     pixelEllipse(ctx, cx, cy + 1, rx * 1.15, ry * 1.15, ctx.fillStyle);
     ctx.fill();
 
     // Sharp inner core ground shadow
-    ctx.fillStyle = 'rgba(3, 7, 18, 0.6)';
+    ctx.fillStyle = 'rgba(3, 7, 18, 0.25)';
     ctx.beginPath();
     pixelEllipse(ctx, cx, cy, rx, ry, ctx.fillStyle);
     ctx.fill();

@@ -237,7 +237,7 @@ export class CustomIsometricMonsterRenderer {
 
     if (newFrame || (mobImg && mobImg.complete && mobImg.naturalWidth > 0)) {
       // 1. Dynamic 2.5D ground shadow
-      this.drawIsoShadow(ctx, 72, 97, 18, 7, 0.35);
+      this.drawIsoShadow(ctx, 72, 97, 14, 5, 0.20);
 
       // 2. Render Monster Model with Directional Transform
       ctx.save();

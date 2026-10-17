@@ -775,19 +775,17 @@ function drawSurface(
     }
 
     case 'crystal_cavern': {
-      // Three faceted shards with white specular tips: the tip is what makes them read as crystal.
-      for (const [ox, oy, h] of [
-        [-18, 6, 10],
-        [2, -4, 14],
-        [20, 6, 8]
-      ]) {
+      // Uneven, sparse clusters avoid a repeated field of three identical white slashes.
+      const shardX = Math.round(noise2(7, 19, seed) * 36) - 18;
+      const shardY = Math.round(noise2(21, 11, seed) * 8) + 2;
+      for (const [ox, oy, h] of [[shardX, shardY, 5 + Math.round(noise2(9, 4, seed) * 6)]]) {
         const x = CX + ox;
         const y = CY + oy;
         for (let i = 0; i <= h; i++) {
           const w = Math.max(0, Math.round((h - i) * 0.28));
           for (let dx = -w; dx <= w; dx++) tpx(s, x + dx, y - i, dx < 0 ? t.accent : t.accentLo);
         }
-        tpx(s, x, y - h, '#ffffff');
+        tpx(s, x, y - h, '#b3cfce');
         if (t.glow) s.glowDisc(x, y - h / 2, 5, 8, t.glow, glowStrength * 0.35);
       }
       break;

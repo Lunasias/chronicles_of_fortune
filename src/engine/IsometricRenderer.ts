@@ -9,7 +9,8 @@ import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
 import { audio } from './AudioSynthesizer';
 import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSettings';
 import { foliageForBiome } from './BiomeArt';
-import { isDungeonExit } from '../game/DungeonLocations';
+import { isDungeonExit, dungeonSceneGroup } from '../game/DungeonLocations';
+import { drawDungeonRoom } from './EnvironmentArt';
 
 export interface Camera2D {
   x: number;
@@ -56,6 +57,19 @@ export class IsometricRenderer {
   public hasInitializedBoardCache = false;
   private cachedNodes: BoardNode[] | null = null;
   private cachedNodeCount = 0;
+  private sceneSource: BoardNode[] | null = null;
+  private sceneSourceCount = 0;
+  private sceneGroup = 0;
+  private focusedSceneGroup: number | null = null;
+  private sceneNodes: BoardNode[] = [];
+
+  private viewNodes(nodes: BoardNode[], group = this.sceneGroup): BoardNode[] {
+    if (this.sceneSource !== nodes || this.sceneSourceCount !== nodes.length || this.sceneGroup !== group) {
+      this.sceneSource = nodes; this.sceneSourceCount = nodes.length; this.sceneGroup = group;
+      this.sceneNodes = nodes.filter(n => dungeonSceneGroup(n.id) === group);
+    }
+    return this.sceneNodes;
+  }
   private cameraBounds = { minX: -3200, maxX: 5400, minY: -200, maxY: 4400 };
   private particles: Array<{
     x: number;
@@ -192,6 +206,7 @@ export class IsometricRenderer {
   // ISOMETRIC RAYCASTING: Detect which tile was hovered or clicked
   // =========================================================================
   screenToNode(clientX: number, clientY: number, nodes: BoardNode[], priorityIds?: number[]): BoardNode | null {
+    nodes = this.viewNodes(nodes);
     if (!this.hasInitializedBoardCache || this.cachedNodes !== nodes || this.cachedNodeCount !== nodes.length) {
       this.initBoardCache(nodes);
 
@@ -266,6 +281,7 @@ export class IsometricRenderer {
     previewPath: number[] = [],
     time: number = 0
   ) {
+    nodes = this.viewNodes(nodes, activePlayer ? this.focusedSceneGroup ?? dungeonSceneGroup(activePlayer.nodeId) : 0);
     if (!this.hasInitializedBoardCache || this.cachedNodes !== nodes || this.cachedNodeCount !== nodes.length) {
       this.initBoardCache(nodes);
       if (activePlayer) {
@@ -311,7 +327,8 @@ export class IsometricRenderer {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Dynamic Fantasy World Sky & Parallax Horizons (Changes with Day/Night cycle)
-    worldBackground.renderSky(ctx, this.camera, w, h, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay);
+    if (this.sceneGroup) drawDungeonRoom(ctx, w, h, nodes[0]?.biome || 'abyss');
+    else worldBackground.renderSky(ctx, this.camera, w, h, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay);
 
     ctx.save();
     ctx.translate(Math.round(w / 2), Math.round(h / 2));
@@ -319,14 +336,14 @@ export class IsometricRenderer {
     ctx.translate(-camX, -camY);
 
     // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
-    if (graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
+    if (!this.sceneGroup && graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
       worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
     }
 
     // 2.4 The cloud sea the floating continent rises out of. Drawn in world space below the
     // board's lowest tile, so the map reads as an island in the sky rather than as a flat
     // continent.
-    if (isometricTerrainEngine.isInitialized) {
+    if (!this.sceneGroup && isometricTerrainEngine.isInitialized) {
       worldBackground.renderCloudSea(ctx, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
     }
 
@@ -338,7 +355,7 @@ export class IsometricRenderer {
     const maxY = this.camera.y + halfH;
 
     // 2.5 Continuous 3D Isometric Continent Terrain (Biome-specific earth, cliffs & textures)
-    isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
+    isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay, !!this.sceneGroup);
 
     // 2.6 Natural Environmental Clutter (Direct pass, zero sorting overhead)
     isometricTerrainEngine.renderClutter(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
@@ -377,7 +394,7 @@ export class IsometricRenderer {
     }
 
     // 10. Atmospheric Volumetric Sunbeams (God Rays) during Dawn & Dusk
-    this.renderAtmosphericLightShafts(ctx, w, h, ecosystemSystem.timeOfDay);
+    if (!this.sceneGroup) this.renderAtmosphericLightShafts(ctx, w, h, ecosystemSystem.timeOfDay);
 
     // 11. Squid Ink Sabotage Overlay
     if (activePlayer && activePlayer.squidInkTurns > 0) {
@@ -438,6 +455,7 @@ export class IsometricRenderer {
     renderList.length = 0;
     const focus = activePlayer ? this.toScreen(activePlayer.gridX, activePlayer.gridY, activePlayer.gridZ) : null;
     for (const grove of isometricTerrainEngine.groves) {
+      if (this.sceneGroup) continue;
       if (grove.x < minX - 64 || grove.x > maxX + 64 || grove.y < minY - 64 || grove.y > maxY + 64) continue;
       renderList.push({ depth: grove.depth, draw: () => {
         const tree = pixelSprites.getTreeSprite(grove.species, grove.variant);
@@ -511,14 +529,14 @@ export class IsometricRenderer {
 
             // Soft two-tier ambient occlusion & ground contact shadow
             ctx.save();
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+            ctx.fillStyle = 'rgba(13, 22, 29, 0.10)';
             ctx.beginPath();
-            pixelEllipse(ctx, px, py + 16, 42, 16, ctx.fillStyle);
+            pixelEllipse(ctx, px, py + 3, 34, 10, ctx.fillStyle);
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.fillStyle = 'rgba(13, 22, 29, 0.18)';
             ctx.beginPath();
-            pixelEllipse(ctx, px, py + 14, 34, 12, ctx.fillStyle);
+            pixelEllipse(ctx, px, py + 1, 27, 7, ctx.fillStyle);
             ctx.fill();
             ctx.restore();
 
@@ -768,7 +786,7 @@ export class IsometricRenderer {
       }
 
       // Foliage / Tree Props (Only on open path nodes, never clipping through buildings)
-      if (node.id % 2 === 0 && !hasBuilding && foliageForBiome(node.biome)) {
+      if (!this.sceneGroup && node.id % 2 === 0 && !hasBuilding && foliageForBiome(node.biome)) {
         renderList.push({
           depth: depth + 20,
           draw: () => {
@@ -1637,6 +1655,9 @@ export class IsometricRenderer {
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {
+    const matches = (n: BoardNode) => n.gx === gx && n.gy === gy && n.gz === gz;
+    const destination = this.sceneSource?.find(matches) ?? this.cachedNodes?.find(matches);
+    if (destination) this.focusedSceneGroup = dungeonSceneGroup(destination.id);
     const p = this.toScreen(gx, gy, gz);
     // A teleport can precede the next render/cache rebuild. Keep its actual destination reachable.
     this.cameraBounds.minX = Math.min(this.cameraBounds.minX, p.x - 480);

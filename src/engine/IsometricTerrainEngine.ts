@@ -371,7 +371,8 @@ export class IsometricTerrainEngine {
     minY: number,
     maxY: number,
     time: number,
-    timeOfDay: TimeOfDay
+    timeOfDay: TimeOfDay,
+    interior = false
   ) {
     const isNight = timeOfDay === 'NIGHT';
     const hw = this.tileWidth / 2;
@@ -391,7 +392,7 @@ export class IsometricTerrainEngine {
       }
 
       // Shoreline ocean foam waves around perimeter cliffs
-      if (tile.isEdge) {
+      if (tile.isEdge && !interior) {
         this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + bob, hw, hh, isNight, time);
       }
 
@@ -404,7 +405,7 @@ export class IsometricTerrainEngine {
       const variant =
         (((tile.gx * 7 + tile.gy * 13) % TERRAIN_VARIANTS) + TERRAIN_VARIANTS) % TERRAIN_VARIANTS;
       const sprite = isometricTerrainRenderer.getTileSprite(tile.biome, {
-        cliffs: hasCliffs, night: isNight, variant, edgeBiomes: tile.edgeBiomes
+        cliffs: hasCliffs && !interior, night: isNight, variant, edgeBiomes: tile.edgeBiomes
       });
       ctx.drawImage(sprite, tile.x - TERRAIN_BLIT_X, tile.y - TERRAIN_BLIT_Y);
     }

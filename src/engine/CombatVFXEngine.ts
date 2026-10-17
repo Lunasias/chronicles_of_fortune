@@ -1171,14 +1171,14 @@ export class CombatVFXEngine {
     if (this.speedLinesAlpha <= 0.01 || prefersReducedMotion()) return;
     ctx.save();
     ctx.strokeStyle = this.speedLinesColor;
-    ctx.globalAlpha = Math.min(1.0, this.speedLinesAlpha * 0.85);
-    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = Math.min(.24, this.speedLinesAlpha * .18);
+    ctx.lineWidth = 1;
     const scx = w * 0.5;
     const scy = h * 0.5;
-    const lineCount = 32;
+    const lineCount = 16;
     for (let i = 0; i < lineCount; i++) {
       const angle = (i / lineCount) * Math.PI * 2 + Math.sin(i * 99) * 0.04;
-      const innerR = Math.min(w, h) * 0.32 + (i % 4) * 18;
+      const innerR = Math.min(w, h) * 0.60 + (i % 4) * 18;
       const outerR = Math.max(w, h) * 0.82;
       ctx.beginPath();
       ctx.moveTo(scx + Math.cos(angle) * innerR, scy + Math.sin(angle) * innerR);

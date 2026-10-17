@@ -5,6 +5,7 @@ import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import type { TimeOfDay } from '../game/EcosystemSystem';
 import { foliageForBiome } from './BiomeArt';
 import { resolveBiome, terrainPalette } from './IsometricTerrainPainter';
+import { drawDungeonRoom, drawGroundClusters, drawRegionalProps } from './EnvironmentArt';
 
 /** All scenery and combatants share this ground plane, without separate raised platforms. */
 export function battleGroundLayout(w: number, h: number) {
@@ -20,14 +21,9 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
   ctx.imageSmoothingEnabled = false;
   const cave = ['cavern', 'crystal_cavern', 'abyss'].includes(biome);
   if (cave) {
-    ctx.fillStyle = biome === 'abyss' ? '#192035' : '#233a43'; ctx.fillRect(0, 0, w, h);
-    for (let i = 0; i < 13; i++) {
-      const x = Math.round(i * w / 12), height = 80 + (i * 73 % 120);
-      ctx.fillStyle = i % 2 ? '#293f4b' : '#304956'; ctx.fillRect(x - 36, 0, 72, height);
-      ctx.fillStyle = '#45636a'; ctx.fillRect(x - 36, 0, 4, height - 12);
-    }
+    drawDungeonRoom(ctx, w, h, biome);
   } else {
-    worldBackground.renderSky(ctx, { x: 0, y: 0, zoom: 1 }, w, h, time, boss ? 'DUSK' : timeOfDay);
+    worldBackground.renderSky(ctx, { x: 0, y: 0, zoom: 1 }, w, Math.round(h * .62), time, boss ? 'DUSK' : timeOfDay);
   }
   const { floorY } = battleGroundLayout(w, h), night = timeOfDay === 'NIGHT';
   // Extend the floor beyond the viewport. A visible diamond edge makes the arena look airborne.
@@ -44,13 +40,24 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     ctx.drawImage(tile, x - 52, y - 28);
   }
   // Quiet the repeating board texture so fighters remain the visual focus.
-  ctx.fillStyle = palette.top; ctx.globalAlpha = .22; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.fillStyle = palette.top; ctx.globalAlpha = .48; ctx.fillRect(0, horizon, w, h - horizon);
   ctx.restore();
+  drawGroundClusters(ctx, w, h, horizon, palette.top, palette.cliffLeft);
+  // A worn approach links architecture to the arena, leaving the center clear.
+  for (let i = 0; i < 14; i++) {
+    const x = Math.round(w * .5 - 90 + i * 13), y = horizon + 24 + i * 5;
+    ctx.fillStyle = palette.cliffLeft; ctx.globalAlpha = .3;
+    ctx.fillRect(x, y, 38 + i % 3 * 4, 6); ctx.fillRect(x + 8, y + 6, 22, 3);
+  }
+  ctx.globalAlpha = 1;
+  drawRegionalProps(ctx, w, horizon, biome);
+  drawRegionalProps(ctx, w, h + 8, biome);
   const species = foliageForBiome(biome);
-  if (species) for (let i = 0; i < 6; i++) {
+  const treeCount = ['castle', 'steampunk', 'volcano', 'desert'].includes(biome) ? 0 : biome === 'snow' ? 2 : 4;
+  if (species) for (let i = 0; i < treeCount; i++) {
     const offset = i % 3;
     const spread = Math.min(350, w * .39), step = Math.min(40, w * .045);
-    const x = Math.round(i < 3 ? w / 2 - spread + offset * step : w / 2 + spread - offset * step);
+    const x = Math.round(i % 2 === 0 ? w / 2 - spread - offset * step * .3 : w / 2 + spread + offset * step * .3);
     const y = horizon + 12 + offset * 10;
     const tree = isometricFoliageRenderer.getTreeSprite(species, i % 4);
     const scale = w >= 760 ? 2 : 1;
