@@ -5,6 +5,7 @@ import { GameState } from '../.test-build/game/GameState.js';
 import { DungeonSystem } from '../.test-build/game/DungeonSystem.js';
 import { IsometricRenderer } from '../.test-build/engine/IsometricRenderer.js';
 import { isometricTerrainEngine } from '../.test-build/engine/IsometricTerrainEngine.js';
+import { SaveManager } from '../.test-build/game/SaveManager.js';
 
 test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize and return', () => {
   const drawn = new Error('camera/cache preparation complete');
@@ -39,5 +40,30 @@ test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize
     game.resetBoard();
     assert.throws(() => renderer.render(game.allNodes, [], null), err => err === drawn);
     assert.equal(isometricTerrainEngine.terrainTiles.some(t => t.gx >= 140), false);
+  }
+});
+
+test('every dungeon end portal returns to its original surface node after saving and reloading', () => {
+  for (const [realm, exit] of [['abyss', 1006], ['sunfire', 1106], ['frostpeak', 1206]]) {
+    const game = new GameState();
+    game.initGame([{ name: 'Explorer', classKey: 'cleric', isAI: false }]);
+    const origin = game.allNodes.find(n => n.id === 18);
+    Object.assign(game.activePlayer, { nodeId: origin.id, gridX: origin.gx, gridY: origin.gy, gridZ: origin.gz });
+    const dungeon = new DungeonSystem();
+    dungeon.enterDungeon(game.activePlayer, game, realm);
+    const portal = game.allNodes.find(n => n.id === exit);
+    Object.assign(game.activePlayer, { nodeId: exit, gridX: portal.gx, gridY: portal.gy, gridZ: portal.gz });
+    assert.equal(dungeon.isExitNode(exit), true);
+    assert.equal(dungeon.isExitNode(exit - 1), false);
+    assert.equal(SaveManager.save(game), true);
+    const restored = new GameState();
+    assert.equal(SaveManager.load(restored).success, true);
+    assert.ok(restored.allNodes.some(n => n.id === exit));
+    const reloadedDungeon = new DungeonSystem();
+    reloadedDungeon.exitDungeon(restored.activePlayer, restored);
+    assert.equal(restored.activePlayer.nodeId, origin.id);
+    assert.equal(restored.activePlayer.gridX, origin.gx);
+    assert.equal(restored.activePlayer.gridY, origin.gy);
+    assert.equal(restored.activePlayer.dungeonReturnNodeId, null);
   }
 });

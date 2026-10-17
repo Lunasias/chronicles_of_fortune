@@ -608,6 +608,7 @@ export class Player {
   // Movement on board
   public nodeId: number;
   public prevNodeId: number | null = null;
+  public dungeonReturnNodeId: number | null = null;
   public gridX: number;
   public gridY: number;
   public gridZ: number;

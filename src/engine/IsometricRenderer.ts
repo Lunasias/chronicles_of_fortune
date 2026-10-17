@@ -9,6 +9,7 @@ import { defaultZoomFor, snapWorld, snapZoom } from './PixelScale';
 import { audio } from './AudioSynthesizer';
 import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSettings';
 import { foliageForBiome } from './BiomeArt';
+import { isDungeonExit } from '../game/DungeonLocations';
 
 export interface Camera2D {
   x: number;
@@ -467,6 +468,17 @@ export class IsometricRenderer {
         depth,
         draw: () => {
           this.drawIsometricBlock(ctx, px, py, node, isHighlighted, isHovered, time);
+          if (isDungeonExit(node.id)) {
+            const portal = pixelSprites.getBuildingSprite('dark_gate', null);
+            ctx.drawImage(portal, Math.round(px - portal.width / 2), Math.round(py - (portal.width >= 96 ? 80 : 48)));
+            ctx.fillStyle = '#142330';
+            ctx.fillRect(Math.round(px - 64), Math.round(py - 103), 128, 21);
+            ctx.strokeStyle = '#b99b60';
+            ctx.strokeRect(Math.round(px - 64) + .5, Math.round(py - 103) + .5, 128, 21);
+            ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#f2e5c6';
+            ctx.fillText('ออกดันเจี้ยน → พื้นผิว', Math.round(px), Math.round(py - 89));
+          }
         }
       });
 

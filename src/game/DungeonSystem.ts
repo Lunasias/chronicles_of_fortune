@@ -3,6 +3,7 @@ import { Player } from './Player';
 import { GameState } from './GameState';
 import { Combatant } from './BattleEngine';
 import { audio } from '../engine/AudioSynthesizer';
+import { isDungeonExit } from './DungeonLocations';
 
 export const DUNGEON_CATACOMBS_NODES: BoardNode[] = [
   {
@@ -330,6 +331,10 @@ export class DungeonSystem {
            (nodeId >= 1200 && nodeId <= 1206);
   }
 
+  isExitNode(nodeId: number): boolean {
+    return isDungeonExit(nodeId);
+  }
+
   getDungeonDepth(playerId: number): number {
     return this.dungeonDepth[playerId] || 1;
   }
@@ -359,6 +364,7 @@ export class DungeonSystem {
   enterDungeon(player: Player, game: GameState, preferredRealm?: string): void {
     this.ensureDungeonLoaded(game);
     this.returnNodes[player.id] = player.nodeId;
+    player.dungeonReturnNodeId = player.nodeId;
     this.torchMeter[player.id] = 100; // Reset torch on entry
     this.dungeonDepth[player.id] = 1;
 
@@ -409,7 +415,8 @@ export class DungeonSystem {
   }
 
   exitDungeon(player: Player, game: GameState): void {
-    const returnId = this.returnNodes[player.id] ?? 0;
+    const returnId = player.dungeonReturnNodeId ?? this.returnNodes[player.id] ?? 0;
+    player.dungeonReturnNodeId = null;
     const depth = this.getDungeonDepth(player.id);
     delete this.returnNodes[player.id];
     delete this.torchMeter[player.id];

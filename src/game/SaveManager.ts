@@ -2,6 +2,7 @@ import { GameState } from './GameState';
 import { Player, FoodBuff, GuildQuest, CompanionData } from './Player';
 import { TownData, HomeData } from './BoardMap';
 import { EquipmentItem, PrankState } from '../engine/PixelSpriteGenerator';
+import { dungeonSystem } from './DungeonSystem';
 
 export interface SaveMetadata {
   saveVersion?: number;
@@ -39,6 +40,7 @@ export interface SerializedPlayer {
   townDeeds: number[];
   nodeId: number;
   prevNodeId: number | null;
+  dungeonReturnNodeId?: number | null;
   gridX: number;
   gridY: number;
   gridZ: number;
@@ -248,7 +250,7 @@ export class SaveManager {
         maxHp: p.maxHp, hp: p.hp, maxMp: p.maxMp, mp: p.mp,
         atk: p.atk, def: p.def, mag: p.mag, spd: p.spd, luk: p.luk, gold: p.gold,
         townsControlled: p.townsControlled, townDeeds: [...p.townDeeds],
-        nodeId: p.nodeId, prevNodeId: p.prevNodeId,
+        nodeId: p.nodeId, prevNodeId: p.prevNodeId, dungeonReturnNodeId: p.dungeonReturnNodeId,
         gridX: here ? here.gx : p.gridX,
         gridY: here ? here.gy : p.gridY,
         gridZ: here ? here.gz : p.gridZ,
@@ -332,6 +334,7 @@ export class SaveManager {
         return { success: false, error: 'ไฟล์บันทึกไม่มีข้อมูลผู้เล่น' };
       }
 
+      if (data.players.some(p => dungeonSystem.isInDungeon(p.nodeId))) dungeonSystem.ensureDungeonLoaded(game);
       const nodesById = new Map(game.allNodes.map(n => [n.id, n]));
 
       game.players = data.players.map(sp => {
@@ -352,6 +355,7 @@ export class SaveManager {
         p.townDeeds = Array.isArray(sp.townDeeds) ? sp.townDeeds.filter(d => nodesById.has(d)) : [];
         p.townsControlled = p.townDeeds.length;
         p.prevNodeId = numOr(sp.prevNodeId, -1) >= 0 ? numOr(sp.prevNodeId, -1) : null;
+        p.dungeonReturnNodeId = nodesById.has(numOr(sp.dungeonReturnNodeId, -1)) ? numOr(sp.dungeonReturnNodeId, -1) : null;
         const here = nodesById.get(p.nodeId);
         p.gridX = here ? here.gx : numOr(sp.gridX, 0);
         p.gridY = here ? here.gy : numOr(sp.gridY, 0);

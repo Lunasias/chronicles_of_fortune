@@ -72,3 +72,15 @@ The added regression exercises all three entries, camera clamping, late terrain 
 return to the surface and board reset. npm run verify passes all 172 tests.
 Screenshot: dungeon-fixed.png. Development fixture: /?art-scene=dungeon&realm=abyss
 (or sunfire/frostpeak); fixture saves are disabled.
+
+## Battle ground and dungeon exits — 2026-10-17
+Replaced the two raised dueling slabs and floating arena diamond with a continuous,
+viewport-filling biome floor. Combat, cutscene and companion effect coordinates now share
+one ground layout; scenery roots and landmark foundations sit behind combatants on that plane.
+Browser review covered steampunk/castle, a real attack, and the labelled frost exit portal.
+All three dungeon end nodes (1006/1106/1206) now trigger surface return. Previously only
+1006 was dispatched as an exit. Portals have persistent world labels. The original return
+node survives save/load, and loading an in-dungeon save restores dungeon route geometry.
+Legacy saves without a stored return node fall back to the capital. Verification: 174 tests,
+typecheck, production build and CSS checks pass. Screenshots: battle-ground-fixed.png,
+dungeon-exit.png. Fixture exit view: /?art-scene=dungeon&realm=frostpeak&room=exit.

@@ -15,9 +15,8 @@ import type { CompanionData } from '../game/Player';
 import { networkRoomManager } from '../engine/NetworkRoomManager';
 import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
 import { prefersReducedMotion } from './GraphicsSettings';
-import { drawBattleScenery } from '../engine/BattleScenery';
+import { drawBattleScenery, battleGroundLayout } from '../engine/BattleScenery';
 import { magicElementForJob, MAGIC_PALETTES } from '../engine/MagicArt';
-import { IsoSurface, isoBox, faceTones } from '../engine/IsometricBuildingPainter';
 
 export class BattleUI {
   private game: GameState;
@@ -43,7 +42,6 @@ export class BattleUI {
    * of decorative elements actually animate with `time`, so the layers are re-rendered a
    * few times per second and blitted every frame instead of being rebuilt at 60 fps.
    */
-  private daisSprites = new Map<string, HTMLCanvasElement>();
   private sceneryLayers = new Map<string, { canvas: HTMLCanvasElement; key: string; at: number }>();
   private effectClock = new EffectClock();
   private static readonly SCENERY_REFRESH_MS = 100;
@@ -782,13 +780,12 @@ export class BattleUI {
 
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const arenaCX = w * 0.50;
-    const arenaCY = h * 0.56;
+    const summonGround = battleGroundLayout(w, h);
     const isPAtk = b.isPlayerAttacking;
-    const summonX = isPAtk ? arenaCX - 120 : arenaCX + 120;
-    const summonY = arenaCY + 20;
-    const enemyX = isPAtk ? arenaCX + 130 : arenaCX - 130;
-    const enemyY = arenaCY - 25;
+    const summonX = summonGround.playerX - Math.min(70, w * .10);
+    const summonY = summonGround.playerY + 16;
+    const enemyX = summonGround.enemyX;
+    const enemyY = summonGround.enemyY;
 
     const companion = player.companion;
     // Materialise the companion's 64x64 model on the battlefield for the length of the summon.
@@ -860,13 +857,12 @@ export class BattleUI {
 
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const arenaCX = w * 0.50;
-    const arenaCY = h * 0.56;
+    const summonGround = battleGroundLayout(w, h);
     const isPAtk = this.game.activeBattle?.isPlayerAttacking ?? true;
-    const summonX = isPAtk ? arenaCX - 120 : arenaCX + 120;
-    const summonY = arenaCY + 20;
-    const enemyX = isPAtk ? arenaCX + 130 : arenaCX - 130;
-    const enemyY = arenaCY - 25;
+    const summonX = summonGround.playerX - Math.min(70, w * .10);
+    const summonY = summonGround.playerY + 16;
+    const enemyX = summonGround.enemyX;
+    const enemyY = summonGround.enemyY;
 
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, comp.color || '#ec4899');
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${comp.name}!`, 'crit');
@@ -985,15 +981,11 @@ export class BattleUI {
 
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const arenaCX = w * 0.50;
-    const arenaCY = h * 0.56;
-    const arenaW = Math.min(w * 0.88, 880);
-    const arenaH = arenaW * 0.48;
-
-    const pxCenter = arenaCX - arenaW * 0.22;
-    const pyCenter = arenaCY + arenaH * 0.12;
-    const exCenter = arenaCX + arenaW * 0.22;
-    const eyCenter = arenaCY - arenaH * 0.12;
+    const ground = battleGroundLayout(w, h);
+    const pxCenter = ground.playerX;
+    const pyCenter = ground.playerY;
+    const exCenter = ground.enemyX;
+    const eyCenter = ground.enemyY;
 
     const isPAtk = b.isPlayerAttacking;
 
@@ -1453,11 +1445,7 @@ export class BattleUI {
     // Dynamic Screen Shake on Heavy Impacts
     if (!prefersReducedMotion()) ctx.translate(Math.round(combatVFX.screenShakeX), Math.round(combatVFX.screenShakeY));
 
-    const arenaCX = w * 0.50;
-    const arenaCY = h * 0.50;
     const arenaW = Math.min(w * 0.88, 880);
-    const arenaH = arenaW * 0.48;
-    const arenaDrop = 36;
 
     // Camera micro-zoom punch around arena center during impact
     // Keep the scene pixel grid fixed during impacts; anticipation and hit-stop
@@ -1486,43 +1474,11 @@ export class BattleUI {
     // -----------------------------------------------------------------------
     // 2. GRAND EXPANSIVE 2.5D ISOMETRIC ARENA FLOOR THEMED BY BIOME
     // -----------------------------------------------------------------------
-    const pxCenter = arenaCX - arenaW * 0.22;
-    const pyCenter = arenaCY + arenaH * 0.12;
-    const exCenter = arenaCX + arenaW * 0.22;
-    const eyCenter = arenaCY - arenaH * 0.12;
-    const zoneW = arenaW * 0.36;
-    const zoneH = arenaH * 0.36;
-
-    // Themed Elevated 2.5D Dais Colors
-    const daisColors = this.getBiomeDaisTheme(biome);
-
-    // Player Dais (Cyan/Azure Mystic Rune Trim)
-    this.drawIsometricStoneDais(
-      ctx,
-      pxCenter,
-      pyCenter,
-      zoneW,
-      zoneH,
-      18,
-      '#06b6d4',
-      daisColors.top,
-      daisColors.side,
-      '#38bdf8'
-    );
-
-    // Enemy Dais (Crimson/Abyssal Flame Rune Trim)
-    this.drawIsometricStoneDais(
-      ctx,
-      exCenter,
-      eyCenter,
-      zoneW,
-      zoneH,
-      18,
-      '#f43f5e',
-      daisColors.top,
-      daisColors.side,
-      '#fb7185'
-    );
+    const ground = battleGroundLayout(w, h);
+    const pxCenter = ground.playerX;
+    const pyCenter = ground.playerY;
+    const exCenter = ground.enemyX;
+    const eyCenter = ground.enemyY;
 
     // -----------------------------------------------------------------------
     // 3. PREPARE DYNAMIC COMBATANT COORDINATES & SPRITES
@@ -1848,34 +1804,6 @@ export class BattleUI {
   // =========================================================================
   // THEMED DAIS & FLOOR COLOR PALETTES PER BIOME
   // =========================================================================
-  private getBiomeDaisTheme(biome: string): { top: string; side: string } {
-    switch (biome) {
-      case 'castle':
-        return { top: '#1e293b', side: '#0f172a' };
-      case 'forest':
-      case 'grass':
-        return { top: '#14291f', side: '#0b1913' };
-      case 'fairy_grove':
-        return { top: '#2e122b', side: '#190a18' };
-      case 'snow':
-        return { top: '#1c2d44', side: '#0e1a29' };
-      case 'volcano':
-        return { top: '#2c120f', side: '#170908' };
-      case 'desert':
-        return { top: '#2d2214', side: '#18120a' };
-      case 'cavern':
-      case 'crystal_cavern':
-        return { top: '#26173a', side: '#130a1e' };
-      case 'coral':
-        return { top: '#102936', side: '#07161e' };
-      case 'abyss':
-        return { top: '#1f0d2c', side: '#0f0517' };
-      case 'celestial':
-        return { top: '#2b2338', side: '#171120' };
-      default:
-        return { top: '#1e293b', side: '#0f172a' };
-    }
-  }
 
   private getBiomeFloorColors(biome: string): { center: string; mid: string; edge: string; rim: string } {
     switch (biome) {
@@ -2914,42 +2842,6 @@ export class BattleUI {
   // =========================================================================
   // HELPER: 2.5D ISOMETRIC CARVED STONE DUELING DAIS WITH RUNIC TRIM
   // =========================================================================
-  private drawIsometricStoneDais(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    width: number,
-    height: number,
-    dropHeight: number,
-    runeColor: string,
-    topColor: string,
-    sideColor: string,
-    rimColor: string
-  ) {
-    const ww = Math.round(width), hh = Math.round(height), drop = 8;
-    const key = [ww, hh, runeColor].join('_');
-    let canvas = this.daisSprites.get(key);
-    if (!canvas) {
-      const surface = new IsoSurface(ww + 8, hh + drop + 8);
-      const x = Math.round(ww / 2) + 4, y = Math.round(hh / 2) + 4;
-      const stone = faceTones('#a3ac99', .32, .75, .54, .4);
-      isoBox(surface, x, y + drop, ww / 2, hh / 2, drop, stone);
-      surface.diamond(x, y, ww / 2 - 1, hh / 2 - 1, runeColor === '#06b6d4' ? '#90b6aa' : '#bf9b8d');
-      surface.diamond(x, y, ww / 2 - 4, hh / 2 - 3, '#8c9c8d');
-      for (let yy = 8; yy < hh - 4; yy += 8) for (let xx = 8; xx < ww; xx += 12) {
-        if (Math.abs(xx - x) / (ww / 2 - 6) + Math.abs(yy - y) / (hh / 2 - 4) > .95) continue;
-        const tint = (xx + yy) % 5 ? '#95a391' : '#788c80';
-        surface.px(xx, yy, tint); surface.px(xx + 1, yy, tint); surface.px(xx + 2, yy, tint);
-      }
-      surface.outline();
-      canvas = document.createElement('canvas'); canvas.width = surface.w; canvas.height = surface.h;
-      const out = canvas.getContext('2d')!, pixels = out.createImageData(surface.w, surface.h);
-      pixels.data.set(surface.data); out.putImageData(pixels, 0, 0);
-      this.daisSprites.set(key, canvas);
-    }
-    ctx.drawImage(canvas, Math.round(cx - ww / 2 - 4), Math.round(cy - hh / 2 - 4));
-  }
-
   private drawTacticalGridSlots(
     ctx: CanvasRenderingContext2D,
     cx: number,

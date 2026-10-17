@@ -1760,8 +1760,9 @@ class DokaponApp {
         break;
 
       case 'blue':
-        if (tile.id === 1006) {
+        if (dungeonSystem.isExitNode(tile.id)) {
           dungeonSystem.exitDungeon(p, this.game);
+          this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
           hallOfFameUI.unlockTrophy('DUNGEON_CRAWLER');
           this.advanceTurn();
         } else {
@@ -3642,6 +3643,10 @@ class DokaponApp {
       this.renderer.initBoardCache(this.game.allNodes);
       dungeonSystem.enterDungeon(this.game.activePlayer, this.game, query.get('realm') || 'abyss');
       const player = this.game.activePlayer;
+      if (query.get('room') === 'exit') {
+        const exit = this.game.allNodes.find(n => n.id === player.nodeId + 6)!;
+        Object.assign(player, { nodeId: exit.id, gridX: exit.gx, gridY: exit.gy, gridZ: exit.gz });
+      }
       this.renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ);
       this.hud.update();
       return;
