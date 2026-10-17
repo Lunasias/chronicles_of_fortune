@@ -1,5 +1,7 @@
 import './styles/tailwind.css';
 import './styles/art-direction.css';
+import './styles/interface.css';
+import { installInterface } from './ui/Interface';
 import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
 import { GameState } from './game/GameState';
@@ -1174,8 +1176,8 @@ class DokaponApp {
 
     // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas, Space rolls dice
     window.addEventListener('keydown', (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const target = e.target as HTMLElement | null;
+      if (e.defaultPrevented || target?.closest('button, summary, input, textarea, select, [contenteditable="true"]')) return;
 
       if (e.key === ' ' || e.code === 'Space') {
         const rollBtn = document.getElementById('btnRollDice');
@@ -3102,6 +3104,14 @@ class DokaponApp {
       bagList.appendChild(row);
     });
 
+    for (let slot = p.inventory.length; slot < 12; slot++) {
+      const emptySlot = document.createElement('div');
+      emptySlot.className = 'inventory-empty-slot';
+      emptySlot.setAttribute('aria-hidden', 'true');
+      emptySlot.textContent = `ช่องว่าง ${String(slot + 1).padStart(2, '0')}`;
+      bagList.appendChild(emptySlot);
+    }
+
     modal.classList.remove('hidden');
   }
 
@@ -3714,6 +3724,7 @@ class DokaponApp {
 // Start Application on Load
 function startApp() {
   installPixelIcons();
+  installInterface();
   installGraphicsSettings();
   const app = new DokaponApp();
   app.startVisualReview();

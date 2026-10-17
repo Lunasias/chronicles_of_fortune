@@ -6,6 +6,10 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
 
 ![Fortuna living fantasy world](docs/art-review/living-world-capital.png)
 
+The game now has a unified brass-and-midnight fantasy interface: a new title menu,
+world HUD, combat deck, satchel grid and responsive shop panels.
+[Interface screenshots and validation](docs/art-review/interface-v4/README.md).
+
 ---
 
 ## 🌟 Key Features

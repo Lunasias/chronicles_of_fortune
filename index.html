@@ -833,7 +833,8 @@
         <canvas id="hudAvatarCanvas" width="48" height="48" class="image-pixelated w-10 h-10 sm:w-12 sm:h-12"></canvas>
         <span id="hudDarklingBadge" class="hidden absolute top-0 right-0 text-[8px] sm:text-[9px] bg-purple-700 text-white font-bold px-1">จอมมาร</span>
       </div>
-      <div>
+      <div class="hero-card-details">
+        <div class="ui-eyebrow">นักผจญภัย · ADVENTURER</div>
         <div class="flex items-center gap-1.5 sm:gap-2">
           <span id="hudPlayerName" class="font-bold text-amber-300 text-xs sm:text-sm tracking-wider truncate max-w-[85px] sm:max-w-none">Hero 1</span>
           <span id="hudPlayerClass" class="text-[9px] sm:text-[10px] text-slate-300 bg-slate-800 px-1 py-0.5">Warrior</span>
@@ -903,6 +904,9 @@
           <span id="hudWeatherIcon" class="text-xs sm:text-sm">🌤️</span>
           <span id="hudWeatherText" class="hidden sm:inline">ลบ</span>
         </div>
+        <details id="hudSystemMenu" class="system-menu">
+          <summary aria-label="เปิดเมนูระบบ" title="เมนูระบบ">☰ <span>เมนู</span></summary>
+          <div class="system-menu-content">
         <!-- Crisis Tracker Toggle Button -->
         <button id="btnToggleCrisisTracker" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-red-300 hover:text-white flex items-center gap-1 font-bold touch-manipulation" title="ดูภารกิจและวิกฤตเมือง (Crisis & Objectives)">
           <span>👑</span>
@@ -925,17 +929,19 @@
         <button id="btnSettings" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-slate-300 hover:text-white touch-manipulation" title="ตั้งค่า">
           ⚙️
         </button>
+          </div>
+        </details>
       </div>
 
       <!-- Live Isometric Radar Minimap -->
       <div id="minimapBox" class="pixel-box p-1 bg-slate-950/90 border-slate-700 relative">
         <div class="flex items-center justify-between px-1 pb-0.5 sm:hidden pixel-head">
-          <span class="text-[8px] text-amber-300 font-bold">เรดาร์</span>
+          <span class="text-[8px] text-amber-300 font-bold">แผนที่ · FORTUNA</span>
           <button id="btnToggleMinimap" class="text-[9px] text-slate-400 hover:text-white px-1 font-bold">▼</button>
         </div>
         <div id="minimapCanvasWrapper">
           <canvas id="minimapCanvas" width="130" height="130" class="block w-20 h-20 sm:w-[130px] sm:h-[130px] bg-slate-900 cursor-pointer hover:ring-2 hover:ring-amber-400 transition-all" title="คลิกเพื่อเปิดแผนที่ยุทธศาสตร์โลกแบบเต็มจอ (กดปุ่ม M)"></canvas>
-          <div class="hidden sm:block absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 text-slate-400 pointer-events-none">เรดาร์ 2.5D (M)</div>
+          <div class="hidden sm:block absolute bottom-1 right-1 text-[8px] bg-black/70 px-1 text-slate-400 pointer-events-none">FORTUNA · [M]</div>
         </div>
       </div>
     </div>
@@ -988,6 +994,7 @@
   <!-- BOTTOM ACTION BAR (z-20) -->
   <div id="bottomBar" class="hidden absolute bottom-2 sm:bottom-3 left-0 right-0 z-20 flex justify-center items-center gap-1.5 sm:gap-2 px-2 sm:px-3 pointer-events-none">
     <div class="pixel-box pointer-events-auto px-2.5 sm:px-4 py-1.5 sm:py-2 flex flex-wrap justify-center items-center gap-1.5 sm:gap-2.5 bg-slate-900/95 border-slate-700 max-w-[98vw]">
+      <span class="dock-label" aria-hidden="true">การเดินทาง<br><small>YOUR JOURNEY</small></span>
       <!-- Roll Dice / Spinner Button -->
       <button id="btnRollDice" class="pixel-btn pixel-btn-gold px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-950 flex items-center gap-1.5 sm:gap-2 touch-manipulation min-h-[40px] sm:min-h-[46px] shadow-lg shadow-amber-500/20 ring-1 ring-amber-300/40">
         <span class="text-base sm:text-xl">🎲</span>
@@ -1210,6 +1217,7 @@
     <!-- DOKAPON COMMAND SELECTION PANEL (Bottom) -->
     <div id="battleCommandDock" class="min-h-[140px] md:h-44 max-h-[38vh] md:max-h-48 bg-slate-900 p-2 sm:p-3 flex flex-col gap-2 border-t-2 border-slate-800 overflow-y-auto">
       
+      <div class="battle-dock-title"><span>คำสั่งการต่อสู้</span><span>TACTICAL COMMAND</span></div>
       <!-- Brown Dust 2 3x3 Tactical Formation Row -->
       <div id="battleFormationRow" class="w-full flex flex-wrap items-center justify-between pb-1 mb-1 border-b border-slate-800 text-[11px] gap-1">
         <div class="flex items-center gap-1.5 text-amber-300 font-bold">
@@ -1301,7 +1309,8 @@
 
       <!-- Narration & RPS Hint Box -->
       <div id="battleNarrationPanel" class="flex-1 pixel-box p-2 sm:p-3 bg-slate-950 flex flex-col justify-between text-[10px] sm:text-xs text-slate-300 border-slate-700 min-h-[50px]">
-        <div id="battleNarration" class="overflow-y-auto max-h-12 md:max-h-20 pr-1 leading-relaxed text-[10px] sm:text-[11px]">
+        <div class="ui-eyebrow">บันทึกการต่อสู้ · COMBAT LOG</div>
+        <div id="battleNarration" role="log" aria-live="polite" class="overflow-y-auto max-h-12 md:max-h-20 pr-1 leading-relaxed text-[10px] sm:text-[11px]">
           ดวลศึกแห่งโชคชะตา! ชาร์จฟันชนะป้องกัน, สวนกลับทำลายชาร์จฟัน!
         </div>
         <div class="text-[8px] sm:text-[9px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between gap-1">
@@ -2087,7 +2096,7 @@
   <div id="titleScreen" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto">
     <div class="text-center mb-4 sm:mb-6">
       <div class="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-[10px] tracking-widest font-bold mb-2 border border-amber-500/40">
-        เกมกระดาน RPG พิกเซล 2.5D
+        A PIXEL FANTASY ADVENTURE
       </div>
       <h1 class="text-2xl md:text-4xl text-amber-300 font-extrabold tracking-wider">
         Chronicles of Fortune
@@ -2096,7 +2105,7 @@
         ตำนานแห่งโชคชะตา
       </h2>
       <p class="text-[10px] sm:text-[11px] text-slate-400 mt-2 max-w-sm mx-auto">
-        การผจญภัยเชิงยุทธวิธีสุดโหดข้ามทวีปมีชีวิต 2.5D ที่ทำลายมิตรภาพ!
+        ออกเดินทางข้ามอาณาจักร ต่อสู้เคียงข้างคู่หู<br>และเขียนตำนานแห่งโชคชะตาในแบบของคุณ
       </p>
     </div>
 
@@ -2104,7 +2113,7 @@
     <div id="titleButtonsBlock" class="flex flex-col gap-2.5 w-64 max-w-full">
       <button id="btnStartAdventure" class="pixel-btn pixel-btn-gold py-3 text-xs font-bold text-slate-950 tracking-wider flex items-center justify-center gap-2">
         <span>⚔️</span>
-        <span>เกมใหม่</span>
+        <span>เริ่มการผจญภัย <small>NEW ADVENTURE</small></span>
       </button>
       <button id="btnTitleLoadGame" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white flex flex-col items-center justify-center gap-0.5">
         <span class="flex items-center gap-1 font-bold">
@@ -2115,11 +2124,11 @@
       </button>
       <button id="btnTitleMultiplayerRoom" class="pixel-btn py-2 text-xs text-cyan-300 hover:text-white flex items-center justify-center gap-1.5 font-bold">
         <span>🌐</span>
-        <span>ห้องเล่นหลายคน (Room Code P2P)</span>
+        <span>ผจญภัยกับเพื่อน</span>
       </button>
       <button id="btnTitleHallOfFame" class="pixel-btn py-2 text-xs text-amber-300 hover:text-white flex items-center justify-center gap-1.5 font-bold">
         <span>🏛️</span>
-        <span>หอเกียรติยศ (Hall of Fame)</span>
+        <span>หอเกียรติยศ</span>
       </button>
       <button id="btnHowToPlay" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
         กฎกติกา

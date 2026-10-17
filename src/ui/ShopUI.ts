@@ -183,6 +183,10 @@ export class ShopUI {
           </button>
         `;
 
+        const buyButton = row.querySelector<HTMLButtonElement>('button')!;
+        buyButton.disabled = p.gold < item.cost || p.inventory.length >= 12;
+        buyButton.title = p.inventory.length >= 12 ? 'กระเป๋าเต็ม' : p.gold < item.cost ? 'ทองไม่เพียงพอ' : `ซื้อ ${item.name}`;
+
         row.querySelector('button')!.onclick = () => {
           if (p.gold < item.cost) {
             this.game.addLog(`${p.displayName} มีเงินทองไม่พอซื้อ ${item.name}!`);

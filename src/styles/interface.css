@@ -1,0 +1,288 @@
+/* Fortuna interface: engraved brass, midnight ink and parchment. Loaded last so
+   static screens and runtime-generated panels share the same component system. */
+:root {
+  --ui-ink: #101e29;
+  --ui-panel: #172b36;
+  --ui-raised: #223b45;
+  --ui-line: #496064;
+  --ui-gold: #c9ab72;
+  --ui-paper: #f4e9cf;
+  --ui-muted: #a9b9b7;
+  --ui-shadow: 0 4px 0 #08131c, 0 12px 28px #030c1466;
+}
+body { font-family: 'Kanit', sans-serif; color: var(--ui-paper); }
+button, input, select, textarea { font-family: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+body :is(.pixel-box, .pixel-box-gold) {
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-line);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 3px var(--ui-ink), inset 0 0 0 4px #79918a26, var(--ui-shadow);
+}
+body .pixel-box-gold { border-color: var(--ui-gold); }
+body .pixel-head { background: transparent; box-shadow: none; border-bottom: 1px solid #c9ab724d; padding-bottom: 10px; }
+body :is(.pixel-btn, .command-card) {
+  position: relative;
+  background: #263f49;
+  border: 1px solid #637a7a;
+  border-radius: 0;
+  box-shadow: inset 0 2px #ffffff0b, inset 0 -3px #08172266, 0 2px #07151e;
+  color: var(--ui-paper);
+  min-height: 40px;
+  line-height: 1.4;
+  transition: background-color 120ms, border-color 120ms, transform 120ms;
+}
+body :is(.pixel-btn, .command-card):hover:not(:disabled) { background: #34545b; border-color: #e1c58e; transform: translateY(-1px); }
+body :is(.pixel-btn, .command-card):active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 3px #0005; }
+body :is(.pixel-btn, .command-card):disabled { opacity: .45; cursor: not-allowed; filter: saturate(.4); }
+body :is(.pixel-btn-gold, #btnRollDice, #btnCmdStrike, #btnCmdBurst) {
+  background: #d5b97c;
+  border-color: #f2ddb0;
+  color: #202a2c;
+  text-shadow: none;
+  box-shadow: inset 0 2px #fff3c666, inset 0 -3px #9a7a45, 0 2px #07151e;
+}
+body :is(.pixel-btn-gold, #btnRollDice, #btnCmdStrike, #btnCmdBurst):hover:not(:disabled) { background: #e6cd96; color: #17232c; }
+body :is(.pixel-btn-purple, .pixel-btn-pink) { background: #403c58; border-color: #8f819b; }
+body .pixel-btn-red { background: #54383b; border-color: #a57874; }
+body .pixel-btn-green { background: #294a43; border-color: #719582; }
+body :is(.pixel-btn-blue, .pixel-btn-cyan) { background: #284651; border-color: #6c9ba3; }
+body :is(.pixel-close, button[title='ย่อ/ขยาย']) { min-width: 32px; min-height: 32px; color: #d6d2bf; }
+body :is(button, summary, input, select, a):focus-visible { outline: 2px solid #f8df9f; outline-offset: 3px; }
+body :is(input[type='text'], input[type='number'], select, textarea) { border: 1px solid #617878 !important; padding: 8px 10px; min-height: 40px; }
+body input[type='checkbox'] { accent-color: var(--ui-gold); width: 16px; height: 16px; }
+body .pixel-bar { border: 1px solid #08141d; box-shadow: 0 1px #e9e2bf22; background: #081722; }
+body .pixel-bar-fill { box-shadow: inset 0 2px #ffffff28, inset 0 -2px #0003; }
+body :is(#hudHPBar, #battlePlayerHP) { background: #c76c6b; }
+body :is(#hudMPBar, #battlePlayerMP) { background: #69a8bc; }
+body #battleEnemyHP { background: #8fb591; }
+body #battlePlayerBurst { background: #d8b871; }
+body :is(.text-slate-400, .text-slate-500) { color: var(--ui-muted); }
+body :is(.text-amber-300, .text-amber-400) { color: #e4c990; }
+.ui-eyebrow { color: #c6b58f; font-size: 9px; font-weight: 500; letter-spacing: 1.3px; line-height: 1.6; margin-bottom: 5px; }
+* { scrollbar-width: thin; scrollbar-color: #8c825f #101e29; }
+
+/* Title becomes a quiet editorial panel over the kingdom artwork. */
+body #titleScreen { padding: 7vh 8vw; justify-content: center; align-items: flex-end; background-position: 38% center; }
+#titleScreen::before { background: linear-gradient(90deg, #08172205 20%, #08172266 58%, #081722d9 100%); }
+#titleScreen::after { content: 'FORTUNA  /  THE CHRONICLES BEGIN'; bottom: 26px; left: 32px; color: #fff1ce; font-size: 10px; }
+body #titleScreen > .text-center { width: 420px; max-width: 100%; background: #112631f5; border: 1px solid #bba16e; border-bottom: 0; padding: 32px 30px 24px; margin: 0; text-align: left; }
+#titleScreen > .text-center > div { border: 0; background: none; padding: 0; letter-spacing: 2px; font-size: 9px; color: #c7b589; margin-bottom: 18px; }
+body #titleScreen h1 { font-family: 'Silkscreen', sans-serif; font-size: 32px; line-height: 1.3; letter-spacing: -1px; color: #f5e8bf; text-shadow: 3px 3px #080f1d; }
+body #titleScreen h2 { font-size: 21px; letter-spacing: 1px; color: #d9bd7e; margin-top: 10px; }
+body #titleScreen p { color: #b8c6c1; line-height: 1.9; margin-top: 14px; font-size: 13px; }
+body #titleButtonsBlock { width: 420px; max-width: 100%; background: #112631f5; padding: 0 30px 30px; border: 1px solid #bba16e; border-top: 0; gap: 9px; box-shadow: 6px 6px #07131b55; }
+#titleButtonsBlock button { min-height: 46px; font-size: 13px; }
+#titleButtonsBlock #btnStartAdventure { min-height: 66px; margin-bottom: 4px; font-size: 16px; justify-content: flex-start; padding-left: 20px; gap: 16px; }
+#btnStartAdventure small { display: block; font-family: 'Silkscreen', sans-serif; font-size: 8px; letter-spacing: 1px; opacity: .7; margin-top: 4px; }
+#titleButtonsBlock #btnHowToPlay { background: transparent; border-color: #496064; box-shadow: none; color: #bdc9c4; }
+body #playerSetupBlock { max-width: 900px; padding: 26px; gap: 18px; }
+#playerSetupRoster > div { padding: 16px; background: #11232c; border: 1px solid #4d6464; }
+#playerSetupRoster input { width: 100%; }
+#playerSetupRoster select { max-width: 100%; }
+
+/* World HUD: hero on the left, economy/navigation on the right. */
+body #topHUD { top: max(18px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); right: max(18px, env(safe-area-inset-right)); gap: 12px; }
+body #topHUD > .pixel-box:first-child { min-width: 310px; padding: 14px 16px; border-color: #bba16e; gap: 14px; }
+body #hudPlayerAvatarWrapper { width: 60px; height: 64px; border: 1px solid #cbb17a; background: #101e2a; box-shadow: inset 0 0 0 3px #243d45; }
+body #hudAvatarCanvas { width: 56px; height: 56px; }
+#hudPlayerName { font-size: 16px; letter-spacing: .3px; }
+#hudPlayerClass { background: #263e47; color: #c7d0c6; }
+#hudPlayerLevel { color: #a7d3ae; }
+.hero-card-details .pixel-bar { height: 14px; }
+body #hudHPText, body #hudMPText { font-size: 10px; text-shadow: 1px 1px #111; }
+body #topHUD > div:nth-child(3) { gap: 10px; }
+body #topHUD > div:nth-child(3) > .pixel-box:first-child { max-width: 700px; padding: 12px 16px; gap: 16px; min-height: 58px; }
+#hudPlayerGold, #hudPlayerNetWorth { font-size: 14px; font-variant-numeric: tabular-nums; }
+body #hudRosterStrip { padding: 8px 10px; border-color: #596c66; }
+#hudRosterButtonsContainer button { min-height: 32px; padding: 5px 10px; }
+.system-menu { position: relative; border-left: 1px solid #5b6b60; padding-left: 12px; }
+.system-menu summary { list-style: none; cursor: pointer; color: #efdfb7; min-height: 36px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.system-menu summary::-webkit-details-marker { display: none; }
+.system-menu[open] summary { color: #fff2ba; }
+.system-menu-content { position: absolute; right: -16px; top: calc(100% + 16px); width: 230px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #132a35; border: 1px solid #bba16e; box-shadow: var(--ui-shadow); z-index: 40; }
+.system-menu-content button { min-height: 44px; }
+.system-menu-content button::after { content: attr(data-ui-label); font-size: 11px; }
+.system-menu-content #btnSaveGame > span:last-child { display: none; }
+body #minimapBox { padding: 7px; background: #11232deb; border-color: #9a895f; }
+#minimapBox > .pixel-head { display: flex; padding: 0 2px 6px; border: 0; }
+#minimapBox .pixel-head > span { font-size: 9px; letter-spacing: 1px; }
+#minimapBox #btnToggleMinimap { display: none; }
+body #minimapCanvasWrapper { width: 142px; height: 142px; border: 1px solid #495c60; }
+body #minimapCanvas { width: 100%; height: 100%; }
+body #bottomBar { bottom: max(18px, env(safe-area-inset-bottom)); }
+body #bottomBar > div { padding: 10px; gap: 7px; border-color: #bba16e; background: #122630f5; }
+.dock-label { padding: 0 16px 0 8px; color: #e5d5b0; font-size: 13px; border-right: 1px solid #5d6659; margin-right: 3px; }
+.dock-label small { font-size: 8px; color: #a6b5af; letter-spacing: 1px; }
+body #bottomBar button { min-height: 50px; padding: 8px 14px; font-size: 12px; }
+body #btnRollDice { min-width: 170px; font-size: 14px; }
+body #btnInspectHero { background: #2b4149; color: #eee4cc; border-color: #637a7a; }
+body #btnFieldMagic { background: #403c58; }
+body #btnInventory { background: #30483e; }
+body #btnWorldMap { background: #284651; }
+body :is(#gameEventFeedWindow, #questTrackerHUD) { background: #122630f5; border-color: #8b805f; }
+body :is(#gameEventFeedList, #questTrackerList) { padding: 12px; font-size: 12px; line-height: 1.65; }
+body #floatingEventToast { top: auto; bottom: 112px; padding: 10px 16px; border: 1px solid #c9ab72; background: #162d38; }
+
+/* Every modal, including panels mounted later by the game, uses this shell. */
+body :is([id$='Modal'], #characterInspectModal):not(.hidden) { background-color: #06141cba; }
+body :is([id$='Modal'], #characterInspectModal) > :is(.pixel-box, .pixel-box-gold) {
+  border-color: #bba16e;
+  padding: 24px;
+  background: #172c36;
+  max-height: min(90dvh, 920px);
+}
+body :is([id$='Modal']) :is(h2, h3) { color: #ecdbb1; line-height: 1.5; }
+body :is([id$='Modal']) h2 { font-size: 21px; letter-spacing: .3px; }
+body :is([id$='Modal']) h3 { font-size: 15px; }
+body :is([id$='Modal']) .text-xs { font-size: 13px; line-height: 1.7; }
+body :is([id$='Modal']) .text-\[10px\] { font-size: 12px; line-height: 1.65; }
+body :is([id$='Modal']) .text-\[9px\] { font-size: 11px; line-height: 1.6; }
+body :is([id$='Modal']) .pixel-box .pixel-box { box-shadow: none; background: #11232d; border-color: #3d555c; }
+body #shopModal > div { max-width: 880px; }
+body #inventoryModal > div { max-width: 960px; }
+body #townModal > div { max-width: 650px; }
+body :is(#shopDioramaCanvas, #townDioramaCanvas) { border: 1px solid #687463; height: auto; max-height: 200px; margin-bottom: 18px; }
+#shopItemList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 10px; padding: 3px 4px 12px; }
+#shopItemList > :is(div, button) { margin: 0; min-width: 0; }
+#shopItemList > .pixel-box { padding: 16px; background: #112630; border-color: #506665; gap: 12px; align-items: flex-start; }
+#shopItemList > .pixel-box > div { min-width: 0; }
+#shopItemList > .pixel-box > button { flex-shrink: 0; }
+#shopItemList > :only-child { grid-column: 1 / -1; }
+#satchelItemsList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 8px; }
+#satchelItemsList > div { padding: 12px; border: 1px solid #496064; margin: 0; min-height: 100px; min-width: 0; }
+#satchelItemsList > div:not(.inventory-empty-slot) { flex-direction: column; align-items: stretch; gap: 10px; }
+#satchelItemsList > div > button { align-self: flex-end; }
+body #satchelItemsList > .inventory-empty-slot { min-height: 72px; display: flex; align-items: center; justify-content: center; color: #627c80; background: #10232c; border: 1px dashed #3d555c; box-shadow: none; font-size: 11px; }
+#equippedSlotsList > div { min-height: 46px; padding: 8px; background: #0d202b; border: 1px solid #3d555c; margin-bottom: 6px; }
+#statBreakdownList { line-height: 1.8; }
+body #worldMapModal > div { max-width: 1200px; }
+body #settingsModal > div { max-width: 720px; }
+#settingsModal button { min-height: 44px; }
+body #graphicsPreferences { background: #10242d; padding: 18px; gap: 16px; border-color: #506665; }
+body #weeklyRankingsTable > div { padding: 14px; margin-bottom: 8px; }
+body :is(#victoryModal, #levelUpModal) > div { border-color: #e0c282; padding: 32px; }
+
+/* Combat: readable combatant cards and a separate, predictable command deck. */
+body #battleScreen > div:first-child { border-bottom: 0; }
+#battleScreen > div:first-child > div:first-of-type > .pixel-box { padding: 16px; max-width: 330px; background: #112731f5; border-top: 3px solid #81b3be; }
+#battleScreen > div:first-child > div:first-of-type > .pixel-box:last-child { border-top-color: #c78b7e; }
+body :is(#battlePlayerName, #battleEnemyName) { font-size: 15px; color: #f0e3c5; }
+body :is(#battlePlayerHPText, #battlePlayerMPText, #battleEnemyHPText) { font-size: 10px; text-shadow: 1px 1px #000; }
+body #battleTurnTimeline { padding: 7px 10px; border-color: #9d916e; gap: 7px; }
+body #battleCommandDock { position: relative; flex: 0 0 auto; height: auto; min-height: 190px; max-height: 38dvh; padding: 14px 24px 18px; background: #102631; border-top: 1px solid #c3a66d; gap: 8px; }
+.battle-dock-title { display: flex; justify-content: space-between; color: #e7d4aa; font-size: 13px; letter-spacing: .5px; }
+.battle-dock-title > span:last-child { font-family: 'Silkscreen', sans-serif; font-size: 9px; color: #a4b6b3; }
+body #battleFormationRow { border: 0; padding: 0; margin: 0; }
+#battleFormationButtons button { min-height: 30px; padding: 4px 12px; }
+body #battleCommandRow { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(240px, 1fr); gap: 16px; }
+body :is(#attackerCommandGroup, #defenderCommandGroup) { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; min-width: 0; }
+body #battleScreen .command-card { min-height: 95px; border: 1px solid #637b7b; padding: 10px; gap: 5px; }
+body #battleScreen .command-card > span:nth-child(2) { font-size: 14px; }
+body #battleScreen .command-card > span:last-child { font-size: 11px; }
+body #battleScreen .command-card > .pixel-icon { width: 24px; height: 24px; }
+body #battleNarrationPanel { grid-column: 2; grid-row: 1; padding: 12px 16px; border-color: #3d5960; background: #0d202b; box-shadow: none; }
+body #battleNarration { font-size: 13px; line-height: 1.65; max-height: 58px; }
+body #btnCmdMagic, body #btnCmdSkill { background: #403c58; }
+body #btnCmdDefend { background: #2d514c; }
+body #btnCmdAttack, body #btnCmdCounter { background: #563c40; }
+body #battleScreen .hidden { display: none; }
+
+@media (min-width: 1100px) {
+  body #topHUD { grid-template-columns: 320px 1fr auto; }
+}
+@media (max-width: 1100px) {
+  .dock-label { display: none; }
+  body #bottomBar button { padding: 8px 11px; }
+  body #topHUD > div:nth-child(3) > .pixel-box:first-child { gap: 10px; padding: 10px; }
+  body #topHUD > .pixel-box:first-child { min-width: 280px; }
+}
+@media (max-width: 768px) {
+  body #titleScreen { padding: 20px 16px 42px; align-items: center; background-position: 30% center; }
+  body #titleScreen > .text-center { padding: 24px 24px 18px; }
+  body #titleButtonsBlock { padding: 0 24px 24px; }
+  body #titleScreen h1 { font-size: 27px; }
+  body #titleScreen::after { font-size: 7px; left: 16px; bottom: 14px; }
+  body #topHUD { display: flex; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; gap: 8px; }
+  body #topHUD.hidden { display: none; }
+  body #topHUD > .pixel-box:first-child { min-width: 0; padding: 10px; gap: 8px; }
+  body #hudPlayerAvatarWrapper { width: 42px !important; height: 48px !important; }
+  body #hudAvatarCanvas { width: 42px !important; height: 42px !important; }
+  .hero-card-details .ui-eyebrow { display: none; }
+  body #hudPlayerName { font-size: 13px; }
+  body #hudRosterStrip { order: 3; margin-left: auto; padding: 5px; max-width: 90vw; }
+  body #topHUD > div:nth-child(3) { flex: 1; min-width: 170px; }
+  body #topHUD > div:nth-child(3) > .pixel-box:first-child { padding: 8px; gap: 8px; justify-content: flex-end; max-width: 100%; }
+  body #hudPlayerGold, body #hudPlayerNetWorth { font-size: 11px; }
+  .system-menu { padding-left: 8px; }
+  .system-menu summary { min-height: 44px; }
+  .system-menu summary > span { display: none; }
+  .system-menu-content { right: -8px; top: calc(100% + 8px); }
+  body #minimapBox { padding: 6px; }
+  #minimapBox #btnToggleMinimap { display: block; min-width: 36px; min-height: 32px; }
+  body #minimapCanvasWrapper { width: 142px; height: 142px; }
+  body #bottomBar { bottom: max(8px, env(safe-area-inset-bottom)); padding: 0 8px; }
+  body #bottomBar > div { width: max-content; max-width: 100%; padding: 7px; border-radius: 0; gap: 6px; }
+  body #bottomBar button { min-height: 46px; padding: 7px 11px; font-size: 12px; }
+  body #btnRollDice { min-width: 130px; position: sticky; left: 0; z-index: 1; }
+  body :is([id$='Modal']) > :is(.pixel-box, .pixel-box-gold) { padding: 16px; max-height: 90dvh; }
+  body :is([id$='Modal']) h2 { font-size: 18px; }
+  #shopItemList { grid-template-columns: 1fr; }
+  #satchelItemsList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body #battleCommandDock { padding: 10px 12px; min-height: 190px; max-height: 43dvh; }
+  body #battleCommandRow { grid-template-columns: 1fr; gap: 8px; }
+  body :is(#attackerCommandGroup, #defenderCommandGroup) { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+  body #battleScreen .command-card { min-height: 78px !important; padding: 6px !important; }
+  body #battleScreen .command-card > span:nth-child(2) { font-size: 12px; }
+  body #battleScreen .command-card > span:last-child { font-size: 10px; }
+  body #battleNarrationPanel { grid-column: 1; grid-row: 2; min-height: 55px; padding: 8px 10px; }
+  #battleNarrationPanel > .ui-eyebrow, #battleNarrationPanel > div:last-child { display: none; }
+  body #battleNarration { max-height: 40px; font-size: 12px; }
+  #battleFormationButtons button { min-height: 44px; }
+  #battleScreen > div:first-child > div:first-of-type > .pixel-box { padding: 9px; }
+  body :is(#battlePlayerName, #battleEnemyName) { font-size: 12px; }
+}
+@media (max-width: 480px) {
+  body #topHUD > .pixel-box:first-child { max-width: calc(100% - 50px); }
+  body #topHUD > div:nth-child(3) { flex-basis: 100%; flex-direction: row; align-items: start; justify-content: space-between; }
+  body #topHUD > div:nth-child(3) > .pixel-box:first-child { flex: 1; justify-content: flex-start; }
+  body #hudRosterStrip { max-width: 100%; margin-left: 0; }
+  body #minimapBox { position: absolute; right: 0; top: 0; }
+  #minimapBox .pixel-head > span { display: none; }
+  body #battleFormationDesc { display: none; }
+  .battle-dock-title > span:last-child { font-size: 7px; }
+  body #battleScreen .command-card > span:last-child { display: none; }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  body #titleScreen { justify-content: flex-start; padding: 18px 5vw; }
+  body #titleScreen > .text-center { padding: 18px 24px 10px; }
+  body #titleScreen h1 { font-size: 24px; }
+  body #titleScreen h2 { font-size: 16px; }
+  body #titleScreen p { display: none; }
+  body #titleButtonsBlock { gap: 6px; padding: 0 24px 18px; }
+  #titleButtonsBlock button { min-height: 34px; }
+  #titleButtonsBlock #btnStartAdventure { min-height: 48px; }
+  body #battleCommandDock { min-height: 125px; max-height: 42dvh; padding: 8px 14px; }
+  .battle-dock-title { display: none; }
+  body #battleCommandRow { grid-template-columns: minmax(0, 1.8fr) minmax(180px, 1fr); }
+  body #battleNarrationPanel { grid-column: 2; grid-row: 1; }
+  body #battleScreen .command-card { min-height: 68px !important; }
+  body #battleScreen .command-card { padding: 6px !important; gap: 3px; }
+  body #battleScreen .command-card > span:last-child { display: none; }
+  body #battleScreen .command-card > .pixel-icon { width: 20px; height: 20px; }
+  #battleScreen > div:first-child > div:first-of-type > .pixel-box { padding: 7px 10px; max-width: 27vw; }
+  #battlePlayerRoleBadge, #battleEnemyRoleBadge { display: none; }
+  body :is(#battlePlayerName, #battleEnemyName) { font-size: 11px; }
+  #battleScreen .pixel-bar { height: 9px; }
+  #battlePlayerBurstText { display: none; }
+  #battleTurnTimeline { font-size: 8px; }
+  body #battleNarration { font-size: 11px; max-height: 34px; }
+  #battleNarrationPanel > .ui-eyebrow { display: none; }
+  #battleFormationButtons button { min-height: 30px; }
+  body #topHUD { top: 8px; }
+  body #topHUD > .pixel-box:first-child { padding: 8px; }
+  .hero-card-details .ui-eyebrow { display: none; }
+  body #minimapCanvasWrapper { width: 100px; height: 100px; }
+  body #bottomBar { bottom: 8px; }
+  body #bottomBar button { min-height: 40px; }
+}
