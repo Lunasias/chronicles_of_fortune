@@ -11,19 +11,22 @@ function decodePNG(filePath) {
   const idatBuffers = [];
   let width = 0;
   let height = 0;
+  let colorType = 6;
   while (pos < buf.length) {
     const len = buf.readUInt32BE(pos);
     const type = buf.slice(pos + 4, pos + 8).toString('ascii');
     if (type === 'IHDR') {
       width = buf.readUInt32BE(pos + 8);
       height = buf.readUInt32BE(pos + 12);
+      colorType = buf[pos + 17];
     } else if (type === 'IDAT') {
       idatBuffers.push(buf.slice(pos + 8, pos + 8 + len));
     } else if (type === 'IEND') break;
     pos += 12 + len;
   }
   const decompressed = zlib.inflateSync(Buffer.concat(idatBuffers));
-  const bpp = 4;
+  if (colorType !== 2 && colorType !== 6) throw new Error(`Unsupported PNG color type ${colorType}`);
+  const bpp = colorType === 2 ? 3 : 4;
   const scanline = width * bpp;
   const pixels = Buffer.alloc(width * height * 4);
 
@@ -51,6 +54,13 @@ function decodePNG(filePath) {
       else if (filter === 4) val = (byte + paeth(left, up, upLeft)) & 0xff;
       pixels[y * scanline + x] = val;
     }
+  }
+  if (bpp === 3) {
+    const rgba = Buffer.alloc(width * height * 4);
+    for (let i = 0; i < width * height; i++) {
+      rgba[i * 4] = pixels[i * 3]; rgba[i * 4 + 1] = pixels[i * 3 + 1]; rgba[i * 4 + 2] = pixels[i * 3 + 2]; rgba[i * 4 + 3] = 255;
+    }
+    return { width, height, pixels: rgba };
   }
   return { width, height, pixels };
 }

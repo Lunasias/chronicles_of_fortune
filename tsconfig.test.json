@@ -9,6 +9,7 @@
     "allowImportingTsExtensions": false
   },
   "include": [
+    "src/engine/MapProjection.ts",
     "src/engine/BattleScenery.ts",
     "src/engine/IsometricRenderer.ts",
     "src/game/DungeonSystem.ts",

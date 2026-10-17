@@ -90,3 +90,10 @@ See POLISH.md for the implementation and visual evidence for all ten review find
 Final npm run verify passes 177 tests, production build, typecheck and stylesheet checks.
 New screenshots: polish-battle.png, polish-dungeon.png, polish-mobile.png, polish-shop.png.
 Browser tests also exercised actual mobile casting and the full-screen PvP handover shield.
+
+## Living fantasy world — 2026-10-17
+See LIVING_WORLD.md for expanded geography, density, source artwork and runtime observations.
+The full verification run passes 181 tests, production build, typecheck and CSS checks.
+New regressions cover all 312 ground anchors, large-world minimap fitting, clear walking
+corridors, material projection, opaque RGB decoding, and all 24 new detail sprite cells.
+Actual play rolled three, selected a visible destination and entered its NPC event.

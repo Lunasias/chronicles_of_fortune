@@ -4,7 +4,7 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring origin
 
 Single-player board campaign against up to 3 AI rivals (local hot-seat play is also supported).
 
-![Fortuna pixel-art world](docs/art-review/reference-day.png)
+![Fortuna living fantasy world](docs/art-review/living-world-capital.png)
 
 ---
 
@@ -23,6 +23,8 @@ Single-player board campaign against up to 3 AI rivals (local hot-seat play is a
 - **Royal Weekly Report**: Weekly net worth ceremonies hosted by the King.
 
 ### 2. 🎨 Fortuna pixel-art overhaul
+
+The expanded living world spans about 15,000 × 6,600 native world pixels, with dense forests, regional ground materials, ruins, waterfalls and settlement dressing. [World art details and validation](docs/art-review/LIVING_WORLD.md).
 - Original versioned art in `public/assets/art-v2/`: six hero bases, eight directions,
   motion and action sheets; eighteen monster families, combat poses; twenty-seven companions
   and three town hosts; sixteen building cells and twenty tree silhouettes.

@@ -5,6 +5,7 @@ import {
   type TerrainPaintOptions
 } from './IsometricTerrainPainter';
 import { PROP_SIZE, paintProp, propSizeBucket, type PropPaintOptions, type PropType } from './IsometricPropPainter';
+import { GroundMaterials } from './GroundMaterials';
 
 /**
  * Serves the 104x82 pixel-art sprite for every board floor tile.
@@ -16,6 +17,16 @@ import { PROP_SIZE, paintProp, propSizeBucket, type PropPaintOptions, type PropT
  */
 export class IsometricTerrainRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
+  private materials = new GroundMaterials(() => this.cache.clear());
+  private roadPatterns = new WeakMap<CanvasRenderingContext2D,Map<boolean,CanvasPattern>>();
+
+  public roadPattern(ctx:CanvasRenderingContext2D,night:boolean):CanvasPattern|null {
+    const patterns=this.roadPatterns.get(ctx)||new Map<boolean,CanvasPattern>();
+    if(patterns.has(night))return patterns.get(night)!;
+    const pattern=this.materials.pathPattern(ctx,night);
+    if(pattern){patterns.set(night,pattern);this.roadPatterns.set(ctx,patterns);}
+    return pattern;
+  }
 
   public getTileSprite(biome: string, options: TerrainPaintOptions = {}): HTMLCanvasElement {
     const variant = options.variant ?? 0;
@@ -24,6 +35,7 @@ export class IsometricTerrainRenderer {
     if (cached) return cached;
 
     const surface = paintTerrainTile(biome, options);
+    this.materials.apply(surface.data, biome, variant, !!options.night);
     const canvas = document.createElement('canvas');
     canvas.width = TERRAIN_SPRITE_W;
     canvas.height = TERRAIN_SPRITE_H;

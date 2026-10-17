@@ -9,6 +9,7 @@ import { IsometricRenderer } from './engine/IsometricRenderer';
 import { DOKAPON_NODES, type BoardNode, type BiomeType } from './game/BoardMap';
 import { Player } from './game/Player';
 import { JOB_VISUALS } from './engine/JobVisuals';
+import { worldDetails, WORLD_DETAIL_NAMES } from './engine/WorldDetails';
 import { drawSettlementScenery } from './engine/SettlementScenery';
 import { CombatVFXEngine } from './engine/CombatVFXEngine';
 import { MAGIC_PALETTES, type MagicElement } from './engine/MagicArt';
@@ -61,6 +62,7 @@ let paused = false;
 let frame = 0;
 let previousPaint = -Infinity;
 let referenceBiome = 'grass';
+let continentFocus = '';
 const biomeSelect = document.querySelector<HTMLSelectElement>('#reviewBiome')!;
 for (const biome of biomes) { const option = document.createElement('option'); option.value = biome; option.textContent = biome; biomeSelect.append(option); }
 
@@ -92,7 +94,14 @@ function paint(now: number, schedule = true) {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#172b38'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  if (category.value === 'reference') {
+  if (category.value === 'continent') {
+    const location = DOKAPON_NODES.find(n=>n.biome===biomeSelect.value) || DOKAPON_NODES[0];
+    actor.nodeId = location.id; actor.gridX=location.gx;actor.gridY=location.gy;actor.gridZ=location.gz;
+    ecosystemSystem.timeOfDay=timeSelect.value as TimeOfDay;
+    if(continentFocus!==biomeSelect.value){reference.centerCameraOn(location.gx,location.gy,location.gz);reference.camera.x=reference.camera.targetX;reference.camera.y=reference.camera.targetY;continentFocus=biomeSelect.value;}
+    reference.render(DOKAPON_NODES,[actor],actor,[],[],paused?0:now);
+  } else if (category.value === 'reference') {
+    continentFocus='';actor.nodeId=4;actor.gridX=3;actor.gridY=3;actor.gridZ=0;
     if (referenceBiome !== biomeSelect.value) {
       referenceBiome = biomeSelect.value;
       for (const node of nodes) node.biome = referenceBiome as BiomeType;
@@ -150,6 +159,11 @@ function paint(now: number, schedule = true) {
       const x = 30 + (i % 5) * 225, y = 30 + Math.floor(i / 5) * 220;
       ctx.drawImage(terrain.getTileSprite(biome, { cliffs: true, night }), x, y, 208, 192);
       label(biome, x + 104, y + 208);
+    });
+  } else if (category.value === 'world_details') {
+    WORLD_DETAIL_NAMES.forEach((kind,i)=>{
+      const image=worldDetails.get(kind,night),x=48+(i%6)*192,y=16+Math.floor(i/6)*175;
+      if(image)ctx.drawImage(image,x,y);label(kind,x+48,y+126);
     });
   } else if (category.value === 'foliage') {
     ['dark_oak', 'frost_pine', 'gloom_spore', 'ash_thorn', 'blood_willow'].forEach((species, row) => {

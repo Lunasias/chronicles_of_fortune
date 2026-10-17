@@ -19,7 +19,7 @@ test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize
     const surfaceId = player.nodeId;
     const dungeon = new DungeonSystem();
     renderer.initBoardCache(game.allNodes);
-    assert.equal(isometricTerrainEngine.terrainTiles.some(t => t.gx >= 140), false);
+    assert.equal(renderer.nodeScreenCache.has(1000), false);
     dungeon.enterDungeon(player, game, realm);
     assert.equal(player.nodeId, entrance);
     const target = renderer.toScreen(player.gridX, player.gridY, player.gridZ);
@@ -38,7 +38,8 @@ test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize
     const surface = game.allNodes.find(n => n.id === surfaceId);
     renderer.centerCameraOn(surface.gx, surface.gy, surface.gz);
     assert.throws(() => renderer.render(game.allNodes, game.players, player), err => err === drawn);
-    assert.ok(isometricTerrainEngine.terrainTiles.every(t => t.gx < 140), 'roster focus can inspect a surface player from inside a dungeon');
+    assert.ok(renderer.nodeScreenCache.has(surfaceId), 'roster focus can inspect a surface player from inside a dungeon');
+    assert.equal(renderer.nodeScreenCache.has(1000), false);
     renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ);
     assert.throws(() => renderer.render(game.allNodes, game.players, player), err => err === drawn);
     dungeon.exitDungeon(player, game);
@@ -47,7 +48,7 @@ test('late-loaded dungeons rebuild terrain and remain reachable by focus, resize
     assert.equal(renderer.camera.targetY, renderer.toScreen(player.gridX, player.gridY, player.gridZ).y);
     game.resetBoard();
     assert.throws(() => renderer.render(game.allNodes, [], null), err => err === drawn);
-    assert.equal(isometricTerrainEngine.terrainTiles.some(t => t.gx >= 140), false);
+    assert.equal(renderer.nodeScreenCache.has(1000), false);
   }
 });
 

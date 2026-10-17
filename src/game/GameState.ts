@@ -423,7 +423,7 @@ export class GameState {
     }
 
     if (spellKey === 'banish' && target) {
-      const farNodes = this.allNodes.filter(n => Math.hypot(n.gx - target!.gridX, n.gy - target!.gridY) > 20);
+      const farNodes = this.allNodes.filter(n => Math.hypot(n.gx - target!.gridX, n.gy - target!.gridY) > 40);
       const destNode = farNodes.length > 0 ? farNodes[Math.floor(Math.random() * farNodes.length)] : this.allNodes[Math.floor(Math.random() * this.allNodes.length)];
       target.nodeId = destNode.id;
       target.gridX = destNode.gx;
@@ -724,7 +724,7 @@ export class GameState {
     const startGY = p.gridY;
     const startGZ = p.gridZ;
     const startTime = Date.now();
-    const duration = Math.max(45, Math.round(180 / this.gameSpeed));
+    const duration = Math.max(60, Math.round((150 + Math.hypot(dgx, dgy) * 30) / this.gameSpeed));
 
     const animate = () => {
       const elapsed = Date.now() - startTime;

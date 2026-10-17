@@ -6,6 +6,8 @@ import type { TimeOfDay } from '../game/EcosystemSystem';
 import { foliageForBiome } from './BiomeArt';
 import { resolveBiome, terrainPalette } from './IsometricTerrainPainter';
 import { drawDungeonRoom, drawGroundClusters, drawRegionalProps } from './EnvironmentArt';
+import { worldDetails } from './WorldDetails';
+import { BIOME_DRESSING } from './WorldEcology';
 
 /** All scenery and combatants share this ground plane, without separate raised platforms. */
 export function battleGroundLayout(w: number, h: number) {
@@ -52,6 +54,15 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
   ctx.globalAlpha = 1;
   drawRegionalProps(ctx, w, horizon, biome);
   drawRegionalProps(ctx, w, h + 8, biome);
+  // Use the same detailed world dressing in encounters, framing a clear playable center.
+  const dressing = BIOME_DRESSING[biome] || BIOME_DRESSING.grass;
+  for(let i=0;i<8;i++){
+    const image=worldDetails.get(dressing[i%dressing.length],night);
+    if(!image)continue;
+    const foreground=i>=6, x=Math.round(foreground?(i===6?12:w-12):w*(.04+i*.18));
+    const y=foreground?h+24:horizon+12+(i%3)*9;
+    ctx.drawImage(image,x-48,y-Number(image.dataset.footY||80));
+  }
   const species = foliageForBiome(biome);
   const treeCount = ['castle', 'steampunk', 'volcano', 'desert'].includes(biome) ? 0 : biome === 'snow' ? 2 : 4;
   if (species) for (let i = 0; i < treeCount; i++) {

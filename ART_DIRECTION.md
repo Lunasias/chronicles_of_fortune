@@ -99,3 +99,10 @@ of eight-view companion locomotion. Existing game logic and legacy source art re
 These routes are guarded by `import.meta.env.DEV`; fixture autosaves and Hall of Fame writes
 are suppressed. The FPS meter is development-only and is not a guarantee for every device.
 See `docs/art-review/QA.md` for the completed acceptance checks and practical limits.
+
+## Living world — 2026-10-17
+The latest world pass is documented in docs/art-review/LIVING_WORLD.md. Original generated
+material and dressing atlases dated 2026-10-17 are added to the source manifest (24 images).
+Terrain remains 96×48 native projection; detailed biome material samples and depth-sorted
+96px scenery now carry the world's visual density. The 312 graph destinations retain their
+IDs, dice costs and ownership identity under the expanded geographic layout.

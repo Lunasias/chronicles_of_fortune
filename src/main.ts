@@ -3618,7 +3618,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
     this.visualReviewActive = true;
@@ -3635,9 +3635,17 @@ class DokaponApp {
     this.game.initGame(party);
     if (query.get('companion') === 'true') this.game.activePlayer.companion = createCompanion('pudding');
     const requestedBiome = query.get('biome') || 'forest';
-    const node = this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
+    const node = this.game.allNodes.find(n => n.id === Number(query.get('node') ?? NaN)) || this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
+    if (scene === 'world') {
+      Object.assign(this.game.activePlayer, {gridX:node.gx,gridY:node.gy,gridZ:node.gz});
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      this.renderer.centerCameraOn(node.gx,node.gy,node.gz);
+      this.hud.update();
+      return;
+    }
     if (scene === 'dungeon') {
       // Build the surface first, then use the real late-loading teleport path.
       this.renderer.initBoardCache(this.game.allNodes);

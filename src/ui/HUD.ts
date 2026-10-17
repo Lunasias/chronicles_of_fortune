@@ -4,6 +4,8 @@ import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { escapeHtml } from '../util/Html';
 import { pixelDisc } from '../engine/PixelFx';
+import { mapProjection } from '../engine/MapProjection';
+import { dungeonSceneGroup } from '../game/DungeonLocations';
 
 export class HUD {
   private game: GameState;
@@ -299,20 +301,23 @@ export class HUD {
     ctx.fillStyle = '#0a0f1d';
     ctx.fillRect(0, 0, w, h);
 
-    const scaleX = w / 36;
-    const scaleY = h / 32;
+    const group = dungeonSceneGroup(this.game.activePlayer?.nodeId ?? 0);
+    const nodes = this.game.allNodes.filter(n => dungeonSceneGroup(n.id) === group);
+    const project = mapProjection(nodes,w,h,8);
+    const byId = new Map(nodes.map(n=>[n.id,n]));
 
     // Draw lines
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1.5;
-    this.game.allNodes.forEach(node => {
+    nodes.forEach(node => {
       node.neighbors.forEach(nId => {
         if (nId > node.id) {
-          const target = this.game.allNodes.find(n => n.id === nId);
+          const target = byId.get(nId);
           if (target) {
             ctx.beginPath();
-            ctx.moveTo(node.gx * scaleX, node.gy * scaleY);
-            ctx.lineTo(target.gx * scaleX, target.gy * scaleY);
+            const a = project(node.gx,node.gy), b = project(target.gx,target.gy);
+            ctx.moveTo(a.x,a.y);
+            ctx.lineTo(b.x,b.y);
             ctx.stroke();
           }
         }
@@ -320,7 +325,7 @@ export class HUD {
     });
 
     // Draw spaces
-    this.game.allNodes.forEach(node => {
+    nodes.forEach(node => {
       ctx.fillStyle =
         node.type === 'town'
           ? '#fbbf24'
@@ -331,14 +336,17 @@ export class HUD {
           : node.type === 'blue'
           ? '#3b82f6'
           : '#64748b';
-      ctx.fillRect(node.gx * scaleX - 2, node.gy * scaleY - 2, 4, 4);
+      const p = project(node.gx,node.gy);
+      ctx.fillRect(p.x - 1, p.y - 1, 3, 3);
     });
 
     // Draw players
     this.game.players.forEach(pl => {
+      if (dungeonSceneGroup(pl.nodeId) !== group) return;
       ctx.fillStyle = pl.isDarkling ? '#f43f5e' : pl.color;
       ctx.beginPath();
-      pixelDisc(ctx, pl.gridX * scaleX, pl.gridY * scaleY, 4, ctx.fillStyle);
+      const p = project(pl.gridX,pl.gridY);
+      pixelDisc(ctx, p.x, p.y, 4, ctx.fillStyle);
       ctx.fill();
     });
   }

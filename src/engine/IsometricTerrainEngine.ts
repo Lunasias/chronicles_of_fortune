@@ -4,6 +4,7 @@ import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H, TERRAIN_VARIANTS } from './IsometricTerrainPainter';
 import { PROP_BASE_X, PROP_BASE_Y } from './IsometricPropPainter';
 import { foliageForBiome } from './BiomeArt';
+import { worldNoise, roadField, BIOME_DRESSING, SETTLEMENT_DRESSING, canopyDensity, type WorldDressing } from './WorldEcology';
 
 export interface TerrainTile {
   gx: number;
@@ -15,6 +16,7 @@ export interface TerrainTile {
   biome: BiomeType;
   realmId: RealmId;
   isEdge: boolean;
+  isCoast?: boolean;
   hasSouthCliff: boolean;
   hasEastCliff: boolean;
   hasWestCliff: boolean;
@@ -37,6 +39,7 @@ export interface EnvironmentProp {
 }
 
 export class IsometricTerrainEngine {
+  public worldDressing: WorldDressing[] = [];
   public groves: Array<{ x: number; y: number; depth: number; species: string; variant: number }> = [];
   public tileWidth = 96;
   public tileHeight = 48;
@@ -56,6 +59,22 @@ export class IsometricTerrainEngine {
   public bucketSize = 400;
   public tileBuckets = new Map<string, TerrainTile[]>();
   public propBuckets = new Map<string, EnvironmentProp[]>();
+  private dressingBuckets = new Map<string, WorldDressing[]>();
+  private groveBuckets = new Map<string, typeof this.groves>();
+
+  public getVisibleDressing(minX: number, maxX: number, minY: number, maxY: number) {
+    return this.visibleScenery(this.dressingBuckets, minX, maxX, minY, maxY);
+  }
+  public getVisibleGroves(minX: number, maxX: number, minY: number, maxY: number) {
+    return this.visibleScenery(this.groveBuckets, minX, maxX, minY, maxY);
+  }
+  private visibleScenery<T extends { x: number; y: number }>(buckets: Map<string, T[]>, minX: number, maxX: number, minY: number, maxY: number): T[] {
+    const result: T[] = [];
+    for (let x = Math.floor((minX - 120) / this.bucketSize); x <= Math.floor((maxX + 120) / this.bucketSize); x++)
+      for (let y = Math.floor((minY - 120) / this.bucketSize); y <= Math.floor((maxY + 120) / this.bucketSize); y++)
+        result.push(...(buckets.get(`${x},${y}`) || []));
+    return result;
+  }
 
   public getBucketKey(x: number, y: number): string {
     const bx = Math.floor(x / this.bucketSize);
@@ -137,11 +156,12 @@ export class IsometricTerrainEngine {
       }
     };
 
-    // 1. Expand terrain around every board node (radius of 2 tiles for solid island ground)
+    const landRadius = nodes.some(n => n.id < 1000) ? 7 : 2;
+    // Organic continental margins extend beyond the playable route.
     nodes.forEach(node => {
-      for (let dx = -2; dx <= 2; dx++) {
-        for (let dy = -2; dy <= 2; dy++) {
-          if (Math.abs(dx) + Math.abs(dy) <= 3) {
+      for (let dx = -landRadius; dx <= landRadius; dx++) {
+        for (let dy = -landRadius; dy <= landRadius; dy++) {
+          if (Math.hypot(dx, dy) <= landRadius - .5 + worldNoise(node.gx + dx, node.gy + dy) * .9) {
             addCell(node.gx + dx, node.gy + dy, node.gz, node.biome, node.realmId);
           }
         }
@@ -177,6 +197,14 @@ export class IsometricTerrainEngine {
       });
     });
 
+    // Expanded land must not bury a destination under a taller neighbor's biome/elevation.
+    for(const node of nodes) {
+      for(const [dx,dy] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]) {
+        tempTileMap.set(`${node.gx+dx},${node.gy+dy}`,{gx:node.gx+dx,gy:node.gy+dy,gz:node.gz,biome:node.biome,realmId:node.realmId});
+      }
+    }
+    for(const node of nodes) tempTileMap.set(`${node.gx},${node.gy}`,{gx:node.gx,gy:node.gy,gz:node.gz,biome:node.biome,realmId:node.realmId});
+
     // 3. Build fast spatial lookup and determine cliff drops on terrain edges
     tempTileMap.forEach((cell, key) => {
       const pos = this.toScreen(cell.gx, cell.gy, cell.gz);
@@ -204,6 +232,7 @@ export class IsometricTerrainEngine {
         biome: cell.biome,
         realmId: cell.realmId,
         isEdge: hasSouth || hasEast || hasWest || hasNorth,
+        isCoast: !tempTileMap.has(`${cell.gx+1},${cell.gy}`) || !tempTileMap.has(`${cell.gx},${cell.gy+1}`) || !tempTileMap.has(`${cell.gx-1},${cell.gy}`) || !tempTileMap.has(`${cell.gx},${cell.gy-1}`),
         hasSouthCliff: hasSouth,
         hasEastCliff: hasEast,
         hasWestCliff: hasWest,
@@ -225,6 +254,15 @@ export class IsometricTerrainEngine {
 
     // 4. Generate Environmental Clutter (Rocks, Grass, Wildflowers, Shrubs, Crystals)
     this.generateEnvironmentClutter(nodes);
+    this.dressingBuckets.clear(); this.groveBuckets.clear();
+    for (const item of this.worldDressing) {
+      const key = this.getBucketKey(item.x,item.y), list = this.dressingBuckets.get(key) || [];
+      list.push(item); this.dressingBuckets.set(key,list);
+    }
+    for (const item of this.groves) {
+      const key = this.getBucketKey(item.x,item.y), list = this.groveBuckets.get(key) || [];
+      list.push(item); this.groveBuckets.set(key,list);
+    }
 
     // 5. Index into Spatial Grid Buckets for O(visible) zero-lag rendering
     this.tileBuckets.clear();
@@ -275,76 +313,37 @@ export class IsometricTerrainEngine {
 
   // Generate natural environment props (rocks, grass clumps, flowers) on off-road terrain
   private generateEnvironmentClutter(nodes: BoardNode[]) {
-    const nodeCoords = new Set(nodes.map(n => `${n.gx},${n.gy}`));
-    const routes = nodes.flatMap(n => n.neighbors.filter(id => id > n.id).map(id => {
-      const other = nodes.find(candidate => candidate.id === id)!;
-      return { a: this.toScreen(n.gx, n.gy, n.gz), b: this.toScreen(other.gx, other.gy, other.gz) };
-    }));
-    this.groves = [];
-
-    let propId = 0;
-    this.terrainTiles.forEach(tile => {
-      const isNodeCenter = nodeCoords.has(`${tile.gx},${tile.gy}`);
-      // Don't clutter the exact node center where building/plate/hero stands
-      if (isNodeCenter) return;
-
-      // Deterministic pseudo-random seed from grid coordinates
-      const seed = Math.sin(tile.gx * 12.9898 + tile.gy * 78.233) * 43758.5453;
-      const rand1 = seed - Math.floor(seed);
-      const rand2 = (seed * 1.5) - Math.floor(seed * 1.5);
-      const rand3 = (seed * 2.3) - Math.floor(seed * 2.3);
-
-      const wooded = ['grass', 'forest', 'waterfall_forest', 'snow', 'sakura_shrine', 'fairy_grove'].includes(tile.biome);
-      const clusterSeed = Math.sin(Math.floor(tile.gx / 3) * 31.73 + Math.floor(tile.gy / 3) * 17.17) * 19451.17;
-      const cluster = clusterSeed - Math.floor(clusterSeed);
-      if (wooded && cluster > .35 && rand1 < (tile.biome === 'forest' ? .48 : .22)) {
-        const clear = routes.every(({ a, b }) => {
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const t = Math.max(0, Math.min(1, ((tile.x - a.x) * dx + (tile.y - a.y) * dy) / Math.max(1, dx * dx + dy * dy)));
-          return Math.hypot(tile.x - a.x - dx * t, tile.y - a.y - dy * t) > 28;
-        });
-        if (clear) this.groves.push({
-          x: Math.round(tile.x), y: Math.round(tile.y), depth: tile.depth + 25,
-          species: foliageForBiome(tile.biome)!,
-          variant: Math.floor(rand3 * 4)
-        });
+    const nodeCoords = new Set(nodes.map(n => n.gx + ',' + n.gy));
+    const distanceToRoad = roadField(nodes, (x,y,z) => this.toScreen(x,y,z));
+    const hubs = nodes.filter(n => ['town', 'guild', 'tavern'].includes(n.type)).map(n => ({ n, ...this.toScreen(n.gx,n.gy,n.gz) }));
+    const anchors = nodes.map(n => this.toScreen(n.gx,n.gy,n.gz));
+    this.groves = []; this.worldDressing = [];
+    for (const tile of this.terrainTiles) {
+      if (nodeCoords.has(tile.gx + ',' + tile.gy)) continue;
+      const r = worldNoise(tile.gx, tile.gy), r2 = worldNoise(tile.gx,tile.gy,2), r3 = worldNoise(tile.gx,tile.gy,3);
+      const x = Math.round(tile.x + (r2 - .5) * 34), y = Math.round(tile.y + (r3 - .5) * 16);
+      const roadDistance = distanceToRoad(x,y);
+      const anchorDistance = Math.min(...anchors.map(a => Math.hypot(x-a.x,y-a.y)));
+      if (anchorDistance < 52) continue;
+      const cluster = worldNoise(Math.floor(tile.gx/4),Math.floor(tile.gy/4),7);
+      if (roadDistance > 42 && anchorDistance > 86 && r < canopyDensity(tile.biome,cluster)) {
+        const species = foliageForBiome(tile.biome);
+        if (species) this.groves.push({x,y,depth:tile.depth + Math.round((y-tile.y)*1000/24)+25,species,variant:Math.floor(r3*4)});
       }
-
-      // Rich scattering of natural environment props (38% density on off-node terrain)
-      if (rand1 < 0.38) {
-        let type: EnvironmentProp['type'] = 'grass';
-        if (rand2 < 0.30) {
-          type = 'rock'; // Boulders and stones
-        } else if (rand2 < 0.55) {
-          type = 'flower'; // Flower patches
-        } else if (rand2 < 0.78) {
-          type = 'shrub'; // Bushes and shrubs
-        } else if (rand2 < 0.92 && (tile.biome === 'snow' || tile.biome === 'abyss' || tile.biome === 'cavern')) {
-          type = 'crystal'; // Magical ice or void crystal
-        }
-
-        // Sub-tile jitter for natural scattering
-        const offsetX = (rand2 - 0.5) * 36;
-        const offsetY = (rand3 - 0.5) * 18;
-
-        this.environmentProps.push({
-          id: `env_prop_${propId++}`,
-          type,
-          gx: tile.gx,
-          gy: tile.gy,
-          gz: tile.gz,
-          x: tile.x + offsetX,
-          y: tile.y + offsetY,
-          depth: tile.depth + 15,
-          biome: tile.biome,
-          variant: Math.floor(rand3 * 4),
-          scale: 0.85 + rand1 * 0.35
-        });
+      const hub = hubs.find(a => Math.hypot(x-a.x,y-a.y)<260 && Math.abs(a.n.gz-tile.gz)<=1);
+      let kind = null;
+      if (hub && roadDistance > 48 && anchorDistance > 90 && r2 < .30) {
+        const village = SETTLEMENT_DRESSING[tile.biome] || ['woodland_cottage','camp','fence','well','market','lantern_sign'] as const;
+        kind = village[Math.floor(r3*village.length)];
+      } else if (roadDistance > 22 && r2 < .58) {
+        const family = BIOME_DRESSING[tile.biome] || BIOME_DRESSING.grass;
+        kind = family[Math.floor(r3*family.length)];
       }
-    });
-
-    // Depth sort environment props
-    this.environmentProps.sort((a, b) => a.depth - b.depth);
+      if (kind) this.worldDressing.push({x,y,depth:tile.depth + Math.round((y-tile.y)*1000/24)+30,kind,biome:tile.biome,roadDistance});
+      // Small native clusters connect large sprites without filling the walkable corridor.
+      if (roadDistance > 14 && r < .72) this.environmentProps.push({id:'env_'+tile.gx+'_'+tile.gy,type:r3<.25?'rock':r3<.5?'shrub':r3<.75?'flower':'grass',gx:tile.gx,gy:tile.gy,gz:tile.gz,x,y,depth:tile.depth,biome:tile.biome,variant:Math.floor(r2*4),scale:1});
+    }
+    this.environmentProps.sort((a,b)=>a.depth-b.depth);
   }
 
   // =========================================================================
@@ -381,7 +380,7 @@ export class IsometricTerrainEngine {
     const bob = Math.round(Math.sin(time * 0.003) * 1.5);
 
     // Direct iteration over pre-sorted terrainTiles with zero allocations!
-    const tiles = this.terrainTiles;
+    const tiles = this.getVisibleTiles(minX, maxX, minY, maxY);
     const len = tiles.length;
 
     for (let i = 0; i < len; i++) {
@@ -392,7 +391,7 @@ export class IsometricTerrainEngine {
       }
 
       // Shoreline ocean foam waves around perimeter cliffs
-      if (tile.isEdge && !interior) {
+      if (tile.isCoast && !interior) {
         this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + bob, hw, hh, isNight, time);
       }
 
@@ -483,7 +482,7 @@ export class IsometricTerrainEngine {
     timeOfDay: TimeOfDay
   ) {
     const night = timeOfDay === 'NIGHT';
-    const props = this.environmentProps;
+    const props = this.getVisibleProps(minX, maxX, minY, maxY);
     const len = props.length;
 
     for (let i = 0; i < len; i++) {

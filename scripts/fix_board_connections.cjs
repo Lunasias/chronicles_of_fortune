@@ -1,5 +1,5 @@
 // Rebuilds the road graph in src/game/BoardMap.ts:
-//   * drops any neighbour link longer than 5.5 grid units
+//   * drops any neighbour link longer than 14 expanded-world grid units
 //   * connects each disconnected realm to the main landmass with the shortest bridge
 //   * rewrites the node array in the canonical formatting used by the file
 //
@@ -13,7 +13,7 @@ const fs = require('fs');
 
 const TARGET = 'src/game/BoardMap.ts';
 const ANCHOR = 'export const DOKAPON_NODES: BoardNode[] = ';
-const MAX_ROAD_DISTANCE = 5.5;
+const MAX_ROAD_DISTANCE = 14; // Expanded continent uses roughly twice the original grid spacing.
 
 const write = process.argv.includes('--write');
 const content = fs.readFileSync(TARGET, 'utf8');

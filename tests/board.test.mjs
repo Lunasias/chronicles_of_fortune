@@ -18,7 +18,7 @@ const byId = new Map(nodes.map(n => [n.id, n]));
 const positionKey = n => `${n.gx},${n.gy},${n.gz}`;
 
 /** Longest road link the board generator treats as a valid edge. */
-const MAX_ROAD_DISTANCE = 5.5;
+const MAX_ROAD_DISTANCE = 14; // Expanded world coordinates; graph topology and dice costs stay unchanged.
 
 test('exports a non-empty node array', () => {
   assert.ok(Array.isArray(nodes), 'DOKAPON_NODES must be an array');

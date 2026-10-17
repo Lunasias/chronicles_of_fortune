@@ -11,6 +11,9 @@ import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSetting
 import { foliageForBiome } from './BiomeArt';
 import { isDungeonExit, dungeonSceneGroup } from '../game/DungeonLocations';
 import { drawDungeonRoom } from './EnvironmentArt';
+import { worldDetails } from './WorldDetails';
+import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
+import { roadPoint } from './WorldEcology';
 
 export interface Camera2D {
   x: number;
@@ -411,6 +414,7 @@ export class IsometricRenderer {
     maxY: number
   ) {
     // Native-pixel earth paths with irregular cobbles; no antialiased rails or centre stripe.
+    const roadMaterial=isometricTerrainRenderer.roadPattern(ctx,ecosystemSystem.timeOfDay==='NIGHT');
     for (const seg of this.roadwaySegments) {
       if (Math.max(seg.x1, seg.x2) < minX - 30 || Math.min(seg.x1, seg.x2) > maxX + 30 ||
           Math.max(seg.y1, seg.y2) < minY - 30 || Math.min(seg.y1, seg.y2) > maxY + 30) continue;
@@ -418,15 +422,15 @@ export class IsometricRenderer {
       const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
       // Finish each entire layer before the next, so stamp shadows never cut
       // vertical seams through the preceding stone (the old fence-like pattern).
-      for (const layer of [{ color: '#394339', w: 18, h: 8 }, { color: seg.roadColor, w: 16, h: 6 }]) {
+      for (const layer of [{ color: '#394339', w: 18, h: 8 }, { color: roadMaterial || seg.roadColor, w: 16, h: 6 }]) {
         ctx.fillStyle = layer.color;
         for (let i = 0; i <= steps; i++) {
-          const x = Math.round(seg.x1 + dx * i / steps), y = Math.round(seg.y1 + dy * i / steps);
+          const {x,y} = roadPoint(seg.x1,seg.y1,dx,dy,i/steps);
           ctx.fillRect(x - layer.w / 2, y - 3, layer.w, layer.h);
         }
       }
       for (let i = 2; i < steps - 1; i += 5) {
-        const x = Math.round(seg.x1 + dx * i / steps), y = Math.round(seg.y1 + dy * i / steps);
+        const {x,y} = roadPoint(seg.x1,seg.y1,dx,dy,i/steps);
         const j = (i % 3) - 1;
         ctx.fillStyle = '#655c49'; ctx.fillRect(x - 3 + j, y - 1, 5, 3);
         ctx.fillStyle = '#b1a084'; ctx.fillRect(x - 3 + j, y - 2, 4, 2);
@@ -454,13 +458,26 @@ export class IsometricRenderer {
     const renderList = this.depthRenderList;
     renderList.length = 0;
     const focus = activePlayer ? this.toScreen(activePlayer.gridX, activePlayer.gridY, activePlayer.gridZ) : null;
-    for (const grove of isometricTerrainEngine.groves) {
+    const visibleActors = players.map(p => this.toScreen(p.gridX,p.gridY,p.gridZ));
+    const hover = this.hoveredNodeId === null ? null : this.nodeScreenCache.get(this.hoveredNodeId);
+    if (hover) visibleActors.push(hover);
+    const obscuresActor = (x: number,y: number,height: number,width: number) => visibleActors.some(p => y > p.y - 6 && y - p.y < height - 10 && Math.abs(x - p.x) < width / 2 + 12);
+    if (!this.sceneGroup) for (const item of isometricTerrainEngine.getVisibleDressing(minX,maxX,minY,maxY)) {
+      renderList.push({depth:item.depth,draw:()=>{
+        const sprite = worldDetails.get(item.kind, ecosystemSystem.timeOfDay === 'NIGHT');
+        const fallback = sprite || isometricTerrainRenderer.getPropSprite(item.kind.includes('rock') || item.kind.includes('crag') ? 'rock' : 'shrub', {biome:item.biome,variant:0});
+        const foot = sprite ? Number(sprite.dataset.footY || 80) : 28;
+        ctx.save(); if (obscuresActor(item.x,item.y,fallback.height,fallback.width)) ctx.globalAlpha = .23;
+        ctx.drawImage(fallback,Math.round(item.x-fallback.width/2),Math.round(item.y-foot)); ctx.restore();
+      }});
+    }
+    for (const grove of isometricTerrainEngine.getVisibleGroves(minX,maxX,minY,maxY)) {
       if (this.sceneGroup) continue;
       if (grove.x < minX - 64 || grove.x > maxX + 64 || grove.y < minY - 64 || grove.y > maxY + 64) continue;
       renderList.push({ depth: grove.depth, draw: () => {
         const tree = pixelSprites.getTreeSprite(grove.species, grove.variant);
         ctx.save();
-        if (focus && grove.y > focus.y + 4 && grove.y - focus.y < tree.height - 12 && Math.abs(grove.x - focus.x) < tree.width / 2 + 12) ctx.globalAlpha = .35;
+        if (obscuresActor(grove.x,grove.y,tree.height,tree.width)) ctx.globalAlpha = .23;
         ctx.drawImage(tree, grove.x - tree.width / 2, grove.y - Number(tree.dataset.footY || 54));
         ctx.restore();
       } });
