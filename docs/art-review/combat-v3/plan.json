@@ -1,0 +1,1124 @@
+[
+  {
+    "index": 0,
+    "file": "combat-00.png",
+    "rows": [
+      {
+        "id": "warrior",
+        "group": "job",
+        "name": "warrior",
+        "skill": "Colossal Blade",
+        "concept": "enormous silver blue blade crescent with angular boulders and earth rupture"
+      },
+      {
+        "id": "magician",
+        "group": "job",
+        "name": "magician",
+        "skill": "Explosion",
+        "concept": "crimson orange mushroom inferno bloom and smoky purple edge"
+      },
+      {
+        "id": "thief",
+        "group": "job",
+        "name": "thief",
+        "skill": "5-Shadow Clone",
+        "concept": "five jade magenta dagger crescents and shadow wisps"
+      },
+      {
+        "id": "cleric",
+        "group": "job",
+        "name": "cleric",
+        "skill": "Holy Cross Judgment",
+        "concept": "ivory gold winged cross, ornate halo and divine feathers"
+      }
+    ]
+  },
+  {
+    "index": 1,
+    "file": "combat-01.png",
+    "rows": [
+      {
+        "id": "spellblade",
+        "group": "job",
+        "name": "Spellblade",
+        "skill": "Lightning Slicer",
+        "concept": "cobalt electric sword wave with branching white lightning, floating rune fragments"
+      },
+      {
+        "id": "paladin",
+        "group": "job",
+        "name": "paladin",
+        "skill": "หัตถ์ศักดิ์สิทธิ์คุ้มครองพิภพ (Divine Aegis)",
+        "concept": "paladin: หัตถ์ศักดิ์สิทธิ์คุ้มครองพิภพ (Divine Aegis). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "berserker",
+        "group": "job",
+        "name": "berserker",
+        "skill": "คลั่งโลหิตผ่าสวรรค์ (Blood Frenzy)",
+        "concept": "berserker: คลั่งโลหิตผ่าสวรรค์ (Blood Frenzy). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "archmage",
+        "group": "job",
+        "name": "archmage",
+        "skill": "มหาอุกกาบาตสิ้นพิภพ (Apocalypse Meteor)",
+        "concept": "archmage: มหาอุกกาบาตสิ้นพิภพ (Apocalypse Meteor). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 2,
+    "file": "combat-02.png",
+    "rows": [
+      {
+        "id": "necromancer",
+        "group": "job",
+        "name": "necromancer",
+        "skill": "กองทัพวิญญาณกระดูกคืนชีพ (Army of the Damned)",
+        "concept": "necromancer: กองทัพวิญญาณกระดูกคืนชีพ (Army of the Damned). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "ninja",
+        "group": "job",
+        "name": "ninja",
+        "skill": "ดาวกระจายสังหารไร้เงา (Shadow Shuriken)",
+        "concept": "ninja: ดาวกระจายสังหารไร้เงา (Shadow Shuriken). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "assassin",
+        "group": "job",
+        "name": "assassin",
+        "skill": "มรณภาพในพริบตา (Death Mark)",
+        "concept": "assassin: มรณภาพในพริบตา (Death Mark). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "high_priest",
+        "group": "job",
+        "name": "high_priest",
+        "skill": "แสงทิพย์ชำระบาปสากล (Universal Radiance)",
+        "concept": "high_priest: แสงทิพย์ชำระบาปสากล (Universal Radiance). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 3,
+    "file": "combat-03.png",
+    "rows": [
+      {
+        "id": "saint",
+        "group": "job",
+        "name": "saint",
+        "skill": "พรสวรรค์ปกปักชะตากรรม (Miracle Grace)",
+        "concept": "saint: พรสวรรค์ปกปักชะตากรรม (Miracle Grace). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "rune_master",
+        "group": "job",
+        "name": "rune_master",
+        "skill": "ระบำดาบสิบมนตรา (Ten-Rune Blade Dance)",
+        "concept": "rune_master: ระบำดาบสิบมนตรา (Ten-Rune Blade Dance). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "crusader",
+        "group": "job",
+        "name": "crusader",
+        "skill": "มหาปราการเทวาพิทักษ์จักรวาล (Aegis of the Heavens)",
+        "concept": "crusader: มหาปราการเทวาพิทักษ์จักรวาล (Aegis of the Heavens). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "warlord",
+        "group": "job",
+        "name": "warlord",
+        "skill": "มหาดาบผ่าพิภพโลหิตเดือด (World Breaker)",
+        "concept": "warlord: มหาดาบผ่าพิภพโลหิตเดือด (World Breaker). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 4,
+    "file": "combat-04.png",
+    "rows": [
+      {
+        "id": "grand_arcanist",
+        "group": "job",
+        "name": "grand_arcanist",
+        "skill": "ซูเปอร์โนวาดับดารา (Supernova Cataclysm)",
+        "concept": "grand_arcanist: ซูเปอร์โนวาดับดารา (Supernova Cataclysm). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "lich_king",
+        "group": "job",
+        "name": "lich_king",
+        "skill": "มหาคำสาปกลืนวิญญาณนิรันดร์ (Soul Drain Apocalypse)",
+        "concept": "lich_king: มหาคำสาปกลืนวิญญาณนิรันดร์ (Soul Drain Apocalypse). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "phantom_shinobi",
+        "group": "job",
+        "name": "phantom_shinobi",
+        "skill": "หมื่นเงาพายุจักรพรรดิ (Infinite Phantom Gale)",
+        "concept": "phantom_shinobi: หมื่นเงาพายุจักรพรรดิ (Infinite Phantom Gale). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "shadow_reaper",
+        "group": "job",
+        "name": "shadow_reaper",
+        "skill": "เคียวเกี่ยววิญญาณมรณะ (Soul Harvester)",
+        "concept": "shadow_reaper: เคียวเกี่ยววิญญาณมรณะ (Soul Harvester). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 5,
+    "file": "combat-05.png",
+    "rows": [
+      {
+        "id": "radiant_archon",
+        "group": "job",
+        "name": "radiant_archon",
+        "skill": "พิพากษาแสงสวรรค์เก้าชั้นฟ้า (Nine Heavens Judgement)",
+        "concept": "radiant_archon: พิพากษาแสงสวรรค์เก้าชั้นฟ้า (Nine Heavens Judgement). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "seraphic_saint",
+        "group": "job",
+        "name": "seraphic_saint",
+        "skill": "ปาฏิหาริย์ดวงดาราแห่งการฟื้นคืน (Miracle Resurrection)",
+        "concept": "seraphic_saint: ปาฏิหาริย์ดวงดาราแห่งการฟื้นคืน (Miracle Resurrection). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "rune_sovereign",
+        "group": "job",
+        "name": "rune_sovereign",
+        "skill": "มหาเพลงดาบจักรวาลอักขระ (Omni-Rune Cataclysm)",
+        "concept": "rune_sovereign: มหาเพลงดาบจักรวาลอักขระ (Omni-Rune Cataclysm). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "ranger",
+        "group": "job",
+        "name": "Ranger",
+        "skill": "Sylvan Arrowstorm",
+        "concept": "emerald spectral arrow volley with leaves and golden forest spirits"
+      }
+    ]
+  },
+  {
+    "index": 6,
+    "file": "combat-06.png",
+    "rows": [
+      {
+        "id": "darkling",
+        "group": "job",
+        "name": "Darkling",
+        "skill": "Demonic World End",
+        "concept": "black crimson horned skull eclipse with demonic wings and magenta inferno"
+      },
+      {
+        "id": "monster_slime_princess_aurelia_jelly_acid_splash",
+        "group": "monster",
+        "name": "Slime Princess Aurelia",
+        "skill": "Jelly Acid Splash",
+        "concept": "Slime Princess Aurelia: Jelly Acid Splash. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_goblin_thief_girl_rikka_nimble_pocket_pick",
+        "group": "monster",
+        "name": "Goblin Thief Girl Rikka",
+        "skill": "Nimble Pocket Pick",
+        "concept": "Goblin Thief Girl Rikka: Nimble Pocket Pick. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_panther_huntress_kaelia_shadow_pounce",
+        "group": "monster",
+        "name": "Panther Huntress Kaelia",
+        "skill": "Shadow Pounce",
+        "concept": "Panther Huntress Kaelia: Shadow Pounce. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 7,
+    "file": "combat-07.png",
+    "rows": [
+      {
+        "id": "monster_catgirl_huntress_mia_cascade_pounce",
+        "group": "monster",
+        "name": "Catgirl Huntress Mia",
+        "skill": "Cascade Pounce",
+        "concept": "Catgirl Huntress Mia: Cascade Pounce. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_elf_princess_sylphira_sylph_cascade_arrow",
+        "group": "monster",
+        "name": "Elf Princess Sylphira",
+        "skill": "Sylph Cascade Arrow",
+        "concept": "Elf Princess Sylphira: Sylph Cascade Arrow. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_mermaid_siren_nerida_siren_deluge_song",
+        "group": "monster",
+        "name": "Mermaid Siren Nerida",
+        "skill": "Siren Deluge Song",
+        "concept": "Mermaid Siren Nerida: Siren Deluge Song. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_dryad_nymph_alura_verdant_entangle",
+        "group": "monster",
+        "name": "Dryad Nymph Alura",
+        "skill": "Verdant Entangle",
+        "concept": "Dryad Nymph Alura: Verdant Entangle. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 8,
+    "file": "combat-08.png",
+    "rows": [
+      {
+        "id": "monster_lupine_wolfgirl_fenra_lupine_moon_claw",
+        "group": "monster",
+        "name": "Lupine Wolfgirl Fenra",
+        "skill": "Lupine Moon Claw",
+        "concept": "Lupine Wolfgirl Fenra: Lupine Moon Claw. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_skeletal_maid_charlotte_frost_rapier_thrust",
+        "group": "monster",
+        "name": "Skeletal Maid Charlotte",
+        "skill": "Frost Rapier Thrust",
+        "concept": "Skeletal Maid Charlotte: Frost Rapier Thrust. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_yeti_maiden_borealia_glacial_avalanche_slam",
+        "group": "monster",
+        "name": "Yeti Maiden Borealia",
+        "skill": "Glacial Avalanche Slam",
+        "concept": "Yeti Maiden Borealia: Glacial Avalanche Slam. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_desert_bandit_queen_shani_mirage_sand_slash",
+        "group": "monster",
+        "name": "Desert Bandit Queen Shani",
+        "skill": "Mirage Sand Slash",
+        "concept": "Desert Bandit Queen Shani: Mirage Sand Slash. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 9,
+    "file": "combat-09.png",
+    "rows": [
+      {
+        "id": "monster_pharaoh_priestess_nefertia_curse_of_the_sands",
+        "group": "monster",
+        "name": "Pharaoh Priestess Nefertia",
+        "skill": "Curse of the Sands",
+        "concept": "Pharaoh Priestess Nefertia: Curse of the Sands. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_clockwork_maid_nicole_steam_overdrive",
+        "group": "monster",
+        "name": "Clockwork Maid Nicole",
+        "skill": "Steam Overdrive",
+        "concept": "Clockwork Maid Nicole: Steam Overdrive. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_hellhound_fiend_cerbia_infernal_crunch",
+        "group": "monster",
+        "name": "Hellhound Fiend Cerbia",
+        "skill": "Infernal Crunch",
+        "concept": "Hellhound Fiend Cerbia: Infernal Crunch. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_corsair_siren_captain_morgana_siren_tempest_song",
+        "group": "monster",
+        "name": "Corsair Siren Captain Morgana",
+        "skill": "Siren Tempest Song",
+        "concept": "Corsair Siren Captain Morgana: Siren Tempest Song. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 10,
+    "file": "combat-10.png",
+    "rows": [
+      {
+        "id": "monster_nether_valkyrie_morrigan_void_cleave",
+        "group": "monster",
+        "name": "Nether Valkyrie Morrigan",
+        "skill": "Void Cleave",
+        "concept": "Nether Valkyrie Morrigan: Void Cleave. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_celestial_archangel_seraphina_divine_judgement_ray",
+        "group": "monster",
+        "name": "Celestial Archangel Seraphina",
+        "skill": "Divine Judgement Ray",
+        "concept": "Celestial Archangel Seraphina: Divine Judgement Ray. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_sun_valkyrie_aurora_radiant_spear",
+        "group": "monster",
+        "name": "Sun Valkyrie Aurora",
+        "skill": "Radiant Spear",
+        "concept": "Sun Valkyrie Aurora: Radiant Spear. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_pixie_queen_titania_starlight_dream_pollen",
+        "group": "monster",
+        "name": "Pixie Queen Titania",
+        "skill": "Starlight Dream Pollen",
+        "concept": "Pixie Queen Titania: Starlight Dream Pollen. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 11,
+    "file": "combat-11.png",
+    "rows": [
+      {
+        "id": "monster_kitsune_maiden_tamamo_foxfire_blossom",
+        "group": "monster",
+        "name": "Kitsune Maiden Tamamo",
+        "skill": "Foxfire Blossom",
+        "concept": "Kitsune Maiden Tamamo: Foxfire Blossom. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_crystal_golem_maiden_prismia_prismatic_mirror_beam",
+        "group": "monster",
+        "name": "Crystal Golem Maiden Prismia",
+        "skill": "Prismatic Mirror Beam",
+        "concept": "Crystal Golem Maiden Prismia: Prismatic Mirror Beam. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_arachne_weaver_sylvi_crystal_silk_bind",
+        "group": "monster",
+        "name": "Arachne Weaver Sylvi",
+        "skill": "Crystal Silk Bind",
+        "concept": "Arachne Weaver Sylvi: Crystal Silk Bind. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_royal_guard_paladin_leonora_aegis_shield_slam",
+        "group": "monster",
+        "name": "Royal Guard Paladin Leonora",
+        "skill": "Aegis Shield Slam",
+        "concept": "Royal Guard Paladin Leonora: Aegis Shield Slam. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 12,
+    "file": "combat-12.png",
+    "rows": [
+      {
+        "id": "monster_sorceress_duchess_beatrice_arcane_nova_flurry",
+        "group": "monster",
+        "name": "Sorceress Duchess Beatrice",
+        "skill": "Arcane Nova Flurry",
+        "concept": "Sorceress Duchess Beatrice: Arcane Nova Flurry. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_steampunk_automaton_princess_alice_overclock_steam_drill",
+        "group": "monster",
+        "name": "Steampunk Automaton Princess Alice",
+        "skill": "Overclock Steam Drill",
+        "concept": "Steampunk Automaton Princess Alice: Overclock Steam Drill. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_steam_gear_gunner_victoria_sniper_vapor_blast",
+        "group": "monster",
+        "name": "Steam Gear Gunner Victoria",
+        "skill": "Sniper Vapor Blast",
+        "concept": "Steam Gear Gunner Victoria: Sniper Vapor Blast. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_clockwork_maid_nicole_mechanical_sweep",
+        "group": "monster",
+        "name": "Clockwork Maid Nicole",
+        "skill": "Mechanical Sweep",
+        "concept": "Clockwork Maid Nicole: Mechanical Sweep. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 13,
+    "file": "combat-13.png",
+    "rows": [
+      {
+        "id": "monster_kitsune_shrine_maiden_chiyo_foxfire_blossom_burst",
+        "group": "monster",
+        "name": "Kitsune Shrine Maiden Chiyo",
+        "skill": "Foxfire Blossom Burst",
+        "concept": "Kitsune Shrine Maiden Chiyo: Foxfire Blossom Burst. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_sakura_blossom_tengu_ayame_kamaitachi_whirlwind",
+        "group": "monster",
+        "name": "Sakura Blossom Tengu Ayame",
+        "skill": "Kamaitachi Whirlwind",
+        "concept": "Sakura Blossom Tengu Ayame: Kamaitachi Whirlwind. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_nine_tailed_matriarch_tamamo_foxfire_ninefold_bloom",
+        "group": "monster",
+        "name": "Nine-Tailed Matriarch Tamamo",
+        "skill": "Foxfire Ninefold Bloom",
+        "concept": "Nine-Tailed Matriarch Tamamo: Foxfire Ninefold Bloom. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_clockwork_sovereign_chrono_alice_chrono_overdrive_beam",
+        "group": "monster",
+        "name": "Clockwork Sovereign Chrono Alice",
+        "skill": "Chrono Overdrive Beam",
+        "concept": "Clockwork Sovereign Chrono Alice: Chrono Overdrive Beam. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 14,
+    "file": "combat-14.png",
+    "rows": [
+      {
+        "id": "monster_water_archon_ondine_tidal_deluge_torrent",
+        "group": "monster",
+        "name": "Water Archon Ondine",
+        "skill": "Tidal Deluge Torrent",
+        "concept": "Water Archon Ondine: Tidal Deluge Torrent. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_ice_empress_borealia_absolute_zero_freeze",
+        "group": "monster",
+        "name": "Ice Empress Borealia",
+        "skill": "Absolute Zero Freeze",
+        "concept": "Ice Empress Borealia: Absolute Zero Freeze. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_pharaoh_queen_nefertia_curse_of_the_sun_god",
+        "group": "monster",
+        "name": "Pharaoh Queen Nefertia",
+        "skill": "Curse of the Sun God",
+        "concept": "Pharaoh Queen Nefertia: Curse of the Sun God. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_void_empress_tiamat_void_annihilation_breath",
+        "group": "monster",
+        "name": "Void Empress Tiamat",
+        "skill": "Void Annihilation Breath",
+        "concept": "Void Empress Tiamat: Void Annihilation Breath. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 15,
+    "file": "combat-15.png",
+    "rows": [
+      {
+        "id": "monster_slime_queen_aurelia_royal_acid_nova",
+        "group": "monster",
+        "name": "Slime Queen Aurelia",
+        "skill": "Royal Acid Nova",
+        "concept": "Slime Queen Aurelia: Royal Acid Nova. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_dragon_princess_ignis_cataclysmic_dragonflare",
+        "group": "monster",
+        "name": "Dragon Princess Ignis",
+        "skill": "Cataclysmic Dragonflare",
+        "concept": "Dragon Princess Ignis: Cataclysmic Dragonflare. A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_crypt_lord_malthazar_soul_reap",
+        "group": "monster",
+        "name": "ราชันไร้ชีพ มัลธาซาร์ (Crypt Lord Malthazar)",
+        "skill": "คำสาปกลืนวิญญาณ (Soul Reap)",
+        "concept": "ราชันไร้ชีพ มัลธาซาร์ (Crypt Lord Malthazar): คำสาปกลืนวิญญาณ (Soul Reap). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_flame_drake_lord_solar_dragon_breath",
+        "group": "monster",
+        "name": "จอมมังกรอัคคี อิ๊กนีเชียส (Flame Drake Lord)",
+        "skill": "ลมหายใจมังกรสุริยะ (Solar Dragon Breath)",
+        "concept": "จอมมังกรอัคคี อิ๊กนีเชียส (Flame Drake Lord): ลมหายใจมังกรสุริยะ (Solar Dragon Breath). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      }
+    ]
+  },
+  {
+    "index": 16,
+    "file": "combat-16.png",
+    "rows": [
+      {
+        "id": "monster_glacial_yeti_titan_avalanche_slam",
+        "group": "monster",
+        "name": "พญาเยติเหมันต์ ไครโอส (Glacial Yeti Titan)",
+        "skill": "ทุบผาหิมะถล่ม (Avalanche Slam)",
+        "concept": "พญาเยติเหมันต์ ไครโอส (Glacial Yeti Titan): ทุบผาหิมะถล่ม (Avalanche Slam). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_ancient_mimic_gold_crunch",
+        "group": "monster",
+        "name": "กล่องปีศาจกินคน (Ancient Mimic)",
+        "skill": "เขี้ยวกลืนกินทอง (Gold Crunch)",
+        "concept": "กล่องปีศาจกินคน (Ancient Mimic): เขี้ยวกลืนกินทอง (Gold Crunch). A unique splendid visual spell manifestation fitting this character identity; no character body."
+      },
+      {
+        "id": "monster_lake_goblin_girl_mizuki",
+        "group": "monster",
+        "name": "Lake Goblin Girl Mizuki",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Lake Goblin Girl Mizuki, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_river_harpy_maiden_zephyra",
+        "group": "monster",
+        "name": "River Harpy Maiden Zephyra",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for River Harpy Maiden Zephyra, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 17,
+    "file": "combat-17.png",
+    "rows": [
+      {
+        "id": "monster_highway_bandit_lass_scarlett",
+        "group": "monster",
+        "name": "Highway Bandit Lass Scarlett",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Highway Bandit Lass Scarlett, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_briar_kobold_witch_maya",
+        "group": "monster",
+        "name": "Briar Kobold Witch Maya",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Briar Kobold Witch Maya, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_chimera_empress_chimaria",
+        "group": "monster",
+        "name": "Chimera Empress Chimaria",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Chimera Empress Chimaria, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_yeti_chieftain_maiden_borealia",
+        "group": "monster",
+        "name": "Yeti Chieftain Maiden Borealia",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Yeti Chieftain Maiden Borealia, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 18,
+    "file": "combat-18.png",
+    "rows": [
+      {
+        "id": "monster_glacial_golem_maiden_crystalina",
+        "group": "monster",
+        "name": "Glacial Golem Maiden Crystalina",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Glacial Golem Maiden Crystalina, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_ancient_frost_dragoness_saphira",
+        "group": "monster",
+        "name": "Ancient Frost Dragoness Saphira",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Ancient Frost Dragoness Saphira, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_sandstone_sphinx_queen_nefertia",
+        "group": "monster",
+        "name": "Sandstone Sphinx Queen Nefertia",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Sandstone Sphinx Queen Nefertia, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_clockwork_maiden_nicole",
+        "group": "monster",
+        "name": "Clockwork Maiden Nicole",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Clockwork Maiden Nicole, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 19,
+    "file": "combat-19.png",
+    "rows": [
+      {
+        "id": "monster_obsidian_golem_valkyrie_onyxia",
+        "group": "monster",
+        "name": "Obsidian Golem Valkyrie Onyxia",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Obsidian Golem Valkyrie Onyxia, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_fire_wyrm_matriarch_pyra",
+        "group": "monster",
+        "name": "Fire Wyrm Matriarch Pyra",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Fire Wyrm Matriarch Pyra, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_magma_golem_queen_ignitia",
+        "group": "monster",
+        "name": "Magma Golem Queen Ignitia",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Magma Golem Queen Ignitia, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_infernal_archdemoness_lilith",
+        "group": "monster",
+        "name": "Infernal Archdemoness Lilith",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Infernal Archdemoness Lilith, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 20,
+    "file": "combat-20.png",
+    "rows": [
+      {
+        "id": "monster_abyssal_siren_empress_lorelei",
+        "group": "monster",
+        "name": "Abyssal Siren Empress Lorelei",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Abyssal Siren Empress Lorelei, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_abyssal_kraken_maiden_ursula",
+        "group": "monster",
+        "name": "Abyssal Kraken Maiden Ursula",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Abyssal Kraken Maiden Ursula, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_void_warden_priestess_nihilia",
+        "group": "monster",
+        "name": "Void Warden Priestess Nihilia",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Void Warden Priestess Nihilia, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_clockwork_automaton_princess_alice",
+        "group": "monster",
+        "name": "Clockwork Automaton Princess Alice",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Clockwork Automaton Princess Alice, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 21,
+    "file": "combat-21.png",
+    "rows": [
+      {
+        "id": "monster_dryad_maiden_alura",
+        "group": "monster",
+        "name": "Dryad Maiden Alura",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Dryad Maiden Alura, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_naiad_sovereign_ondine",
+        "group": "monster",
+        "name": "Naiad Sovereign Ondine",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Naiad Sovereign Ondine, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_lotus_maiden_nelumbo",
+        "group": "monster",
+        "name": "Lotus Maiden Nelumbo",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for Lotus Maiden Nelumbo, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      },
+      {
+        "id": "monster_river_nymph_sabrina",
+        "group": "monster",
+        "name": "River Nymph Sabrina",
+        "skill": "Oppressive Strike",
+        "concept": "Distinct signature attack for River Nymph Sabrina, express their creature species, weapon and habitat as spectacular magical impact, no body"
+      }
+    ]
+  },
+  {
+    "index": 22,
+    "file": "combat-22.png",
+    "rows": [
+      {
+        "id": "monster_river_kraken_maiden",
+        "group": "monster",
+        "name": "River Kraken Maiden",
+        "skill": "Tidal Crush",
+        "concept": "turquoise coiling tentacles of water and swirling frothy whirlpool"
+      },
+      {
+        "id": "companion_gobby",
+        "group": "companion",
+        "name": "ก็อบลินสาวขี้อ้อน ก็อบบี้ (Goblin Lass Gobby)",
+        "skill": "Goblin Gold Steal",
+        "concept": "Goblin Gold Steal: splendid unique human dagger magic in #22c55e; +6 ATK, ช่วยขโมยทอง 20G ในการรบ. No character."
+      },
+      {
+        "id": "companion_lulu",
+        "group": "companion",
+        "name": "โคโบลด์สาวน้อยหูตูบ ลูลู่ (Kobold Pup Lulu)",
+        "skill": "Kobold Digging Barrier",
+        "concept": "Kobold Digging Barrier: splendid unique human pickaxe magic in #f59e0b; +6 DEF, ขุดแร่หายากเพิ่มโชค LUK +5. No character."
+      },
+      {
+        "id": "companion_pudding",
+        "group": "companion",
+        "name": "สไลม์สาวใสบริสุทธิ์ พุดดิ้ง (Slime Girl Pudding)",
+        "skill": "Gelatin Shield Blast",
+        "concept": "Gelatin Shield Blast: splendid unique slime none magic in #38bdf8; +30 Max HP, ฟื้นฟูเลือดอัตโนมัติ. No character."
+      }
+    ]
+  },
+  {
+    "index": 23,
+    "file": "combat-23.png",
+    "rows": [
+      {
+        "id": "companion_silva",
+        "group": "companion",
+        "name": "บีสต์เกิร์ลหมาป่าทุ่งหญ้า ซิลวา (Meadow Wolf Silva)",
+        "skill": "Wolf Pack Pounce",
+        "concept": "Wolf Pack Pounce: splendid unique human claw magic in #84cc16; +8 SPD, กระโจนกัดคู่ศัตรู. No character."
+      },
+      {
+        "id": "companion_shadow_panther",
+        "group": "companion",
+        "name": "สาวเสือดำรัตติกาล ชาโดว์ (Shadow Panther Shadow)",
+        "skill": "Night Ambush",
+        "concept": "Night Ambush: splendid unique human dagger magic in #6366f1; +8 ATK, +6 SPD, การโจมตีติดคริติคอลบ่อยขึ้น. No character."
+      },
+      {
+        "id": "companion_frost_elsa",
+        "group": "companion",
+        "name": "อัศวินสาววิญญาณเยือกแข็ง เอลซ่า (Frost Ghost Elsa)",
+        "skill": "Frost Glaze Armor",
+        "concept": "Frost Glaze Armor: splendid unique ghost sword magic in #a5f3fc; +8 DEF, +6 MAG, เกราะน้ำแข็งดูดซับดาเมจ. No character."
+      },
+      {
+        "id": "companion_yukiko",
+        "group": "companion",
+        "name": "เยติสาวขนนุ่ม ยูกิโกะ (Fluffy Yeti Yukiko)",
+        "skill": "Snowstorm Hug",
+        "concept": "Snowstorm Hug: splendid unique human none magic in #e0f2fe; +10 DEF, มอบความอบอุ่นต้านทานหนาว. No character."
+      }
+    ]
+  },
+  {
+    "index": 24,
+    "file": "combat-24.png",
+    "rows": [
+      {
+        "id": "companion_glacia",
+        "group": "companion",
+        "name": "เจ้าหญิงมังกรน้ำแข็ง เกลเซีย (Ice Drake Glacia)",
+        "skill": "Glacial Breath",
+        "concept": "Glacial Breath: splendid unique human none magic in #06b6d4; +9 MAG, พ่นไอเย็นแช่แข็งศัตรู. No character."
+      },
+      {
+        "id": "companion_safira",
+        "group": "companion",
+        "name": "สาวนักดาบทราย ซาฟิรา (Sand Dune Safira)",
+        "skill": "Mirage Strike",
+        "concept": "Mirage Strike: splendid unique human scimitar magic in #f97316; +8 ATK, +6 LUK, โบนัสทองคำหลังชนะศึก. No character."
+      },
+      {
+        "id": "companion_nefertiti",
+        "group": "companion",
+        "name": "ฟาโรห์สาวมัมมี่มนตรา เนเฟอร์ติติ (Mummy Queen Nefertiti)",
+        "skill": "Pharaoh Sand Curse",
+        "concept": "Pharaoh Sand Curse: splendid unique human staff magic in #eab308; +10 MAG, ปลดปล่อยคำสาปโบราณ. No character."
+      },
+      {
+        "id": "companion_fizzy",
+        "group": "companion",
+        "name": "อิมป์สาวน้อยไฟลุก ฟิซซี่ (Brimstone Imp Fizzy)",
+        "skill": "Hellfire Spark",
+        "concept": "Hellfire Spark: splendid unique human none magic in #ef4444; +8 MAG, เผาผลาญศัตรูต่อเนื่อง. No character."
+      }
+    ]
+  },
+  {
+    "index": 25,
+    "file": "combat-25.png",
+    "rows": [
+      {
+        "id": "companion_selina",
+        "group": "companion",
+        "name": "สาวแมงป่องหางเพลิง เซลิน่า (Magma Stinger Selina)",
+        "skill": "Molten Stinger",
+        "concept": "Molten Stinger: splendid unique human claw magic in #dc2626; +7 ATK, +7 DEF, พิษลาวาเข้มข้น. No character."
+      },
+      {
+        "id": "companion_andrea",
+        "group": "companion",
+        "name": "เมดจักรกลศิลาดำ แอนเดรีย (Obsidian Maid Andrea)",
+        "skill": "Obsidian Barrier",
+        "concept": "Obsidian Barrier: splendid unique mech shield magic in #475569; +12 DEF, สร้างบาเรียหินดำดูดซับความเสียหาย. No character."
+      },
+      {
+        "id": "companion_alice",
+        "group": "companion",
+        "name": "เจ้าหญิงจักรกล อลิซ (Automaton Princess Alice)",
+        "skill": "Clockwork Overdrive",
+        "concept": "Clockwork Overdrive: splendid unique mech none magic in #f59e0b; +10 DEF, +6 MAG, คลื่นกระแทกไอน้ำ. No character."
+      },
+      {
+        "id": "companion_victoria",
+        "group": "companion",
+        "name": "มือปืนสาวสตรีมพังก์ วิกตอเรีย (Gunner Victoria)",
+        "skill": "Gatling Suppressive Fire",
+        "concept": "Gatling Suppressive Fire: splendid unique human gun magic in #0ea5e9; +10 ATK, +8 SPD, ระดมยิงปืนกลสนับสนุน. No character."
+      }
+    ]
+  },
+  {
+    "index": 26,
+    "file": "combat-26.png",
+    "rows": [
+      {
+        "id": "companion_nicole",
+        "group": "companion",
+        "name": "เมดสาวไขลาน นิโคล (Clockwork Nicole)",
+        "skill": "Earl Grey Restoration",
+        "concept": "Earl Grey Restoration: splendid unique mech tray magic in #ec4899; +8 DEF, +8 SPD, เสิร์ฟชาฟื้นฟู HP/MP ทุกเทิร์น. No character."
+      },
+      {
+        "id": "companion_chiyo",
+        "group": "companion",
+        "name": "มิโกะจิ้งจอกเก้าหาง จิโยะ (Nine-Tailed Kitsune Chiyo)",
+        "skill": "Nine Fox Spirit Fire",
+        "concept": "Nine Fox Spirit Fire: splendid unique human gohei magic in #f43f5e; +10 MAG, +8 LUK, ปัดเป่าคำสาปและบัฟโชคลาภ. No character."
+      },
+      {
+        "id": "companion_ayame",
+        "group": "companion",
+        "name": "เทนงูสาวขนนกซากุระ อายาเมะ (Sakura Tengu Ayame)",
+        "skill": "Cherry Blossom Gale",
+        "concept": "Cherry Blossom Gale: splendid unique human fan magic in #f472b6; +10 SPD, +6 ATK, พัดสายลมคมกริบ. No character."
+      },
+      {
+        "id": "companion_alura",
+        "group": "companion",
+        "name": "นิมฟ์พฤกษา อาลูร่า (Dryad Nymph Alura)",
+        "skill": "Nature Embrace",
+        "concept": "Nature Embrace: splendid unique human staff magic in #10b981; +8 MAG, +35 HP, เถาวัลย์พันธนาการศัตรู. No character."
+      }
+    ]
+  },
+  {
+    "index": 27,
+    "file": "combat-27.png",
+    "rows": [
+      {
+        "id": "companion_melody",
+        "group": "companion",
+        "name": "ไซเรนสาวห้วงอเวจี เมโลดี้ (Abyss Siren Melody)",
+        "skill": "Siren Abyssal Lullaby",
+        "concept": "Siren Abyssal Lullaby: splendid unique mermaid none magic in #a855f7; +11 MAG, ร้องเพลงสะกดจิตลดพลังศัตรู. No character."
+      },
+      {
+        "id": "companion_chloe",
+        "group": "companion",
+        "name": "เคออสสไลม์สาวมืด โคลอี้ (Chaos Slime Chloe)",
+        "skill": "Void Fluid Split",
+        "concept": "Void Fluid Split: splendid unique slime none magic in #8b5cf6; +35 Max HP, หลบหลีกการโจมตีทางกายภาพ. No character."
+      },
+      {
+        "id": "companion_gara",
+        "group": "companion",
+        "name": "จอมโจรสาวโรบินฮู้ด การาเกะ (Banditess Gara)",
+        "skill": "Shadow Prowl Loot",
+        "concept": "Shadow Prowl Loot: splendid unique human dagger magic in #eab308; +8 ATK, +8 SPD, เพิ่มทองที่ได้รับ 30%. No character."
+      },
+      {
+        "id": "companion_ignis",
+        "group": "companion",
+        "name": "เจ้าหญิงมังกรเพลิงบรรพกาล อิกนิส (Dragon Princess Ignis)",
+        "skill": "Ancient Dragon Flare",
+        "concept": "Ancient Dragon Flare: splendid unique human none magic in #ef4444; +15 ATK, +15 MAG, พ่นเปลวเพลิงมังกรบรรพกาลล้างผลาญ. No character."
+      }
+    ]
+  },
+  {
+    "index": 28,
+    "file": "combat-28.png",
+    "rows": [
+      {
+        "id": "companion_mia",
+        "group": "companion",
+        "name": "สาวหูแมวนักล่า มิอา",
+        "skill": "Lupine Cat Claw Rush",
+        "concept": "Lupine Cat Claw Rush: splendid unique human dagger magic in #10b981; พุ่งกระโจนข่วนศัตรูต่อเนื่องด้วยกรงเล็บลมกรด!. No character."
+      },
+      {
+        "id": "companion_sylphira",
+        "group": "companion",
+        "name": "เจ้าหญิงเอลฟ์ ซิลฟิรา",
+        "skill": "Emerald Waterfall Deluge",
+        "concept": "Emerald Waterfall Deluge: splendid unique human staff magic in #38bdf8; อัญเชิญสายน้ำตกมรกตชำระล้างศัตรูและฟื้นฟูเลือด!. No character."
+      },
+      {
+        "id": "companion_slime_princess",
+        "group": "companion",
+        "name": "เจ้าหญิงสไลม์ ออเรเลีย (Slime Princess Aurelia)",
+        "skill": "Acid Gel Rapier — Corrosive Burst",
+        "concept": "Acid Gel Rapier — Corrosive Burst: splendid unique slime rapier magic in #34d399; ดาบเรเปียร์เจลกรดไล่สีเขียวมรกต-ฟ้าคราม แทงทะลุเกราะ พร้อมปล่อยฟองสบู่กรดแรงดันสูงแตกกระจาย 4 ลูก. No character."
+      },
+      {
+        "id": "companion_beastgirl",
+        "group": "companion",
+        "name": "สาวน้อยอสูร",
+        "skill": "Beast Instinct",
+        "concept": "Beast Instinct: splendid unique human claw magic in #ec4899; +6 All Stats, คุ้มกันภัยทุกการเดินทาง. No character."
+      }
+    ]
+  },
+  {
+    "index": 29,
+    "file": "combat-29.png",
+    "rows": [
+      {
+        "id": "common_slash",
+        "group": "common",
+        "name": "slash",
+        "skill": "slash",
+        "concept": "silver crescent blade with bright contact star and flying sparks"
+      },
+      {
+        "id": "common_smash",
+        "group": "common",
+        "name": "smash",
+        "skill": "smash",
+        "concept": "amber massive ground fracture with stone debris and expanding dust"
+      },
+      {
+        "id": "common_parry",
+        "group": "common",
+        "name": "parry",
+        "skill": "parry",
+        "concept": "crossed steel gold blade collision with shower of sparks"
+      },
+      {
+        "id": "common_guard",
+        "group": "common",
+        "name": "guard",
+        "skill": "guard",
+        "concept": "ornate sapphire crystalline aegis shield"
+      }
+    ]
+  },
+  {
+    "index": 30,
+    "file": "combat-30.png",
+    "rows": [
+      {
+        "id": "common_arcane",
+        "group": "common",
+        "name": "arcane",
+        "skill": "arcane",
+        "concept": "violet astral sigil with orbiting crystalline stars"
+      },
+      {
+        "id": "common_flame",
+        "group": "common",
+        "name": "flame",
+        "skill": "flame",
+        "concept": "orange red roaring inferno with rolling flame tongues"
+      },
+      {
+        "id": "common_frost",
+        "group": "common",
+        "name": "frost",
+        "skill": "frost",
+        "concept": "turquoise jagged ice shard eruption with snowflakes"
+      },
+      {
+        "id": "common_storm",
+        "group": "common",
+        "name": "storm",
+        "skill": "storm",
+        "concept": "branching cobalt lightning with shattered electric crystals"
+      }
+    ]
+  },
+  {
+    "index": 31,
+    "file": "combat-31.png",
+    "rows": [
+      {
+        "id": "common_shadow",
+        "group": "common",
+        "name": "shadow",
+        "skill": "shadow",
+        "concept": "black purple eclipse with spectral scythes"
+      },
+      {
+        "id": "common_holy",
+        "group": "common",
+        "name": "holy",
+        "skill": "holy",
+        "concept": "gold divine pillar with white feather wings"
+      },
+      {
+        "id": "common_nature",
+        "group": "common",
+        "name": "nature",
+        "skill": "nature",
+        "concept": "emerald thorny vines with verdant leaves and flowers"
+      },
+      {
+        "id": "common_heal",
+        "group": "common",
+        "name": "heal",
+        "skill": "heal",
+        "concept": "jade gold blossoming lilies and healing light"
+      }
+    ]
+  },
+  {
+    "index": 32,
+    "file": "combat-32.png",
+    "rows": [
+      {
+        "id": "common_summon",
+        "group": "common",
+        "name": "summon",
+        "skill": "summon",
+        "concept": "ornate violet dimensional gate with stardust"
+      },
+      {
+        "id": "common_nova",
+        "group": "common",
+        "name": "nova",
+        "skill": "nova",
+        "concept": "world ending crimson gold fiery blast with billowing smoke"
+      },
+      {
+        "id": "common_beam",
+        "group": "common",
+        "name": "beam",
+        "skill": "beam",
+        "concept": "horizontal blue white plasma lance pointing RIGHT, charging into coherent beam then breaking into sparks"
+      },
+      {
+        "id": "common_evade",
+        "group": "common",
+        "name": "evade",
+        "skill": "evade",
+        "concept": "pale cyan feather-like curved wind trails dissolving into mist"
+      }
+    ]
+  }
+]

@@ -10,7 +10,7 @@ import { ecosystemSystem } from '../game/EcosystemSystem';
 import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
 import { customIsometricHeroRenderer } from '../engine/CustomIsometricHeroRenderer';
 import { companionSprites } from '../engine/CompanionSpriteRenderer';
-import { COMPANION_SPRITE_SIZE } from '../game/CompanionDatabase';
+import { COMPANION_SPRITE_SIZE, resolveCompanionKey } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
 import { networkRoomManager } from '../engine/NetworkRoomManager';
 import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
@@ -423,6 +423,9 @@ export class BattleUI {
     // Never carry a summon over from a previous battle.
     this.activeSummon = null;
 
+    void combatVFX.preloadOwner({job:p.classKey,isDarkling:p.isDarkling});
+    void combatVFX.preloadOwner({name:enemy.name,skill:enemy.skillName});
+    if(p.companion)void combatVFX.preloadOwner({companionKey:resolveCompanionKey(p.companion)});
     this.effectClock.reset(performance.now());
 
     // Switch to battle chiptune theme
@@ -796,9 +799,10 @@ export class BattleUI {
     this.activeSummon = { companion, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
 
     // Spawn magical companion warp portal
+    combatVFX.setOwner({companionKey:resolveCompanionKey(companion)});
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, companion.color || '#ec4899');
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${companion.name}!`, 'crit');
-    combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, enemyX, enemyY, 'mage', false);
+    combatVFX.triggerSkillCutscene(companion.skillName, summonX, summonY, isPAtk ? enemyX : summonGround.playerX, isPAtk ? enemyY : summonGround.playerY, 'mage', false);
 
     if (isPAtk) {
       // Offensive Companion Assist
@@ -868,6 +872,7 @@ export class BattleUI {
     const enemyX = summonGround.enemyX;
     const enemyY = summonGround.enemyY;
 
+    combatVFX.setOwner({companionKey:resolveCompanionKey(comp)});
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, comp.color || '#ec4899');
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${comp.name}!`, 'crit');
     this.activeSummon = { companion: comp, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
@@ -977,11 +982,15 @@ export class BattleUI {
       : customIsometricMonsterRenderer.getMonsterSprite(combatant.name, 'SW', 'idle', 0);
   }
 
-  private executeRoundWithAnimation(atkAction: AttackerAction, defAction: DefenderAction) {
+  private async executeRoundWithAnimation(atkAction: AttackerAction, defAction: DefenderAction) {
     const b = this.game.activeBattle;
     if (!b) return;
 
     this.isExecutingRound = true;
+    const artOwner={job:b.attacker.playerRef?.classKey,name:b.attacker.playerRef?undefined:b.attacker.name,skill:b.attacker.skillName,isDarkling:b.attacker.playerRef?.isDarkling};
+    combatVFX.setOwner(artOwner);
+    await combatVFX.preloadOwner(artOwner);
+    if(this.game.activeBattle!==b){this.isExecutingRound=false;return;}
 
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -1173,6 +1182,7 @@ export class BattleUI {
         combatVFX.triggerHitstop(8);
         combatVFX.triggerImpactFlash('#fde047', 0.9);
         combatVFX.triggerSpeedLines('rgba(234, 179, 8, 0.9)', 28);
+        combatVFX.setOwner({job:b.defender.playerRef?.classKey,name:b.defender.playerRef?undefined:b.defender.name,skill:b.defender.skillName});
         combatVFX.spawnCounterHit(
           atkBaseX + this.cutscene.attackerOffsetX,
           atkBaseY + this.cutscene.attackerOffsetY,

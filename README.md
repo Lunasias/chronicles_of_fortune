@@ -220,4 +220,4 @@ MIT License - see [LICENSE](LICENSE).
 
 ### Battle effects
 
-The new [battle effects suite](docs/art-review/BATTLE_EFFECTS.md) includes sixteen pixel geometry families and class/element choreography. Open `/effects-review.html` for action playback, frame scrubbing and reduced-motion comparison.
+The [generated combat artwork](docs/art-review/combat-v3/README.md) delivers 132 owner-specific and shared animations (792 frames) in 33 transparent PNG atlases. Every effect pixel comes from generated raster artwork. Open `/effects-review.html` to select a job, monster or companion and scrub its animation.

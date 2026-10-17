@@ -30,6 +30,7 @@
     "src/game/GameState.ts",
     "src/game/SaveManager.ts",
     "src/ui/MobileDisplayManager.ts",
-    "src/util/Html.ts"
+    "src/util/Html.ts",
+    "src/game/MonsterDatabase.ts"
   ]
 }

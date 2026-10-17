@@ -108,3 +108,11 @@ Actual play rolled three, selected a visible destination and entered its NPC eve
 ### Battle grounding correction
 
 Rear scenery anchors previously extended above the rendered floor horizon. Extended the floor two rows rearward and placed every dressing foot at least 12px inside it. Scenery and landmarks now use their actual visible pixel base, with cached fallback anchor detection and tight pixel contact shadows. The viewport regression check also rejects scenery feet in the sky. Refreshed both battle screenshots after browser inspection.
+
+## Generated combat artwork v3 — 2026-10-17
+
+- 33 transparent generated PNG atlases, 132 explicit owner/common animation profiles, 792 occupied distinct frames. Final packing pass adds clear space around peak drawings; no procedural effect art is drawn.
+- All playable job keys, realm rosters, town occupiers and companion keys have explicit registry coverage. Identity and skill disambiguate Nicole variants. World/dungeon boss identities and River Kraken are included in the catalog.
+- SHA-256 checks verify that delivered source files are byte-identical to the selected image_gen originals. Manifest records alpha coverage and per-frame occupancy/hash. The final atlases total about 65.6 MiB and load on demand.
+- Tests cover image-only rendering, integer placement, read-only playback, six-frame timing, fixed peak under reduced motion, lifecycle/hitstop, owner routing, atlas extraction preserving particles, and bounded source/frame caches. All 190 tests, typecheck, build and CSS coverage pass.
+- Browser-reviewed generated raster previews of warrior, cleric, dragon and Pudding in effects-review.html; saved beside combat-v3/README.md. This uses the real combat VFX engine and scenery with preview actors. A stale pre-existing battle tab was blocked by browser URL policy, so this pass does not claim a new end-to-end battle UI playthrough or a physical-device performance benchmark.

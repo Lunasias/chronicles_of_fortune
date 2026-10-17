@@ -106,3 +106,7 @@ material and dressing atlases dated 2026-10-17 are added to the source manifest 
 Terrain remains 96×48 native projection; detailed biome material samples and depth-sorted
 96px scenery now carry the world's visual density. The 312 graph destinations retain their
 IDs, dice costs and ownership identity under the expanded geographic layout.
+
+## Generated combat artwork v3
+
+Combat VFX use the original generated transparent PNG atlases under public/assets/combat-v3. All 132 profiles have explicit image ownership; player names inherit their selected job, while monsters and companions resolve by identity and skill. Code only selects, crops and plays the painted frames. Procedural rings, arcs, beams and particle shapes no longer render as battle effect art. Source sheets, prompts, inventory and QA manifest are retained.

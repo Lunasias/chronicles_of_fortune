@@ -1,4 +1,5 @@
-import { pixelDisc, pixelEllipse, pixelRing, pixelStroke, pixelVignette } from './PixelFx';
+import { pixelRing, pixelStroke, pixelVignette } from './PixelFx';
+import { resolveCombatArt, generatedCombatArt, type CombatArtOwner } from './GeneratedCombatArt';
 import { BattleEffects } from './BattleEffects';
 import { magicElementForJob } from './MagicArt';
 import { prefersReducedMotion, graphicsPreferences } from '../ui/GraphicsSettings';
@@ -125,6 +126,10 @@ export interface CutInBanner {
 
 export class CombatVFXEngine {
   public readonly choreography = new BattleEffects();
+  public owner:CombatArtOwner={};
+  setOwner(owner:CombatArtOwner){this.owner=owner;}
+  preloadOwner(owner:CombatArtOwner){return generatedCombatArt.preload([resolveCombatArt(owner),'common_guard','common_slash','common_beam','common_summon']);}
+
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
   public groundCracks: GroundCrack[] = [];
@@ -167,7 +172,7 @@ export class CombatVFXEngine {
   constructor() {}
 
   reset() {
-    this.choreography.clear();
+    this.choreography.clear(); this.owner={};
     this.particles.length = this.slashArcs.length = this.groundCracks.length = this.runicRings.length = 0;
     this.floatingTexts.length = this.magicLaserBeams.length = this.summonPortals.length = 0;
     this.activeCutscene = null; this.activeCutInBanner = null;
@@ -293,7 +298,7 @@ export class CombatVFXEngine {
   // 1. ATTACK: DIAGONAL ISOMETRIC SLASH & BLOOD/SPARK BURST
   // =========================================================================
   spawnAttackHit(monsterX: number, monsterY: number, isRightToLeft = false) {
-    this.choreography.emit('slash', monsterX, monsterY, {fromX: monsterX + (isRightToLeft ? 100 : -100)});
+    this.choreography.emit('slash', monsterX, monsterY, {fromX: monsterX + (isRightToLeft ? 100 : -100),artId:resolveCombatArt(this.owner,'slash'),power:.7});
     this.triggerScreenShake(10);
 
     // Diagonal blade arc sliced along isometric perspective
@@ -336,7 +341,7 @@ export class CombatVFXEngine {
   // 2. STRIKE: 2.5D ISOMETRIC CRATER & SPLINTERING BONE DEBRIS
   // =========================================================================
   spawnStrikeHit(monsterX: number, monsterY: number) {
-    this.choreography.emit('smash', monsterX, monsterY, {power: 1.35});
+    this.choreography.emit('smash', monsterX, monsterY, {power: 1.35,artId:resolveCombatArt(this.owner,'smash')});
     this.triggerScreenShake(26);
 
     // 2.5D Flat Isometric Fracture Crater
@@ -388,7 +393,7 @@ export class CombatVFXEngine {
   // 3. MAGIC: FLAT ISOMETRIC RUNIC PENTAGRAM & VOID EXPLOSION
   // =========================================================================
   spawnMagicHit(monsterX: number, monsterY: number, isHeal = false, element: MagicElement = 'arcane') {
-    this.choreography.emit(isHeal ? 'heal' : element, monsterX, monsterY, {power: isHeal ? 1 : 1.2});
+    this.choreography.emit(isHeal ? 'heal' : element, monsterX, monsterY, {power: isHeal ? 1 : 1.2,artId:isHeal?'common_heal':resolveCombatArt(this.owner,element)});
     const palette = MAGIC_PALETTES[isHeal ? 'nature' : element];
     this.triggerScreenShake(isHeal ? 5 : 18);
 
@@ -435,7 +440,7 @@ export class CombatVFXEngine {
   // =========================================================================
   spawnCounterHit(clashX: number, clashY: number, attackerX: number, attackerY: number) {
     this.choreography.emit('parry', clashX, clashY, {power: 1.3});
-    this.choreography.emit('slash', attackerX, attackerY, {delay: 8, fromX: clashX});
+    this.choreography.emit('slash', attackerX, attackerY, {delay: 8, fromX: clashX,artId:resolveCombatArt(this.owner,'slash')});
     this.triggerScreenShake(20);
 
     // Parry sparks
@@ -489,7 +494,7 @@ export class CombatVFXEngine {
     const isBoss = lowerName.includes('dragon') || lowerName.includes('boss') || lowerName.includes('ignis') || lowerName.includes('wyrm');
     const isMagic = atkType === 'magic' || lowerName.includes('lich') || lowerName.includes('ghost') || lowerName.includes('witch');
 
-    this.choreography.emit(isBoss ? 'nova' : isMagic ? 'shadow' : 'slash', targetX, targetY, {power: isBoss ? 1.7 : 1, fromX});
+    this.choreography.emit(isBoss ? 'nova' : isMagic ? 'shadow' : 'slash', targetX, targetY, {power: isBoss ? 1.7 : 1, fromX,artId:resolveCombatArt(this.owner.name?this.owner:{name:monsterName},isMagic?'shadow':'slash')});
     if (isBoss) {
       // Abyssal Dragon Hellfire Eruption on Player
       const crackPoints: Array<{ x: number; y: number }> = [];
@@ -612,7 +617,7 @@ export class CombatVFXEngine {
     const job = classKey.toLowerCase();
     const kind = isDarkling ? 'shadow' : /warrior|knight|fighter|duelist|gladiator/.test(job) ? 'smash' : /thief|rogue/.test(job) ? 'slash' : /magician|mage|sorcer|archmage/.test(job) ? 'nova' : magicElementForJob(job);
     this.choreography.emit('summon', casterX, casterY + 40, {power: 1.25, color: MAGIC_PALETTES[magicElementForJob(job)][1]});
-    this.choreography.emit(kind, targetX, targetY, {power: 1.75, delay: 10, fromX: casterX, fromY: casterY});
+    this.choreography.emit(kind, targetX, targetY, {power: 1.75, delay: 10, fromX: casterX, fromY: casterY,artId:resolveCombatArt(this.owner.name||this.owner.companionKey||this.owner.job?this.owner:{job:classKey,isDarkling})});
     this.activeCutscene = {
       skillName,
       casterX,
@@ -651,84 +656,7 @@ export class CombatVFXEngine {
       isNested: true
     });
 
-    // Class-specific Dark Fantasy FX
-    const cls = classKey.toLowerCase();
-    if (cls === 'warrior' || isDarkling) {
-      // Colossal Blade Groundbreak: Massive ground cracks and cleave shockwave
-      this.spawnStrikeHit(targetX, targetY);
-      this.groundCracks.push({
-        x: targetX,
-        y: targetY,
-        radius: 65,
-        alpha: 1.0,
-        decay: 0.015,
-        points: [
-          { x: targetX - 50, y: targetY + 10 },
-          { x: targetX - 25, y: targetY - 15 },
-          { x: targetX, y: targetY },
-          { x: targetX + 30, y: targetY - 20 },
-          { x: targetX + 55, y: targetY + 15 }
-        ]
-      });
-      this.slashArcs.push({
-        x: targetX,
-        y: targetY - 20,
-        radius: 80,
-        startAngle: -Math.PI * 0.7,
-        endAngle: Math.PI * 0.4,
-        color: isDarkling ? '#be123c' : '#38bdf8',
-        width: 14,
-        alpha: 1.0,
-        decay: 0.02
-      });
-      this.triggerScreenShake(28);
-    } else if (cls === 'magician') {
-      // Megumin Explosion Nova: Catastrophic blast shockwave
-      this.spawnExplosionNova(targetX, targetY - 25, '#ef4444');
-      this.triggerScreenShake(34);
-      this.triggerSpeedLines('#f59e0b', 30);
-    } else if (cls === 'thief') {
-      // 5-Shadow Clone Strike Arcs
-      this.triggerScreenShake(22);
-      this.triggerSpeedLines('#10b981', 25);
-      for (let i = 0; i < 5; i++) {
-        const startAng = (i / 5) * Math.PI * 2;
-        this.slashArcs.push({
-          x: targetX,
-          y: targetY - 15,
-          radius: 50 + (i % 2) * 15,
-          startAngle: startAng,
-          endAngle: startAng + Math.PI * 0.8,
-          color: i % 2 === 0 ? '#10b981' : '#ec4899',
-          width: 6,
-          alpha: 1.0,
-          decay: 0.025
-        });
-      }
-    } else if (cls === 'cleric') {
-      // Holy Cross Judgment: Divine light pillar from heaven
-      this.triggerScreenShake(26);
-      this.triggerSpeedLines('#fde047', 28);
-      this.spawnMagicHit(targetX, targetY, true);
-      this.spawnMagicLaserBeam(targetX, 0, targetX, targetY, '#fde047', 36);
-    } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
-      // Horizontal Lightning Slicer: Screen-wide lightning slash
-      this.triggerScreenShake(30);
-      this.triggerSpeedLines('#38bdf8', 30);
-      this.spawnStrikeHit(targetX, targetY);
-      for (let i = 0; i < 50; i++) {
-        this.particles.push({
-          x: targetX + (Math.random() - 0.5) * 100,
-          y: targetY - 30 + (Math.random() - 0.5) * 40,
-          vx: (Math.random() - 0.5) * 12,
-          vy: (Math.random() - 0.5) * 6,
-          color: Math.random() > 0.4 ? '#38bdf8' : '#e0f2fe',
-          size: 3 + Math.random() * 5,
-          alpha: 1.0,
-          decay: 0.03
-        });
-      }
-    }
+    // The selected owner PNG supplies the whole signature, including its impact and aftermath.
   }
 
   // =========================================================================
@@ -738,7 +666,7 @@ export class CombatVFXEngine {
     this.triggerScreenShake(18);
     this.triggerSpeedLines(color, 24);
 
-    this.choreography.emit('beam', targetX, targetY, {fromX: casterX, fromY: casterY, color, power: Math.min(1.5,width/16)});
+    this.choreography.emit('beam', targetX, targetY, {fromX: casterX, fromY: casterY, color, power: Math.min(1.5,width/16),artId:this.owner.companionKey?resolveCombatArt(this.owner):'common_beam'});
     this.magicLaserBeams.push({
       casterX,
       casterY,
@@ -1008,115 +936,6 @@ export class CombatVFXEngine {
       ctx.restore();
     }
 
-    // World-pixel geometry: no scaled or rotated canvas paths in the core effects.
-    this.groundCracks.forEach(c => {
-      for (let i = 0; i < c.points.length; i++) {
-        const from = c.points[i], to = c.points[(i + 1) % c.points.length];
-        pixelStroke(ctx, from.x, from.y, to.x, to.y, 3, '#ba6d65', c.alpha);
-      }
-    });
-    this.runicRings.forEach(r => {
-      ctx.save(); ctx.globalAlpha = r.alpha;
-      pixelRing(ctx, r.x, r.y, r.radius, r.radius / 2, r.color, 2);
-      if (r.isNested) {
-        pixelRing(ctx, r.x, r.y, r.radius * .65, r.radius * .325, r.color, 1);
-        for (let i = 0; i < 5; i++) {
-          const a = i / 5 * Math.PI * 2 + r.angle, b = (i + 2) / 5 * Math.PI * 2 + r.angle;
-          pixelStroke(ctx, r.x + Math.cos(a) * r.radius * .65, r.y + Math.sin(a) * r.radius * .325,
-            r.x + Math.cos(b) * r.radius * .65, r.y + Math.sin(b) * r.radius * .325, 2, r.color, r.alpha);
-        }
-      }
-      ctx.restore();
-    });
-
-    // Summoning discs preserve the same native 2:1 plane as the board.
-    this.summonPortals.forEach(p => {
-      ctx.save(); ctx.globalAlpha = p.alpha;
-      pixelRing(ctx, p.x, p.y, p.radius, p.radius / 2, p.color, 2);
-      pixelRing(ctx, p.x, p.y, p.radius * .7, p.radius * .35, p.color, 1);
-      for (let i = 0; i < 6; i++) {
-        const a = i / 6 * Math.PI * 2 + p.angle;
-        pixelStroke(ctx, p.x + Math.cos(a) * p.radius * .7, p.y + Math.sin(a) * p.radius * .35,
-          p.x + Math.cos(a) * p.radius, p.y + Math.sin(a) * p.radius / 2, 2, p.color, p.alpha);
-      }
-      for (let band = 0; band < 8; band++) {
-        const t = band / 8;
-        ctx.globalAlpha = p.alpha * .65 * (1 - t * .65);
-        ctx.fillStyle = t < .4 ? p.color : '#eae7ce';
-        ctx.fillRect(Math.round(p.x - p.radius * .6), Math.round(p.y - p.pillarHeight * ((band + 1) / 8)),
-          Math.max(1, Math.round(p.radius * 1.2)), Math.max(1, Math.ceil(p.pillarHeight / 8)));
-      }
-      ctx.restore();
-    });
-
-    // 3. Draw Diagonal Slash Arcs
-    this.slashArcs.forEach(arc => {
-      ctx.save();
-      // A swept arc is stepped into integer segments along its own radius, so the blade edge is a
-      // pixel staircase rather than a resampled curve, and the whole arc uses one colour instead
-      // of a `shadowBlur` halo.
-      const sweep = arc.endAngle - arc.startAngle;
-      const segments = Math.max(4, Math.round((Math.abs(sweep) * arc.radius) / 3));
-      const thickness = Math.max(1, Math.round(arc.width));
-      ctx.globalAlpha = arc.alpha;
-      ctx.fillStyle = arc.color;
-      for (let i = 0; i <= segments; i++) {
-        const a = arc.startAngle + (sweep * i) / segments;
-        const x = arc.x + Math.cos(a) * arc.radius;
-        const y = arc.y + Math.sin(a) * arc.radius;
-        ctx.fillRect(Math.round(x - thickness / 2), Math.round(y - thickness / 2), thickness, thickness);
-      }
-      // A brighter core along the middle of the sweep, which is what a blade edge looks like.
-      ctx.fillStyle = '#ffffff';
-      for (let i = 0; i <= segments; i += 2) {
-        const a = arc.startAngle + (sweep * i) / segments;
-        ctx.fillRect(
-          Math.round(arc.x + Math.cos(a) * arc.radius),
-          Math.round(arc.y + Math.sin(a) * arc.radius),
-          1,
-          1
-        );
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    });
-
-    // Beams are three stepped strokes, with native pixel flares at their endpoints.
-    this.magicLaserBeams.forEach(b => {
-      const width = prefersReducedMotion() ? Math.min(12, b.width) : b.width;
-      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width * 2, b.color, b.alpha * .25);
-      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width, b.color, b.alpha * .85);
-      pixelStroke(ctx, b.casterX, b.casterY, b.targetX, b.targetY, width * .3, '#eee9d0', b.alpha);
-      pixelDisc(ctx, b.casterX, b.casterY, width * .6, '#eee9d0', b.alpha);
-      pixelDisc(ctx, b.targetX, b.targetY, width, b.color, b.alpha * .75);
-      pixelDisc(ctx, b.targetX, b.targetY, width * .4, '#eee9d0', b.alpha);
-    });
-
-    // 4. Draw Particles
-    this.particles.forEach(p => {
-      ctx.save();
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.alpha;
-      ctx.shadowColor = p.color;
-      const x = Math.round(p.x), y = Math.round(p.y), s = Math.max(2, Math.round(p.size));
-      if (p.shape === 'cross') {
-        ctx.fillRect(x - 1, y - s, 2, s * 2 + 1); ctx.fillRect(x - s, y - 1, s * 2 + 1, 2);
-      } else if (p.shape === 'shard') {
-        for (let dy = -s; dy <= s; dy++) { const width = Math.max(1, s - Math.abs(dy)); ctx.fillRect(x - width, y + dy, width * 2, 1); }
-      } else if (p.shape === 'spark') {
-        pixelStroke(ctx, x - 2, y - s * 2, x + 1, y, 2, p.color, p.alpha);
-        pixelStroke(ctx, x + 1, y, x - 1, y + s, 2, p.color, p.alpha);
-      } else if (p.shape === 'leaf') {
-        ctx.fillRect(x, y - 2, s, 2); ctx.fillRect(x - 2, y, s + 2, 2); ctx.fillRect(x - 2, y + 2, s, 2);
-      } else if (p.shape === 'ember') {
-        ctx.fillRect(x, y - s, 2, s * 2); ctx.fillRect(x - 1, y - 1, 4, s);
-      } else if (p.shape === 'wisp') {
-        ctx.fillRect(x - s, y - 1, s * 2, 2); ctx.fillRect(x - 1, y - s, 2, s * 2);
-        ctx.fillRect(x + s, y + 1, 2, 2);
-      } else pixelDisc(ctx, x, y, s, ctx.fillStyle, p.alpha);
-      ctx.restore();
-    });
-
     this.choreography.render(ctx, arenaWidth, arenaHeight, prefersReducedMotion(), graphicsPreferences.quality === 'balanced');
 
     // 5. Draw Bouncing Floating Combat Numbers & Text
@@ -1139,7 +958,7 @@ export class CombatVFXEngine {
     });
 
     // 6. Action Speed Lines (Anime Dynamic Slash Overlay)
-    this.renderSpeedLines(ctx, arenaWidth, arenaHeight);
+    // The PNG attack art supplies speed trails; no generated geometry overlay.
 
     // 7. Brown Dust 2 Style Cut-In Action Banner
     this.renderCutInBanner(ctx, arenaWidth, arenaHeight);
@@ -1205,27 +1024,6 @@ export class CombatVFXEngine {
     ctx.fillStyle = this.impactFlashColor;
     ctx.globalAlpha = Math.min(.18, this.impactFlashAlpha);
     ctx.fillRect(0, 0, w, h);
-    ctx.restore();
-  }
-
-  private renderSpeedLines(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    if (this.speedLinesAlpha <= 0.01 || prefersReducedMotion()) return;
-    ctx.save();
-    ctx.strokeStyle = this.speedLinesColor;
-    ctx.globalAlpha = Math.min(.24, this.speedLinesAlpha * .18);
-    ctx.lineWidth = 1;
-    const scx = w * 0.5;
-    const scy = h * 0.5;
-    const lineCount = 16;
-    for (let i = 0; i < lineCount; i++) {
-      const angle = (i / lineCount) * Math.PI * 2 + Math.sin(i * 99) * 0.04;
-      const innerR = Math.min(w, h) * 0.60 + (i % 4) * 18;
-      const outerR = Math.max(w, h) * 0.82;
-      ctx.beginPath();
-      ctx.moveTo(scx + Math.cos(angle) * innerR, scy + Math.sin(angle) * innerR);
-      ctx.lineTo(scx + Math.cos(angle) * outerR, scy + Math.sin(angle) * outerR);
-      ctx.stroke();
-    }
     ctx.restore();
   }
 

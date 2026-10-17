@@ -1,3 +1,5 @@
+> Superseded by [generated PNG combat artwork v3](combat-v3/README.md). This document records the earlier procedural pass.
+
 # Battle effects overhaul — 2026-10-17
 
 The combat engine now layers fixed-step, native-pixel choreography onto its impact particles, animation reactions and damage numbers. Sixteen geometry families cover blade crescents, ground-breaking strikes, parry ripostes, shields, arcane seals, fire eruptions, ice prisms, branching lightning, eclipsing shadow blades, winged holy pillars, nature spirals, healing, summons, novas, traveling beams and evasion.

@@ -9,6 +9,7 @@ import { customIsometricHeroRenderer } from '../.test-build/engine/CustomIsometr
 import { JOB_PROMOTIONS, TIER3_PROMOTIONS } from '../.test-build/game/Player.js';
 import png from '../scripts/lib/png.cjs';
 import { MAGIC_PALETTES, magicElementForJob } from '../.test-build/engine/MagicArt.js';
+import { generatedCombatArt } from '../.test-build/engine/GeneratedCombatArt.js';
 import { CombatVFXEngine, fitEffectText } from '../.test-build/engine/CombatVFXEngine.js';
 import { foliageForBiome } from '../.test-build/engine/BiomeArt.js';
 
@@ -127,23 +128,11 @@ test('promoted magic retains its elemental identity and each element has a disti
   assert.equal(new Set(Object.values(MAGIC_PALETTES).map(ramp => ramp.join())).size, 7);
 });
 
-test('core spell and summon effects keep integer pixels and balance the caller canvas stack', () => {
-  const fx = new CombatVFXEngine();
-  fx.runicRings.push({ x: 101.4, y: 120.6, radius: 32, color: '#acbcca', alpha: .8, decay: .1, angle: .3, isNested: true });
-  fx.summonPortals.push({ x: 180.2, y: 190.7, radius: 24, color: '#8fb9a1', alpha: .6, decay: .1, angle: .5, pillarHeight: 80 });
-  fx.magicLaserBeams.push({ casterX: 10.4, casterY: 29.7, targetX: 190.2, targetY: 110.8, width: 12, color: '#a9b8ca', alpha: .7, decay: .1, rings: 2 });
-  fx.groundCracks.push({ x: 100, y: 100, radius: 20, alpha: .7, decay: .1, points: [{ x: 97.2, y: 101.6 }, { x: 110.4, y: 118.2 }, { x: 121.8, y: 100.2 }] });
-  let depth = 0, blocks = 0;
-  const ctx = new Proxy({}, { get: (target, key) => {
-    if (key === 'save') return () => { depth++; };
-    if (key === 'restore') return () => { assert.ok(depth > 0, 'effect restored its caller canvas state'); depth--; };
-    if (key === 'rotate' || key === 'scale' || key === 'transform') return () => assert.fail('core FX must rasterize directly to world pixels');
-    if (key === 'fillRect') return (...values) => { blocks++; for (const value of values) assert.ok(Number.isInteger(value), `fractional FX rectangle: ${values}`); };
-    return target[key] ?? (() => {});
-  }, set: (target, key, value) => { target[key] = value; return true; } });
-  fx.render(ctx, 800, 450);
-  assert.equal(depth, 0);
-  assert.ok(blocks > 100, 'expected visible rasterized spells');
+test('combat spells use generated image frames and preserve the caller canvas state', () => {
+  const fx=new CombatVFXEngine();fx.spawnMagicHit(100,120,false,'frost');fx.spawnCompanionSummonPortal(180,190);for(let i=0;i<20;i++)fx.update();
+  let depth=0,draws=0;const original=generatedCombatArt.frame;generatedCombatArt.frame=()=>({width:128,height:128});
+  const ctx=new Proxy({}, {get:(t,k)=>k==='save'?()=>depth++:k==='restore'?()=>{assert.ok(depth>0);depth--;}:k==='drawImage'?()=>draws++:k==='fillRect'?()=>assert.fail('procedural spell art must not be drawn'):t[k]??(()=>{}),set:(t,k,v)=>{t[k]=v;return true;}});
+  try{fx.render(ctx,800,450);assert.equal(depth,0);assert.equal(draws,2);}finally{generatedCombatArt.frame=original;}
 });
 
 test('long combat announcements fit a narrow phone without stretching the text', () => {
