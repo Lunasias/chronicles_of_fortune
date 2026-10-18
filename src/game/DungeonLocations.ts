@@ -5,5 +5,5 @@ export function isDungeonExit(nodeId: number): boolean {
 }
 
 export function dungeonSceneGroup(nodeId: number): number {
-  return nodeId >= 1000 && nodeId <= 1006 ? 1000 : nodeId >= 1100 && nodeId <= 1106 ? 1100 : nodeId >= 1200 && nodeId <= 1206 ? 1200 : 0;
+  return nodeId >= 1000 && nodeId <= 1035 ? 1000 : nodeId >= 1100 && nodeId <= 1135 ? 1100 : nodeId >= 1200 && nodeId <= 1235 ? 1200 : 0;
 }

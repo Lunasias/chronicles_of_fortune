@@ -18,13 +18,14 @@ import { GroundMaterials } from './GroundMaterials';
 export class IsometricTerrainRenderer {
   private cache = new Map<string, HTMLCanvasElement>();
   private materials = new GroundMaterials(() => this.cache.clear());
-  private roadPatterns = new WeakMap<CanvasRenderingContext2D,Map<boolean,CanvasPattern>>();
+  private roadPatterns = new WeakMap<CanvasRenderingContext2D,Map<string,CanvasPattern>>();
 
-  public roadPattern(ctx:CanvasRenderingContext2D,night:boolean):CanvasPattern|null {
-    const patterns=this.roadPatterns.get(ctx)||new Map<boolean,CanvasPattern>();
-    if(patterns.has(night))return patterns.get(night)!;
-    const pattern=this.materials.pathPattern(ctx,night);
-    if(pattern){patterns.set(night,pattern);this.roadPatterns.set(ctx,patterns);}
+  public roadPattern(ctx:CanvasRenderingContext2D,night:boolean,interior=false):CanvasPattern|null {
+    const key=`${night}:${interior}`;
+    const patterns=this.roadPatterns.get(ctx)||new Map<string,CanvasPattern>();
+    if(patterns.has(key))return patterns.get(key)!;
+    const pattern=this.materials.pathPattern(ctx,night,interior);
+    if(pattern){patterns.set(key,pattern);this.roadPatterns.set(ctx,patterns);}
     return pattern;
   }
 
@@ -34,7 +35,8 @@ export class IsometricTerrainRenderer {
     const cached = this.cache.get(key);
     if (cached) return cached;
 
-    const surface = paintTerrainTile(biome, options);
+    const floorBiome=biome==='dungeon_catacombs'?'cavern':biome==='dungeon_volcano'?'volcano':biome==='dungeon_ice'?'castle':biome;
+    const surface = paintTerrainTile(floorBiome, { ...options, detail: false, contour: false });
     this.materials.apply(surface.data, biome, variant, !!options.night);
     const canvas = document.createElement('canvas');
     canvas.width = TERRAIN_SPRITE_W;

@@ -46,8 +46,8 @@ test('every promotion tier gains an actual outer silhouette, rather than just re
 
 test('dungeon scene boundaries isolate each route and leave the surface separate', () => {
   for (const start of [1000, 1100, 1200]) {
-    for (let i = 0; i < 7; i++) assert.equal(dungeonSceneGroup(start + i), start);
-    assert.equal(dungeonSceneGroup(start + 7), 0);
+    for (let i = 0; i < 36; i++) assert.equal(dungeonSceneGroup(start + i), start);
+    assert.equal(dungeonSceneGroup(start + 36), 0);
   }
   for (const id of [0, 18, 311, 999]) assert.equal(dungeonSceneGroup(id), 0);
 });

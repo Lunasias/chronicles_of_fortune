@@ -1,0 +1,232 @@
+{
+  "surfaceNodes": 760,
+  "dungeonNodes": [
+    {
+      "name": "DUNGEON_CATACOMBS_NODES",
+      "count": 36
+    },
+    {
+      "name": "DUNGEON_VOLCANO_NODES",
+      "count": 36
+    },
+    {
+      "name": "DUNGEON_FROZEN_NODES",
+      "count": 36
+    }
+  ],
+  "regions": [
+    {
+      "biome": "grass",
+      "gx": 40,
+      "gy": 40,
+      "gz": 0,
+      "realm": "solaria",
+      "name": "Solaria Meadows",
+      "description": "ทุ่งราชธานีและหมู่บ้านกังหัน"
+    },
+    {
+      "biome": "castle",
+      "gx": 8,
+      "gy": 40,
+      "gz": 1,
+      "realm": "solaria",
+      "name": "Crownwall",
+      "description": "นครกำแพงขาวและสวนหลวง"
+    },
+    {
+      "biome": "forest",
+      "gx": 40,
+      "gy": 8,
+      "gz": 0,
+      "realm": "emerald",
+      "name": "Elderwood",
+      "description": "มหาพฤกษาและซากนครเอลฟ์"
+    },
+    {
+      "biome": "waterfall_forest",
+      "gx": 72,
+      "gy": 8,
+      "gz": 1,
+      "realm": "emerald",
+      "name": "Mistfall",
+      "description": "หุบเขาน้ำตกและสะพานเถาวัลย์"
+    },
+    {
+      "biome": "fairy_grove",
+      "gx": 104,
+      "gy": 8,
+      "gz": 1,
+      "realm": "emerald",
+      "name": "Faelight",
+      "description": "ป่าเห็ดเรืองแสงและหมู่บ้านแฟรี่"
+    },
+    {
+      "biome": "sakura_shrine",
+      "gx": 104,
+      "gy": 40,
+      "gz": 2,
+      "realm": "emerald",
+      "name": "Hanamori",
+      "description": "เขาศักดิ์สิทธิ์และศาลเจ้าซากุระ"
+    },
+    {
+      "biome": "snow",
+      "gx": 8,
+      "gy": 8,
+      "gz": 3,
+      "realm": "frostpeak",
+      "name": "Frostpeak",
+      "description": "ป่าสนหิมะและป้อมเหมันต์"
+    },
+    {
+      "biome": "steampunk",
+      "gx": 8,
+      "gy": 72,
+      "gz": 1,
+      "realm": "solaria",
+      "name": "Brasshaven",
+      "description": "นครทองเหลืองและอู่เรือเหาะ"
+    },
+    {
+      "biome": "desert",
+      "gx": 40,
+      "gy": 72,
+      "gz": 0,
+      "realm": "sunfire",
+      "name": "Suncourt",
+      "description": "โอเอซิสและนครหินทราย"
+    },
+    {
+      "biome": "volcano",
+      "gx": 72,
+      "gy": 72,
+      "gz": 2,
+      "realm": "sunfire",
+      "name": "Emberforge",
+      "description": "ป้อมหินบะซอลต์และธารลาวา"
+    },
+    {
+      "biome": "coral",
+      "gx": 104,
+      "gy": 72,
+      "gz": -1,
+      "realm": "emerald",
+      "name": "Tidereach",
+      "description": "อาณาจักรปะการังและวิหารสมุทร"
+    },
+    {
+      "biome": "celestial",
+      "gx": 136,
+      "gy": 40,
+      "gz": 5,
+      "realm": "celestial",
+      "name": "Aurelia Skies",
+      "description": "หมู่เกาะวิหารลอยฟ้า"
+    },
+    {
+      "biome": "cavern",
+      "gx": 40,
+      "gy": 104,
+      "gz": -2,
+      "realm": "abyss",
+      "name": "Deepwater Grotto",
+      "description": "ถ้ำหินปูนและทะเลสาบใต้พิภพ"
+    },
+    {
+      "biome": "crystal_cavern",
+      "gx": 72,
+      "gy": 104,
+      "gz": -2,
+      "realm": "abyss",
+      "name": "Prismdeep",
+      "description": "นครผลึกและน้ำตกใต้ดิน"
+    },
+    {
+      "biome": "abyss",
+      "gx": 104,
+      "gy": 104,
+      "gz": -3,
+      "realm": "abyss",
+      "name": "Duskreach",
+      "description": "มหาวิหารทมิฬและหุบเหวม่วง"
+    }
+  ],
+  "connections": [
+    [
+      "grass",
+      "castle"
+    ],
+    [
+      "grass",
+      "forest"
+    ],
+    [
+      "forest",
+      "waterfall_forest"
+    ],
+    [
+      "waterfall_forest",
+      "fairy_grove"
+    ],
+    [
+      "fairy_grove",
+      "sakura_shrine"
+    ],
+    [
+      "castle",
+      "snow"
+    ],
+    [
+      "castle",
+      "steampunk"
+    ],
+    [
+      "grass",
+      "desert"
+    ],
+    [
+      "desert",
+      "volcano"
+    ],
+    [
+      "volcano",
+      "coral"
+    ],
+    [
+      "sakura_shrine",
+      "coral"
+    ],
+    [
+      "sakura_shrine",
+      "celestial"
+    ],
+    [
+      "desert",
+      "cavern"
+    ],
+    [
+      "cavern",
+      "crystal_cavern"
+    ],
+    [
+      "crystal_cavern",
+      "abyss"
+    ],
+    [
+      "volcano",
+      "crystal_cavern"
+    ],
+    [
+      "coral",
+      "abyss"
+    ],
+    [
+      "waterfall_forest",
+      "sakura_shrine"
+    ],
+    [
+      "steampunk",
+      "desert"
+    ]
+  ]
+}

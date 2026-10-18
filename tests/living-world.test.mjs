@@ -12,17 +12,17 @@ import { mapProjection } from '../.test-build/engine/MapProjection.js';
 
 test('large continent contains dense deterministic scenery with clear walking corridors', () => {
   const e = new IsometricTerrainEngine(); e.initTerrain(DOKAPON_NODES);
-  assert.ok(e.worldBounds.maxX-e.worldBounds.minX > 14000);
-  assert.ok(e.terrainTiles.length > 14000);
-  assert.ok(e.groves.length > 2500);
-  assert.ok(e.worldDressing.length > 6000);
-  assert.ok(e.worldDressing.every(p => p.roadDistance > 22));
+  assert.ok(e.worldBounds.maxX-e.worldBounds.minX > 10000);
+  assert.ok(e.terrainTiles.length > 8000);
+  assert.ok(e.regionalScenery.length > 1500);
+  assert.equal(e.groves.length,0,'retired generic foliage must not be mixed into regional artwork');
+  assert.ok(e.regionalScenery.every(p => p.roadDistance >= 24));
   const road = roadField(DOKAPON_NODES,(x,y,z)=>e.toScreen(x,y,z));
-  assert.ok(e.groves.every(p => road(p.x,p.y)>42));
-  const visible = e.getVisibleDressing(-500,500,1500,2200);
-  assert.ok(visible.length < e.worldDressing.length/3);
-  assert.ok(e.worldDressing.some(p=>p.kind==='woodland_cottage'));
-  assert.ok(e.worldDressing.some(p=>p.kind==='waterfall'));
+  assert.ok(e.regionalScenery.every(p => road(p.x,p.y)>=24));
+  const visible = e.getVisibleRegionalScenery(-500,500,1500,2200);
+  assert.ok(visible.length < e.regionalScenery.length/3);
+  assert.ok(e.regionalScenery.some(p=>p.slot==='home'));
+  assert.ok(e.regionalScenery.some(p=>p.theme==='waterfall_forest'));
   for(const node of DOKAPON_NODES){
     const floor=e.terrainTiles.find(t=>t.gx===node.gx&&t.gy===node.gy);
     assert.equal(floor?.gz,node.gz,`destination ${node.id} must stand on its own ground`);
@@ -31,8 +31,8 @@ test('large continent contains dense deterministic scenery with clear walking co
 });
 
 test('new material sheet is opaque RGB and every detail atlas cell contains isolated artwork', () => {
-  const material = png.decodePNG('public/assets/art-v2/world-ground-materials.png');
-  assert.equal(MATERIAL_ORDER.length,16);
+  const material = png.decodePNG('public/assets/art-v2/world-rebuild-v1/ground-materials.png');
+  assert.equal(MATERIAL_ORDER.length,20);
   for (let i=3;i<material.pixels.length;i+=4) assert.equal(material.pixels[i],255);
   const details = png.decodePNG('public/assets/art-v2/world-details-atlas.png');
   assert.equal(WORLD_DETAIL_NAMES.length,24);

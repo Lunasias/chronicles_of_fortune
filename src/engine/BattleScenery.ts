@@ -1,3 +1,4 @@
+import { regionalArt } from './RegionalScenery';
 import { generatedBackdrops, backdropKey } from './GeneratedBackdrops';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
@@ -94,7 +95,7 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
   ctx.fillStyle = palette.top; ctx.fillRect(0, horizon, w, h - horizon);
   for (let depth = rearDepth; depth <= frontDepth; depth++) for (let column = -columns; column <= columns; column++) {
     const x = Math.round(w / 2 + column * 96 + (Math.abs(depth) % 2) * 48), y = floorY + depth * 24;
-    const tile = isometricTerrainRenderer.getTileSprite(biome, { cliffs: false, night, variant: Math.abs(column * 7 + depth * 13) % 4 });
+    const tile = isometricTerrainRenderer.getTileSprite(backdropKey(biome,nodeId), { cliffs: false, night, variant: Math.abs(column * 7 + depth * 13) % 4 });
     ctx.drawImage(tile, x - 52, y - 28);
   }
   // Quiet the repeating board texture so fighters remain the visual focus.
@@ -108,32 +109,21 @@ export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: n
     ctx.fillRect(x, y, 38 + i % 3 * 4, 6); ctx.fillRect(x + 8, y + 6, 22, 3);
   }
   ctx.globalAlpha = 1;
-  const dressing = BIOME_DRESSING[biome] || BIOME_DRESSING.grass;
-  const settlement = SETTLEMENT_DRESSING[biome] || ['fence', 'lantern_sign', 'well'] as const;
-  const ground = battleGroundLayout(w, h);
-  // Low plants and debris interrupt the floor without concealing contact shadows.
-  for (let i = 0; i < Math.ceil(w * h / 7000); i++) {
-    const x = Math.round(worldNoise(i, 1, 31) * w);
-    const y = Math.round(horizon + 35 + worldNoise(i, 2, 31) * (h - horizon - 35));
-    if ([[ground.playerX, ground.playerY], [ground.enemyX, ground.enemyY]].some(([fx, fy]) => Math.abs(x - fx) < 92 && Math.abs(y - fy) < 62)) continue;
-    const image = worldDetails.get(dressing[i % dressing.length], night);
-    if (!image) continue;
-    const size = 32 + (i % 3) * 8, scale = size / 96;
-    drawGroundedScenery(ctx, image, x, y, scale, night);
+  const theme=backdropKey(biome,nodeId);
+  const ground=battleGroundLayout(w,h);
+  // The same purpose-built regional objects frame both map and battle clearings.
+  for(let i=0;i<Math.ceil(w*h/18000);i++){
+    const x=Math.round(worldNoise(i,1,31)*w),y=Math.round(horizon+42+worldNoise(i,2,31)*(h-horizon-42));
+    if([[ground.playerX,ground.playerY],[ground.enemyX,ground.enemyY]].some(([fx,fy])=>Math.abs(x-fx)<100&&Math.abs(y-fy)<70))continue;
+    const image=regionalArt.get(theme,i%3?'undergrowth':'rocks');
+    if(image)drawGroundedScenery(ctx,image,x,y,1,night);
   }
-  const species = foliageForBiome(biome);
-  for (const placement of battleDressingLayout(w, h)) {
-    const { x, y, scale, seed } = placement;
-    const index = Math.abs(seed);
-    const kind: WorldDetailName = index % 5 === 0 ? settlement[index % settlement.length] : dressing[index % dressing.length];
-    const image = placement.tree && species ? isometricFoliageRenderer.getTreeSprite(species, index % 4) : worldDetails.get(kind, night);
-    if (!image) continue;
-    drawGroundedScenery(ctx, image, x, y, scale, night);
+  for(const placement of battleDressingLayout(w,h)){
+    const index=Math.abs(placement.seed);
+    const slot=placement.tree?(theme.startsWith('dungeon_')?'cliff':index%2?'nature_large':'nature_alternate'):index%4===0?'wall':index%3===0?'cliff':'undergrowth';
+    const image=regionalArt.get(theme,slot);if(!image)continue;
+    drawGroundedScenery(ctx,image,placement.x,placement.y,1,night);
   }
-  const landmark = boss ? 'dark_gate' : town ? 'capital' : biome === 'castle' ? 'town' : biome === 'steampunk' ? 'shop_weapon' : biome === 'sakura_shrine' ? 'isekai_event' : biome === 'coral' ? 'fishing' : biome === 'celestial' ? 'monument' : null;
-  if (landmark) {
-    const building = isometricBuildingRenderer.getBuildingSprite(landmark);
-    // Foundation sits on the same tiled plane behind the fighters.
-    drawGroundedScenery(ctx, building, w / 2, horizon + 24, 2, night);
-  }
+  const landmark=regionalArt.get(theme,boss?'boss':town?'capital':'landmark');
+  if(landmark)drawGroundedScenery(ctx,landmark,w/2,horizon+26,1,night);
 }

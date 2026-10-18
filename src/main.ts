@@ -3687,7 +3687,7 @@ class DokaponApp {
       this.renderer.initBoardCache(this.game.allNodes);
       dungeonSystem.enterDungeon(this.game.activePlayer, this.game, query.get('realm') || 'abyss');
       const player = this.game.activePlayer;
-      if (query.get('room') === 'exit') {
+      if (query.get('dungeon-room') === 'exit') {
         const exit = this.game.allNodes.find(n => n.id === player.nodeId + 6)!;
         Object.assign(player, { nodeId: exit.id, gridX: exit.gx, gridY: exit.gy, gridZ: exit.gz });
       }

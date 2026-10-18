@@ -2,6 +2,7 @@ import { BoardNode } from '../game/BoardMap';
 import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { worldBackground } from './WorldBackground';
 import { generatedBackdrops, backdropKey } from './GeneratedBackdrops';
+import { regionalArt, regionalSlotForNode } from './RegionalScenery';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
@@ -57,6 +58,7 @@ export class IsometricRenderer {
     roadColor: string;
     dashColor: string;
     edgeColor: string;
+    interior: boolean;
   }> = [];
   public hasInitializedBoardCache = false;
   private cachedNodes: BoardNode[] | null = null;
@@ -198,7 +200,8 @@ export class IsometricRenderer {
             y2: p2.y,
             roadColor,
             dashColor,
-            edgeColor
+            edgeColor,
+            interior: node.id >= 1000 || ['cavern','crystal_cavern','abyss','coral','castle','celestial','sakura_shrine','steampunk'].includes(node.biome)
           });
         }
       });
@@ -345,7 +348,7 @@ export class IsometricRenderer {
     // 2.4 The cloud sea the floating continent rises out of. Drawn in world space below the
     // board's lowest tile, so the map reads as an island in the sky rather than as a flat
     // continent.
-    if (openSky && isometricTerrainEngine.isInitialized) {
+    if (backgroundKey === 'celestial' && isometricTerrainEngine.isInitialized) {
       worldBackground.renderCloudSea(ctx, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
     }
 
@@ -360,7 +363,7 @@ export class IsometricRenderer {
     isometricTerrainEngine.renderGround(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay, !!this.sceneGroup);
 
     // 2.6 Natural Environmental Clutter (Direct pass, zero sorting overhead)
-    isometricTerrainEngine.renderClutter(ctx, minX, maxX, minY, maxY, time, ecosystemSystem.timeOfDay);
+    // Native regional artwork is depth-sorted with actors below.
 
     // 3. 2.5D Isometric Textured Roadways (O(1) zero-allocation lookup)
     this.renderIsometricRoads(ctx, minX, maxX, minY, maxY);
@@ -396,7 +399,7 @@ export class IsometricRenderer {
     }
 
     // 10. Atmospheric Volumetric Sunbeams (God Rays) during Dawn & Dusk
-    if (!this.sceneGroup) this.renderAtmosphericLightShafts(ctx, w, h, ecosystemSystem.timeOfDay);
+    if (openSky) this.renderAtmosphericLightShafts(ctx, w, h, ecosystemSystem.timeOfDay);
 
     // 11. Squid Ink Sabotage Overlay
     if (activePlayer && activePlayer.squidInkTurns > 0) {
@@ -414,8 +417,8 @@ export class IsometricRenderer {
     maxY: number
   ) {
     // Native-pixel earth paths with irregular cobbles; no antialiased rails or centre stripe.
-    const roadMaterial=isometricTerrainRenderer.roadPattern(ctx,ecosystemSystem.timeOfDay==='NIGHT');
     for (const seg of this.roadwaySegments) {
+      const roadMaterial=isometricTerrainRenderer.roadPattern(ctx,ecosystemSystem.timeOfDay==='NIGHT',seg.interior);
       if (Math.max(seg.x1, seg.x2) < minX - 30 || Math.min(seg.x1, seg.x2) > maxX + 30 ||
           Math.max(seg.y1, seg.y2) < minY - 30 || Math.min(seg.y1, seg.y2) > maxY + 30) continue;
       const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
@@ -462,25 +465,12 @@ export class IsometricRenderer {
     const hover = this.hoveredNodeId === null ? null : this.nodeScreenCache.get(this.hoveredNodeId);
     if (hover) visibleActors.push(hover);
     const obscuresActor = (x: number,y: number,height: number,width: number) => visibleActors.some(p => y > p.y - 6 && y - p.y < height - 10 && Math.abs(x - p.x) < width / 2 + 12);
-    if (!this.sceneGroup) for (const item of isometricTerrainEngine.getVisibleDressing(minX,maxX,minY,maxY)) {
+    for(const item of isometricTerrainEngine.getVisibleRegionalScenery(minX,maxX,minY,maxY)){
       renderList.push({depth:item.depth,draw:()=>{
-        const sprite = worldDetails.get(item.kind, ecosystemSystem.timeOfDay === 'NIGHT');
-        const fallback = sprite || isometricTerrainRenderer.getPropSprite(item.kind.includes('rock') || item.kind.includes('crag') ? 'rock' : 'shrub', {biome:item.biome,variant:0});
-        const foot = sprite ? Number(sprite.dataset.footY || 80) : 28;
-        ctx.save(); if (obscuresActor(item.x,item.y,fallback.height,fallback.width)) ctx.globalAlpha = .23;
-        ctx.drawImage(fallback,Math.round(item.x-fallback.width/2),Math.round(item.y-foot)); ctx.restore();
+        const sprite=regionalArt.get(item.theme,item.slot);if(!sprite)return;
+        ctx.save();if(obscuresActor(item.x,item.y,sprite.height,sprite.width))ctx.globalAlpha=.22;
+        ctx.drawImage(sprite,Math.round(item.x-sprite.width/2),Math.round(item.y-Number(sprite.dataset.footY)));ctx.restore();
       }});
-    }
-    for (const grove of isometricTerrainEngine.getVisibleGroves(minX,maxX,minY,maxY)) {
-      if (this.sceneGroup) continue;
-      if (grove.x < minX - 64 || grove.x > maxX + 64 || grove.y < minY - 64 || grove.y > maxY + 64) continue;
-      renderList.push({ depth: grove.depth, draw: () => {
-        const tree = pixelSprites.getTreeSprite(grove.species, grove.variant);
-        ctx.save();
-        if (obscuresActor(grove.x,grove.y,tree.height,tree.width)) ctx.globalAlpha = .23;
-        ctx.drawImage(tree, grove.x - tree.width / 2, grove.y - Number(tree.dataset.footY || 54));
-        ctx.restore();
-      } });
     }
 
     // 1. Add Isometric Blocks & Props within viewport
@@ -504,15 +494,13 @@ export class IsometricRenderer {
         draw: () => {
           this.drawIsometricBlock(ctx, px, py, node, isHighlighted, isHovered, time);
           if (isDungeonExit(node.id)) {
-            const portal = pixelSprites.getBuildingSprite('dark_gate', null);
-            ctx.drawImage(portal, Math.round(px - portal.width / 2), Math.round(py - (portal.width >= 96 ? 80 : 48)));
             ctx.fillStyle = '#142330';
-            ctx.fillRect(Math.round(px - 64), Math.round(py - 103), 128, 21);
+            ctx.fillRect(Math.round(px - 64), Math.round(py - 151), 128, 21);
             ctx.strokeStyle = '#b99b60';
-            ctx.strokeRect(Math.round(px - 64) + .5, Math.round(py - 103) + .5, 128, 21);
+            ctx.strokeRect(Math.round(px - 64) + .5, Math.round(py - 151) + .5, 128, 21);
             ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
             ctx.fillStyle = '#f2e5c6';
-            ctx.fillText('ออกดันเจี้ยน → พื้นผิว', Math.round(px), Math.round(py - 89));
+            ctx.fillText('ออกดันเจี้ยน → พื้นผิว', Math.round(px), Math.round(py - 137));
           }
         }
       });
@@ -557,10 +545,12 @@ export class IsometricRenderer {
             ctx.fill();
             ctx.restore();
 
-            const bld = pixelSprites.getBuildingSprite(node.id === 0 ? 'capital' : node.type, ownerColor);
+            const slot=regionalSlotForNode(node);
+            const bld=slot?regionalArt.get(backdropKey(node.biome,node.id),slot):null;
+            if(!bld)return;
             // 64x64 model whose base diamond is centred at (32, 48) inside the sprite, so the
             // blit is anchored to seat that base exactly on the node's tile centre.
-            ctx.drawImage(bld, px - bld.width / 2, py - (bld.width === 96 ? 80 : 48));
+            ctx.drawImage(bld, px - bld.width / 2, py - Number(bld.dataset.footY));
 
             // Full names and health belong to the hovered location. Quiet map markers
             // keep the town's silhouette readable while still showing occupation.
@@ -802,35 +792,14 @@ export class IsometricRenderer {
         });
       }
 
-      // Foliage / Tree Props (Only on open path nodes, never clipping through buildings)
-      if (!this.sceneGroup && node.id % 2 === 0 && !hasBuilding && foliageForBiome(node.biome)) {
-        renderList.push({
-          depth: depth + 20,
-          draw: () => {
-            const treeType = foliageForBiome(node.biome)!;
-            const tree = pixelSprites.getTreeSprite(treeType, node.id % 4);
-            // Ambient ground contact shadow at trunk base
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.beginPath();
-            pixelEllipse(ctx, px + 52, py + 8, 14, 7, ctx.fillStyle);
-            ctx.fill();
+      if(node.routeKind) renderList.push({depth:depth+20,draw:()=>{
+        const bridge=regionalArt.get(backdropKey(node.biome),'bridge');if(!bridge)return;
+        const other=nodes.find(n=>n.id===node.neighbors[0]);
+        const mirror=other&&Math.abs(other.gx-node.gx)>=Math.abs(other.gy-node.gy);
+        ctx.save();ctx.translate(px,py);if(mirror)ctx.scale(-1,1);
+        ctx.drawImage(bridge,-64,-Number(bridge.dataset.footY)+20);ctx.restore();
+      }});
 
-            // 1:1 blit of the 64x64 model. The anchor keeps the trunk base on the tile centre
-            // at (px + 52, py + 6), the same spot the old 68x88 sprite was resampled into.
-            ctx.drawImage(tree, px + 52 - tree.width / 2, py + 6 - Number(tree.dataset.footY || 54));
-          }
-        });
-      }
-
-      // Dark Fantasy Biome Props (Only on open path nodes)
-      if (node.id % 3 === 0 && !hasBuilding) {
-        renderList.push({
-          depth: depth + 15,
-          draw: () => {
-            this.drawDarkFantasyBiomeProp(ctx, px - 38, py - 42, node.biome, node.id, time);
-          }
-        });
-      }
     }
 
     // Actors and scenery share a depth pass, so walking behind a tree reads as depth.

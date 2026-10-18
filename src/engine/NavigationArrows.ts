@@ -8,7 +8,7 @@ export function canShowMovementNavigation(phase: string, remainingMoves: number,
 export interface NavigationPoint { id: number; x: number; y: number }
 export interface DirectionGuide extends NavigationPoint { sector: number; count: number }
 export function markerClearance(type: string): number {
-  return type === 'boss' ? 108 : ['capital','town','shop_item','shop_weapon','shop_magic','church','dark_gate','vault','tavern','guild','fishing','isekai_event','mystery_chest','home'].includes(type) ? 92 : 62;
+  return type === 'boss' ? 168 : ['capital','town','shop_item','shop_weapon','shop_magic','church','dark_gate','vault','tavern','guild','fishing','isekai_event','mystery_chest','home'].includes(type) ? 148 : 62;
 }
 /** Screen-space directions match the actual projected map, including elevation. */
 export function offscreenDirectionGuides(hero: {x:number;y:number}, targets: NavigationPoint[], width:number, height:number): DirectionGuide[] {

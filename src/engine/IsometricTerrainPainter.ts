@@ -933,6 +933,7 @@ export interface TerrainPaintOptions {
    * sitting on four speckle pixels looks exactly like a speckle that moved.
    */
   detail?: boolean;
+  contour?: boolean;
 }
 
 /** Every biome the painter understands, in board order. */
@@ -976,7 +977,7 @@ export function paintTerrainTile(biome: string, options: TerrainPaintOptions = {
   if (options.cliffs) drawCliffs(s, t, seed);
   drawTopFace(s, t);
   if (options.detail !== false) drawSurface(s, kind, t, night, seed, dx, dy);
-  drawContour(s, t);
+  if(options.contour !== false) drawContour(s, t);
   if (options.edgeBiomes) blendBiomeEdges(s, kind, night, options.edgeBiomes);
   return s;
 }

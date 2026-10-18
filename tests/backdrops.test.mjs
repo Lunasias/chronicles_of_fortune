@@ -23,7 +23,7 @@ test("every board biome and dungeon has unique generated production backdrop art
 
 test("dungeon node identity overrides surface biome including all three exits",()=>{
   for(const [start,key] of [[1000,"dungeon_catacombs"],[1100,"dungeon_volcano"],[1200,"dungeon_ice"]]){
-    for(let id=start;id<=start+6;id++)assert.equal(backdropKey("grass",id),key);
+    for(let id=start;id<=start+35;id++)assert.equal(backdropKey("grass",id),key);
   }
   assert.equal(backdropKey("unknown"),"grass");
   assert.equal(backdropKey("snow",999),"snow");

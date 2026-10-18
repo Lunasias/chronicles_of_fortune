@@ -5,6 +5,8 @@ import { TERRAIN_BLIT_X, TERRAIN_BLIT_Y, TERRAIN_CLIFF_H, TERRAIN_VARIANTS } fro
 import { PROP_BASE_X, PROP_BASE_Y } from './IsometricPropPainter';
 import { foliageForBiome } from './BiomeArt';
 import { worldNoise, roadField, BIOME_DRESSING, SETTLEMENT_DRESSING, canopyDensity, type WorldDressing } from './WorldEcology';
+import { regionalSceneryLayout, type RegionalScenery } from './RegionalScenery';
+import { backdropKey } from './GeneratedBackdrops';
 
 export interface TerrainTile {
   gx: number;
@@ -39,6 +41,12 @@ export interface EnvironmentProp {
 }
 
 export class IsometricTerrainEngine {
+  public regionalScenery: RegionalScenery[] = [];
+  private regionalBuckets = new Map<string,RegionalScenery[]>();
+  private floorTheme: string | null = null;
+  public getVisibleRegionalScenery(minX:number,maxX:number,minY:number,maxY:number) {
+    return this.visibleScenery(this.regionalBuckets,minX,maxX,minY,maxY);
+  }
   public worldDressing: WorldDressing[] = [];
   public groves: Array<{ x: number; y: number; depth: number; species: string; variant: number }> = [];
   public tileWidth = 96;
@@ -134,6 +142,7 @@ export class IsometricTerrainEngine {
   // INITIALIZE TERRAIN & ENVIRONMENT MESH FROM BOARD NODES
   // =========================================================================
   public initTerrain(nodes: BoardNode[]) {
+    this.floorTheme = nodes[0]?.id >= 1000 ? backdropKey(nodes[0].biome,nodes[0].id) : null;
     this.terrainTiles = [];
     this.environmentProps = [];
     this.tileGrid.clear();
@@ -156,7 +165,7 @@ export class IsometricTerrainEngine {
       }
     };
 
-    const landRadius = nodes.some(n => n.id < 1000) ? 7 : 2;
+    const landRadius = nodes.some(n => n.id < 1000) ? 5 : 2;
     // Organic continental margins extend beyond the playable route.
     nodes.forEach(node => {
       for (let dx = -landRadius; dx <= landRadius; dx++) {
@@ -254,6 +263,11 @@ export class IsometricTerrainEngine {
 
     // 4. Generate Environmental Clutter (Rocks, Grass, Wildflowers, Shrubs, Crystals)
     this.generateEnvironmentClutter(nodes);
+    this.regionalBuckets.clear();
+    for(const item of this.regionalScenery) {
+      const key=this.getBucketKey(item.x,item.y),bucket=this.regionalBuckets.get(key)||[];
+      bucket.push(item);this.regionalBuckets.set(key,bucket);
+    }
     this.dressingBuckets.clear(); this.groveBuckets.clear();
     for (const item of this.worldDressing) {
       const key = this.getBucketKey(item.x,item.y), list = this.dressingBuckets.get(key) || [];
@@ -313,37 +327,8 @@ export class IsometricTerrainEngine {
 
   // Generate natural environment props (rocks, grass clumps, flowers) on off-road terrain
   private generateEnvironmentClutter(nodes: BoardNode[]) {
-    const nodeCoords = new Set(nodes.map(n => n.gx + ',' + n.gy));
-    const distanceToRoad = roadField(nodes, (x,y,z) => this.toScreen(x,y,z));
-    const hubs = nodes.filter(n => ['town', 'guild', 'tavern'].includes(n.type)).map(n => ({ n, ...this.toScreen(n.gx,n.gy,n.gz) }));
-    const anchors = nodes.map(n => this.toScreen(n.gx,n.gy,n.gz));
-    this.groves = []; this.worldDressing = [];
-    for (const tile of this.terrainTiles) {
-      if (nodeCoords.has(tile.gx + ',' + tile.gy)) continue;
-      const r = worldNoise(tile.gx, tile.gy), r2 = worldNoise(tile.gx,tile.gy,2), r3 = worldNoise(tile.gx,tile.gy,3);
-      const x = Math.round(tile.x + (r2 - .5) * 34), y = Math.round(tile.y + (r3 - .5) * 16);
-      const roadDistance = distanceToRoad(x,y);
-      const anchorDistance = Math.min(...anchors.map(a => Math.hypot(x-a.x,y-a.y)));
-      if (anchorDistance < 52) continue;
-      const cluster = worldNoise(Math.floor(tile.gx/4),Math.floor(tile.gy/4),7);
-      if (roadDistance > 42 && anchorDistance > 86 && r < canopyDensity(tile.biome,cluster)) {
-        const species = foliageForBiome(tile.biome);
-        if (species) this.groves.push({x,y,depth:tile.depth + Math.round((y-tile.y)*1000/24)+25,species,variant:Math.floor(r3*4)});
-      }
-      const hub = hubs.find(a => Math.hypot(x-a.x,y-a.y)<260 && Math.abs(a.n.gz-tile.gz)<=1);
-      let kind = null;
-      if (hub && roadDistance > 48 && anchorDistance > 90 && r2 < .30) {
-        const village = SETTLEMENT_DRESSING[tile.biome] || ['woodland_cottage','camp','fence','well','market','lantern_sign'] as const;
-        kind = village[Math.floor(r3*village.length)];
-      } else if (roadDistance > 22 && r2 < .58) {
-        const family = BIOME_DRESSING[tile.biome] || BIOME_DRESSING.grass;
-        kind = family[Math.floor(r3*family.length)];
-      }
-      if (kind) this.worldDressing.push({x,y,depth:tile.depth + Math.round((y-tile.y)*1000/24)+30,kind,biome:tile.biome,roadDistance});
-      // Small native clusters connect large sprites without filling the walkable corridor.
-      if (roadDistance > 14 && r < .72) this.environmentProps.push({id:'env_'+tile.gx+'_'+tile.gy,type:r3<.25?'rock':r3<.5?'shrub':r3<.75?'flower':'grass',gx:tile.gx,gy:tile.gy,gz:tile.gz,x,y,depth:tile.depth,biome:tile.biome,variant:Math.floor(r2*4),scale:1});
-    }
-    this.environmentProps.sort((a,b)=>a.depth-b.depth);
+    this.groves=[];this.worldDressing=[];this.environmentProps=[];
+    this.regionalScenery=regionalSceneryLayout(this.terrainTiles,nodes,(x,y,z)=>this.toScreen(x,y,z));
   }
 
   // =========================================================================
@@ -391,9 +376,7 @@ export class IsometricTerrainEngine {
       }
 
       // Shoreline ocean foam waves around perimeter cliffs
-      if (tile.isCoast && !interior) {
-        this.drawShoreWave(ctx, tile.x, tile.y + cliffHeight + 11 + bob, hw, hh, isNight, time);
-      }
+
 
       // Zero-lag hardware GPU texture blit. The offset is the painter's own geometry, so the
       // rhombus centre lands exactly on the tile's world position.
@@ -403,7 +386,7 @@ export class IsometricTerrainEngine {
       // variant count, which spreads the four layouts evenly rather than banding them by row.
       const variant =
         (((tile.gx * 7 + tile.gy * 13) % TERRAIN_VARIANTS) + TERRAIN_VARIANTS) % TERRAIN_VARIANTS;
-      const sprite = isometricTerrainRenderer.getTileSprite(tile.biome, {
+      const sprite = isometricTerrainRenderer.getTileSprite(this.floorTheme || tile.biome, {
         cliffs: hasCliffs && !interior, night: isNight, variant, edgeBiomes: tile.edgeBiomes
       });
       ctx.drawImage(sprite, tile.x - TERRAIN_BLIT_X, tile.y - TERRAIN_BLIT_Y);

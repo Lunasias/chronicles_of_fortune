@@ -1,5 +1,7 @@
 # Fortuna — visual production guide
 
+The [2026-10-18 world rebuild](docs/art-review/world-rebuild-v1/README.md) supersedes the historical 312-node layout and generic foreground dressing below: 760 surface nodes, 108 dungeon nodes, 432 generated regional sprites and twenty new ground materials are now the production baseline.
+
 ## North star
 An inviting, hand-crafted floating kingdom: jade forests, slate roofs, honey-lit windows,
 cool violet shadows and confident, readable adventurer silhouettes. A tactical board that

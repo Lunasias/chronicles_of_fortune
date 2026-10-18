@@ -50,7 +50,7 @@ The expanded living world spans about 15,000 × 6,600 native world pixels, with 
 - Production rules, coverage and remaining verification are recorded in [ART_DIRECTION.md](ART_DIRECTION.md).
 
 ### 3. 🗺️ The World
-A hand-authored continent of **312 spaces** across **6 realms** and 15 sub-regions, including **41 towns** to liberate and tax, plus shops, taverns, guilds, churches, vaults, fishing spots, boss lairs and a Darkling gate.
+A rebuilt fantasy world of **760 spaces** across **6 realms and 15 regions**, including **45 towns**, dedicated service districts and **19 regional crossings**. Three separate dungeons add **108 spaces across 18 rooms**. See the [world rebuild and generated art collection](docs/art-review/world-rebuild-v1/README.md).
 
 ### 4. 💖 Companions
 **27 recruitable companions**, each with its own **64×64 pixel-art model**, drawn from the
