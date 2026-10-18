@@ -7,6 +7,10 @@ import { companionSprites } from '../engine/CompanionSpriteRenderer';
 export class WeeklyReportUI {
   private game: GameState;
   private onDismissCallback?: () => void;
+  private autoCloseTimeout: number | null = null;
+  private countdownInterval: number | null = null;
+  private reportDismissed = true;
+  private autoCloseDurationMs = 18_000;
 
   constructor(game: GameState) {
     this.game = game;
@@ -26,10 +30,7 @@ export class WeeklyReportUI {
   private bindButtons() {
     document.getElementById('btnDismissWeeklyReport')?.addEventListener('click', () => {
       audio.click();
-      document.getElementById('weeklyReportModal')?.classList.add('hidden');
-      if (this.onDismissCallback) {
-        this.onDismissCallback();
-      }
+      this.dismissReport();
     });
 
     const handleAcceptPact = (spec: 'destroyer' | 'reaper' | 'tormentor' = 'destroyer') => {
@@ -53,7 +54,51 @@ export class WeeklyReportUI {
     });
   }
 
+  private clearAutoCloseTimers() {
+    if (this.autoCloseTimeout !== null) window.clearTimeout(this.autoCloseTimeout);
+    if (this.countdownInterval !== null) window.clearInterval(this.countdownInterval);
+    this.autoCloseTimeout = null;
+    this.countdownInterval = null;
+  }
+
+  private dismissReport() {
+    if (this.reportDismissed) return;
+    this.reportDismissed = true;
+    this.clearAutoCloseTimers();
+    document.getElementById('weeklyReportModal')?.classList.add('hidden');
+    const onDismiss = this.onDismissCallback;
+    this.onDismissCallback = undefined;
+    onDismiss?.();
+  }
+
+  private startAutoCloseCountdown() {
+    this.clearAutoCloseTimers();
+    const label = document.getElementById('weeklyAutoCloseLabel');
+    const secondsLabel = document.getElementById('weeklyAutoCloseSeconds');
+    const progress = document.getElementById('weeklyAutoCloseProgress');
+    const track = progress?.parentElement;
+    const deadline = performance.now() + this.autoCloseDurationMs;
+    let lastAnnouncedSeconds = -1;
+    const update = () => {
+      const remaining = Math.max(0, deadline - performance.now());
+      const seconds = Math.ceil(remaining / 1000);
+      if (progress) progress.style.transform = `scaleX(${remaining / this.autoCloseDurationMs})`;
+      if (seconds !== lastAnnouncedSeconds) {
+        if (label) label.textContent = `ไปสัปดาห์ถัดไปอัตโนมัติใน ${seconds} วินาที`;
+        if (secondsLabel) secondsLabel.textContent = `${seconds}s`;
+        track?.setAttribute('aria-valuenow', String(seconds));
+        lastAnnouncedSeconds = seconds;
+      }
+      if (remaining <= 0) this.dismissReport();
+    };
+    update();
+    this.countdownInterval = window.setInterval(update, 100);
+    this.autoCloseTimeout = window.setTimeout(() => this.dismissReport(), this.autoCloseDurationMs);
+  }
+
   open(onDismiss: () => void) {
+    this.clearAutoCloseTimers();
+    this.reportDismissed = false;
     this.onDismissCallback = onDismiss;
     audio.fanfare();
 
@@ -103,6 +148,11 @@ export class WeeklyReportUI {
 
     });
 
+    // Give players enough time to read the standings; longer rosters get a little more time.
+    this.autoCloseDurationMs = Math.min(30_000, Math.max(15_000, 8_000 + this.game.players.length * 2_500));
+    const countdownTrack = document.querySelector<HTMLElement>('#weeklyAutoClose .weekly-auto-close-track');
+    if (countdownTrack) countdownTrack.setAttribute('aria-valuemax', String(Math.ceil(this.autoCloseDurationMs / 1000)));
     modal.classList.remove('hidden');
+    this.startAutoCloseCountdown();
   }
 }
