@@ -14,6 +14,7 @@ import { drawDungeonRoom } from './EnvironmentArt';
 import { worldDetails } from './WorldDetails';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { roadPoint } from './WorldEcology';
+import { navigationArrows, markerClearance, offscreenDirectionGuides, type DirectionGuide } from './NavigationArrows';
 
 export interface Camera2D {
   x: number;
@@ -94,6 +95,7 @@ export class IsometricRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.ctx.imageSmoothingEnabled = false;
+    navigationArrows.frame(0);
     const defaultZ = this.getDefaultZoom();
     this.camera.zoom = defaultZ;
     this.camera.targetZoom = defaultZ;
@@ -243,12 +245,7 @@ export class IsometricRenderer {
 
       // When node is an active destination, also accept clicks directly on the floating overhead indicator!
       if (isPriority) {
-        const hasBuilding = [
-          'town', 'shop_item', 'shop_weapon', 'shop_magic', 'church',
-          'dark_gate', 'boss', 'vault', 'tavern', 'guild', 'fishing',
-          'isekai_event', 'mystery_chest', 'home'
-        ].includes(node.type);
-        const beaconY = ny - (node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62));
+        const beaconY = ny - markerClearance(node.type);
         const dyBeacon = Math.abs(worldY - beaconY);
         const beaconDist = (dx / (hw * 1.2)) + (dyBeacon / 32);
         if (beaconDist <= 1.35) {
@@ -403,6 +400,7 @@ export class IsometricRenderer {
     if (activePlayer && activePlayer.squidInkTurns > 0) {
       this.renderSquidInkOverlay(ctx, w, h);
     }
+    this.renderNavigationCompass(ctx, nodes, activePlayer, highlightedNodes);
   }
 
 
@@ -1078,169 +1076,58 @@ export class IsometricRenderer {
    * Floats safely ABOVE buildings and characters, with zero obstruction to sprites or text badges!
    */
   private renderDestinationOverheadMarkers(
-    ctx: CanvasRenderingContext2D,
-    nodes: BoardNode[],
-    highlightedNodes: number[],
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
-    time: number
+    ctx: CanvasRenderingContext2D, nodes: BoardNode[], highlightedNodes: number[],
+    minX: number, maxX: number, minY: number, maxY: number, time: number
   ) {
-    if (highlightedNodes.length === 0) return;
-
-    for (let i = 0; i < highlightedNodes.length; i++) {
-      const nodeId = highlightedNodes[i];
-      const node = nodes.find(n => n.id === nodeId);
-      if (!node) continue;
-
-      const pos = this.nodeScreenCache.get(node.id);
-      const px = pos ? pos.x : this.toScreen(node.gx, node.gy, node.gz).x;
-      const py = pos ? pos.y : this.toScreen(node.gx, node.gy, node.gz).y;
-
-      // View frustum culling
-      if (px < minX - 100 || px > maxX + 100 || py < minY - 180 || py > maxY + 180) {
-        continue;
+    if (!highlightedNodes.length) return;
+    const sprite = navigationArrows.frame(0);
+    if (!sprite) return;
+    for (const id of highlightedNodes) {
+      const node = nodes.find(n => n.id === id); if (!node) continue;
+      const p = this.nodeScreenCache.get(id) || this.toScreen(node.gx,node.gy,node.gz);
+      if (p.x < minX-100 || p.x > maxX+100 || p.y < minY-180 || p.y > maxY+180) continue;
+      const hovered = this.hoveredNodeId === id;
+      const bob = prefersReducedMotion() ? 0 : Math.round(Math.sin(time*.004+id*.35)*4);
+      const y = p.y-markerClearance(node.type)+bob, size=hovered?80:64;
+      ctx.drawImage(sprite,Math.round(p.x-size/2),Math.round(y-size/2),size,size);
+      if (hovered) {
+        ctx.save(); ctx.font='bold 12px Kanit, sans-serif'; ctx.textAlign='center';
+        ctx.fillStyle='#102c50'; ctx.fillRect(Math.round(p.x-62),Math.round(y-56),124,22);
+        ctx.fillStyle='#ffe6a0'; ctx.fillText('เดินมาที่นี่',Math.round(p.x),Math.round(y-40)); ctx.restore();
       }
-
-      const isHovered = this.hoveredNodeId === node.id;
-      const ringColor = isHovered ? '#fde047' : '#00f0ff';
-      const glowColor = isHovered ? 'rgba(251, 191, 36, 0.45)' : 'rgba(0, 240, 255, 0.35)';
-
-      // Safe clearance height calculation:
-      // Buildings & Badges reach up to py - 80, Realm Bosses reach py - 95, normal nodes reach py - 48
-      const hasBuilding = [
-        'town', 'shop_item', 'shop_weapon', 'shop_magic', 'church',
-        'dark_gate', 'boss', 'vault', 'tavern', 'guild', 'fishing',
-        'isekai_event', 'mystery_chest', 'home'
-      ].includes(node.type);
-
-      const baseClearance = node.type === 'boss' ? 108 : (hasBuilding ? 92 : 62);
-      // Continuous vertical bobbing animation so destination arrows glide up and down smoothly
-      const bobSpeed = isHovered ? 0.007 : 0.005;
-      const bobAmp = isHovered ? 9 : 7;
-      const bob = Math.sin(time * bobSpeed + node.id * 0.35) * bobAmp;
-      const pointerY = py - baseClearance + bob;
-
-      ctx.save();
-
-      // 1. Stepped Translucent Light Column (Non-intrusive guide ray)
-      // Bands of decreasing alpha instead of a vertical gradient: the beam has to fade, and a
-      // gradient across a beam is the same soft ramp this whole pass exists to remove.
-      const beamW = isHovered ? 26 : 18;
-      const beamTop = pointerY + 12;
-      const beamBottom = py;
-      const beamBands = 7;
-      for (let b = 0; b < beamBands; b++) {
-        const t = b / beamBands;
-        const y0 = beamBottom + (beamTop - beamBottom) * t;
-        const y1 = beamBottom + (beamTop - beamBottom) * ((b + 1) / beamBands);
-        const halfW = beamW * 0.5 * (1 - t * 0.5);
-        ctx.globalAlpha = (isHovered ? 0.22 : 0.16) * (1 - t) * (1 - t);
-        ctx.fillStyle = isHovered ? '#fbbf24' : '#00f0ff';
-        for (let y = Math.round(Math.min(y0, y1)); y < Math.round(Math.max(y0, y1)); y++) {
-          ctx.fillRect(Math.round(px - halfW), y, Math.max(1, Math.round(halfW * 2)), 1);
-        }
-      }
-      ctx.globalAlpha = 1;
-
-      // 2. High-Visibility 3D Downward Pointer Arrow
-      const arrowScale = isHovered ? 1.25 : 1.0;
-      const aw = 14 * arrowScale;
-      const ah = 22 * arrowScale;
-      const tipY = pointerY + 8;
-
-      // 2.1 Drop Shadow for maximum contrast against any terrain/sky
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.75)';
-      ctx.beginPath();
-      ctx.moveTo(px, tipY + 4);
-      ctx.lineTo(px - aw - 3, tipY - ah - 3);
-      ctx.lineTo(px, tipY - ah + 3);
-      ctx.lineTo(px + aw + 3, tipY - ah - 3);
-      ctx.closePath();
-      ctx.fill();
-
-      // 2.2 Outer Glow Aura
-      ctx.strokeStyle = glowColor;
-      ctx.lineWidth = isHovered ? 5.5 : 4.0;
-      ctx.beginPath();
-      ctx.moveTo(px, tipY);
-      ctx.lineTo(px - aw, tipY - ah);
-      ctx.lineTo(px, tipY - ah + 5);
-      ctx.lineTo(px + aw, tipY - ah);
-      ctx.closePath();
-      ctx.stroke();
-
-      // 2.3 Left Shaded Facet
-      ctx.fillStyle = isHovered ? '#d97706' : '#0284c7';
-      ctx.beginPath();
-      ctx.moveTo(px, tipY);
-      ctx.lineTo(px - aw, tipY - ah);
-      ctx.lineTo(px, tipY - ah + 5);
-      ctx.closePath();
-      ctx.fill();
-
-      // 2.4 Right Highlighted Facet
-      ctx.fillStyle = isHovered ? '#fef08a' : '#38bdf8';
-      ctx.beginPath();
-      ctx.moveTo(px, tipY);
-      ctx.lineTo(px, tipY - ah + 5);
-      ctx.lineTo(px + aw, tipY - ah);
-      ctx.closePath();
-      ctx.fill();
-
-      // 2.5 Center Specular Crest & Core Line
-      ctx.strokeStyle = ringColor;
-      ctx.lineWidth = 2.0;
-      ctx.beginPath();
-      ctx.moveTo(px, tipY);
-      ctx.lineTo(px - aw, tipY - ah);
-      ctx.lineTo(px, tipY - ah + 5);
-      ctx.lineTo(px + aw, tipY - ah);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Specular white glimmer at top
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px - 2, tipY - ah + 2, 4, 3);
-
-      // 3. Crisp Inner Target Glyph
-      ctx.font = `bold ${Math.round(11 * arrowScale)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = isHovered ? '#78350f' : '#082f49';
-      ctx.fillText('▼', px, tipY - ah * 0.45);
-
-      // 4. Interactive Hover Badge (Only when hovered!)
-      if (isHovered) {
-        const badgeY = tipY - ah - 16;
-        const steps = this.previewPathNodeIds && this.previewPathNodeIds.length > 1
-          ? this.previewPathNodeIds.length - 1
-          : null;
-        const label = steps !== null ? `🎯 เดิน ${steps} ช่อง (คลิก)` : `🎯 เดินมาที่นี่`;
-        ctx.font = 'bold 10px "Kanit", "Prompt", sans-serif';
-        const txtW = ctx.measureText(label).width;
-        const boxW = txtW + 18;
-        const boxH = 20;
-
-        // Dark pill background with golden border
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-        ctx.beginPath();
-        ctx.roundRect(px - boxW / 2, badgeY - boxH / 2, boxW, boxH, 10);
-        ctx.fill();
-
-        ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fef08a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(label, px, badgeY);
-      }
-
-      ctx.restore();
     }
+  }
+
+  private directionGuides: DirectionGuide[] = [];
+  public navigationTargetAt(clientX: number, clientY: number): number | null {
+    const rect=this.canvas.getBoundingClientRect();
+    const x=(clientX-rect.left)*this.canvas.width/rect.width,y=(clientY-rect.top)*this.canvas.height/rect.height;
+    return this.directionGuides.find(g=>Math.abs(g.x-x)<=28&&Math.abs(g.y-y)<=28)?.id ?? null;
+  }
+
+  private renderNavigationCompass(ctx:CanvasRenderingContext2D,nodes:BoardNode[],player:Player|null,ids:number[]) {
+    this.directionGuides=[];
+    if(!player||!ids.length)return;
+    const zoom=this.camera.zoom,cx=snapWorld(this.camera.x,zoom),cy=snapWorld(this.camera.y,zoom);
+    const project=(x:number,y:number)=>({x:this.canvas.width/2+(x-cx)*zoom,y:this.canvas.height/2+(y-cy)*zoom});
+    const heroWorld=this.toScreen(player.gridX,player.gridY,player.gridZ),hero=project(heroWorld.x,heroWorld.y);
+    const targets=nodes.filter(n=>ids.includes(n.id)).map(n=>{const p=this.toScreen(n.gx,n.gy,n.gz);return{id:n.id,...project(p.x,p.y-markerClearance(n.type))};});
+    this.directionGuides=offscreenDirectionGuides(hero,targets,this.canvas.width,this.canvas.height);
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(const guide of this.directionGuides){
+      const sprite=navigationArrows.frame(guide.sector+1);if(!sprite)continue;
+      ctx.drawImage(sprite,guide.x-28,guide.y-28,56,56);
+      ctx.font='bold 11px Kanit, sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#10284d';ctx.fillRect(guide.x+10,guide.y+10,22,18);
+      ctx.fillStyle='#ffe29a';ctx.fillText(String(guide.count),guide.x+21,guide.y+23);
+    }
+    if(this.directionGuides.length){
+      const guide=this.directionGuides[0],angle=guide.sector*Math.PI/4-Math.PI/2;
+      const x=Math.round(guide.x-Math.cos(angle)*70),y=Math.round(guide.y-Math.sin(angle)*62+120);
+      ctx.font='bold 11px Kanit, sans-serif';ctx.textAlign='center';ctx.fillStyle='#10284d';ctx.fillRect(x-95,y-14,190,23);
+      ctx.fillStyle='#ffe29a';ctx.fillText('ปลายทางนอกจอ · กดลูกศรเพื่อดู',x,y+1);
+    }
+    ctx.restore();
   }
 
   private drawDarkFantasyBiomeProp(

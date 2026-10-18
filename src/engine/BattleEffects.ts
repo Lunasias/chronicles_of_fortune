@@ -11,7 +11,7 @@ export class BattleEffects {
   public active:BattleEffect[]=[];
   emit(kind:BattleEffectKind,x:number,y:number,options:Partial<Pick<BattleEffect,'fromX'|'fromY'|'power'|'color'|'delay'|'duration'|'artId'>>={}) {
     if(![x,y,options.fromX??x,options.fromY??y].every(Number.isFinite))return;
-    this.active.push({kind,x,y,fromX:x,fromY:y,age:0,duration:kind==='slash'?32:kind==='evade'?30:64,power:1,delay:0,artId:'common_'+kind,...options});
+    this.active.push({kind,x,y,fromX:x,fromY:y,age:0,duration:kind==='slash'?32:kind==='evade'?30:42,power:1,delay:0,artId:'common_'+kind,...options});
     if(this.active.length>40)this.active.splice(0,this.active.length-40);
   }
   update(){for(const effect of this.active)effect.age++;this.active=this.active.filter(e=>e.age<e.duration+e.delay);}

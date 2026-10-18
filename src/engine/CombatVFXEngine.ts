@@ -128,7 +128,7 @@ export class CombatVFXEngine {
   public readonly choreography = new BattleEffects();
   public owner:CombatArtOwner={};
   setOwner(owner:CombatArtOwner){this.owner=owner;}
-  preloadOwner(owner:CombatArtOwner){return generatedCombatArt.preload([resolveCombatArt(owner),'common_guard','common_slash','common_beam','common_summon','common_heal','common_frost','common_storm','common_flame','common_shadow']);}
+  preloadOwner(owner:CombatArtOwner){return generatedCombatArt.preload([resolveCombatArt(owner),'common_parry','common_slash','common_summon','common_heal']);}
 
   public particles: Particle[] = [];
   public slashArcs: SlashArc[] = [];
@@ -187,7 +187,8 @@ export class CombatVFXEngine {
 
 
   triggerHitstop(frames = 4) {
-    this.hitstopTimer = frames;
+    // Keep choreography continuous; impact is communicated by pose, sound and shake.
+    this.hitstopTimer = 0;
   }
 
   triggerScreenShake(intensity = 14) {
@@ -616,7 +617,7 @@ export class CombatVFXEngine {
   ) {
     const job = classKey.toLowerCase();
     const kind = isDarkling ? 'shadow' : /warrior|knight|fighter|duelist|gladiator/.test(job) ? 'smash' : /thief|rogue/.test(job) ? 'slash' : /magician|mage|sorcer|archmage/.test(job) ? 'nova' : magicElementForJob(job);
-    this.choreography.emit(kind, targetX, targetY, {power: 1.75, delay: 10, fromX: casterX, fromY: casterY,artId:resolveCombatArt(this.owner.name||this.owner.companionKey||this.owner.job?this.owner:{job:classKey,isDarkling})});
+    this.choreography.emit(kind, targetX, targetY, {power: 1.75, duration:42, fromX: casterX, fromY: casterY,artId:resolveCombatArt(this.owner.name||this.owner.companionKey||this.owner.job?this.owner:{job:classKey,isDarkling})});
     this.activeCutscene = {
       skillName,
       casterX,
@@ -625,7 +626,7 @@ export class CombatVFXEngine {
       targetY,
       classKey,
       isDarkling,
-      totalDuration: 75,
+      totalDuration: 42,
       elapsed: 0
     };
 
@@ -778,12 +779,6 @@ export class CombatVFXEngine {
     if (this.floatingTexts.length > 60) this.floatingTexts.splice(0,this.floatingTexts.length-60);
     if (this.particles.length > cap) this.particles.splice(0, this.particles.length - cap);
     for (const list of [this.slashArcs, this.groundCracks, this.runicRings, this.magicLaserBeams, this.summonPortals]) if (list.length > 40) list.splice(0,list.length-40);
-
-    // 0. Hitstop micro-pause
-    if (this.hitstopTimer > 0) {
-      this.hitstopTimer--;
-      return;
-    }
 
     this.choreography.update();
 

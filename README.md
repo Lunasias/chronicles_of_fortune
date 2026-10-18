@@ -228,4 +228,6 @@ MIT License - see [LICENSE](LICENSE).
 
 ### Battle effects
 
+The [combat flow and navigation update](docs/art-review/navigation-flow/README.md) adds continuous recovery, generated destination markers and clickable offscreen direction guidance around the hero.
+
 The [generated combat artwork](docs/art-review/combat-v3/README.md) delivers 132 owner-specific and shared animations (792 frames) in 33 transparent PNG atlases. Every effect pixel comes from generated raster artwork. Open `/effects-review.html` to select a job, monster or companion and scrub its animation.

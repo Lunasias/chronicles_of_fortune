@@ -1115,8 +1115,8 @@ export class BattleUI {
     this.attackerAnim = (atkAction === 'strike' || atkAction === 'burst') ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
     this.defenderAnim = 'counter';
 
-    // Start Phase 1: Dash forward across the arena! (340ms)
-    this.startCutscenePhase('dash', 340, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+    // Start Phase 1: Dash forward across the arena! (280ms)
+    this.startCutscenePhase('dash', 280, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
     // Trigger Anime Speed Lines for rapid dash movement!
     if (atkAction === 'burst') {
@@ -1142,7 +1142,7 @@ export class BattleUI {
       audio.attackHit();
     }
 
-    // Phase 2: Impact & Combat Resolution (after dash completes at 340ms)
+    // Phase 2: Impact & Combat Resolution (after dash completes at 280ms)
     setTimeout(() => {
       this.cutscene.bannerAlpha = 0;
       this.cutscene.targetBannerAlpha = 0;
@@ -1194,7 +1194,7 @@ export class BattleUI {
           atkBaseX,
           atkBaseY
         );
-        this.startCutscenePhase('impact', 480, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
+        this.startCutscenePhase('impact', 420, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
       } else {
         if (result.damageToDefender > 0) {
           this.defenderAnim = 'hurt';
@@ -1213,7 +1213,7 @@ export class BattleUI {
         } else if (atkAction === 'skill') {
           combatVFX.triggerSpeedLines('rgba(236, 72, 153, 0.9)', 32);
         }
-        this.startCutscenePhase('impact', 480, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+        this.startCutscenePhase('impact', 420, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
         const hitX = defBaseX + targetDefDX;
         const hitY = defBaseY + targetDefDY;
@@ -1261,13 +1261,7 @@ export class BattleUI {
           }
         }
 
-        // One readable aftermath, after the signature has finished. A critical
-        // hit/kill already has a full impact in the owner's generated animation.
-        const aftermath = result.isMagicBlocked || defAction === 'defend' ? 'guard'
-          : result.isShatter ? 'frost' : result.isChainShock ? 'storm'
-          : result.burnDamage ? 'flame' : result.curseInflicted ? 'shadow' : null;
-        if (!result.isMiss && aftermath) combatVFX.choreography.emit(aftermath,hitX,hitY-36,{power:.65,delay:76,duration:28});
-        if (result.vampiricHeal) combatVFX.choreography.emit('heal',atkBaseX,atkBaseY,{power:.65,delay:110,duration:24});
+        // The owner signature is the entire visual action; status results stay in the log.
         if (result.damageToDefender > 0) {
           audio.hurt();
         }
@@ -1315,14 +1309,14 @@ export class BattleUI {
 
       this.updateUI();
 
-      // Phase 3: Airborne backdash leap returning to dais (after 480ms impact)
+      // Phase 3: Airborne backdash leap returning to dais (after 420ms impact)
       setTimeout(() => {
         this.cutscene.targetZoom = 1.0;
         this.cutscene.targetBannerAlpha = 0;
         this.attackerAnim = 'run';
-        this.startCutscenePhase('leap_back', 450, 0, 0, 0, 0);
+        this.startCutscenePhase('leap_back', 340, 0, 0, 0, 0);
 
-        // Phase 4: Settle & Turn Swap (after 450ms leap)
+        // Phase 4: Settle & Turn Swap (after 340ms leap)
         setTimeout(() => {
           this.cutscene.active = false;
           this.cutscene.phase = 'idle';
@@ -1368,9 +1362,9 @@ export class BattleUI {
           this.updateUI();
           this.updateCommandMenu();
           this.checkAITurn();
-        }, this.getSpeedDelay(460));
-      }, this.getSpeedDelay(result.vampiricHeal ? 2300 : result.isShatter || result.isChainShock || result.burnDamage || result.curseInflicted || result.isMagicBlocked || defAction === 'defend' ? 1800 : 1100));
-    }, this.getSpeedDelay(340));
+        }, this.getSpeedDelay(340));
+      }, this.getSpeedDelay(420));
+    }, this.getSpeedDelay(280));
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
@@ -1438,8 +1432,9 @@ export class BattleUI {
         this.cutscene.defenderOffsetX = this.cutscene.defenderStartX + (this.cutscene.defenderTargetX - this.cutscene.defenderStartX) * ease;
         this.cutscene.defenderOffsetY = this.cutscene.defenderStartY + (this.cutscene.defenderTargetY - this.cutscene.defenderStartY) * ease;
       } else if (this.cutscene.phase === 'impact') {
-        this.cutscene.attackerOffsetX = this.cutscene.targetX + (Math.random() - 0.5) * 2;
-        this.cutscene.attackerOffsetY = this.cutscene.targetY + (Math.random() - 0.5) * 2;
+        const followThrough = Math.sin(p * Math.PI);
+        this.cutscene.attackerOffsetX = this.cutscene.targetX + Math.sign(this.cutscene.targetX || 1) * followThrough * 10;
+        this.cutscene.attackerOffsetY = this.cutscene.targetY - followThrough * 4;
       } else if (this.cutscene.phase === 'leap_back') {
         const arc = Math.sin(p * Math.PI) * -35;
         this.cutscene.attackerOffsetX = this.cutscene.startX + (0 - this.cutscene.startX) * p;

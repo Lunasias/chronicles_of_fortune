@@ -46,15 +46,15 @@ test('real combat entry points route physical, elemental, boss, promoted skill a
   for(const element of ['arcane','flame','frost','storm','shadow','holy','nature'])fx.spawnMagicHit(200,200,false,element);
   fx.spawnMagicHit(200,200,true);fx.spawnMonsterAttack(0,0,200,200,'Dragon Princess Ignis');fx.spawnCompanionSummonPortal(200,200);fx.spawnMagicLaserBeam(100,100,200,200);fx.spawnExplosionNova(200,200);
   const seen=new Set(fx.choreography.active.map(e=>e.kind));for(const kind of kinds.filter(k=>k!=='evade'))assert.ok(seen.has(kind),kind);
-  for(const job of ['seraphic_saint','lich_king','rune_sovereign','ranger','warlord','warrior']){fx.reset();fx.triggerSkillCutscene(job,100,200,300,200,job);assert.ok(fx.choreography.active.some(e=>e.artId===job&&e.delay===10),job);}
+  for(const job of ['seraphic_saint','lich_king','rune_sovereign','ranger','warlord','warrior']){fx.reset();fx.triggerSkillCutscene(job,100,200,300,200,job);assert.ok(fx.choreography.active.some(e=>e.artId===job&&e.delay===0),job);}
   fx.reset();fx.setOwner({name:'Steam Gear Gunner Victoria',skill:'Sniper Vapor Blast'});fx.spawnMagicHit(200,200);assert.ok(fx.choreography.active.some(e=>e.artId.startsWith('monster_steam_gear_gunner_victoria')));
   fx.reset();fx.setOwner({companionKey:'pudding'});fx.triggerSkillCutscene('Gelatin Shield Blast',100,200,300,200,'mage');assert.ok(fx.choreography.active.some(e=>e.artId==='companion_pudding'));
   fx.reset();assert.equal(fx.choreography.active.length,0);assert.equal(fx.particles.length,0);assert.equal(fx.activeCutscene,null);
 });
 
-test('fixed update bounds debris, obeys hitstop and suppresses shake for reduced motion',()=>{
+test('fixed update bounds debris, keeps impact animation flowing and suppresses shake for reduced motion',()=>{
   const fx=new CombatVFXEngine();for(let i=0;i<30;i++)fx.spawnExplosionNova(200,200);fx.update();assert.ok(fx.particles.length<=600);
-  fx.reset();fx.spawnAttackHit(200,200);fx.triggerHitstop(2);fx.update();assert.equal(fx.choreography.active[0].age,0);fx.update();fx.update();assert.equal(fx.choreography.active[0].age,1);
+  fx.reset();fx.spawnAttackHit(200,200);fx.triggerHitstop(12);fx.update();assert.equal(fx.choreography.active[0].age,1);fx.update();fx.update();assert.equal(fx.choreography.active[0].age,3);
   graphicsPreferences.reducedMotion=true;try{fx.triggerScreenShake(30);assert.equal(fx.screenShakeAmount,0);}finally{graphicsPreferences.reducedMotion=false;}
   for(let i=0;i<220;i++)fx.update();assert.equal(fx.choreography.active.length,0);assert.equal(fx.particles.length,0);
 });

@@ -1,5 +1,7 @@
 # Combat, loading and colour fixes — 2026-10-17
 
+The staged aftermath described below is superseded by the [continuous combat flow update](../navigation-flow/README.md), which removes delayed secondary status artwork.
+
 ## Problems reproduced
 
 - The combat path emitted a signature, generic summon, beam and several reactions

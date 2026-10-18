@@ -1,0 +1,20 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-10-18",
+  "asset": "public/assets/art-v2/navigation-arrows-v1.png",
+  "source": "C:/Users/usEr/.codex/generated_images/01a1455d-ed5e-73a3-8be4-189b5620d076/exec-28a03e3e-5efd-4f24-86b0-88ab2954e88f.png",
+  "columns": 3,
+  "rows": 3,
+  "cellOrder": [
+    "destination",
+    "N",
+    "NE",
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW"
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: production pixel-art navigation sprite atlas for a fantasy isometric RPG. Generate ONE transparent PNG sprite sheet, square image, EXACT uniform 3 columns by 3 rows, each cell an equal square. Nine separate icons, one centered icon per cell, wide completely transparent padding between icons, no touching neighboring cells. Row-major order: row1 column1 a downward pointing hovering destination arrow (points straight down on screen); row1 column2 a compass direction arrow pointing UP; row1 column3 a compass direction arrow pointing UPPER RIGHT. Row2: RIGHT, LOWER RIGHT, DOWN. Row3: LOWER LEFT, LEFT, UPPER LEFT. The eight compass arrows must have exactly matching size, silhouette and visual weight, simply different directions; all arrows point outwards along the named direction, unmistakable triangular arrowheads with short stems. Style: beautifully hand-crafted crisp low-resolution pixel art, chunky pixel clusters, no smooth or blurry edges; golden enchanted brass, bright ivory center, warm amber shadows, thick dark navy outline plus narrow pale rim for exceptional readability over detailed snow, forest and volcanic ground. Destination icon has a jewel at its upper end and a strong downward chevron. Compass icons are compact ornate gold arrowhead pointers. Icons occupy only the middle 55 percent of each square cell. Flat orthographic UI icons, no perspective tilt for compass arrows. Transparent background with actual alpha, no backdrop, no ground, no labels, no letters, no numbers, no grid lines, no external frame, no drop-shadow clouds, no glow haze. This sheet will be sliced directly into nine icons for actual gameplay."
+}

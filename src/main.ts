@@ -591,6 +591,15 @@ class DokaponApp {
     if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
     if (networkRoomManager.isInRoom() && !this.isMyTurn()) return;
 
+    const directionId = this.renderer.navigationTargetAt(clientX, clientY);
+    if (directionId !== null && this.game.highlightedNodes.includes(directionId)) {
+      const target = this.game.allNodes.find(n => n.id === directionId);
+      if (target) {
+        this.renderer.centerCameraOn(target.gx, target.gy, target.gz);
+        this.renderer.hoveredNodeId = target.id;
+      }
+      return;
+    }
     const clickedNode = this.renderer.screenToNode(clientX, clientY, this.game.allNodes, this.game.highlightedNodes);
     if (clickedNode && this.game.highlightedNodes.includes(clickedNode.id)) {
       this.selectNodeToMove(clickedNode);
@@ -787,6 +796,11 @@ class DokaponApp {
         return;
       }
 
+      if (this.renderer.navigationTargetAt(e.clientX,e.clientY) !== null) {
+        this.canvas.style.cursor='pointer';
+        this.inspectUI.hideMoveDestinationPreview();
+        return;
+      }
       const hoveredNode = this.renderer.screenToNode(e.clientX, e.clientY, this.game.allNodes, this.game.highlightedNodes);
 
       if (hoveredNode && this.game.highlightedNodes.includes(hoveredNode.id)) {
@@ -3653,6 +3667,12 @@ class DokaponApp {
       document.getElementById('topHUD')?.classList.remove('hidden');
       document.getElementById('bottomBar')?.classList.remove('hidden');
       this.renderer.centerCameraOn(node.gx,node.gy,node.gz);
+      const reviewRoll = Number(query.get('roll'));
+      if (Number.isInteger(reviewRoll) && reviewRoll > 0 && reviewRoll <= 36) {
+        this.game.remainingMoves = reviewRoll;
+        this.game.phase = 'CHOOSING_PATH';
+        this.game.updateReachableHighlights();
+      }
       this.hud.update();
       return;
     }
