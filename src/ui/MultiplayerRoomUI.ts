@@ -5,6 +5,7 @@
  */
 
 import { networkRoomManager, RoomInfo, ConnectedPeer } from '../engine/NetworkRoomManager';
+import { escapeHtml } from '../util/Html';
 import { audio } from '../engine/AudioSynthesizer';
 import { HERO_CLASSES, HERO_SKINS } from '../game/Player';
 import type { SaveGameData } from '../game/SaveManager';
@@ -27,6 +28,7 @@ export interface MultiplayerStartOptions {
 export class MultiplayerRoomUI {
   private modal: HTMLElement;
   private onStartGameCallback?: (opts: MultiplayerStartOptions) => void;
+  private chatHistory: Array<{ name: string; text: string }> = [];
   private localName: string = 'Hero 1';
   private localClass: string = 'warrior';
   private localSkin: number = 0;
@@ -49,7 +51,7 @@ export class MultiplayerRoomUI {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const roomParam = urlParams.get('room');
-      if (roomParam) {
+      if (roomParam && !networkRoomManager.getActiveSession()) {
         setTimeout(() => {
           this.open();
           const input = document.getElementById('inputJoinRoomCode') as HTMLInputElement;
@@ -67,7 +69,14 @@ export class MultiplayerRoomUI {
 
     // Listen to network packets
     networkRoomManager.onPacket(pkt => {
-      if (pkt.type === 'CHAT_MSG') {
+      if (pkt.type === 'ROOM_ERROR' && pkt.payload?.peerId === networkRoomManager.getMyPeerId()) {
+        networkRoomManager.leaveRoom();
+        this.open();
+        const error = document.createElement('p'); error.textContent = pkt.payload.message;
+        this.modal.firstElementChild?.appendChild(error);
+      } else if (pkt.type === 'CHAT_MSG') {
+        this.chatHistory.push({ name: pkt.senderName, text: String(pkt.payload?.text || '') });
+        this.chatHistory = this.chatHistory.slice(-100);
         audio.click();
         const chatBox = document.getElementById('netRoomChatList');
         if (chatBox) {
@@ -94,6 +103,10 @@ export class MultiplayerRoomUI {
         }
       }
     });
+  }
+
+  public setStartGameCallback(callback: (opts: MultiplayerStartOptions) => void) {
+    this.onStartGameCallback = callback;
   }
 
   public open(onStartGame?: (opts: MultiplayerStartOptions) => void) {
@@ -134,7 +147,7 @@ export class MultiplayerRoomUI {
             <div class="grid grid-cols-2 gap-2">
               <div class="flex flex-col gap-1">
                 <span class="text-[9px] text-slate-400">ชื่อของคุณ</span>
-                <input id="inputLobbyMyName" type="text" maxlength="12" value="${this.localName}" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 text-white outline-none focus:border-amber-400" />
+                <input id="inputLobbyMyName" type="text" maxlength="12" value="${escapeHtml(this.localName)}" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 text-white outline-none focus:border-amber-400" />
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-[9px] text-slate-400">อาชีพเริ่มต้น</span>
@@ -192,7 +205,9 @@ export class MultiplayerRoomUI {
         const code = input?.value?.trim();
         if (code) {
           audio.click();
-          networkRoomManager.joinRoom(code, this.localName, this.localClass, this.localSkin);
+          if (!networkRoomManager.joinRoom(code, this.localName, this.localClass, this.localSkin)) {
+            input.setCustomValidity('ใช้รหัสรูปแบบ CF-1234'); input.reportValidity();
+          }
         }
       });
       return;
@@ -205,8 +220,14 @@ export class MultiplayerRoomUI {
   private renderActiveRoom(room: RoomInfo) {
     const isHost = room.isHost;
     const connectedPeers = room.connectedPeers || [];
-    const partySize = isHost ? this.partySize : (room.partySize || 3);
+    const partySize = room.partySize || 3;
+    this.partySize = partySize;
+    this.gameMode = room.gameMode || 'standard';
+    const canStart = isHost && room.status === 'lobby' && Array.from({ length: partySize }, (_, i) => connectedPeers[i] ? !connectedPeers[i].isDisconnected : !!this.botSlots[i]).every(Boolean);
     const myPeerId = room.myPeerId;
+    const connected = connectedPeers.some(p => p.isHost);
+    const me = connectedPeers.find(p => p.id === myPeerId);
+    if (me) { this.localName = me.name; this.localClass = me.classKey; this.localSkin = me.skinVariant; }
 
     // Build the slot list for display
     const slots: Array<{
@@ -256,6 +277,7 @@ export class MultiplayerRoomUI {
               <button id="btnCopyInviteLink" class="pixel-btn px-2 py-0.5 text-[10px] text-amber-300 hover:text-white" title="คัดลอกลิงก์เชิญ">🔗 ลิงก์เชิญ</button>
             </div>
           </div>
+          <button id="btnCloseActiveNetRoom" class="pixel-close text-xs px-2 py-0.5">✖</button>
           <button id="btnLeaveNetRoom" class="pixel-btn px-2.5 py-1 text-xs text-rose-300 hover:text-white">ออกจากห้อง</button>
         </div>
 
@@ -285,7 +307,7 @@ export class MultiplayerRoomUI {
           </div>
         ` : `
           <div class="flex items-center justify-between text-xs px-2 py-1 bg-slate-950/60 rounded border border-slate-800 text-slate-300">
-            <span>โหมดเกม: <strong class="text-amber-300">${room.gameMode || 'Standard'}</strong></span>
+            <span>โหมดเกม: <strong class="text-amber-300">${escapeHtml(room.gameMode || 'Standard')}</strong></span>
             <span>ความจุห้อง: <strong class="text-cyan-300">${partySize} คน</strong></span>
           </div>
         `}
@@ -296,7 +318,7 @@ export class MultiplayerRoomUI {
             <span class="text-slate-300 font-bold">ผู้เล่นในห้อง (${connectedPeers.length}/${partySize}):</span>
             <span class="text-[10px] text-emerald-400 flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>ออนไลน์ (พร้อมเล่น)</span>
+              <span>${connected ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อมต่อ Host...'}</span>
             </span>
           </div>
 
@@ -313,7 +335,7 @@ export class MultiplayerRoomUI {
                     <span class="text-base">${isAssigned ? (s.peer?.isHost ? '👑' : '⚔️') : (s.isAI ? '🤖' : '⏳')}</span>
                     <div>
                       <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-bold text-white">${s.name}</span>
+                        <span class="text-xs font-bold text-white">${escapeHtml(s.name)}</span>
                         ${isMe ? `<span class="text-[9px] bg-amber-500 text-slate-950 font-bold px-1 rounded">คุณ</span>` : ''}
                         ${s.peer?.isHost ? `<span class="text-[9px] text-amber-400 border border-amber-600/60 px-1 rounded">HOST</span>` : ''}
                       </div>
@@ -350,6 +372,7 @@ export class MultiplayerRoomUI {
         <div class="flex flex-col gap-1">
           <span class="text-[10px] text-slate-400">แชทในห้อง:</span>
           <div id="netRoomChatList" class="bg-slate-950 border border-slate-800 p-2 h-16 overflow-y-auto space-y-1 rounded text-slate-300">
+            ${this.chatHistory.map(msg => `<div class="text-[11px] text-cyan-200">💬 [${escapeHtml(msg.name)}]: ${escapeHtml(msg.text)}</div>`).join('')}
             <div class="text-[10px] text-slate-500">ห้องเตรียมพร้อมแล้ว สามารถส่งข้อความคุยกับเพื่อนร่วมห้องได้</div>
           </div>
           <div class="flex gap-2 mt-0.5">
@@ -363,13 +386,17 @@ export class MultiplayerRoomUI {
           <span class="text-[10px] text-slate-400">
             ${isHost ? 'พร้อมแล้วกดเริ่มเกมเพื่อส่งทุกคนเข้าสู่กระดาน' : 'กำลังรอ Host กดเริ่มเกม...'}
           </span>
-          <button id="btnStartLobbyGame" class="pixel-btn pixel-btn-gold px-5 py-2 text-xs font-bold text-slate-950 ${!isHost ? 'opacity-60 cursor-not-allowed' : ''}">
-            ${isHost ? 'เข้าสู่อาณาจักร (เริ่มเกม) ➔' : '⏳ รอ Host เริ่มเกม...'}
+          <button id="btnStartLobbyGame" ${!canStart ? 'disabled' : ''} class="pixel-btn pixel-btn-gold px-5 py-2 text-xs font-bold text-slate-950 ${!isHost ? 'opacity-60 cursor-not-allowed' : ''}">
+            ${room.status === 'playing' ? 'เกมกำลังดำเนินอยู่' : isHost ? (canStart ? 'เข้าสู่อาณาจักร (เริ่มเกม) ➔' : 'รอผู้เล่น หรือ เปิด AI ให้ครบ') : '⏳ รอ Host เริ่มเกม...'}
           </button>
         </div>
       </div>
     `;
 
+    if (room.status === 'playing') {
+      this.modal.querySelectorAll<HTMLButtonElement | HTMLSelectElement>('.btn-lobby-party-size, #selectLobbyGameMode, .btn-toggle-slot-ai, .lobby-change-class').forEach(el => el.disabled = true);
+    }
+    document.getElementById('btnCloseActiveNetRoom')?.addEventListener('click', () => this.close());
     // Event Bindings
     document.getElementById('btnLeaveNetRoom')?.addEventListener('click', () => {
       audio.click();
@@ -405,13 +432,12 @@ export class MultiplayerRoomUI {
         btn.addEventListener('click', e => {
           audio.click();
           const target = e.currentTarget as HTMLElement;
-          this.partySize = parseInt(target.getAttribute('data-count') || '3', 10);
-          this.render();
+          networkRoomManager.updateLobbySettings({ partySize: parseInt(target.getAttribute('data-count') || '3', 10) });
         });
       });
 
       document.getElementById('selectLobbyGameMode')?.addEventListener('change', e => {
-        this.gameMode = (e.target as HTMLSelectElement).value;
+        networkRoomManager.updateLobbySettings({ gameMode: (e.target as HTMLSelectElement).value });
       });
 
       document.querySelectorAll('.btn-toggle-slot-ai').forEach(btn => {
@@ -439,6 +465,8 @@ export class MultiplayerRoomUI {
       const input = document.getElementById('inputRoomChat') as HTMLInputElement;
       const text = input?.value?.trim();
       if (text) {
+        this.chatHistory.push({ name: this.localName, text });
+        this.chatHistory = this.chatHistory.slice(-100);
         audio.click();
         networkRoomManager.broadcast({
           packetId: `${myPeerId}_chat_${Date.now()}`,
@@ -469,6 +497,7 @@ export class MultiplayerRoomUI {
     // Start Game Button
     if (isHost) {
       document.getElementById('btnStartLobbyGame')?.addEventListener('click', () => {
+        if (!canStart || networkRoomManager.getRoomInfo()?.status !== 'lobby') return;
         audio.fanfare();
         this.close();
 

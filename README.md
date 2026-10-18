@@ -2,7 +2,27 @@
 
 A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring original fantasy pixel art, tactical combat dioramas, and competitive party mechanics.
 
-Single-player board campaign against up to 3 AI rivals (local hot-seat play is also supported).
+Single-player board campaign against up to 3 AI rivals, local hot-seat play, and online P2P rooms for 2–4 players with optional AI slots.
+
+### Online multiplayer
+
+Choose **ผจญภัยกับเพื่อน**, create a room, and share its `CF-1234` code or invitation link.
+The host chooses the party size and mode. Every slot must contain a connected player or
+an enabled AI before starting. Room settings and character changes synchronize immediately.
+
+The active human's device resolves that turn's movement, encounters and choices; the host
+resolves AI turns. Other devices receive the board position and the completed turn state,
+including inventory, world changes and the next player. PvP participants receive their own
+attack/defence choices; one device resolves combat so random results cannot diverge.
+
+Use **กลับเข้าห้อง** after refreshing. Seats are reserved by the tab's session identity.
+A refreshed active player resumes a shared board checkpoint, rather than restoring a
+partially completed combat or event dialog. The host must return to the same room after
+refreshing; host migration is not supported. Internet play uses PeerJS/WebRTC signaling
+and public STUN servers, so restrictive networks that require a TURN relay may not connect.
+Tabs on the same origin can also communicate through BroadcastChannel.
+
+See [multiplayer verification](docs/MULTIPLAYER.md) for the protocol and regression coverage.
 
 ![Fortuna living fantasy world](docs/art-review/living-world-capital.png)
 

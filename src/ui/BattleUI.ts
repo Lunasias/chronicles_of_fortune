@@ -13,7 +13,8 @@ import { customIsometricHeroRenderer } from '../engine/CustomIsometricHeroRender
 import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { COMPANION_SPRITE_SIZE, resolveCompanionKey } from '../game/CompanionDatabase';
 import type { CompanionData } from '../game/Player';
-import { networkRoomManager } from '../engine/NetworkRoomManager';
+import { chooseJourney } from './JourneyUI';
+import { networkRoomManager, NetworkPacket } from '../engine/NetworkRoomManager';
 import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
 import { prefersReducedMotion } from './GraphicsSettings';
 import { drawBattleScenery, battleGroundLayout } from '../engine/BattleScenery';
@@ -527,12 +528,63 @@ export class BattleUI {
     return Boolean(isAttackerHuman && isDefenderHuman && b.attacker.playerRef && b.defender.playerRef);
   }
 
-  public receiveRemoteBattleAction(role: 'attacker' | 'defender', action: string) {
-    if (role === 'attacker') {
-      this.handleAttackerInput(action as AttackerAction, true);
-    } else {
-      this.handleDefenderInput(action as DefenderAction, true);
-    }
+  private remotePrompt: { id: string; role: 'attacker' | 'defender'; playerIndex: number } | null = null;
+  private promptSequence = 0;
+
+  private promptRemotePlayer(role: 'attacker' | 'defender'): boolean {
+    if (!networkRoomManager.isInRoom()) return false;
+    const b = this.game.activeBattle;
+    const player = b?.[role].playerRef;
+    if (!b || !player || player.isAI) return false;
+    const index = this.game.players.indexOf(player);
+    if (index === networkRoomManager.getLocalPlayerIndex()) return false;
+    const id = `${networkRoomManager.getMyPeerId()}_battle_${Date.now()}_${++this.promptSequence}`;
+    this.remotePrompt = { id, role, playerIndex: index };
+    queueMicrotask(() => {
+      document.getElementById('attackerCommandGroup')?.classList.add('hidden');
+      document.getElementById('defenderCommandGroup')?.classList.add('hidden');
+      const label = document.getElementById('battleTurnText');
+      if (label) label.innerText = `รอ ${player.displayName} เลือกคำสั่ง...`;
+    });
+    networkRoomManager.broadcast({ packetId: id, type: 'BATTLE_PROMPT', roomCode: networkRoomManager.getRoomCode()!,
+      senderId: networkRoomManager.getMyPeerId(), senderName: this.game.activePlayer.displayName,
+      payload: { id, role, playerIndex: index, turnPlayerIndex: this.game.activePlayerIdx,
+        actions: role === 'defender' ? ['defend', 'counter', 'magic_guard', 'give_up'] :
+          ['attack', 'strike', 'magic', ...(!this.playerSkillUsedThisBattle ? ['skill'] : []), ...((player.burstGauge || 0) >= 100 ? ['burst'] : [])],
+        attacker: b.attacker.name, defender: b.defender.name, hp: b[role].hp, enemyHp: b[role === 'attacker' ? 'defender' : 'attacker'].hp }, timestamp: Date.now() });
+    return true;
+  }
+
+  public resendRemotePrompt(playerIndex: number): void {
+    if (this.remotePrompt?.playerIndex === playerIndex) this.promptRemotePlayer(this.remotePrompt.role);
+  }
+
+  public receiveBattlePrompt(packet: NetworkPacket): void {
+    const p = packet.payload;
+    if (!p || p.playerIndex !== networkRoomManager.getLocalPlayerIndex() || p.turnPlayerIndex !== this.game.activePlayerIdx) return;
+    const owner = networkRoomManager.getRoomInfo()?.connectedPeers.find(peer => peer.playerIndex === this.game.activePlayerIdx);
+    if (packet.senderId !== (this.game.activePlayer.isAI ? 'host' : owner?.id)) return;
+    const choices = Array.isArray(p.actions) ? p.actions.filter((a: string) => ['attack', 'strike', 'magic', 'skill', 'burst', 'defend', 'counter', 'magic_guard', 'give_up'].includes(a)) : [];
+    const names: Record<string, string> = { burst: 'เบิร์สต์', attack: 'โจมตี', strike: 'โจมตีหนัก', magic: 'เวทมนตร์', skill: 'ท่าอาชีพ', defend: 'ป้องกัน', counter: 'สวนกลับ', magic_guard: 'ป้องกันเวท', give_up: 'ยอมแพ้' };
+    const player = this.game.players[p.playerIndex];
+    if (!player || !choices.length) return;
+    chooseJourney(player, `${p.attacker} ⚔️ ${p.defender}`, `HP คุณ: ${Math.ceil(p.hp)} • HP คู่ต่อสู้: ${Math.ceil(p.enemyHp)}`, choices.map((action: string) => ({
+      label: names[action], detail: '', run: () => networkRoomManager.broadcast({
+        packetId: `${p.id}_reply`, type: 'BATTLE_ACTION', roomCode: networkRoomManager.getRoomCode()!,
+        senderId: networkRoomManager.getMyPeerId(), senderName: player.displayName,
+        payload: { promptId: p.id, role: p.role, action }, timestamp: Date.now() })
+    })));
+  }
+
+  public receiveRemoteBattlePacket(packet: NetworkPacket): void {
+    const prompt = this.remotePrompt;
+    const peer = networkRoomManager.getRoomInfo()?.connectedPeers.find(p => p.id === packet.senderId);
+    if (!prompt || peer?.playerIndex !== prompt.playerIndex || packet.payload?.promptId !== prompt.id || packet.payload?.role !== prompt.role) return;
+    const actions = prompt.role === 'attacker' ? ['attack', 'strike', 'magic', 'skill', 'burst'] : ['defend', 'counter', 'magic_guard', 'give_up'];
+    if (!actions.includes(packet.payload.action)) return;
+    this.remotePrompt = null;
+    if (prompt.role === 'attacker') this.handleAttackerInput(packet.payload.action, true);
+    else this.handleDefenderInput(packet.payload.action, true);
   }
 
   private handleAttackerInput(atkAction: AttackerAction, isRemote = false) {
@@ -540,17 +592,11 @@ export class BattleUI {
     if (!b || this.isExecutingRound) return;
 
     if (!isRemote && networkRoomManager.isInRoom()) {
-      networkRoomManager.broadcast({
-        packetId: `bat_atk_${Date.now()}`,
-        type: 'BATTLE_ACTION',
-        roomCode: networkRoomManager.getRoomCode()!,
-        senderId: networkRoomManager.getMyPeerId(),
-        senderName: b.attacker.name,
-        payload: { role: 'attacker', action: atkAction },
-        timestamp: Date.now()
-      });
+      const player = b.attacker.playerRef;
+      if (!player || player.isAI || this.game.players.indexOf(player) !== networkRoomManager.getLocalPlayerIndex()) return;
     }
 
+    if (!['attack', 'strike', 'magic', 'skill', 'burst'].includes(atkAction)) return;
     if (atkAction === 'skill') {
       if (this.playerSkillUsedThisBattle) return;
       this.playerSkillUsedThisBattle = true;
@@ -570,6 +616,7 @@ export class BattleUI {
     if (isDefenderHuman) {
       // PvP mode: Save attacker choice and prompt human defender to choose!
       this.pendingAttackerAction = atkAction;
+      if (this.promptRemotePlayer('defender')) return;
       const atkGroup = document.getElementById('attackerCommandGroup')!;
       const defGroup = document.getElementById('defenderCommandGroup')!;
       atkGroup.classList.add('hidden');
@@ -610,25 +657,19 @@ export class BattleUI {
     if (!b || this.isExecutingRound) return;
 
     if (!isRemote && networkRoomManager.isInRoom()) {
-      networkRoomManager.broadcast({
-        packetId: `bat_def_${Date.now()}`,
-        type: 'BATTLE_ACTION',
-        roomCode: networkRoomManager.getRoomCode()!,
-        senderId: networkRoomManager.getMyPeerId(),
-        senderName: b.defender.name,
-        payload: { role: 'defender', action: defAction },
-        timestamp: Date.now()
-      });
+      const player = b.defender.playerRef;
+      if (!player || player.isAI || this.game.players.indexOf(player) !== networkRoomManager.getLocalPlayerIndex()) return;
     }
 
     audio.click();
 
+    const hadPendingAction = this.pendingAttackerAction !== null;
     let atkAction: AttackerAction = this.pendingAttackerAction || 'attack';
     this.pendingAttackerAction = null;
 
-    if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
+    if (!hadPendingAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
       atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty);
-    } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
+    } else if (!hadPendingAction && !b.isPlayerAttacking) {
       const roll = this.game.world.random();
       if (roll < 0.45) atkAction = 'attack';
       else if (roll < 0.75) atkAction = 'strike';
@@ -665,6 +706,8 @@ export class BattleUI {
     if (!b) return;
 
     this.pendingAttackerAction = null;
+    this.remotePrompt = null;
+    if (b.attacker.playerRef && !b.attacker.playerRef.isAI) this.promptRemotePlayer('attacker');
     const atkGroup = document.getElementById('attackerCommandGroup')!;
     const defGroup = document.getElementById('defenderCommandGroup')!;
 
@@ -952,6 +995,7 @@ export class BattleUI {
             : 'defend';
           this.executeRoundWithAnimation(action, defAct);
         } else {
+          if (this.promptRemotePlayer('defender')) return;
           // Human defender: show defender buttons so human can choose!
           const atkGroup = document.getElementById('attackerCommandGroup')!;
           const defGroup = document.getElementById('defenderCommandGroup')!;

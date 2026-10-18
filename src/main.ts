@@ -8,6 +8,7 @@ import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
+import { canAcceptTurnPacket, applyNetworkState } from './engine/MultiplayerSync';
 import { canShowMovementNavigation } from './engine/NavigationArrows';
 import { HUD } from './ui/HUD';
 import { BattleUI } from './ui/BattleUI';
@@ -114,6 +115,7 @@ class DokaponApp {
     document.getElementById('btnTitleHallOfFame')?.addEventListener('click', () => {
       hallOfFameUI.open();
     });
+    multiplayerRoomUI.setStartGameCallback(opts => this.startMultiplayerGame(opts));
     document.getElementById('btnTitleMultiplayerRoom')?.addEventListener('click', () => {
       multiplayerRoomUI.open(opts => {
         this.startMultiplayerGame(opts);
@@ -158,12 +160,22 @@ class DokaponApp {
     return this.game.activePlayerIdx === networkRoomManager.getLocalPlayerIndex();
   }
 
+  private ownsActiveTurn(): boolean {
+    return !networkRoomManager.isInRoom() || this.isMyTurn() || (networkRoomManager.isHost() && this.game.activePlayer.isAI);
+  }
+
+  private isTurnPacket(pkt: NetworkPacket): boolean {
+    return canAcceptTurnPacket(this.game, networkRoomManager.getRoomInfo(), pkt);
+  }
+
   private canShowMovementNavigation(): boolean {
     return canShowMovementNavigation(this.game.phase, this.game.remainingMoves, this.game.activePlayer.isAI, this.isMyTurn());
   }
 
   private startMultiplayerGame(opts: MultiplayerStartOptions) {
     if (opts.saveData) {
+      const me = networkRoomManager.getRoomInfo()?.connectedPeers.find(p => p.id === networkRoomManager.getMyPeerId());
+      if (me?.playerIndex !== undefined) networkRoomManager.setLocalPlayerIndex(me.playerIndex);
       SaveManager.applySaveData(this.game, opts.saveData, false);
       this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
@@ -215,35 +227,48 @@ class DokaponApp {
   private bindNetworkListeners() {
     networkRoomManager.onPacket(pkt => {
       if (pkt.type === 'DICE_ROLL') {
-        if (pkt.payload && typeof pkt.payload.totalRoll === 'number') {
-          this.triggerDiceRoll(pkt.payload.totalRoll);
-        }
+        if (!this.isTurnPacket(pkt) || !['BOARD_TURN', 'DICE_ROLLING'].includes(this.game.phase)) return;
+        const roll = pkt.payload?.totalRoll;
+        if (!Number.isInteger(roll) || roll < 1 || roll > 32) return;
+        this.game.remainingMoves = roll;
+        this.game.phase = 'CHOOSING_PATH';
+        this.game.updateReachableHighlights(); this.hud.update();
       } else if (pkt.type === 'MOVE_PATH') {
+        if (!this.isTurnPacket(pkt) || this.game.phase !== 'CHOOSING_PATH') return;
         const path = pkt.payload?.path;
-        if (path && Array.isArray(path) && path.length > 1) {
-          this.inspectUI.hideMoveDestinationPreview();
-          this.renderer.hoveredNodeId = null;
-          this.renderer.previewPathNodeIds = [];
-          this.game.executePath(
-            path,
-            () => this.onMoveStep(),
-            tile => this.handleTileArrival(tile)
-          );
-        }
+        if (!Array.isArray(path) || path.length < 2 || path[0] !== this.game.activePlayer.nodeId) return;
+        const node = this.game.allNodes.find(n => n.id === path[path.length - 1]);
+        if (!node) return;
+        // Spectators never run tile events, random encounters, movement damage or AI.
+        Object.assign(this.game.activePlayer, { nodeId: node.id, gridX: node.gx, gridY: node.gy, gridZ: node.gz });
+        this.game.phase = 'TILE_EVENT'; this.game.remainingMoves = 0; this.game.highlightedNodes = [];
+        this.hud.update();
       } else if (pkt.type === 'SYNC_STATE') {
-        if (pkt.payload?.state && !networkRoomManager.isHost()) {
-          SaveManager.applySaveData(this.game, pkt.payload.state, false);
-          networkRoomManager.saveSessionSnapshot(pkt.payload.state);
-          this.hud.update();
-          this.renderer.centerCameraOn(this.game.activePlayer.gridX, this.game.activePlayer.gridY, this.game.activePlayer.gridZ);
+        if (!this.isTurnPacket(pkt) || !pkt.payload?.state) return;
+        const previousPlayer = this.game.activePlayerIdx;
+        const result = applyNetworkState(this.game, pkt.payload);
+        if (!result.success) return;
+        if (result.bossState) { this.bossCurrentHp = result.bossState.currentHp; this.bossMaxHp = result.bossState.maxHp; }
+        networkRoomManager.saveSessionSnapshot(pkt.payload.state); this.hud.update();
+        if (previousPlayer !== this.game.activePlayerIdx || this.game.phase === 'BOARD_TURN') {
+          this.onTurnStarted();
+          if (this.game.activePlayer.isAI) this.handleAITurnStart();
         }
       } else if (pkt.type === 'REJOIN_ROOM') {
-        if (networkRoomManager.isHost()) {
+        if (networkRoomManager.isHost() && networkRoomManager.getRoomInfo()?.status === 'playing') {
+          const targetPlayerIndex = networkRoomManager.getRoomInfo()?.connectedPeers.find(p => p.id === pkt.senderId)?.playerIndex;
+          // A transport reconnect must not overwrite a still-running turn. A refreshed
+          // turn owner instead resumes a shared board checkpoint on every machine.
+          this.battleUI.resendRemotePrompt(targetPlayerIndex!);
+          if (targetPlayerIndex === this.game.activePlayerIdx && !pkt.payload?.previousPeerId) return;
+          const restartTurn = targetPlayerIndex === this.game.activePlayerIdx;
+          if (restartTurn) {
+            this.game.phase = 'BOARD_TURN'; this.game.remainingMoves = 0; this.game.highlightedNodes = [];
+          }
           const currentSave = SaveManager.serializeGameState(this.game, {
             currentHp: this.bossCurrentHp,
             maxHp: this.bossMaxHp
           });
-          const targetPlayerIndex = pkt.payload?.playerIndex ?? pkt.payload?.peer?.playerIndex;
           networkRoomManager.broadcast({
             packetId: `rejoin_ack_${Date.now()}`,
             type: 'REJOIN_ACK',
@@ -252,6 +277,7 @@ class DokaponApp {
             senderName: this.game.players[0]?.displayName || 'Host',
             payload: {
               saveData: currentSave,
+              restartTurn,
               playerIndex: targetPlayerIndex,
               clientSessionId: pkt.payload?.clientSessionId,
               peerId: pkt.senderId,
@@ -261,14 +287,18 @@ class DokaponApp {
             },
             timestamp: Date.now()
           });
+          if (restartTurn) this.onTurnStarted();
         }
       } else if (pkt.type === 'REJOIN_ACK') {
         if (!networkRoomManager.isHost() && pkt.payload?.saveData) {
           const mySessionId = getOrCreateClientSessionId();
-          if (!pkt.payload.clientSessionId || pkt.payload.clientSessionId === mySessionId || pkt.payload.peerId === networkRoomManager.getMyPeerId()) {
-            if (typeof pkt.payload.playerIndex === 'number') {
+          const isTarget = pkt.payload.clientSessionId === mySessionId || pkt.payload.peerId === networkRoomManager.getMyPeerId();
+          if (isTarget || pkt.payload.restartTurn) {
+            if (pkt.payload.restartTurn) document.getElementById('journeyDecision')?.classList.add('hidden');
+            if (isTarget && typeof pkt.payload.playerIndex === 'number') {
               networkRoomManager.setLocalPlayerIndex(pkt.payload.playerIndex);
             }
+            networkRoomManager.setStatus('playing');
             SaveManager.applySaveData(this.game, pkt.payload.saveData, false);
             if (pkt.payload.gameMode) this.game.gameMode = pkt.payload.gameMode;
             if (pkt.payload.aiDifficulty) this.game.aiDifficulty = pkt.payload.aiDifficulty;
@@ -287,10 +317,11 @@ class DokaponApp {
         const reconnectedName = pkt.payload?.peer?.name || pkt.senderName;
         this.game.addLog(`🌐 ผู้เล่น [${reconnectedName}] เชื่อมต่อกลับเข้ามาแล้ว!`, 'info');
         this.updateMultiplayerHudBadge();
+        this.battleUI.resendRemotePrompt(pkt.payload?.peer?.playerIndex);
+      } else if (pkt.type === 'BATTLE_PROMPT') {
+        this.battleUI.receiveBattlePrompt(pkt);
       } else if (pkt.type === 'BATTLE_ACTION') {
-        if (pkt.payload?.role && pkt.payload?.action) {
-          this.battleUI.receiveRemoteBattleAction(pkt.payload.role, pkt.payload.action);
-        }
+        this.battleUI.receiveRemoteBattlePacket(pkt);
       } else if (pkt.type === 'CHAT_MSG') {
         this.game.addLog(`💬 [${pkt.senderName}]: ${pkt.payload?.text || ''}`, 'info');
       }
@@ -338,9 +369,10 @@ class DokaponApp {
     `;
   }
 
-  private syncMultiplayerState() {
+  private syncMultiplayerState(authorityPlayerIdx = this.game.activePlayerIdx) {
     if (!networkRoomManager.isInRoom()) return;
-    if (!networkRoomManager.isHost() && !this.isMyTurn()) return;
+    const authority = this.game.players[authorityPlayerIdx];
+    if (!(authority?.isAI ? networkRoomManager.isHost() : authorityPlayerIdx === networkRoomManager.getLocalPlayerIndex())) return;
 
     const snapshot = SaveManager.serializeGameState(this.game, {
       currentHp: this.bossCurrentHp,
@@ -353,7 +385,7 @@ class DokaponApp {
       roomCode: networkRoomManager.getRoomCode()!,
       senderId: networkRoomManager.getMyPeerId(),
       senderName: this.game.activePlayer.displayName,
-      payload: { state: snapshot },
+      payload: { state: snapshot, playerIdx: authorityPlayerIdx, phase: this.game.phase, remainingMoves: this.game.remainingMoves },
       timestamp: Date.now()
     });
   }
@@ -403,6 +435,14 @@ class DokaponApp {
   }
 
   private async executeRejoin(session: ActiveMPSession) {
+    if (session.status === 'lobby') {
+      if (session.isHost) {
+        networkRoomManager.createRoom(session.playerName, session.classKey, session.skinVariant, session.roomCode);
+        networkRoomManager.restoreRoster(session);
+      } else networkRoomManager.rejoinRoom(session);
+      multiplayerRoomUI.open();
+      return;
+    }
     if (session.isHost) {
       networkRoomManager.createRoom(
         session.playerName || 'Host',
@@ -410,6 +450,7 @@ class DokaponApp {
         session.skinVariant || 0,
         session.roomCode
       );
+      networkRoomManager.restoreRoster(session);
       networkRoomManager.setStatus('playing');
 
       if (session.saveDataSnapshot) {
@@ -426,7 +467,9 @@ class DokaponApp {
       this.updateMultiplayerHudBadge();
       this.game.addLog(`⚡ คุณกลับเข้าห้องในฐานะ Host เรียบร้อยแล้ว!`, 'info');
       this.syncMultiplayerState();
+      if (this.game.activePlayer.isAI) this.handleAITurnStart();
     } else {
+      const success = networkRoomManager.rejoinRoom(session);
       // Guest rejoin: restore board visuals immediately from snapshot
       if (session.saveDataSnapshot) {
         SaveManager.applySaveData(this.game, session.saveDataSnapshot, false);
@@ -439,7 +482,6 @@ class DokaponApp {
         this.updateMultiplayerHudBadge();
       }
 
-      const success = networkRoomManager.rejoinRoom(session);
       if (success) {
         this.game.addLog(`🔄 กำลังเชื่อมต่อกลับเข้าห้อง ${session.roomCode}...`, 'info');
       } else {
@@ -468,6 +510,7 @@ class DokaponApp {
       }
     }
     const totalRoll = this.game.rollMovementDice();
+    this.syncMultiplayerState();
     if (networkRoomManager.isInRoom()) {
       networkRoomManager.broadcast({
         packetId: `dice_ai_${Date.now()}`,
@@ -938,6 +981,7 @@ class DokaponApp {
           return;
         }
         const totalRoll = this.game.rollMovementDice();
+        this.syncMultiplayerState();
         if (networkRoomManager.isInRoom()) {
           networkRoomManager.broadcast({
             packetId: `dice_${Date.now()}`,
@@ -1003,18 +1047,24 @@ class DokaponApp {
 
     // Darkling Calamities
     document.getElementById('btnCalamityInvade')?.addEventListener('click', () => {
+      if (!this.ownsActiveTurn()) return;
       const msg = darklingSystem.castSummonInvaders(this.game.activePlayer, this.game.allNodes, this.game.players);
       this.game.addLog(msg, 'darkling');
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
+      this.syncMultiplayerState();
     });
     document.getElementById('btnCalamityPlague')?.addEventListener('click', () => {
+      if (!this.ownsActiveTurn()) return;
       const msg = darklingSystem.castGlobalPlague(this.game.activePlayer, this.game.players);
       this.game.addLog(msg, 'darkling');
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
+      this.syncMultiplayerState();
     });
     document.getElementById('btnCalamityWarp')?.addEventListener('click', () => {
+      if (!this.ownsActiveTurn()) return;
       const res = darklingSystem.castDemonWarp(this.game.activePlayer, this.game.players, this.game.allNodes);
       this.game.addLog(res.message, 'darkling');
+      this.syncMultiplayerState();
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
       this.renderer.centerCameraOn(this.game.activePlayer.gridX, this.game.activePlayer.gridY, this.game.activePlayer.gridZ);
     });
@@ -1645,7 +1695,7 @@ class DokaponApp {
           diceModal.classList.add('hidden');
           this.game.updateReachableHighlights();
 
-          if (this.game.activePlayer.isAI) {
+          if (this.game.activePlayer.isAI && this.ownsActiveTurn()) {
             // AI intelligently picks best destination (last-hit towns, PvP, shops)
             const chosenTarget = aiSystem.chooseRoute(
               this.game.highlightedNodes,
@@ -1715,6 +1765,7 @@ class DokaponApp {
   }
 
   private handleTileArrival(tile: BoardNode) {
+    if (!this.ownsActiveTurn()) return;
     triggerHaptic('selection');
     const p = this.game.activePlayer;
     this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
@@ -2368,8 +2419,9 @@ class DokaponApp {
   }
 
   private advanceTurn() {
+    if (!this.ownsActiveTurn()) return;
     this.game.checkWinConditions();
-    if (this.showMatchResult()) return;
+    if (this.showMatchResult()) { this.syncMultiplayerState(); return; }
     this.hud.update();
 
     // 3. Check for Grand World Calamity triggers
@@ -2391,7 +2443,7 @@ class DokaponApp {
   }
 
   private finishAdvanceTurn() {
-    this.syncMultiplayerState();
+    const authorityPlayerIdx = this.game.activePlayerIdx;
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
@@ -2404,8 +2456,8 @@ class DokaponApp {
           this.game.addLog(`💾 บันทึกอัตโนมัติ (Auto-Save สัปดาห์ที่ ${this.game.weekCounter}) เรียบร้อย!`, 'info');
           this.updateTitleSaveStatus();
 
-          this.syncMultiplayerState();
           this.game.startTurn();
+          this.syncMultiplayerState(authorityPlayerIdx);
           this.onTurnStarted();
           if (this.game.activePlayer.isAI) {
             this.handleAITurnStart();
@@ -2414,9 +2466,9 @@ class DokaponApp {
       });
     });
 
-    if (this.showMatchResult()) return;
+    if (this.showMatchResult()) { this.syncMultiplayerState(authorityPlayerIdx); return; }
     if (this.game.phase === 'BOARD_TURN') {
-      this.syncMultiplayerState();
+      this.syncMultiplayerState(authorityPlayerIdx);
       this.onTurnStarted();
       if (this.game.activePlayer.isAI) {
         this.handleAITurnStart();
@@ -2429,7 +2481,7 @@ class DokaponApp {
   private onTurnStarted() {
     if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
-    offerWeeklyDraft(this.game);
+    if (this.ownsActiveTurn()) offerWeeklyDraft(this.game);
     // 1. Smoothly center camera on active player without jarring zoom jumps
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
 
@@ -2702,7 +2754,9 @@ class DokaponApp {
       if (canCast) {
         card.addEventListener('click', () => {
           const targetId = spell.requiresTarget && select ? parseInt(select.value) : undefined;
+          if (!this.ownsActiveTurn()) return;
           const res = this.game.castFieldSpell(p, spell.id, targetId);
+          this.syncMultiplayerState();
           const resEl = document.getElementById('fieldSpellResultMsg')!;
           resEl.innerText = res.message;
           resEl.classList.remove('hidden');

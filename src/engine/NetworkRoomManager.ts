@@ -7,6 +7,8 @@
  */
 
 export type NetworkPacketType =
+  | 'ROOM_ERROR'
+  | 'BATTLE_PROMPT'
   | 'JOIN_ROOM'
   | 'REJOIN_ROOM'
   | 'REJOIN_ACK'
@@ -70,6 +72,8 @@ export interface ActiveMPSession {
   status: 'lobby' | 'playing';
   gameMode?: string;
   saveDataSnapshot?: any;
+  connectedPeers?: ConnectedPeer[];
+  partySize?: number;
   lastActiveTime: number;
 }
 
@@ -101,6 +105,7 @@ export class NetworkRoomManager {
   private packetSeq = 0;
   private localPlayerIndex: number = 0;
   private reconnectTimer: any = null;
+  private transportGeneration = 0;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -177,7 +182,9 @@ export class NetworkRoomManager {
       playerIndex: this.localPlayerIndex,
       status: this.currentRoom.status,
       gameMode: this.currentRoom.gameMode,
-      saveDataSnapshot: saveData || existing?.saveDataSnapshot || null,
+      saveDataSnapshot: saveData || (existing?.roomCode === this.currentRoom.code ? existing.saveDataSnapshot : null),
+      connectedPeers: this.currentRoom.connectedPeers,
+      partySize: this.currentRoom.partySize,
       lastActiveTime: Date.now()
     };
 
@@ -264,7 +271,7 @@ export class NetworkRoomManager {
     skinVariant: number = 0
   ): boolean {
     const cleanCode = roomCode.trim().toUpperCase();
-    if (!cleanCode) return false;
+    if (!/^CF-\d{4}$/.test(cleanCode)) return false;
 
     this.leaveRoom(true);
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
@@ -319,7 +326,7 @@ export class NetworkRoomManager {
    */
   public rejoinRoom(session: ActiveMPSession): boolean {
     const cleanCode = session.roomCode.trim().toUpperCase();
-    if (!cleanCode) return false;
+    if (!/^CF-\d{4}$/.test(cleanCode)) return false;
 
     this.leaveRoom(true);
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
@@ -348,7 +355,7 @@ export class NetworkRoomManager {
     };
 
     this.setupBroadcastChannel(channelName);
-    this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, true);
+    this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, true, session.myPeerId);
 
     // Broadcast REJOIN packet
     this.broadcast({
@@ -407,6 +414,7 @@ export class NetworkRoomManager {
    * Leave the current room and close all communication channels
    */
   public leaveRoom(preserveSession: boolean = false) {
+    this.transportGeneration++;
     if (!preserveSession) {
       this.clearSession();
     }
@@ -439,6 +447,7 @@ export class NetworkRoomManager {
       this.channel = null;
     }
 
+    this.currentRoom = null;
     // Close WebRTC connections
     this.connections.forEach(conn => {
       try {
@@ -565,8 +574,10 @@ export class NetworkRoomManager {
   private async initHostWebRTC(roomCode: string, hostPlayerName: string) {
     if (typeof window === 'undefined' || typeof (window as any).RTCPeerConnection === 'undefined') return;
 
+    const generation = this.transportGeneration;
     try {
       const mod = await import('peerjs');
+      if (generation !== this.transportGeneration || this.currentRoom?.code !== roomCode) return;
       const PeerClass = (mod as any).Peer || (mod as any).default?.Peer || (mod as any).default;
       if (!PeerClass) return;
 
@@ -587,23 +598,28 @@ export class NetworkRoomManager {
 
       this.peer.on('connection', (conn: any) => {
         console.log('[NetworkRoomManager] Incoming peer connection from:', conn.peer);
+        if (generation !== this.transportGeneration || !this.currentRoom?.isHost) { conn.close(); return; }
         this.connections.set(conn.peer, conn);
 
         conn.on('data', (data: any) => {
+          if (generation !== this.transportGeneration || data?.senderId !== conn.metadata?.peerId) return;
           this.processIncomingPacket(data as NetworkPacket, 'webrtc');
         });
 
         conn.on('close', () => {
+          if (this.connections.get(conn.peer) !== conn) return;
           this.connections.delete(conn.peer);
           if (this.currentRoom) {
-            const peerObj = this.currentRoom.connectedPeers.find(p => p.id === conn.peer);
+            const peerObj = this.currentRoom.connectedPeers.find(p => p.id === conn.metadata?.peerId);
             if (peerObj) {
               if (this.currentRoom.status === 'playing') {
                 peerObj.isDisconnected = true;
               } else {
-                this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== conn.peer);
+                this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== conn.metadata?.peerId);
+                this.currentRoom.connectedPeers.forEach((p, i) => p.playerIndex = i);
               }
               this.notifyStateChange();
+              this.publishRoster();
             }
           }
         });
@@ -617,15 +633,21 @@ export class NetworkRoomManager {
     }
   }
 
-  private async initGuestWebRTC(roomCode: string, myPeerId: string, selfPeer: ConnectedPeer, isRejoining: boolean = false) {
+  private async initGuestWebRTC(roomCode: string, myPeerId: string, selfPeer: ConnectedPeer, isRejoining: boolean = false, previousPeerId?: string) {
     if (typeof window === 'undefined' || typeof (window as any).RTCPeerConnection === 'undefined') return;
 
+    const generation = this.transportGeneration;
     try {
       const mod = await import('peerjs');
+      if (generation !== this.transportGeneration || this.currentRoom?.code !== roomCode) return;
       const PeerClass = (mod as any).Peer || (mod as any).default?.Peer || (mod as any).default;
       if (!PeerClass) return;
 
       const hostPeerId = `cof-host-${roomCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+      const previousPeer = this.peer;
+      this.peer = null;
+      this.hostConnection = null;
+      previousPeer?.destroy();
       this.peer = new PeerClass(`cof-guest-${Math.random().toString(36).substring(2, 9)}`, {
         debug: 1,
         config: {
@@ -636,12 +658,24 @@ export class NetworkRoomManager {
         }
       });
 
+      const activePeer = this.peer;
       this.peer.on('open', () => {
+        if (this.peer !== activePeer || generation !== this.transportGeneration) return;
         console.log('[NetworkRoomManager] Guest WebRTC connected to signaling broker. Connecting to host:', hostPeerId);
-        const conn = this.peer.connect(hostPeerId, { reliable: true });
+        const conn = activePeer.connect(hostPeerId, { reliable: true, metadata: { peerId: myPeerId } });
         this.hostConnection = conn;
+        const timeout = setTimeout(() => {
+          if (this.hostConnection === conn && !conn.open) { this.hostConnection = null; conn.close(); this.scheduleAutoReconnect(); }
+        }, 10000);
+        conn.on('error', () => {
+          clearTimeout(timeout);
+          if (this.hostConnection !== conn) return;
+          this.hostConnection = null; this.scheduleAutoReconnect();
+        });
 
         conn.on('open', () => {
+          clearTimeout(timeout);
+          if (this.hostConnection !== conn) return;
           console.log('[NetworkRoomManager] WebRTC DataConnection to host opened!');
           const pktType = isRejoining ? 'REJOIN_ROOM' : 'JOIN_ROOM';
           const pkt: NetworkPacket = {
@@ -653,6 +687,7 @@ export class NetworkRoomManager {
             payload: {
               peer: selfPeer,
               clientSessionId: selfPeer.clientSessionId,
+              previousPeerId,
               playerIndex: selfPeer.playerIndex,
               joinedAt: Date.now()
             },
@@ -662,10 +697,13 @@ export class NetworkRoomManager {
         });
 
         conn.on('data', (data: any) => {
+          if (generation !== this.transportGeneration || this.hostConnection !== conn) return;
           this.processIncomingPacket(data as NetworkPacket, 'webrtc');
         });
 
         conn.on('close', () => {
+          clearTimeout(timeout);
+          if (this.hostConnection !== conn) return;
           console.log('[NetworkRoomManager] WebRTC connection to host closed');
           this.hostConnection = null;
           this.scheduleAutoReconnect();
@@ -673,6 +711,7 @@ export class NetworkRoomManager {
       });
 
       this.peer.on('error', (err: any) => {
+        if (this.peer !== activePeer) return;
         console.warn('[NetworkRoomManager] Guest Peer error:', err);
         this.hostConnection = null;
         this.scheduleAutoReconnect();
@@ -723,176 +762,94 @@ export class NetworkRoomManager {
     }
   }
 
-  private processIncomingPacket(packet: NetworkPacket, source: 'webrtc' | 'broadcast') {
-    if (!packet || packet.roomCode !== this.currentRoom?.code) return;
-    if (packet.senderId === this.currentRoom.myPeerId) return;
-
-    // Deduplicate packets arriving from both WebRTC and BroadcastChannel
-    if (packet.packetId && this.markPacketSeen(packet.packetId)) {
-      return;
+  public updateLobbySettings(settings: { partySize?: number; gameMode?: string }): boolean {
+    const room = this.currentRoom;
+    if (!room?.isHost || room.status !== 'lobby') return false;
+    if (settings.partySize !== undefined) {
+      if (![2, 3, 4].includes(settings.partySize) || settings.partySize < room.connectedPeers.length) return false;
+      room.partySize = settings.partySize;
     }
+    if (settings.gameMode && ['standard', 'blitz', 'coop_raid', 'roguelike_draft'].includes(settings.gameMode)) room.gameMode = settings.gameMode;
+    this.publishRoster(); this.saveSessionSnapshot(); this.notifyStateChange();
+    return true;
+  }
 
-    // Host authoritative handling for room membership
-    if (this.currentRoom.isHost) {
-      if (packet.type === 'JOIN_ROOM') {
-        const guestPeer: ConnectedPeer = packet.payload?.peer || {
-          id: packet.senderId,
-          clientSessionId: packet.payload?.clientSessionId,
-          name: packet.senderName,
-          classKey: 'mage',
-          skinVariant: 0,
-          isHost: false,
-          playerIndex: this.currentRoom.connectedPeers.length
-        };
-        const exists = this.currentRoom.connectedPeers.some(p => p.id === packet.senderId);
-        if (!exists) {
-          guestPeer.playerIndex = this.currentRoom.connectedPeers.length;
-          this.currentRoom.connectedPeers.push(guestPeer);
-          this.notifyStateChange();
+  public restoreRoster(session: ActiveMPSession): void {
+    if (!this.currentRoom?.isHost || !session.connectedPeers) return;
+    this.currentRoom.connectedPeers = session.connectedPeers.map(p => ({ ...p, isDisconnected: !p.isHost }));
+    this.currentRoom.partySize = session.partySize || session.connectedPeers.length;
+    this.saveSessionSnapshot();
+  }
 
-          // Acknowledge connection and broadcast updated peer roster
-          this.broadcast({
-            packetId: this.nextPacketId(),
-            type: 'PEER_CONNECTED',
-            roomCode: this.currentRoom.code,
-            senderId: 'host',
-            senderName: this.currentRoom.connectedPeers[0]?.name || 'Host',
-            payload: {
-              peers: this.currentRoom.connectedPeers,
-              partySize: this.currentRoom.partySize,
-              gameMode: this.currentRoom.gameMode,
-              aiDifficulty: this.currentRoom.aiDifficulty
-            },
-            timestamp: Date.now()
-          });
+  private publishRoster(reconnectedPeer?: ConnectedPeer): void {
+    const room = this.currentRoom;
+    if (!room?.isHost) return;
+    this.broadcast({ packetId: this.nextPacketId(), type: reconnectedPeer ? 'PEER_RECONNECTED' : 'PEER_CONNECTED', roomCode: room.code,
+      senderId: 'host', senderName: room.connectedPeers[0]?.name || 'Host',
+      payload: { peer: reconnectedPeer, peers: room.connectedPeers, partySize: room.partySize, gameMode: room.gameMode, aiDifficulty: room.aiDifficulty }, timestamp: Date.now() });
+  }
+
+  private processIncomingPacket(packet: NetworkPacket, source: 'webrtc' | 'broadcast') {
+    const room = this.currentRoom;
+    if (!room || !packet || packet.roomCode !== room.code || typeof packet.packetId !== 'string' || !packet.packetId || typeof packet.senderId !== 'string') return;
+    if (packet.senderId === room.myPeerId || this.markPacketSeen(packet.packetId)) return;
+    if (['START_GAME', 'PEER_CONNECTED', 'PEER_RECONNECTED', 'REJOIN_ACK', 'ROOM_ERROR'].includes(packet.type) && packet.senderId !== 'host') return;
+    if (room.isHost) {
+      if (packet.type === 'JOIN_ROOM' || packet.type === 'REJOIN_ROOM') {
+        const sessionId = packet.payload?.clientSessionId;
+        let member = room.connectedPeers.find(p => !p.isHost && (p.id === packet.senderId || (sessionId && p.clientSessionId === sessionId)));
+        if (!member && (room.status === 'playing' || room.connectedPeers.length >= (room.partySize || 3))) {
+          this.broadcast({ packetId: this.nextPacketId(), type: 'ROOM_ERROR', roomCode: room.code, senderId: 'host', senderName: 'Host',
+            payload: { peerId: packet.senderId, message: room.status === 'playing' ? 'เกมเริ่มแล้ว ไม่พบที่นั่งเดิมของคุณ' : 'ห้องเต็มแล้ว' }, timestamp: Date.now() });
+          return;
         }
-      } else if (packet.type === 'REJOIN_ROOM') {
-        const clientSessionId = packet.payload?.clientSessionId;
-        const playerIndex = packet.payload?.playerIndex;
-        const playerName = packet.senderName;
-
-        let existingPeer = this.currentRoom.connectedPeers.find(
-          p =>
-            (clientSessionId && p.clientSessionId === clientSessionId) ||
-            (typeof playerIndex === 'number' && p.playerIndex === playerIndex) ||
-            p.name === playerName
-        );
-
-        if (existingPeer) {
-          existingPeer.id = packet.senderId;
-          existingPeer.isDisconnected = false;
-          if (clientSessionId) existingPeer.clientSessionId = clientSessionId;
-        } else {
-          existingPeer = {
-            id: packet.senderId,
-            clientSessionId: clientSessionId || getOrCreateClientSessionId(),
-            name: playerName,
-            classKey: packet.payload?.peer?.classKey || 'warrior',
-            skinVariant: packet.payload?.peer?.skinVariant || 0,
-            isHost: false,
-            playerIndex: typeof playerIndex === 'number' ? playerIndex : this.currentRoom.connectedPeers.length
-          };
-          this.currentRoom.connectedPeers.push(existingPeer);
+        if (!member) {
+          member = { id: packet.senderId, clientSessionId: sessionId, name: String(packet.senderName || 'Guest').slice(0, 24),
+            classKey: packet.payload?.peer?.classKey || 'warrior', skinVariant: packet.payload?.peer?.skinVariant || 0,
+            isHost: false, playerIndex: room.connectedPeers.length };
+          room.connectedPeers.push(member);
         }
-
-        this.notifyStateChange();
-
-        this.broadcast({
-          packetId: this.nextPacketId(),
-          type: 'PEER_RECONNECTED',
-          roomCode: this.currentRoom.code,
-          senderId: 'host',
-          senderName: this.currentRoom.connectedPeers[0]?.name || 'Host',
-          payload: {
-            peer: existingPeer,
-            peers: this.currentRoom.connectedPeers
-          },
-          timestamp: Date.now()
-        });
-      } else if (packet.type === 'PLAYER_UPDATE') {
-        const p = this.currentRoom.connectedPeers.find(peer => peer.id === packet.senderId);
-        if (p && packet.payload) {
-          p.name = packet.payload.name || p.name;
-          p.classKey = packet.payload.classKey || p.classKey;
-          p.skinVariant = packet.payload.skinVariant ?? p.skinVariant;
-          this.notifyStateChange();
-
-          // Relay update to other peers
-          this.broadcast({
-            packetId: this.nextPacketId(),
-            type: 'PLAYER_UPDATE',
-            roomCode: this.currentRoom.code,
-            senderId: packet.senderId,
-            senderName: p.name,
-            payload: packet.payload,
-            timestamp: Date.now()
-          });
-        }
-      } else if (packet.type === 'LEAVE_ROOM') {
-        const peerObj = this.currentRoom.connectedPeers.find(p => p.id === packet.senderId);
-        if (peerObj) {
-          if (this.currentRoom.status === 'playing') {
-            peerObj.isDisconnected = true;
-          } else {
-            this.currentRoom.connectedPeers = this.currentRoom.connectedPeers.filter(p => p.id !== packet.senderId);
-          }
-          this.notifyStateChange();
-          this.broadcast({
-            packetId: this.nextPacketId(),
-            type: 'PEER_CONNECTED',
-            roomCode: this.currentRoom.code,
-            senderId: 'host',
-            senderName: 'Host',
-            payload: { peers: this.currentRoom.connectedPeers },
-            timestamp: Date.now()
-          });
-        }
+        member.id = packet.senderId; member.isDisconnected = false;
+        this.publishRoster(packet.type === 'REJOIN_ROOM' ? member : undefined); this.saveSessionSnapshot(); this.notifyStateChange();
       } else {
-        // Relay in-game packet from one guest to all other peers
-        this.connections.forEach((conn, id) => {
-          if (id !== packet.senderId && conn.open) {
-            try {
-              conn.send(packet);
-            } catch {
-              // Ignore
-            }
+        const member = room.connectedPeers.find(p => p.id === packet.senderId && !p.isHost);
+        if (!member) return;
+        if (packet.type === 'PLAYER_UPDATE') {
+          if (room.status !== 'lobby') return;
+          member.name = String(packet.payload?.name || member.name).slice(0, 24);
+          member.classKey = packet.payload?.classKey || member.classKey;
+          member.skinVariant = packet.payload?.skinVariant ?? member.skinVariant;
+          this.publishRoster(); this.notifyStateChange();
+        } else if (packet.type === 'LEAVE_ROOM') {
+          if (room.status === 'playing') member.isDisconnected = true;
+          else {
+            room.connectedPeers = room.connectedPeers.filter(p => p !== member);
+            room.connectedPeers.forEach((p, i) => p.playerIndex = i);
           }
-        });
+          this.publishRoster(); this.saveSessionSnapshot(); this.notifyStateChange();
+        } else {
+          // Bridge both transports; all clients deduplicate the original packet ID.
+          if (source === 'webrtc') this.channel?.postMessage(packet);
+          this.connections.forEach(conn => { if (conn.open) { try { conn.send(packet); } catch {} } });
+        }
       }
     } else {
-      // Guest handling
+      if (['JOIN_ROOM', 'REJOIN_ROOM'].includes(packet.type)) return;
       if (packet.type === 'PEER_CONNECTED' || packet.type === 'PEER_RECONNECTED') {
-        if (packet.payload?.peers && Array.isArray(packet.payload.peers)) {
-          this.currentRoom.connectedPeers = packet.payload.peers;
-          if (packet.payload.partySize) this.currentRoom.partySize = packet.payload.partySize;
-          if (packet.payload.gameMode) this.currentRoom.gameMode = packet.payload.gameMode;
-          if (packet.payload.aiDifficulty) this.currentRoom.aiDifficulty = packet.payload.aiDifficulty;
-
-          // Determine our assigned player index
-          const me = this.currentRoom.connectedPeers.find(p => p.id === this.currentRoom!.myPeerId);
-          if (me && typeof me.playerIndex === 'number') {
-            this.localPlayerIndex = me.playerIndex;
-          }
-          this.notifyStateChange();
-        }
-      } else if (packet.type === 'PLAYER_UPDATE') {
-        const p = this.currentRoom.connectedPeers.find(peer => peer.id === packet.senderId);
-        if (p && packet.payload) {
-          p.name = packet.payload.name || p.name;
-          p.classKey = packet.payload.classKey || p.classKey;
-          p.skinVariant = packet.payload.skinVariant ?? p.skinVariant;
-          this.notifyStateChange();
-        }
+        if (packet.senderId !== 'host' || !Array.isArray(packet.payload?.peers)) return;
+        room.connectedPeers = packet.payload.peers;
+        room.partySize = packet.payload.partySize ?? room.partySize;
+        room.gameMode = packet.payload.gameMode ?? room.gameMode;
+        room.aiDifficulty = packet.payload.aiDifficulty ?? room.aiDifficulty;
+        const me = room.connectedPeers.find(p => p.id === room.myPeerId);
+        if (me && typeof me.playerIndex === 'number') this.localPlayerIndex = me.playerIndex;
+        this.saveSessionSnapshot(); this.notifyStateChange();
+      } else if (packet.type === 'START_GAME') {
+        if (!packet.payload?.saveData || room.status === 'playing') return;
       }
     }
-
-    // Dispatch to registered packet listeners
     this.onPacketListeners.forEach(listener => {
-      try {
-        listener(packet);
-      } catch (err) {
-        console.error('[NetworkRoomManager] Listener dispatch error:', err);
-      }
+      try { listener(packet); } catch (err) { console.error('[NetworkRoomManager] Listener dispatch error:', err); }
     });
   }
 
