@@ -1817,7 +1817,7 @@ export class BattleUI {
     const biome = node?.biome || 'grass';
     const type = node?.type || 'empty';
 
-    drawBattleScenery(ctx, w, h, biome, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isBoss || type === 'boss', type === 'town');
+    drawBattleScenery(ctx, w, h, biome, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isBoss || type === 'boss', type === 'town', node?.id);
   }
 
   // 1. CASTLE & ROYAL PALACE INTERIOR (ปราสาทและพระราชวังหลวง)

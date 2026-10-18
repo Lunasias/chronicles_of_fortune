@@ -1,6 +1,7 @@
 import { BoardNode } from '../game/BoardMap';
 import { pixelSprites, IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { worldBackground } from './WorldBackground';
+import { generatedBackdrops, backdropKey } from './GeneratedBackdrops';
 import { Player } from '../game/Player';
 import { ecosystemSystem, WeatherType } from '../game/EcosystemSystem';
 import { isometricTerrainEngine } from './IsometricTerrainEngine';
@@ -10,7 +11,6 @@ import { audio } from './AudioSynthesizer';
 import { graphicsPreferences, prefersReducedMotion } from '../ui/GraphicsSettings';
 import { foliageForBiome } from './BiomeArt';
 import { isDungeonExit, dungeonSceneGroup } from '../game/DungeonLocations';
-import { drawDungeonRoom } from './EnvironmentArt';
 import { worldDetails } from './WorldDetails';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { roadPoint } from './WorldEcology';
@@ -327,8 +327,10 @@ export class IsometricRenderer {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Dynamic Fantasy World Sky & Parallax Horizons (Changes with Day/Night cycle)
-    if (this.sceneGroup) drawDungeonRoom(ctx, w, h, nodes[0]?.biome || 'abyss');
-    else worldBackground.renderSky(ctx, this.camera, w, h, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay);
+    const backdropNode = nodes.find(node => node.id === activePlayer?.nodeId) || nodes[0];
+    const backgroundKey = backdropKey(backdropNode?.biome || 'grass', backdropNode?.id);
+    const openSky = !backgroundKey.startsWith('dungeon_') && !['cavern', 'crystal_cavern', 'coral', 'abyss'].includes(backgroundKey);
+    generatedBackdrops.draw(ctx, w, h, backgroundKey, ecosystemSystem.timeOfDay);
 
     ctx.save();
     ctx.translate(Math.round(w / 2), Math.round(h / 2));
@@ -336,14 +338,14 @@ export class IsometricRenderer {
     ctx.translate(-camX, -camY);
 
     // 2. World Space Atmosphere (Clouds, wildlife & motes per time of day)
-    if (!this.sceneGroup && graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
+    if (openSky && graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
       worldBackground.renderAtmosphere(ctx, this.camera, time, ecosystemSystem.timeOfDay);
     }
 
     // 2.4 The cloud sea the floating continent rises out of. Drawn in world space below the
     // board's lowest tile, so the map reads as an island in the sky rather than as a flat
     // continent.
-    if (!this.sceneGroup && isometricTerrainEngine.isInitialized) {
+    if (openSky && isometricTerrainEngine.isInitialized) {
       worldBackground.renderCloudSea(ctx, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
     }
 

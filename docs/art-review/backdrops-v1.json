@@ -1,0 +1,114 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-10-18",
+  "assets": [
+    {
+      "id": "grass",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Sunlit emerald plains of a vast fantasy kingdom, layered rolling hills, ancient windmills and faraway villages, wildflowers, warm ivory clouds.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-87b6a0eb-d5ea-41e0-afe5-f2c3186533b4.png",
+      "asset": "public/assets/art-v2/backdrops-v1/grass.png"
+    },
+    {
+      "id": "forest",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Ancient enchanted oak forest, towering interlocking canopies, mossy trunks, distant ruined elven arches, shafts of golden sunlight.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-aa0c08c5-3ca7-4f6a-acbf-3fe751888ad4.png",
+      "asset": "public/assets/art-v2/backdrops-v1/forest.png"
+    },
+    {
+      "id": "waterfall_forest",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Lush emerald rainforest canyon with spectacular cascading waterfalls, misty layered cliffs, overgrown bridges and giant ferns.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-77cc155c-7523-4684-b05b-3aa12d5a9c7c.png",
+      "asset": "public/assets/art-v2/backdrops-v1/waterfall_forest.png"
+    },
+    {
+      "id": "snow",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Frostpeak alpine kingdom, blue white snowy peaks, dense fir forests, distant ice citadel and frozen valley, luminous crisp air.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-62c2aad7-e8dc-4934-b561-62c8ebbd19ff.png",
+      "asset": "public/assets/art-v2/backdrops-v1/snow.png"
+    },
+    {
+      "id": "desert",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Sunfire desert kingdom, amber sandstone mesas, rose dunes, distant oasis and gilded ancient palace, deep turquoise sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-369c9bc8-0449-4acc-87f6-571b91d81413.png",
+      "asset": "public/assets/art-v2/backdrops-v1/desert.png"
+    },
+    {
+      "id": "volcano",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Volcanic badlands, immense smoking caldera, basalt spires and glowing orange lava rivers, crimson ember clouds.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-4938a794-ba6c-4488-af36-02bfc7a5b741.png",
+      "asset": "public/assets/art-v2/backdrops-v1/volcano.png"
+    },
+    {
+      "id": "cavern",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Underground limestone cavern, massive stalactites and stalagmites, moss, underground lake and scattered warm lanterns, no outdoor sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-10b268dc-74b1-425b-bf00-ec87db97374e.png",
+      "asset": "public/assets/art-v2/backdrops-v1/cavern.png"
+    },
+    {
+      "id": "coral",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Underwater coral kingdom, vivid coral gardens, turquoise submerged ruins and sea palace, light shafts from surface, no outdoor sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-bd6c64e2-505c-4f16-86a1-55af9e835048.png",
+      "asset": "public/assets/art-v2/backdrops-v1/coral.png"
+    },
+    {
+      "id": "abyss",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Abyssal dark fantasy realm, violet chasm, obsidian cathedral ruins, suspended rocks, spectral purple fire, legible rich jewel colors.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-cfe5b9ff-ac12-4a1e-9e5c-3d0e9f7b9239.png",
+      "asset": "public/assets/art-v2/backdrops-v1/abyss.png"
+    },
+    {
+      "id": "castle",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Royal fantasy capital, massive ivory castle blue roofs, layered fortified city ramparts and medieval rooftops, banners and gardens.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-855c1329-ef19-42c1-94d7-ba649df9b935.png",
+      "asset": "public/assets/art-v2/backdrops-v1/castle.png"
+    },
+    {
+      "id": "fairy_grove",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Enchanted fairy grove, immense luminous mushrooms, twisting violet trees, emerald moss and glowing golden motes, magical twilight.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-d889d5c5-b365-4295-b75c-115fbd489301.png",
+      "asset": "public/assets/art-v2/backdrops-v1/fairy_grove.png"
+    },
+    {
+      "id": "crystal_cavern",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Underground crystal cavern, huge sapphire amethyst emerald crystal clusters, vaulted rock ceiling and luminous mineral lake, no outdoor sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-b287a6ff-a233-4e61-a520-0c96401250fa.png",
+      "asset": "public/assets/art-v2/backdrops-v1/crystal_cavern.png"
+    },
+    {
+      "id": "celestial",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Celestial sky kingdom, ivory gold floating temple islands, immense layered clouds, distant starry blue firmament and heavenly bridges.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-2be59fe2-852c-49cc-84a5-53225cadf381.png",
+      "asset": "public/assets/art-v2/backdrops-v1/celestial.png"
+    },
+    {
+      "id": "steampunk",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Fantasy steampunk frontier, brass clockwork towers, copper pipework, airship docks and lush vegetation reclaiming machinery, amber steam.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-e5e75b12-98c8-4e17-ad41-289d10be1326.png",
+      "asset": "public/assets/art-v2/backdrops-v1/steampunk.png"
+    },
+    {
+      "id": "sakura_shrine",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Sacred sakura mountain shrine, dense pink blossom trees, vermilion torii gates, distant pagodas and waterfall, peaceful luminous spring.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-4270d579-befc-432a-8a0d-36a8b915ad72.png",
+      "asset": "public/assets/art-v2/backdrops-v1/sakura_shrine.png"
+    },
+    {
+      "id": "dungeon_catacombs",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Interior of immense ancient catacombs, gothic stone vaults, sarcophagi, skull alcoves, purple braziers and hanging chains, no sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-621ba128-c4a3-4065-90bc-01bedfe18f92.png",
+      "asset": "public/assets/art-v2/backdrops-v1/dungeon_catacombs.png"
+    },
+    {
+      "id": "dungeon_volcano",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Interior of volcanic dungeon forge, black basalt arches, molten lava channels, ancient iron mechanisms and ember lit vaulted cavern, no sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-e8cf9d0e-1907-41bb-af02-711c7446ec0c.png",
+      "asset": "public/assets/art-v2/backdrops-v1/dungeon_volcano.png"
+    },
+    {
+      "id": "dungeon_ice",
+      "prompt": "Use case: stylized-concept. Production pixel art fantasy RPG environment BACKDROP, landscape 1536x1024. One single complete scene, no panels, no atlas. Beautiful hand placed crisp pixel clusters, consistent SNES high detail pixel art, rich saturated colors, readable layered depth, top left light, no smooth painting or blur. Wide environmental panorama viewed across an isometric fantasy world, no characters, enemies, UI, text, logos, borders or giant foreground props. Keep lower 30 percent quiet medium distance terrain that can be covered by the game board / battle ground; main distinct architecture and scenery in middle and upper portions, detailed scenery across width, no oversized central focal object. Upper region includes appropriate atmosphere or cave ceiling. Scene/backdrop: Interior of frozen dungeon palace, sculpted blue ice columns, snowy gothic stone ruins, icicles and turquoise crystals, no sky.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-d7531a82-49bb-439c-867e-51d63976e1cc.png",
+      "asset": "public/assets/art-v2/backdrops-v1/dungeon_ice.png"
+    }
+  ]
+}

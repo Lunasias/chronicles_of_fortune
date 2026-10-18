@@ -228,6 +228,8 @@ MIT License - see [LICENSE](LICENSE).
 
 ### Battle effects
 
+The [generated background collection](docs/art-review/backdrops-v1/README.md) supplies 18 distinct panoramas for all 15 biomes and three dungeon interiors. Open `/backdrops-review.html` to inspect the full collection.
+
 The [combat flow and navigation update](docs/art-review/navigation-flow/README.md) adds continuous recovery, generated destination markers and clickable offscreen direction guidance around the hero.
 
 The [generated combat artwork](docs/art-review/combat-v3/README.md) delivers 132 owner-specific and shared animations (792 frames) in 33 transparent PNG atlases. Every effect pixel comes from generated raster artwork. Open `/effects-review.html` to select a job, monster or companion and scrub its animation.

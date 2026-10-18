@@ -1,11 +1,11 @@
-import { worldBackground } from './WorldBackground';
+import { generatedBackdrops, backdropKey } from './GeneratedBackdrops';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
 import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import type { TimeOfDay } from '../game/EcosystemSystem';
 import { foliageForBiome } from './BiomeArt';
 import { resolveBiome, terrainPalette } from './IsometricTerrainPainter';
-import { drawDungeonRoom, drawGroundClusters } from './EnvironmentArt';
+import { drawGroundClusters } from './EnvironmentArt';
 import { worldDetails } from './WorldDetails';
 import { BIOME_DRESSING, SETTLEMENT_DRESSING, worldNoise } from './WorldEcology';
 import type { WorldDetailName } from './WorldDetails';
@@ -80,14 +80,9 @@ function drawGroundedScenery(ctx: CanvasRenderingContext2D, image: HTMLCanvasEle
 }
 
 /** Arena scenery shares the board's pixels, materials, light and vegetation. */
-export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: number, biome: string, time: number, timeOfDay: TimeOfDay, boss = false, town = false) {
+export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: number, biome: string, time: number, timeOfDay: TimeOfDay, boss = false, town = false, nodeId = 0) {
   ctx.imageSmoothingEnabled = false;
-  const cave = ['cavern', 'crystal_cavern', 'abyss'].includes(biome);
-  if (cave) {
-    drawDungeonRoom(ctx, w, h, biome);
-  } else {
-    worldBackground.renderSky(ctx, { x: 0, y: 0, zoom: 1 }, w, Math.round(h * .62), time, boss ? 'DUSK' : timeOfDay);
-  }
+  generatedBackdrops.draw(ctx, w, h, backdropKey(biome, nodeId), boss ? 'DUSK' : timeOfDay);
   const { floorY } = battleGroundLayout(w, h), night = timeOfDay === 'NIGHT';
   // Extend the floor beyond the viewport. A visible diamond edge makes the arena look airborne.
   const columns = Math.ceil(w / 96) + 2;
