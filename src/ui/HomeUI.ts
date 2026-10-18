@@ -1,3 +1,4 @@
+import { RULES } from '../game/Rules';
 import { GameState } from '../game/GameState';
 import { Player } from '../game/Player';
 import { BoardNode } from '../game/BoardMap';
@@ -36,7 +37,7 @@ export class HomeUI {
     if (node.type === 'empty' || !node.homeData || !node.homeData.ownerId) {
       buySection.classList.remove('hidden');
 
-      const cost = 150;
+      const cost = RULES.homeCost;
       const costEl = document.getElementById('homePlotCost')!;
       costEl.innerText = `${cost}G`;
 
@@ -49,7 +50,7 @@ export class HomeUI {
       btnBuy.onclick = () => {
         if (player.gold < cost) {
           audio.hurt();
-          alert('ทองไม่พอสำหรับซื้อที่ดิน! (ต้องการ 150G)');
+          alert('ทองไม่พอสำหรับซื้อที่ดิน! (ต้องการ 300G)');
           return;
         }
 

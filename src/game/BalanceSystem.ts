@@ -1,26 +1,7 @@
 import { HERO_CLASSES, Player } from './Player';
 import type { Combatant } from './BattleEngine';
 
-/**
- * Enemy power scaling.
- *
- * Every monster stat authored in `BoardMap` and in the encounter tables was tuned for a
- * level-1 hero with no equipment: a starting warrior trades roughly three blows to fell a
- * tier-1 monster and survives about five in return. Nothing ever re-scaled those numbers,
- * so as soon as the hero gained a few levels (+2..4 ATK each) the damage formula
- *
- *     damage = ATK * 2.1 - DEF * 0.75
- *
- * outran every monster's fixed HP and fights collapsed into a single hit.
- *
- * This module treats the authored numbers as the balance point for a fresh hero and scales
- * them by how much stronger the hero has actually become, so the *shape* of a fight is
- * preserved: a tier-1 encounter stays a short skirmish and a tier-4 encounter stays lethal,
- * but neither is trivialised by levelling.
- *
- * The scaling is intentionally applied at battle time rather than written back into the
- * board, so the authored data remains the readable, hand-tuned reference.
- */
+/** Regional difficulty is authored. Equipment and HP upgrades never strengthen the enemy. */
 
 /** Regional threat. Derived from the realm / biome a node belongs to. */
 export type ThreatTier = 1 | 2 | 3 | 4 | 5 | 6;
@@ -34,11 +15,7 @@ export const THREAT_TIER_LABELS: Record<ThreatTier, string> = {
   6: 'เขตบรรพกาล'
 };
 
-/**
- * Average authored stats per tier, measured from the encounter tables in `main.ts`.
- * These are the numbers a fresh hero is expected to face, so they act as the reference
- * point the scaling multiplies away from.
- */
+/** Default regional seeds, used only when an encounter has no authored stat. */
 const TIER_REFERENCE: Record<ThreatTier, { hp: number; atk: number; def: number; mag: number; spd: number }> = {
   1: { hp: 67, atk: 13.5, def: 8.5, mag: 8.5, spd: 8.5 },
   2: { hp: 132, atk: 22.5, def: 16, mag: 18, spd: 14 },
@@ -47,26 +24,6 @@ const TIER_REFERENCE: Record<ThreatTier, { hp: number; atk: number; def: number;
   5: { hp: 720, atk: 70, def: 50, mag: 62, spd: 34 },
   6: { hp: 1000, atk: 88, def: 62, mag: 78, spd: 40 }
 };
-
-/** Highest multiplier applied to monster HP/ATK, so late-game numbers stay readable. */
-const MAX_SCALE = 12;
-
-/** A monster's DEF may never absorb more than this share of the hero's raw attack. */
-const MAX_DEF_ABSORPTION = 0.55;
-
-/**
- * Floor on the authored fight length, in rounds, for any class.
- *
- * A magician's opening magic lands around 54 damage against the authored 67 HP of a tier-1
- * monster, so that encounter was a two-round fight - and a critical (x1.5) killed it outright
- * in one. A 2.5-round floor stops a single lucky hit from ending an encounter while leaving
- * the burst classes' identity intact. The floor does not bind for the martial classes, whose
- * authored encounters are already longer.
- */
-const MIN_AUTHORED_ROUNDS = 2.5;
-
-/** Headroom kept above the hero's worst-case single exchange when sizing a monster's HP. */
-const SINGLE_HIT_SAFETY = 1.15;
 
 /** Multiplier for the luckiest possible exchange: critical, then an agile follow-up. */
 const CRIT_MULTIPLIER = 1.5;
@@ -77,7 +34,7 @@ const DOUBLE_STRIKE_MULTIPLIER = 1.4;
  * follow-up strike BattleEngine can append when SPD leads by 8 or more.
  */
 export function estimateHeroMaxSingleHit(player: Player): number {
-  const base = HERO_CLASSES[player.classKey] || HERO_CLASSES.warrior;
+  const base = HERO_CLASSES[player.originalClassKey || player.classKey] || HERO_CLASSES.warrior;
   const atk = player.getTotalStat('atk');
   const mag = player.getTotalStat('mag');
   const physical = Math.max(6, atk * 2.1);
@@ -98,7 +55,7 @@ export interface PlayerPower {
 
 /** Reads the combat-relevant power of a hero, including its level-1 reference point. */
 export function measurePlayerPower(player: Player): PlayerPower {
-  const base = HERO_CLASSES[player.classKey] || HERO_CLASSES.warrior;
+  const base = HERO_CLASSES[player.originalClassKey || player.classKey] || HERO_CLASSES.warrior;
   const atk = player.getTotalStat('atk');
   const mag = player.getTotalStat('mag');
 
@@ -145,120 +102,22 @@ export function tierForNode(realmId: string | undefined, biome: string | undefin
   return 1;
 }
 
-/**
- * Builds the combatant a hero actually fights.
- *
- * `player` is the hero that will face the monster. When it is omitted the authored stats are
- * returned untouched, which keeps boss/preview paths without a hero working as before.
- */
+/** Authored enemies retain regional strength regardless of the challenger. */
 export function scaleMonster(seed: MonsterSeed, player?: Player | null): Combatant {
-  const tier = seed.tier ?? 1;
-  const ref = TIER_REFERENCE[tier];
-
-  const baseHp = Math.max(1, seed.baseHp ?? ref.hp);
-  const baseAtk = Math.max(1, seed.baseAtk ?? ref.atk);
-  const baseDef = Math.max(0, seed.baseDef ?? ref.def);
-  const baseMag = Math.max(0, seed.baseMag ?? ref.mag);
-  const baseSpd = Math.max(1, seed.baseSpd ?? ref.spd);
-  const baseLuk = Math.max(1, seed.baseLuk ?? 5);
-
-  if (!player) {
-    return {
-      name: seed.name,
-      hp: Math.round(baseHp),
-      maxHp: Math.round(baseHp),
-      mp: seed.mp ?? 30,
-      maxMp: seed.mp ?? 30,
-      atk: Math.round(baseAtk),
-      def: Math.round(baseDef),
-      mag: Math.round(baseMag),
-      spd: Math.round(baseSpd),
-      luk: Math.round(baseLuk),
-      isBoss: seed.isBoss,
-      classKey: seed.classKey,
-      skillName: seed.skillName
-    };
-  }
-
-  const power = measurePlayerPower(player);
-  const offenseRatio = clamp(power.offense / power.baselineOffense, 0.75, MAX_SCALE);
-  // A small "progression dividend": by late game the same tier of monster takes slightly
-  // fewer rounds, so levelling feels rewarding. It is deliberately capped and only applied
-  // to HP - applying it to damage as well would make fights longer AND deadlier at once.
-  const easing = 1 - Math.min(0.15, Math.max(0, power.level - 1) * 0.01);
-
-  const rawAttack = power.offense * 2.1;
-
-  // --- DEF ------------------------------------------------------------------
-  // Grows with the hero's offence so armour keeps mattering, but is capped so it can never
-  // grind the fight down to the minimum-damage floor.
-  const defExact = Math.min(baseDef * offenseRatio, (rawAttack * MAX_DEF_ABSORPTION) / 0.75);
-  const def = Math.floor(defExact);
-
-  // --- HP -------------------------------------------------------------------
-  // The authored HP is the number of rounds the map author intended a level-1 hero to need,
-  // so that round count is measured at baseline and then re-applied to the hero's current
-  // damage per round. This keeps the length of a fight constant as the hero grows instead of
-  // collapsing to a single hit, and it reproduces the authored HP exactly at level 1.
-  const heroDamage = estimateHeroDamagePerRound(player);
-  const baselineDamage = estimateHeroDamagePerRound(player, true);
-  const heroEffective = Math.max(6, heroDamage - defExact * 0.75);
-  const baselineEffective = Math.max(6, baselineDamage - baseDef * 0.75);
-
-  // Guarantee that no single lucky exchange can delete the monster. BattleEngine can stack a
-  // critical (x1.5) with an agile follow-up strike (x1.4) and a botched counter (x1.25), so
-  // the fight length is floored against that worst case rather than against average damage.
-  const worstCaseExchange = estimateHeroMaxSingleHit(player);
-  const guaranteedRounds = (worstCaseExchange * SINGLE_HIT_SAFETY) / Math.max(1, heroEffective * easing);
-
-  const authoredRounds = Math.max(
-    baseHp / baselineEffective,
-    MIN_AUTHORED_ROUNDS,
-    guaranteedRounds
-  );
-  const hp = Math.max(1, Math.round(heroEffective * authoredRounds * easing));
-
-  // --- ATK ------------------------------------------------------------------
-  // Solved so a single hit costs the hero the same share of its health pool as it did at
-  // level 1. Because the denominator is solved out exactly, incoming damage works out to
-  // `authoredShare * maxHp` and the hero survives the same number of hits at every level.
-  const authoredShare = Math.max(
-    0.06,
-    (baseAtk * 2.1 - baselineDefenseFor(player) * 0.75) / power.baselineMaxHp
-  );
-  const targetDamage = authoredShare * power.maxHp;
-  // Floored, not rounded: rounding 13.5 up to 14 was enough to cost the hero one whole hit of
-  // survivability, making a monster stronger than the authored threat it is derived from.
-  const atk = Math.max(1, Math.floor((targetDamage + power.defense * 0.75) / 2.1));
-
-  // --- the rest -------------------------------------------------------------
-  const mag = Math.round(Math.min(baseMag * offenseRatio, atk * 1.15));
-  // Speed and luck grow gently. Player.levelUp() never raises SPD or LUK, so scaling these
-  // as hard as the offence stats would eventually make every monster act first and crit
-  // more often than the hero, which reads as unfair rather than difficult.
-  const spd = Math.round(baseSpd + power.level * 0.4);
-  const luk = Math.round(baseLuk + power.level * 0.2);
-
+  const ref = TIER_REFERENCE[seed.tier ?? 1];
+  // The region defines the challenge. Returning to an earlier region rewards progression.
   return {
-    name: seed.name,
-    hp,
-    maxHp: hp,
-    mp: seed.mp ?? 30 + power.level * 3,
-    maxMp: seed.mp ?? 30 + power.level * 3,
-    atk,
-    def,
-    mag,
-    spd,
-    luk,
-    isBoss: seed.isBoss,
-    classKey: seed.classKey,
-    skillName: seed.skillName
+    name: seed.name, hp: Math.round(seed.baseHp ?? ref.hp), maxHp: Math.round(seed.baseHp ?? ref.hp),
+    mp: seed.mp ?? 30, maxMp: seed.mp ?? 30,
+    atk: Math.round(seed.baseAtk ?? ref.atk), def: Math.round(seed.baseDef ?? ref.def),
+    mag: Math.round(seed.baseMag ?? ref.mag), spd: Math.round(seed.baseSpd ?? ref.spd), luk: Math.round(seed.baseLuk ?? 5),
+    isBoss: seed.isBoss, classKey: seed.classKey, skillName: seed.skillName
   };
 }
 
 /** Best-case single-target damage the hero can produce in one round. */
 export function estimateHeroDamagePerRound(player: Player, atBaseline = false): number {
-  const base = HERO_CLASSES[player.classKey] || HERO_CLASSES.warrior;
+  const base = HERO_CLASSES[player.originalClassKey || player.classKey] || HERO_CLASSES.warrior;
   const atk = atBaseline ? base.atk : player.getTotalStat('atk');
   const mag = atBaseline ? base.mag : player.getTotalStat('mag');
   const luk = atBaseline ? base.luk : player.getTotalStat('luk');
@@ -270,17 +129,8 @@ export function estimateHeroDamagePerRound(player: Player, atBaseline = false): 
 
   // Average critical contribution, capped the same way the engine caps it.
   const critChance = Math.min(0.4, luk * 0.015);
-  const best = Math.max(physical, magic);
+  const best = atBaseline || player.mp >= 10 ? Math.max(physical, magic) : physical;
   return Math.max(1, best * (1 + critChance * 0.5));
-}
-
-function baselineDefenseFor(player: Player): number {
-  const base = HERO_CLASSES[player.classKey] || HERO_CLASSES.warrior;
-  return base.def;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 /**
@@ -288,16 +138,16 @@ function clamp(value: number, min: number, max: number): number {
  * Used by the scouting UI so the warning it shows matches the fight that will happen.
  */
 export function estimateRoundsToKill(monster: Combatant, player: Player): number {
-  const perRound = estimateHeroDamagePerRound(player);
-  const absorbed = Math.max(0, monster.def || 0) * 0.75;
-  const effective = Math.max(6, perRound - absorbed);
+  const physical = Math.max(6, player.getTotalStat('atk') * 2.1 - monster.def * 0.75);
+  const magic = player.mp >= 10 ? Math.max(6, player.getTotalStat('mag') * 2.6 + 12 + (player.getTotalStat('mag') >= 20 ? player.getTotalStat('mag') * 0.35 : 0) - monster.mag * 0.85) : 0;
+  const effective = Math.max(physical, magic);
   return Math.max(1, Math.ceil((monster.hp || 1) / effective));
 }
 
 /** How many of the monster's hits the hero can absorb. */
 export function estimateRoundsToSurvive(monster: Combatant, player: Player): number {
   const incoming = Math.max(4, (monster.atk || 1) * 2.1 - player.getTotalStat('def') * 0.75);
-  return Math.max(1, Math.floor(player.maxHp / incoming));
+  return Math.max(0, Math.floor(player.hp / incoming));
 }
 
 export type ThreatVerdict = 'TRIVIAL' | 'EASY' | 'FAIR' | 'HARD' | 'DEADLY';

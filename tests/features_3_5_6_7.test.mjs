@@ -75,14 +75,15 @@ test('Town Hostile Takeover: rival buys out town at 2x base value', () => {
   assert.ok(!p2.townDeeds.includes(99));
 });
 
-test('Darkling Comeback: 3x ATK, multi-dice roll, and dark spells', () => {
+test('Darkling Comeback: temporary power is applied once, multi-dice roll, and dark spells', () => {
   const p = new Player(1, 'Underdog', 'warrior', '#ef4444', false);
   const baseAtk = p.atk;
   p.becomeDarkling();
 
   assert.equal(p.isDarkling, true);
-  assert.equal(p.atk, Math.floor(baseAtk * 3.0));
-  assert.equal(p.activeSpinnerMultiplier, 3);
+  assert.equal(p.atk, baseAtk);
+  assert.equal(p.getTotalStat('atk'), baseAtk * 2);
+  assert.equal(p.activeSpinnerMultiplier, 2);
   assert.ok(p.fieldSpells.includes('dark_calamity'));
 });
 

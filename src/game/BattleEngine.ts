@@ -1,12 +1,19 @@
-import { Player } from './Player';
+import { getWorld } from './WorldState';
+import { Player, HERO_CLASSES, JOB_PROMOTIONS, TIER3_PROMOTIONS } from './Player';
 import { audio } from '../engine/AudioSynthesizer';
 
 export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill' | 'burst';
 export type DefenderAction = 'defend' | 'counter' | 'magic_guard' | 'give_up';
 export type CombatGridPosition = 'front' | 'mid' | 'back';
 export type GridHazardType = 'none' | 'power_rune' | 'poison_pool' | 'spike_trap' | 'sanctuary_rune';
+export type CombatElement = 'fire' | 'ice' | 'water' | 'lightning' | 'holy' | 'dark' | 'earth';
 
 export interface Combatant {
+  environmentKey?: string;
+  element?: CombatElement;
+  weaknessElement?: CombatElement;
+  resistanceElement?: CombatElement;
+  skillUsed?: boolean;
   name: string;
   hp: number;
   maxHp: number;
@@ -83,6 +90,14 @@ export class BattleEngine {
   public attacker: Combatant;
   public defender: Combatant;
   public isPlayerAttacking: boolean;
+
+  static actionCost(actor: Combatant, action: AttackerAction): number {
+    if (action === 'magic') return 10;
+    if (action !== 'skill') return 0;
+    const key = actor.playerRef?.classKey ?? actor.classKey ?? '';
+    const promotion = [...Object.values(JOB_PROMOTIONS), ...Object.values(TIER3_PROMOTIONS)].flat().find(p => p.tier2Key === key);
+    return promotion?.skillCost ?? HERO_CLASSES[key]?.skillCost ?? 12;
+  }
 
   static getCombatantIntel(combatant: Combatant): CombatantIntel {
     const name = combatant.name.toLowerCase();
@@ -243,16 +258,14 @@ export class BattleEngine {
   }
 
   private initTacticalHazards() {
-    // 60% chance to spawn dynamic field hazards/runes on tactical grid
-    const hazardPool: GridHazardType[] = ['power_rune', 'spike_trap', 'poison_pool', 'sanctuary_rune'];
-    if (Math.random() < 0.65) {
-      const pSlot: CombatGridPosition = Math.random() < 0.5 ? 'front' : (Math.random() < 0.5 ? 'mid' : 'back');
-      this.playerHazards[pSlot] = Math.random() < 0.55 ? 'power_rune' : (Math.random() < 0.5 ? 'sanctuary_rune' : 'spike_trap');
-    }
-    if (Math.random() < 0.65) {
-      const eSlot: CombatGridPosition = Math.random() < 0.5 ? 'mid' : (Math.random() < 0.5 ? 'front' : 'back');
-      this.enemyHazards[eSlot] = hazardPool[Math.floor(Math.random() * hazardPool.length)];
-    }
+    const environments: Record<string, { front?: GridHazardType; back?: GridHazardType }> = {
+      volcano: { front: 'power_rune' }, snow: { back: 'sanctuary_rune' }, abyss: { front: 'poison_pool' },
+      waterfall_forest: { back: 'sanctuary_rune' }, fairy_grove: { back: 'sanctuary_rune' },
+      crystal_cavern: { front: 'power_rune' }, celestial: { back: 'sanctuary_rune' }, steampunk: { front: 'spike_trap' }
+    };
+    const field = environments[this.biome];
+    if (field?.front) this.playerHazards.front = this.enemyHazards.front = field.front;
+    if (field?.back) this.playerHazards.back = this.enemyHazards.back = field.back;
   }
 
   public getDefaultGridPos(c: Combatant): CombatGridPosition {
@@ -280,7 +293,17 @@ export class BattleEngine {
 
   // Resolve Dokapon Rock-Paper-Scissors Mindgame
   resolveRound(atkAction: AttackerAction, defAction: DefenderAction): RoundResult {
+    let fallback = false;
+    if (atkAction === 'burst' && (!this.attacker.playerRef || this.attacker.playerRef.burstGauge < 100)) { atkAction = 'attack'; fallback = true; }
+    const cost = BattleEngine.actionCost(this.attacker, atkAction);
+    if ((this.attacker.mp < cost || (atkAction === 'skill' && this.attacker.skillUsed)) && !(this.attacker.freezeTurns || this.attacker.silenceTurns)) {
+      atkAction = 'attack'; fallback = true;
+    } else if (!(this.attacker.freezeTurns || this.attacker.silenceTurns)) {
+      this.attacker.mp = Math.max(0, this.attacker.mp - cost);
+      if (atkAction === 'skill') this.attacker.skillUsed = true;
+    }
     const rawResult = this.executeRoundLogic(atkAction, defAction);
+    if (fallback) rawResult.narration = 'พลังไม่พอหรือใช้ท่าอาชีพแล้ว จึงโจมตีปกติ • ' + rawResult.narration;
     return this.applyPassivesAndSynergies(rawResult);
   }
 
@@ -343,7 +366,7 @@ export class BattleEngine {
     if (isBlind && (atkAction === 'attack' || atkAction === 'strike')) {
       if (a.blindTurns && a.blindTurns > 0) a.blindTurns--;
       if (a.playerRef && a.playerRef.blindTurns > 0) a.playerRef.blindTurns--;
-      if (Math.random() < 0.50) {
+      if (getWorld().random() < 0.50) {
         audio.miss();
         narration = `👁️ ${a.name} ติดสถานะตาบอด (Blind)! การโจมตีฟันวืดพลาดเป้าอย่างสิ้นเชิง! (0 ดาเมจ)`;
         return {
@@ -365,7 +388,7 @@ export class BattleEngine {
     if (defAction === 'give_up') {
       // Case A: Player fighting a Monster/Boss -> Tactical Retreat / Flee Check
       if (!a.playerRef && d.playerRef) {
-        const fleeRoll = Math.random();
+        const fleeRoll = getWorld().random();
         const fleeChance = Math.min(0.95, Math.max(0.60, 0.80 + (d.spd - a.spd) * 0.03));
         if (fleeRoll < fleeChance) {
           isGiveUp = true;
@@ -426,14 +449,14 @@ export class BattleEngine {
       isCounterSuccess = true;
       audio.counterParry();
       const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
-      damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(Math.random() * 8)));
+      damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(getWorld().random() * 8)));
 
       if (dPos === 'front') {
         damageToAttacker = Math.round(damageToAttacker * 1.15);
       }
 
       // LUK Critical Hit for Counter
-      if (Math.random() < Math.min(0.40, (d.luk || 5) * 0.015)) {
+      if (getWorld().random() < Math.min(0.40, (d.luk || 5) * 0.015)) {
         damageToAttacker = Math.round(damageToAttacker * 1.5);
         narration = `💥 สวนกลับคริติคอลขั้นสุดยอด! ${d.name} ปัดป้องดาบของ ${a.name} และสะท้อนดาเมจสังหาร ${damageToAttacker} หน่วย! (ติด Critical!)`;
       } else {
@@ -446,7 +469,7 @@ export class BattleEngine {
       a.hp = Math.round(Math.max(0, a.hp - damageToAttacker));
 
       // LUK Miracle Survival for Attacker
-      if (a.hp <= 0 && Math.random() < Math.min(0.30, (a.luk || 5) * 0.012)) {
+      if (a.hp <= 0 && getWorld().random() < Math.min(0.30, (a.luk || 5) * 0.012)) {
         a.hp = 1;
         narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${a.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
@@ -469,7 +492,7 @@ export class BattleEngine {
       isStrikeSuccess = true;
       audio.strikeHit();
       // Strike ignores defense!
-      let rawStrike = Math.round(a.atk * 2.6 + Math.floor(Math.random() * 12));
+      let rawStrike = Math.round(a.atk * 2.6 + Math.floor(getWorld().random() * 12));
       if (aPos === 'front') rawStrike = Math.round(rawStrike * 1.15);
       if (dPos === 'front') rawStrike = Math.round(rawStrike * 1.10);
       else if (dPos === 'mid') rawStrike = Math.round(rawStrike * 0.90);
@@ -479,7 +502,7 @@ export class BattleEngine {
 
       // LUK Critical Strike
       let isCrit = false;
-      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+      if (getWorld().random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
         isCrit = true;
         damageToDefender = Math.round(damageToDefender * 1.5);
       }
@@ -493,7 +516,7 @@ export class BattleEngine {
       }
 
       // LUK Miracle Survival
-      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+      if (d.hp <= 0 && getWorld().random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
         d.hp = 1;
         narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
@@ -536,7 +559,9 @@ export class BattleEngine {
       audio.magicCast();
       // Magic penetrates physical armor, but is mitigated by Defender's MAG
       const magMitigation = (d.mag || 5) * 0.85;
-      let rawSpell = a.mag * 2.6 + 12 - magMitigation + Math.random() * 6;
+      let rawSpell = a.mag * 2.6 + 12 - magMitigation + getWorld().random() * 6;
+      if (a.element && a.element === d.weaknessElement) rawSpell *= 1.25;
+      if (a.element && a.element === d.resistanceElement) rawSpell *= 0.8;
 
       // MAG High-Tier Mastery: Elemental burn if MAG >= 20
       let elementalBonus = 0;
@@ -552,7 +577,7 @@ export class BattleEngine {
 
       // LUK Critical Hit for Magic
       let isCrit = false;
-      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+      if (getWorld().random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
         isCrit = true;
         spellDmg = Math.round(spellDmg * 1.5);
       }
@@ -563,7 +588,7 @@ export class BattleEngine {
       narration = `🔮 เพลิงเวทมนตร์แผดเผา! การโจมตีเวทของ ${a.name} ทะลุเกราะกายภาพ สร้างความเสียหาย ${damageToDefender} ดาเมจแก่ ${d.name}!${elementalBonus > 0 ? ' (โบนัสธาตุเวทมนตร์ชั้นสูง)' : ''}${isCrit ? ' 💥 คริติคอลมนตรา!' : ''}`;
 
       // LUK Miracle Survival
-      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+      if (d.hp <= 0 && getWorld().random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
         d.hp = 1;
         narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
@@ -588,7 +613,7 @@ export class BattleEngine {
 
       // LUK Critical Hit for Skill
       let isCrit = false;
-      if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+      if (getWorld().random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
         isCrit = true;
       }
 
@@ -596,7 +621,7 @@ export class BattleEngine {
       const defReduction = Math.max(0, (d.def || 5) * 0.85);
       const magDefReduction = Math.max(0, ((d.def || 5) * 0.4) + ((d.mag || 5) * 0.5));
 
-      const cls = (a.classKey || '').toLowerCase();
+      const cls = (a.playerRef?.originalClassKey || a.classKey || '').toLowerCase();
 
       if (cls === 'magician') {
         const hpCost = Math.max(1, Math.floor(a.hp * 0.15));
@@ -674,7 +699,7 @@ export class BattleEngine {
       }
 
       // LUK Miracle Survival
-      if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+      if (d.hp <= 0 && getWorld().random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
         d.hp = 1;
         narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
       }
@@ -730,7 +755,7 @@ export class BattleEngine {
     // Speed Evasion Check (Faster defender can dodge standard attack if not defending)
     if (defAction !== 'defend' && defAction !== 'counter' && (d.spd || 5) > (a.spd || 5)) {
       const evasionChance = Math.min(0.40, ((d.spd || 5) - (a.spd || 5)) * 0.035);
-      if (Math.random() < evasionChance) {
+      if (getWorld().random() < evasionChance) {
         narration = `⚡ ความว่องไวเหนือชั้น! ${d.name} (SPD ${d.spd}) เคลื่อนไหวรวดเร็วหลบการโจมตีของ ${a.name} ได้อย่างเฉียดฉิว! (0 ดาเมจ)`;
         return {
           attackerAction: atkAction,
@@ -749,7 +774,7 @@ export class BattleEngine {
 
     audio.attackHit();
     const rawAtk = Math.round(a.atk * 2.1 - (d.def || 5) * 0.75);
-    let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(Math.random() * 5 - 2)));
+    let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(getWorld().random() * 5 - 2)));
     if (aPos === 'front') finalDmg = Math.round(finalDmg * 1.15);
     if (dPos === 'front') finalDmg = Math.round(finalDmg * 1.10);
     else if (dPos === 'mid') finalDmg = Math.round(finalDmg * 0.90);
@@ -757,7 +782,7 @@ export class BattleEngine {
 
     // LUK Critical Hit for Attack
     let isCrit = false;
-    if (Math.random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
+    if (getWorld().random() < Math.min(0.40, (a.luk || 5) * 0.015)) {
       isCrit = true;
       finalDmg = Math.round(finalDmg * 1.5);
     }
@@ -781,7 +806,7 @@ export class BattleEngine {
     }
 
     // SPD Agile Double-Strike Check (High SPD heroines can land a bonus follow-up strike!)
-    if ((a.spd || 5) - (d.spd || 5) >= 8 && Math.random() < 0.28) {
+    if ((a.spd || 5) - (d.spd || 5) >= 8 && getWorld().random() < 0.28) {
       const doubleStrikeDmg = Math.round(Math.max(4, finalDmg * 0.40));
       finalDmg += doubleStrikeDmg;
       narration += ` ⚡ ความเร็วเหนือชั้น! (SPD ${a.spd}) พุ่งโจมตีต่อเนื่องเบิ้ลดาเมจ +${doubleStrikeDmg} หน่วย!`;
@@ -791,7 +816,7 @@ export class BattleEngine {
     damageToDefender = finalDmg;
 
     // LUK Miracle Survival
-    if (d.hp <= 0 && Math.random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
+    if (d.hp <= 0 && getWorld().random() < Math.min(0.30, (d.luk || 5) * 0.012)) {
       d.hp = 1;
       narration += ` 🍀 ปาฏิหาริย์แห่งโชค! ${d.name} รอดตายหวุดหวิดเหลือ 1 HP!`;
     }
@@ -852,7 +877,7 @@ export class BattleEngine {
         a.playerRef.gold += stolen;
         result.narration += ` 💰 [ขโมยทอง +${stolen}G]`;
       }
-      if (passives.includes('curse_strike') && d.playerRef && Math.random() < 0.40) {
+      if (passives.includes('curse_strike') && d.playerRef && getWorld().random() < 0.40) {
         d.playerRef.curseTurns = 4;
         result.narration += ` 💀 [ติดคำสาปมรณะ!]`;
       }
@@ -861,22 +886,22 @@ export class BattleEngine {
     // Elemental Weapon Runes (Fire, Ice, Thunder, Poison)
     if (a.playerRef && a.playerRef.weaponRune && result.damageToDefender > 0) {
       const rune = a.playerRef.weaponRune;
-      if (rune === 'fire' && Math.random() < 0.50) {
+      if (rune === 'fire' && getWorld().random() < 0.50) {
         d.burnTurns = 2;
         const burnDmg = Math.max(8, Math.round(d.maxHp * 0.08));
         d.hp = Math.max(0, d.hp - burnDmg);
         result.damageToDefender += burnDmg;
         result.burnDamage = burnDmg;
         result.narration += ` 🔥 [รูนเพลิงลุกไหม้ +${burnDmg}]`;
-      } else if (rune === 'ice' && Math.random() < 0.45) {
+      } else if (rune === 'ice' && getWorld().random() < 0.45) {
         d.freezeTurns = 1;
         result.statusInflicted = 'freeze';
         result.narration += ` ❄️ [รูนเหมันต์แช่แข็ง!]`;
-      } else if (rune === 'thunder' && Math.random() < 0.40) {
+      } else if (rune === 'thunder' && getWorld().random() < 0.40) {
         result.statusInflicted = 'shock';
         d.isShocked = true;
         result.narration += ` ⚡ [รูนสายฟ้าช็อตอัมพาต!]`;
-      } else if (rune === 'poison' && Math.random() < 0.50) {
+      } else if (rune === 'poison' && getWorld().random() < 0.50) {
         result.statusInflicted = 'poison';
         if (d.playerRef) d.playerRef.poisonTurns = 3;
         result.narration += ` ☠️ [รูนพิษแล่นเข้าสู่ร่าง!]`;
@@ -1041,7 +1066,7 @@ export class BattleEngine {
     }
     // Ninja: Shadow Clone evasion chance
     if ((dCls === 'ninja' || dCls.includes('ninja')) && (result.attackerAction === 'attack' || result.attackerAction === 'strike') && !result.isCounterSuccess) {
-      if (Math.random() < 0.22) {
+      if (getWorld().random() < 0.22) {
         result.isDodged = true;
         d.hp = Math.min(d.maxHp, d.hp + result.damageToDefender);
         result.damageToDefender = 0;
@@ -1070,11 +1095,11 @@ export class BattleEngine {
     }
 
     // Additional status triggers from combat actions
-    if (result.damageToDefender > 0 && result.attackerAction === 'magic' && Math.random() < 0.35) {
+    if (result.damageToDefender > 0 && result.attackerAction === 'magic' && getWorld().random() < 0.35) {
       d.silenceTurns = 2;
       result.narration += ` 🤐 [คำสาปเวท ติดสถานะใบ้ 2 เทิร์น!]`;
     }
-    if (result.damageToDefender > 0 && result.attackerAction === 'strike' && Math.random() < 0.30) {
+    if (result.damageToDefender > 0 && result.attackerAction === 'strike' && getWorld().random() < 0.30) {
       d.blindTurns = 2;
       result.narration += ` 👁️ [สะเก็ดประกายแสง ติดสถานะตาบอด 2 เทิร์น!]`;
     }

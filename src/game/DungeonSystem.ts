@@ -1,3 +1,5 @@
+import { getWorld } from './WorldState';
+import { RULES } from './Rules';
 import { BoardNode } from './BoardMap';
 import { Player } from './Player';
 import { GameState } from './GameState';
@@ -2001,9 +2003,7 @@ export const DUNGEON_FROZEN_NODES: BoardNode[] = [
 ];
 
 export class DungeonSystem {
-  private returnNodes: Record<number, number> = {};
-  public torchMeter: Record<number, number> = {}; // PlayerId -> torch % (0 to 100)
-  public dungeonDepth: Record<number, number> = {}; // PlayerId -> current floor depth (1, 2, 3...)
+  reset(): void { getWorld().expeditions = {}; }
 
   ensureDungeonLoaded(game: GameState): void {
     if (!game.allNodes.some(n => n.id === 1000)) {
@@ -2025,113 +2025,80 @@ export class DungeonSystem {
     return isDungeonExit(nodeId);
   }
 
-  getDungeonDepth(playerId: number): number {
-    return this.dungeonDepth[playerId] || 1;
-  }
-
-  getTorch(playerId: number): number {
-    if (this.torchMeter[playerId] === undefined) {
-      this.torchMeter[playerId] = 100;
-    }
-    return this.torchMeter[playerId];
-  }
-
+  getDungeonDepth(playerId: number): number { return getWorld().expeditions[playerId]?.depth ?? 1; }
+  getTorch(playerId: number): number { return getWorld().expeditions[playerId]?.torch ?? 100; }
   stepTorch(player: Player): { torchPct: number; isDark: boolean; message?: string } {
-    const cur = this.getTorch(player.id);
-    // Six-room routes need an exploration budget rather than exhausting a seven-step torch.
-    const updated = Math.max(0, cur - 4);
-    this.torchMeter[player.id] = updated;
-
-    if (updated <= 20) {
-      return {
-        torchPct: updated,
-        isDark: true,
-        message: '🕯️ ไฟคบเพลิงริบหรี่มาก! บรรยากาศมืดมิด มอนสเตอร์ดุร้ายขึ้นเป็นสองเท่า แต่สมบัติจะมีค่าสูงสุด!'
-      };
-    }
-    return { torchPct: updated, isDark: false };
+    const world = getWorld();
+    const run = world.expeditions[player.id] ??= { entrance: dungeonSceneGroup(player.nodeId) || 1000, depth: 1, torch: 100, opened: [], visited: [], guardians: [], claimedFloors: [] };
+    const previous = run.torch;
+    run.torch = Math.max(0, run.torch - 4);
+    const flags = world.memory(player.id).flags;
+    if (run.torch <= 20 && flags.spareTorch) { run.torch = Math.min(100, run.torch + 40); flags.spareTorch = 0; }
+    return { torchPct: run.torch, isDark: run.torch <= 20, message: previous > 20 && run.torch <= 20 ? 'คบเพลิงใกล้ดับ: ศัตรูพลังเพิ่ม 20% ควรหาทางออกหรือพิชิตผู้พิทักษ์' : undefined };
   }
-
+  recordStep(player: Player, nodeId: number): void {
+    this.stepTorch(player);
+    const run = getWorld().expeditions[player.id];
+    if (!run.visited.includes(nodeId)) run.visited.push(nodeId);
+  }
   enterDungeon(player: Player, game: GameState, preferredRealm?: string): void {
     this.ensureDungeonLoaded(game);
-    this.returnNodes[player.id] = player.nodeId;
+    const realm = preferredRealm || game.allNodes.find(n => n.id === player.nodeId)?.realmId;
+    const startId = realm === 'sunfire' ? 1100 : realm === 'frostpeak' ? 1200 : 1000;
     player.dungeonReturnNodeId = player.nodeId;
-    this.torchMeter[player.id] = 100; // Reset torch on entry
-    this.dungeonDepth[player.id] = 1;
-
-    let startId = 1000;
-    const r = preferredRealm || game.allNodes.find(n => n.id === player.nodeId)?.realmId;
-    if (r === 'sunfire') startId = 1100;
-    else if (r === 'frostpeak') startId = 1200;
-
-    player.nodeId = startId;
-    player.prevNodeId = null;
-    const startNode = game.allNodes.find(n => n.id === startId)!;
-    player.gridX = startNode.gx;
-    player.gridY = startNode.gy;
-    player.gridZ = startNode.gz;
-
-    audio.darklingRoar();
-    audio.playBiomeBgm(startNode.biome || 'abyss');
-    game.addLog(
-      `🌀 ${player.displayName} ดำดิ่งสู่ '${startNode.realmName}' ชั้นที่ 1 เพื่อค้นหามหาสมบัติที่สาบสูญ! (คบเพลิง 100%)`,
-      'battle'
-    );
+    game.world.expeditions[player.id] = { entrance: startId, depth: 1, torch: 100, opened: [], visited: [startId], guardians: [], claimedFloors: [] };
+    this.moveTo(player, game, startId);
+    game.addLog('เข้าสู่ดันเจี้ยน: คบเพลิง 100% • เปิดหีบได้ครั้งเดียวต่อชั้น • โบนัสสำเร็จต้องปราบผู้พิทักษ์', 'battle');
   }
-
+  claimChest(player: Player, nodeId: number): number {
+    const run = getWorld().expeditions[player.id];
+    if (!run) return 0;
+    const key = run.depth * 10000 + nodeId;
+    if (run.opened.includes(key)) return 0;
+    run.opened.push(key);
+    const gold = Math.round(RULES.expeditionChest * (1 + (run.depth - 1) * 0.25));
+    player.gold += gold; player.matchStats.goldEarnedTotal += gold;
+    return gold;
+  }
+  defeatGuardian(player: Player, nodeId: number): void {
+    const run = getWorld().expeditions[player.id];
+    if (run && !run.guardians.includes(run.depth)) run.guardians.push(run.depth);
+  }
+  isGuardianDefeated(player: Player): boolean {
+    const run = getWorld().expeditions[player.id];
+    return !!run?.guardians.includes(run.depth);
+  }
+  claimFloor(player: Player): number {
+    const run = getWorld().expeditions[player.id];
+    if (!run || !run.guardians.includes(run.depth) || run.claimedFloors.includes(run.depth)) return 0;
+    run.claimedFloors.push(run.depth);
+    const gold = Math.round(RULES.expeditionClear * (1 + (run.depth - 1) * 0.3));
+    player.gold += gold; player.matchStats.goldEarnedTotal += gold; player.gainXP(Math.round(120 * (1 + (run.depth - 1) * 0.3)));
+    return gold;
+  }
   descendDeeper(player: Player, game: GameState): { success: boolean; newDepth: number } {
-    const currentDepth = this.getDungeonDepth(player.id);
-    const nextDepth = currentDepth + 1;
-    this.dungeonDepth[player.id] = nextDepth;
-    this.torchMeter[player.id] = 100; // Refill torch for the new floor
-
-    // Find starting node of the current dungeon
-    const startId = dungeonSceneGroup(player.nodeId) || 1000;
-
-    player.nodeId = startId;
-    player.prevNodeId = null;
-    const startNode = game.allNodes.find(n => n.id === startId)!;
-    player.gridX = startNode.gx;
-    player.gridY = startNode.gy;
-    player.gridZ = startNode.gz;
-
-    audio.darklingRoar();
-    game.addLog(
-      `🔥 ผู้กล้าหาญ! ${player.displayName} ตัดสินใจดำดิ่งลงสู่ชั้นลึกที่ ${nextDepth} (ความมืดหนาทึบขึ้น รางวัลทวีคูณ!)`,
-      'battle'
-    );
-    return { success: true, newDepth: nextDepth };
+    const run = game.world.expeditions[player.id];
+    if (!run || !run.guardians.includes(run.depth)) return { success: false, newDepth: run?.depth ?? 1 };
+    const reward = this.claimFloor(player);
+    run.depth++; run.torch = 100; run.visited = [run.entrance];
+    this.moveTo(player, game, run.entrance);
+    game.addLog('รับโบนัสชั้นก่อน ' + reward + 'G • ลงสู่ชั้น ' + run.depth + ' ศัตรูแข็งแกร่งขึ้น 20%', 'battle');
+    return { success: true, newDepth: run.depth };
   }
-
   exitDungeon(player: Player, game: GameState): void {
-    const returnId = player.dungeonReturnNodeId ?? this.returnNodes[player.id] ?? 0;
+    const reward = this.claimFloor(player);
+    const target = player.dungeonReturnNodeId ?? 0;
     player.dungeonReturnNodeId = null;
-    const depth = this.getDungeonDepth(player.id);
-    delete this.returnNodes[player.id];
-    delete this.torchMeter[player.id];
-    delete this.dungeonDepth[player.id];
-
-    const targetNode = game.allNodes.find(n => n.id === returnId) || game.allNodes[0];
-    player.nodeId = targetNode.id;
-    player.prevNodeId = null;
-    player.gridX = targetNode.gx;
-    player.gridY = targetNode.gy;
-    player.gridZ = targetNode.gz;
-
-    // Rewards scale significantly with dungeon depth
-    const depthMultiplier = 1 + (depth - 1) * 0.8;
-    const bonusGold = Math.round(1500 * depthMultiplier);
-    const bonusXp = Math.round(350 * depthMultiplier);
-    player.gold += bonusGold;
-    player.matchStats.goldEarnedTotal += bonusGold;
-    player.gainXP(bonusXp);
-
-    audio.jackpotFanfare();
-    audio.playBiomeBgm(targetNode.biome || targetNode.realmId);
-    game.addLog(
-      `✨ ผู้พิชิตดันเจี้ยน (ชั้นที่ ${depth})! ${player.displayName} ทะลวงมิติกลับสู่ผืนพิภพสำเร็จ! ได้รับทอง +${bonusGold}G และ +${bonusXp} XP!`,
-      'level'
-    );
+    delete game.world.expeditions[player.id];
+    this.moveTo(player, game, target);
+    game.addLog('ออกจากดันเจี้ยน • โบนัสพิชิต ' + reward + 'G' + (reward ? '' : ' (ยังไม่พิชิตผู้พิทักษ์หรือรับโบนัสแล้ว)'), 'gold');
+  }
+  abandon(player: Player): void { delete getWorld().expeditions[player.id]; player.dungeonReturnNodeId = null; }
+  private moveTo(player: Player, game: GameState, id: number): void {
+    const node = game.allNodes.find(n => n.id === id) || game.allNodes[0];
+    player.nodeId = node.id; player.prevNodeId = null;
+    player.gridX = node.gx; player.gridY = node.gy; player.gridZ = node.gz;
+    game.world.focusRealm = node.realmId;
   }
 
   getCryptLordBossCombatant(): Combatant {

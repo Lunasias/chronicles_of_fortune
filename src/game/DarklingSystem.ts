@@ -1,3 +1,4 @@
+import { getWorld } from './WorldState';
 import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
@@ -6,7 +7,7 @@ import { royalDecreeSystem } from './RoyalDecreeSystem';
 export class DarklingSystem {
   // Check if player qualifies for Darkling transformation
   canTransform(player: Player, allPlayers: Player[], allNodes: BoardNode[]): boolean {
-    if (player.isDarkling) return false;
+    if (player.isDarkling || getWorld().mode === 'coop_raid' || getWorld().day < (getWorld().memory(player.id).flags.darklingAfterDay ?? 0)) return false;
     if (allPlayers.length < 2) return false;
 
     // Player must be strictly in last place and trailing the leader by at least 400G
@@ -25,6 +26,8 @@ export class DarklingSystem {
 
   // Execute the Demonic Pact with Overlord Rico
   acceptPact(darklingPlayer: Player, allNodes: BoardNode[], spec: 'destroyer' | 'reaper' | 'tormentor' = 'destroyer') {
+    getWorld().memory(darklingPlayer.id).flags.darklingAfterDay = getWorld().day + 14;
+    darklingPlayer.equipment = { weapon: null, armor: null, shield: null, accessory: null };
     // Sacrifice everything
     darklingPlayer.gold = 0;
     darklingPlayer.inventory = [];
@@ -46,31 +49,13 @@ export class DarklingSystem {
     // Transform into The Darkling
     darklingPlayer.becomeDarkling();
 
-    // Grant apocalyptic Darkling spells according to specialization
-    if (spec === 'destroyer') {
-      darklingPlayer.fieldSpells = ['dark_calamity', 'oblivion_slash', 'swap'];
-      darklingPlayer.maxHp += 120;
-      darklingPlayer.hp += 120;
-      darklingPlayer.atk += 30;
-    } else if (spec === 'reaper') {
-      darklingPlayer.fieldSpells = ['dark_plague', 'tax_audit', 'curse_rust', 'swap'];
-      darklingPlayer.mag += 30;
-      darklingPlayer.mp += 60;
-      darklingPlayer.maxMp += 60;
-    } else if (spec === 'tormentor') {
-      darklingPlayer.fieldSpells = ['squid_ink', 'sleepy', 'downer', 'banish'];
-      darklingPlayer.spd += 30;
-      darklingPlayer.luk += 20;
-    } else {
-      darklingPlayer.fieldSpells = ['dark_calamity', 'dark_plague', 'swap'];
-      darklingPlayer.maxHp += 100;
-      darklingPlayer.hp += 100;
-    }
+    const spells = { destroyer: ['dark_calamity', 'oblivion_slash', 'swap'], reaper: ['dark_plague', 'tax_audit', 'curse_rust', 'swap'], tormentor: ['squid_ink', 'sleepy', 'downer', 'banish'] };
+    darklingPlayer.fieldSpells = spells[spec]; darklingPlayer.mp = darklingPlayer.maxMp;
 
     // Issue Royal Wanted Bounty for Darkling hunter rewards
     royalDecreeSystem.issueWantedBounty(
       darklingPlayer,
-      3500,
+      650,
       `กลายร่างเป็น Darkling (${spec.toUpperCase()}) ผู้ทำลายล้างอาณาจักร! สังหารเพื่อรับค่าหัวหลวง!`
     );
 

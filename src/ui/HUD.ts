@@ -57,24 +57,22 @@ export class HUD {
       this.renderAvatar();
     });
 
-    // Make time of day badge interactive for instant testing and cycling
     const timeBadge = document.getElementById('hudTimeOfDayBadge');
-    if (timeBadge) {
-      timeBadge.classList.add('cursor-pointer', 'hover:opacity-80');
-      timeBadge.title = 'คลิกเพื่อสลับช่วงเวลา (ทดสอบ)';
-      timeBadge.addEventListener('click', () => {
-        ecosystemSystem.advanceTime();
-        const tInfo = ecosystemSystem.getTimeDisplay();
-        this.game.addLog(`⌛ สลับเวลา: ตอนนี้เป็นเวลา ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
-        this.update();
-      });
-    }
+    if (timeBadge) timeBadge.title = 'เวลาเปลี่ยนเมื่อจบหนึ่งรอบผู้เล่น';
+
   }
 
   update() {
     const p = this.game.activePlayer;
     if (!p) return;
 
+    let objective = document.getElementById('matchObjectiveText');
+    if (!objective) {
+      objective = document.createElement('div'); objective.id = 'matchObjectiveText';
+      objective.className = 'text-[9px] text-amber-300 leading-relaxed p-1';
+      document.getElementById('minimapBox')?.prepend(objective);
+    }
+    objective.textContent = this.game.objective + (this.game.world.expeditions[p.id] ? ' • ชั้น ' + this.game.world.expeditions[p.id].depth + ' • คบเพลิง ' + this.game.world.expeditions[p.id].torch + '%' : '');
     // Player info
     const nameEl = document.getElementById('hudPlayerName')!;
     nameEl.innerText = p.displayName;
@@ -119,6 +117,7 @@ export class HUD {
     const weatherIconEl = document.getElementById('hudWeatherIcon');
     const weatherTextEl = document.getElementById('hudWeatherText');
     if (weatherIconEl) weatherIconEl.innerText = weatherEffect.icon;
+    if (weatherTextEl) weatherTextEl.title = weatherEffect.desc + (activeNode.id >= 1000 ? ' • สภาพภายในดันเจี้ยน' : ' • พรุ่งนี้: ' + this.game.world.forecast[activeNode.realmId]);
     if (weatherTextEl) weatherTextEl.innerText = `${activeNode.realmName ? activeNode.realmName.split(' ')[0] : 'SOLARIA'} • ${weatherEffect.icon}`;
 
     // Food Buff Badge
@@ -186,7 +185,7 @@ export class HUD {
 
     const p = this.game.activePlayer;
     const occupiedTowns = this.game.allNodes.filter(n => n.townData?.isOccupiedByMonster);
-    const bossNodes = this.game.allNodes.filter(n => n.type === 'boss');
+    const bossNodes = this.game.allNodes.filter(n => n.type === 'boss' && !this.game.world.defeatedBosses.includes(n.id));
 
     // Update Top-Bar Crisis Badge without forcing window open
     const badge = document.getElementById('hudCrisisCount');

@@ -209,7 +209,7 @@ export class IsekaiEventUI {
           </div>
         `;
       } else {
-        const available = isekaiEventManager.getAvailableGuildQuests(player);
+        const available = isekaiEventManager.getAvailableGuildQuests(player, this.game.allNodes.find(n => n.id === player.nodeId));
         questList.innerHTML = available
           .map(
             q => `
@@ -261,7 +261,7 @@ export class IsekaiEventUI {
       const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         if (!player.activeGuildQuest) {
-          const available = isekaiEventManager.getAvailableGuildQuests(player);
+          const available = isekaiEventManager.getAvailableGuildQuests(player, this.game.allNodes.find(n => n.id === player.nodeId));
           if (available.length > 0) {
             isekaiEventManager.acceptQuest(player, available[0]);
           }

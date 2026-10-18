@@ -104,7 +104,7 @@ test('load rejects malformed JSON instead of throwing', () => {
 });
 
 test('load rejects a save with no players', () => {
-  writeSave({ version: 1, players: [] });
+  writeSave({ version: 2, players: [] });
   const res = SaveManager.load(new GameState());
   assert.equal(res.success, false);
   assert.match(res.error, /ผู้เล่น/);
@@ -149,6 +149,7 @@ test('a restored hero always has all four equipment slots', () => {
 test('town deeds pointing at nodes that no longer exist are dropped', () => {
   const game = freshGame();
   game.activePlayer.townDeeds = [0, 99999];
+  game.allNodes.find(n => n.id === 0).townData.ownerId = game.activePlayer.id;
   assert.equal(SaveManager.save(game), true);
   assert.deepEqual(readSave().players[0].townDeeds, [0, 99999], 'save stores what it was given');
 

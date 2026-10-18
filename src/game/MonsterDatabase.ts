@@ -1,8 +1,14 @@
+import { getWorld } from './WorldState';
+import { encounterChance, monsterRewards } from './Rules';
+import { prepareCombatant } from './CombatRules';
+import type { Combatant } from './BattleEngine';
+import { dungeonSystem } from './DungeonSystem';
 import { BoardNode } from './BoardMap';
 import { Player } from './Player';
 import { judgeThreat, scaleMonster, tierForNode } from './BalanceSystem';
 
-export interface MonsterProfile {
+export interface MonsterProfile extends Combatant {
+  environmentKey?: string;
   name: string;
   title: string;
   realmId: string;
@@ -704,22 +710,16 @@ export interface NodeEncounterPreview {
   roster: MonsterProfile[];
 }
 
-/**
- * Builds the encounter information for a node, scaled to the hero that is looking at it.
- *
- * The authored monster stats are the level-1 reference; the monster a hero actually fights is
- * produced by `scaleMonster`, so the numbers shown while scouting must come from the same
- * place or the tooltip would promise a fight that does not happen.
- */
+/** Read-only encounter information shared by scouting and actual battle creation. */
 export function getNodeEncounterPreview(node: BoardNode, player?: Player | null): NodeEncounterPreview {
-  const preview = buildNodeEncounterPreview(node);
+  const preview = { ...buildNodeEncounterPreview(node), encounterChancePercent: encounterChance(node, getWorld()) };
   if (!player || preview.roster.length === 0) return preview;
 
-  const isBossNode = node.type === 'boss' || node.type === 'dark_gate';
+  const isBossNode = node.type === 'boss';
   const tier = tierForNode(node.realmId, node.biome, isBossNode);
 
   const scaleProfile = (monster: MonsterProfile): MonsterProfile => {
-    const scaled = scaleMonster(
+    const raw = scaleMonster(
       {
         name: monster.name,
         tier,
@@ -730,13 +730,21 @@ export function getNodeEncounterPreview(node: BoardNode, player?: Player | null)
         baseMag: monster.mag,
         baseSpd: monster.spd,
         baseLuk: monster.luk,
-        mp: monster.mp
+        mp: monster.mp, skillName: monster.skillName
       },
       player
     );
+    const scaled = prepareCombatant(raw, node, getWorld(), true);
+    const ratio = node.townData?.isOccupiedByMonster ? node.townData.monsterHp / (node.townData.monsterMaxHp || node.townData.monsterHp) : getWorld().bossHealth[node.id] ?? 1;
     return {
       ...monster,
-      hp: scaled.hp,
+      ...scaled,
+      skillName: monster.skillName,
+      weakness: scaled.weaknessElement ? 'เวทธาตุ ' + ({ fire: 'ไฟ', ice: 'น้ำแข็ง', water: 'น้ำ', lightning: 'สายฟ้า', holy: 'แสง', dark: 'มืด', earth: 'ดิน' } as const)[scaled.weaknessElement] + ' (+25%)' : monster.weakness,
+      goldReward: monsterRewards(tierForNode(node.realmId, node.biome), getWorld(), node, node.type === 'town' || node.type === 'boss').gold,
+      xpReward: monsterRewards(tierForNode(node.realmId, node.biome), getWorld(), node, node.type === 'town' || node.type === 'boss').xp,
+      environmentKey: scaled.environmentKey,
+      hp: Math.max(1, Math.round(scaled.hp * ratio)),
       maxHp: scaled.maxHp,
       mp: scaled.mp,
       maxMp: scaled.maxMp,
@@ -755,7 +763,10 @@ export function getNodeEncounterPreview(node: BoardNode, player?: Player | null)
 
   // Replace the hand-written threat label with one derived from the scaled fight, so a
   // "HIGH" warning cannot sit next to numbers that are actually trivial.
-  const threat = judgeThreat(featuredMonster, player);
+  const preparedPlayer = prepareCombatant({ name: player.displayName, hp: player.hp, maxHp: player.maxHp, mp: player.mp, maxMp: player.maxMp, atk: player.getTotalStat('atk'), def: player.getTotalStat('def'), mag: player.getTotalStat('mag'), spd: player.getTotalStat('spd'), luk: player.getTotalStat('luk') }, node, getWorld());
+  const combatView = Object.create(player) as Player;
+  combatView.getTotalStat = stat => preparedPlayer[stat];
+  const threat = judgeThreat(featuredMonster, combatView);
   return {
     ...preview,
     roster,
@@ -774,7 +785,17 @@ export function getNodeEncounterPreview(node: BoardNode, player?: Player | null)
 
 function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
   const realmKey = node.realmId || 'solaria';
-  const roster = REALM_MONSTER_ROSTERS[node.biome || ''] || REALM_MONSTER_ROSTERS[realmKey] || REALM_MONSTER_ROSTERS.solaria;
+  const habitat: Record<string, string> = { grass: 'solaria', forest: 'emerald', waterfall_forest: 'emerald', snow: 'frostfall', desert: 'sunfire', volcano: 'lava', cavern: 'dwarf' };
+  let roster = REALM_MONSTER_ROSTERS[habitat[node.biome] ?? node.biome] || REALM_MONSTER_ROSTERS[realmKey] || REALM_MONSTER_ROSTERS.solaria;
+  // Coastal creatures stay near water; forest regions use their land inhabitants.
+  if (node.biome === 'forest') roster = [...REALM_MONSTER_ROSTERS.emerald.filter(m => !/Mermaid|Siren/i.test(m.name)), ...REALM_MONSTER_ROSTERS.solaria.slice(1)];
+  if (node.biome === 'coral') roster = [...REALM_MONSTER_ROSTERS.coral, ...REALM_MONSTER_ROSTERS.emerald.filter(m => /Mermaid|Siren/i.test(m.name))];
+  if (node.biome === 'cavern') roster = [...REALM_MONSTER_ROSTERS.dwarf, ...REALM_MONSTER_ROSTERS.crystal_cavern];
+  if (node.biome === 'abyss') roster = [...REALM_MONSTER_ROSTERS.abyss, ...REALM_MONSTER_ROSTERS.frostfall.filter(m => /Skeletal/i.test(m.name)), ...REALM_MONSTER_ROSTERS.crystal_cavern.filter(m => /Arachne/i.test(m.name))];
+  if (encounterChance(node, getWorld()) === 0) return {
+    typeLabel: node.name, encounterChancePercent: 0, threatLevel: 'SAFE', threatColor: '#10b981',
+    threatDescription: 'ช่องนี้ไม่มีการสุ่มต่อสู้ประจำพื้นที่', roster: []
+  };
 
   if (node.type === 'town' && node.townData?.isOccupiedByMonster) {
     const td = node.townData;
@@ -812,7 +833,12 @@ function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
     };
   }
 
-  if (node.type === 'boss' || node.type === 'dark_gate') {
+  if (node.type === 'boss') {
+    if (node.id >= 1000) {
+      const seed = node.id >= 1200 ? dungeonSystem.getFrostYetiBossCombatant() : node.id >= 1100 ? dungeonSystem.getFireDrakeBossCombatant() : dungeonSystem.getCryptLordBossCombatant();
+      const monster: MonsterProfile = { ...seed, title: seed.name, realmId: node.realmId, level: 10, skillName: seed.skillName!, skillDesc: 'ผู้พิทักษ์ประจำชั้น', lootDrop: 'โบนัสพิชิตชั้นและของรางวัลตามภูมิภาค', goldReward: 0, xpReward: 0, icon: '👑' };
+      return { typeLabel: node.name, encounterChancePercent: 100, threatLevel: 'BOSS', threatColor: '#f43f5e', threatDescription: 'ปราบผู้พิทักษ์เพื่อรับโบนัสหรือเปิดชั้นต่อไป', featuredMonster: monster, roster: [monster] };
+    }
     let bossMonster: MonsterProfile;
 
     if (node.biome === 'sakura_shrine') {
@@ -930,7 +956,7 @@ function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
         icon: '🪬👑',
         weakness: 'สวนกลับ (Counter)'
       };
-    } else if (node.biome === 'abyss' || node.type === 'dark_gate' || realmKey === 'abyss') {
+    } else if (node.biome === 'abyss' || realmKey === 'abyss') {
       bossMonster = {
         name: 'Void Empress Tiamat',
         title: 'ราชินีมังกรแห่งความว่างเปล่า เทียแมต',
@@ -1024,10 +1050,10 @@ function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
   }
 
   if (node.type === 'red') {
-    const randomPick = roster[Math.floor(Math.random() * roster.length)];
+    const randomPick = roster[0];
     return {
       typeLabel: `⚠️ ${node.name} [ช่องเคราะห์กรรม]`,
-      encounterChancePercent: 55,
+      encounterChancePercent: encounterChance(node, getWorld()),
       threatLevel: 'HIGH',
       threatColor: '#ea580c',
       threatDescription: 'ความเสี่ยงสูง! โอกาสเผชิญการลอบโจมตีของมอนสเตอร์หรือคำสาปสูญเสียทรัพย์สิน!',
@@ -1039,10 +1065,10 @@ function buildNodeEncounterPreview(node: BoardNode): NodeEncounterPreview {
   const primaryMonster = roster[0];
   return {
     typeLabel: `⚪ ${node.name} (${node.subRegionName || 'ทุ่งหญ้า'})`,
-    encounterChancePercent: 35,
+    encounterChancePercent: encounterChance(node, getWorld()),
     threatLevel: 'MEDIUM',
     threatColor: '#38bdf8',
-    threatDescription: 'พื้นที่เดินทางธรรมชาติ มีโอกาส 35% พบสัตว์อสูรสาวประจำภูมิภาค',
+    threatDescription: 'โอกาสเผชิญหน้าขึ้นกับเวลา อากาศและภัยของภูมิภาค',
     featuredMonster: primaryMonster,
     roster
   };

@@ -1,3 +1,4 @@
+import { chooseJourney } from './JourneyUI';
 import { GameState } from '../game/GameState';
 import { BoardNode } from '../game/BoardMap';
 import { townManager } from '../game/TownManager';
@@ -63,15 +64,21 @@ export class TownUI {
       // If rival owned, collect toll automatically upon entering
       if (owner.id !== p.id) {
         const isTradeRoute = townManager.isTownInTradeRoute(townNode, owner, this.game.allNodes);
-        const toll = townManager.calculateToll(townNode, p, this.game.allNodes, owner);
-        p.gold = Math.max(0, p.gold - toll);
+        const flags = this.game.world.memory(p.id).flags;
+        const key = 'toll_' + townNode.id;
+        const toll = flags[key] === this.game.dayCounter ? 0 : Math.min(p.gold, townManager.calculateToll(townNode, p, this.game.allNodes, owner));
+        flags[key] = this.game.dayCounter;
+        p.gold -= toll;
         owner.gold += toll;
         this.game.addLog(`🪙 ${p.displayName} จ่ายค่าผ่านทาง ${toll}G ให้แก่เจ้าของเมือง ${owner.displayName}!${isTradeRoute ? ' (🌐 เส้นทางการค้าคูณ 1.5 เท่า!)' : ''}${p.relics.includes('thief_band') ? ' (💍 แหวนหัวขโมยลดค่าผ่านทาง 50%!)' : ''}`, 'gold');
         audio.coinClink();
       } else {
         // Owner visits own town: Town Milestone Regeneration Perk!
         if (townLvl >= 2) {
-          const healAmount = townLvl >= 3 ? 16 : 8;
+          const flags = this.game.world.memory(p.id).flags;
+          const visitKey = 'rested_' + townNode.id;
+          const healAmount = flags[visitKey] === this.game.dayCounter ? 0 : townLvl >= 3 ? 16 : 8;
+          flags[visitKey] = this.game.dayCounter;
           const oldHp = p.hp;
           p.hp = Math.min(p.maxHp, p.hp + healAmount);
           if (p.hp > oldHp) {
@@ -113,7 +120,7 @@ export class TownUI {
       btnTakeover?.classList.add('hidden');
     }
 
-    const investCost = 150 * (townNode.townData?.level || 1);
+    const investCost = 200 * (townNode.townData?.level || 1);
     investCostText.innerText = `ลงทุน ${investCost}G (อัปเกรด)`;
 
     // Render 2.5D Isometric Town Plaza Diorama
@@ -170,9 +177,13 @@ export class TownUI {
     const res = townManager.investInTown(this.currentTown, p);
     if (res.success) {
       this.game.addLog(`📈 ${p.displayName} ลงทุนพัฒนาเมือง ${this.currentTown.name}! อัปเกรดเป็น ${res.tierName} (เลเวล ${res.newLevel})!`, 'level');
-      if (!p.isAI) {
-        this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
-      }
+      if (res.newLevel >= 3 && !this.currentTown.townData?.specialization && p.gold >= 200) {
+        const town = this.currentTown;
+        chooseJourney(p, 'เลือกบทบาทเมือง', 'ใช้ 200G เพื่อกำหนดบทบาทถาวรของเมืองนี้', [
+          ...(['trade_port', 'fortress', 'mining'] as const).map((spec, i) => ({ label: ['เมืองการค้า', 'ป้อมปราการ', 'เมืองเหมือง'][i], detail: ['รายได้และค่าผ่านทาง +50%', 'กองกำลังรักษาเมืองแข็งแกร่งขึ้น 40%', 'รายได้เพิ่ม 25G ต่อเทิร์น'][i], score: p.aiPersonality === 'economist' && i === 2 ? 10 : 4 - i, run: () => { townManager.setSpecialization(town, p, spec); this.game.addLog('กำหนดบทบาทเมือง ' + town.name + ': ' + spec, 'level'); if (!p.isAI) this.open(town, this.onTownLeaveCallback!, this.onInitiateRobCallback!); } })),
+          { label: 'ตัดสินใจภายหลัง', detail: 'ลงทุนครั้งต่อไปเพื่อเลือกอีกครั้ง', score: 0, run: () => {} }
+        ]);
+      } else if (!p.isAI) this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
     } else {
       this.game.addLog(`ไม่สามารถลงทุนได้ (ต้องเป็นเจ้าของเมืองและมีเงินทองเพียงพอ)`);
     }
@@ -183,8 +194,12 @@ export class TownUI {
     const p = this.game.activePlayer;
 
     if (this.currentTown.townData.ownerId === p.id) {
-      const tax = this.currentTown.townData.taxYield;
-      p.gold += tax;
+      const flags = this.game.world.memory(p.id).flags;
+      const key = 'collected_' + this.currentTown.id;
+      if (flags[key] === this.game.dayCounter) { this.game.addLog('เก็บภาษีเมืองนี้แล้วในวันนี้'); return; }
+      flags[key] = this.game.dayCounter;
+      const tax = Math.min(60, this.currentTown.townData.taxYield);
+      p.gold += tax; p.matchStats.goldEarnedTotal += tax;
       audio.coinClink();
       this.game.addLog(`🪙 เก็บภาษีฉุกเฉินได้ ${tax}G จากเมือง ${this.currentTown.name}!`, 'gold');
     } else {

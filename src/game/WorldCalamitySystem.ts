@@ -1,322 +1,79 @@
-import { BoardNode } from './BoardMap';
-import { Player } from './Player';
-import { audio } from '../engine/AudioSynthesizer';
+import type { BoardNode, RealmId } from './BoardMap';
+import type { Player } from './Player';
+import { getWorld, REALMS } from './WorldState';
 
 export interface CalamityEvent {
-  id: string;
-  type: 'demon_incursion' | 'monster_stampede' | 'golden_goblin' | 'world_boss';
-  headline: string;
-  loreDescription: string;
-  bannerIcon: string;
-  affectedTownNames: string[];
-  bountyReward: number;
+  id: string; type: 'demon_incursion' | 'monster_stampede' | 'golden_goblin' | 'world_boss';
+  headline: string; loreDescription: string; bannerIcon: string; affectedTownNames: string[];
+  bountyReward: number; affectedTownIds?: number[]; remainingTownIds?: number[];
+  startedDay?: number; expiresDay?: number; realm?: RealmId;
 }
-
 export class WorldCalamitySystem {
-  public activeCalamity: CalamityEvent | null = null;
-  public calamityHistory: string[] = [];
-  private triggeredCalamityIds = new Set<string>();
-
-  // Check whether a calamity should trigger as turns and weeks advance
-  public checkCalamityTriggers(
-    dayCounter: number,
-    weekCounter: number,
-    allNodes: BoardNode[],
-    players: Player[]
-  ): CalamityEvent | null {
-    // 1. Week 2 (Day 8-14) or Day 8: Demon General Incursion (จอมมารบุกหมู่บ้าน)
-    if (dayCounter >= 8 && !this.triggeredCalamityIds.has('demon_incursion_1')) {
-      this.triggeredCalamityIds.add('demon_incursion_1');
-      return this.triggerDemonIncursion(allNodes);
+  get activeCalamity(): CalamityEvent | null { return getWorld().calamity; }
+  set activeCalamity(value: CalamityEvent | null) { getWorld().calamity = value; }
+  get calamityHistory(): string[] { return getWorld().calamityHistory; }
+  set calamityHistory(value: string[]) { getWorld().calamityHistory = value; }
+  reset(): void { getWorld().calamity = null; getWorld().calamityHistory = []; }
+  isCalamityActive(): boolean { return !!this.activeCalamity; }
+  clearActiveCalamity(): void { this.activeCalamity = null; }
+  checkCalamityTriggers(day: number, week: number, nodes: BoardNode[], players: Player[]): CalamityEvent | null {
+    const world = getWorld();
+    if (this.activeCalamity) {
+      if (day <= (this.activeCalamity.expiresDay ?? day + 1)) return null;
+      const expired = this.activeCalamity;
+      world.calamityHistory.push('สิ้นสุดวิกฤต: ' + expired.headline);
+      this.clearActiveCalamity();
+      world.memory(0).flags.nextCrisisDay = day + 3;
     }
-
-    // 2. Week 3 (Day 15-21) or Day 15: Wild Monster Stampede (ฝูงมอนสเตอร์บุกเมือง)
-    if (dayCounter >= 15 && !this.triggeredCalamityIds.has('monster_stampede_1')) {
-      this.triggeredCalamityIds.add('monster_stampede_1');
-      return this.triggerMonsterStampede(allNodes);
-    }
-
-    // 3. Week 4 (Day 22+): Golden Goblin Migration
-    if (dayCounter >= 22 && !this.triggeredCalamityIds.has('golden_goblin_1')) {
-      this.triggeredCalamityIds.add('golden_goblin_1');
-      return this.triggerGoldenGoblinMigration();
-    }
-
-    // 4. Week 5 (Day 28+): Apex Ancient Dragon Ouroboros (World Boss Raid)
-    if (dayCounter >= 28 && !this.triggeredCalamityIds.has('world_boss_ouroboros_1')) {
-      this.triggeredCalamityIds.add('world_boss_ouroboros_1');
-      return this.triggerApexDragonBoss(allNodes);
-    }
-
-    // 5. Endless/Late-Game Calamity Cycles (Every 7 days starting from Day 35)
-    if (dayCounter >= 35 && dayCounter % 7 === 0 && !this.activeCalamity) {
-      const cycleKey = `calamity_cycle_day_${dayCounter}`;
-      if (!this.triggeredCalamityIds.has(cycleKey)) {
-        this.triggeredCalamityIds.add(cycleKey);
-        return this.triggerLateGameRotationalCalamity(dayCounter, weekCounter, allNodes);
-      }
-    }
-
-    return null;
+    if (day < 6 || day < (world.memory(0).flags.nextCrisisDay ?? 6)) return null;
+    if (world.memory(0).flags.checkedCrisisDay === day) return null;
+    world.memory(0).flags.checkedCrisisDay = day;
+    const realm = [...REALMS].sort((a, b) => world.threat[b] - world.threat[a])[0];
+    if (world.threat[realm] < 35) return null;
+    const type = world.pick<CalamityEvent['type']>(world.threat[realm] >= 70 ? ['world_boss', 'monster_stampede'] : ['demon_incursion', 'golden_goblin']);
+    return this.trigger(type, realm, day, week, nodes);
   }
-
-  public isCalamityActive(): boolean {
-    return this.activeCalamity !== null;
+  triggerApexDragonBoss(nodes: BoardNode[]): CalamityEvent {
+    return this.trigger('world_boss', 'solaria', getWorld().day, Math.ceil(getWorld().day / 7), nodes);
   }
-
-  public clearActiveCalamity(): void {
-    this.activeCalamity = null;
-  }
-
-  // Demon Lord Vanguard Incursion
-  private triggerDemonIncursion(allNodes: BoardNode[]): CalamityEvent {
-    // Target a major town in Solaria or Frostpeak
-    const candidateTowns = allNodes.filter(n => n.type === 'town' && (n.realmId === 'solaria' || n.realmId === 'frostpeak'));
-    const targetTown = candidateTowns[Math.floor(Math.random() * candidateTowns.length)] || allNodes[4];
-
-    if (targetTown.townData) {
-      targetTown.townData.isOccupiedByMonster = true;
-      targetTown.townData.monsterName = 'Demon General Malakor';
-      targetTown.townData.monsterHp = 220;
-      targetTown.townData.monsterMaxHp = 220;
-      targetTown.townData.monsterAtk = 24;
-      targetTown.townData.monsterDef = 16;
+  private trigger(type: CalamityEvent['type'], realm: RealmId, day: number, week: number, nodes: BoardNode[]): CalamityEvent {
+    const world = getWorld();
+    const candidates = nodes.filter(n => n.type === 'town' && n.realmId === realm && !n.townData?.isOccupiedByMonster);
+    const shuffled = [...candidates];
+    for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(world.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    const targets = shuffled.slice(0, type === 'monster_stampede' ? 3 : type === 'golden_goblin' ? 0 : 1);
+    if (!targets.length && type !== 'golden_goblin') type = 'golden_goblin';
+    const power = 1 + Math.min(0.8, (week - 1) * 0.08);
+    for (const node of targets) {
+      const td = node.townData!;
+      td.isOccupiedByMonster = true;
+      td.monsterName = type === 'world_boss' ? 'Apex Dragon Ouroboros' : type === 'monster_stampede' ? 'Rampaging Chimera' : 'Demon General Malakor';
+      td.monsterHp = td.monsterMaxHp = Math.round((type === 'world_boss' ? 400 : 170) * power);
+      td.monsterAtk = Math.round((type === 'world_boss' ? 32 : 20) * power); td.monsterDef = Math.round(15 * power);
     }
-
+    const caravan = type === 'golden_goblin';
+    if (caravan) world.memory(0).flags.caravanUntil = day + 5;
+    const title = caravan ? 'คาราวานก็อบลินทองคำ' : type === 'world_boss' ? 'มังกรบรรพกาลบุกเมือง' : type === 'monster_stampede' ? 'ฝูงอสูรอพยพ' : 'กองทัพปีศาจปิดล้อม';
     const calamity: CalamityEvent = {
-      id: 'demon_incursion_1',
-      type: 'demon_incursion',
-      headline: '⚠️ มหันตภัยระดับโลก: ขุนพลปีศาจมาลาคอร์ เข้าปิดล้อม ' + targetTown.name + '!',
-      loreDescription: `ท้องฟ้าแปรเปลี่ยนเป็นสีเลือดฉาน! ขุนพลเอกแห่งจอมมาร 'มาลาคอร์' นำทัพอสูรจากอเวจีเข้าปิดล้อม ${targetTown.name}! กษัตริย์ริโก้ประกาศตั้งค่าหัว 800G และเกียรติยศสูงสุดแก่ฮีโร่ผู้ปลดปล่อยเมืองสำเร็จ!`,
-      bannerIcon: '👹',
-      affectedTownNames: [targetTown.name],
-      bountyReward: 800
+      id: type + '_' + day, type, realm, startedDay: day, expiresDay: day + 5,
+      headline: title + ' • ' + realm,
+      loreDescription: caravan ? 'พบรอยคาราวานบนเส้นทางธรรมชาติได้จนถึงวันที่ ' + (day + 5) : 'ปลดปล่อย ' + targets.map(n => n.name).join(', ') + ' ภายในวันที่ ' + (day + 5) + ' รับค่าหัวแยกแต่ละเมือง',
+      bannerIcon: caravan ? '💰' : '⚔️', affectedTownNames: targets.map(n => n.name),
+      affectedTownIds: targets.map(n => n.id), remainingTownIds: targets.map(n => n.id), bountyReward: caravan ? 140 : type === 'world_boss' ? 650 : 250
     };
-
-    this.activeCalamity = calamity;
-    this.calamityHistory.push(calamity.headline);
-    audio.playBgm('boss');
-    return calamity;
+    this.activeCalamity = calamity; world.calamityHistory.push(calamity.headline); return calamity;
   }
-
-  // Monster Horde Stampede
-  private triggerMonsterStampede(allNodes: BoardNode[]): CalamityEvent {
-    // 2 to 3 towns suddenly besieged by feral beasts!
-    const candidateTowns = allNodes.filter(n => n.type === 'town');
-    const shuffled = [...candidateTowns].sort(() => Math.random() - 0.5);
-    const besiegedTowns = shuffled.slice(0, 3);
-
-    besiegedTowns.forEach(t => {
-      if (t.townData) {
-        t.townData.isOccupiedByMonster = true;
-        t.townData.monsterName = 'ฝูงอสูรคลั่งบีฮีมอธ';
-        t.townData.monsterHp = 130;
-        t.townData.monsterMaxHp = 130;
-        t.townData.monsterAtk = 18;
-        t.townData.monsterDef = 12;
-      }
-    });
-
-    const affectedNames = besiegedTowns.map(t => t.name);
-
-    const calamity: CalamityEvent = {
-      id: 'monster_stampede_1',
-      type: 'monster_stampede',
-      headline: '🚨 วิกฤตการณ์ทวีป: ฝูงสัตว์อสูรคลั่งบุกถล่ม 3 หัวเมือง!',
-      loreDescription: `การอพยพอย่างบ้าคลั่งของสัตว์อสูรจากดินแดนภูเขาไฟเนเธอร์ ได้บุกเข้าโจมตีอาณาจักร! เมือง ${affectedNames.join(', ')} กำลังตกอยู่ใต้การปิดล้อมอย่างหนัก! กษัตริย์ริโก้ประกาศมอบเงินรางวัลสองเท่าแก่ผู้ปลดปล่อยเมืองในช่วงวิกฤตนี้!`,
-      bannerIcon: '🐺',
-      affectedTownNames: affectedNames,
-      bountyReward: 600
-    };
-
-    this.activeCalamity = calamity;
-    this.calamityHistory.push(calamity.headline);
-    audio.playBgm('battle');
-    return calamity;
-  }
-
-  // Golden Goblin Migration
-  private triggerGoldenGoblinMigration(): CalamityEvent {
-    const calamity: CalamityEvent = {
-      id: 'golden_goblin_1',
-      type: 'golden_goblin',
-      headline: '✨ เทศกาลแห่งความมั่งคั่ง: กองคาราวานก็อบลินทองคำท่องทวีป!',
-      loreDescription: `มีผู้พบเห็นกองคาราวานก็อบลินทองคำผู้ร่ำรวยเดินทางข้ามทั้ง 4 ดินแดน! นักผจญภัยที่เดินตกช่องว่างจะมีโอกาสพบสมบัติเหรียญทองระยิบระยับ!`,
-      bannerIcon: '💰',
-      affectedTownNames: ['ทุกทวีปทั่วโลก'],
-      bountyReward: 350
-    };
-
-    this.activeCalamity = calamity;
-    this.calamityHistory.push(calamity.headline);
-    audio.fanfare();
-    return calamity;
-  }
-
-  // World Boss Apex Ancient Dragon Emergence
-  public triggerApexDragonBoss(allNodes: BoardNode[]): CalamityEvent {
-    // Target a castle/town or central node
-    const candidateNodes = allNodes.filter(n => n.type === 'town' && (n.realmId === 'sunfire' || n.realmId === 'solaria'));
-    const targetNode = candidateNodes[Math.floor(Math.random() * candidateNodes.length)] || allNodes[0];
-
-    if (targetNode.townData) {
-      targetNode.townData.isOccupiedByMonster = true;
-      targetNode.townData.monsterName = 'มังกรบรรพกาล โอโรโบรอส (Apex World Boss)';
-      targetNode.townData.monsterHp = 380;
-      targetNode.townData.monsterMaxHp = 380;
-      targetNode.townData.monsterAtk = 36;
-      targetNode.townData.monsterDef = 24;
+  claimTown(node: BoardNode, player: Player): number {
+    const event = this.activeCalamity;
+    if (!event?.remainingTownIds?.includes(node.id)) return 0;
+    event.remainingTownIds = event.remainingTownIds.filter(id => id !== node.id);
+    player.gold += event.bountyReward;
+    if (!event.remainingTownIds.length) {
+      if (event.realm) getWorld().threat[event.realm] = Math.max(0, getWorld().threat[event.realm] - 40);
+      getWorld().memory(0).flags.nextCrisisDay = getWorld().day + 4;
+      this.clearActiveCalamity();
     }
-
-    const calamity: CalamityEvent = {
-      id: 'world_boss_ouroboros_1',
-      type: 'world_boss',
-      headline: `👑 มหันตภัยโลก: มังกรบรรพกาล 'โอโรโบรอส' ยึดครอง ${targetNode.name}!`,
-      loreDescription: `ฟากฟ้ามืดมิดด้วยปีกเพลิงของมังกรบรรพกาล โอโรโบรอส (World Boss Apex)! อสูรยักษ์ได้ร่อนลงยึดครอง ${targetNode.name} อย่างเบ็ดเสร็จ! กษัตริย์ริโก้ประกาศค่าหัว 1,500G และเครื่องบรรณาการล้ำค่าแด่ผู้พิชิต!`,
-      bannerIcon: '🐉',
-      affectedTownNames: [targetNode.name],
-      bountyReward: 1500
-    };
-
-    this.activeCalamity = calamity;
-    this.calamityHistory.push(calamity.headline);
-    audio.limitBreak();
-    audio.playBgm('boss');
-    return calamity;
-  }
-
-  // Rotational Late-game Calamities scaling with weekCounter
-  private triggerLateGameRotationalCalamity(
-    dayCounter: number,
-    weekCounter: number,
-    allNodes: BoardNode[]
-  ): CalamityEvent {
-    const scaleFactor = 1 + Math.min(2.5, (weekCounter - 4) * 0.2);
-    const candidateTypes: Array<'demon_incursion' | 'monster_stampede' | 'golden_goblin' | 'world_boss'> = [
-      'demon_incursion',
-      'monster_stampede',
-      'golden_goblin',
-      'world_boss'
-    ];
-    const pickedType = candidateTypes[Math.floor(Math.random() * candidateTypes.length)];
-
-    if (pickedType === 'golden_goblin') {
-      const reward = Math.round(450 * scaleFactor);
-      const calamity: CalamityEvent = {
-        id: `late_golden_goblin_day_${dayCounter}`,
-        type: 'golden_goblin',
-        headline: `✨ เทศกาลมหาสมบัติ: กองทัพก็อบลินจักรพรรดิท่องทวีป (สัปดาห์ที่ ${weekCounter})!`,
-        loreDescription: `กองคาราวานก็อบลินทองคำระดับจักรพรรดิได้หลั่งไหลเข้าสู่อาณาจักร! ทุกย่างก้าวบนช่องว่างแฝงไปด้วยขุมทรัพย์ทองคำมหาศาล!`,
-        bannerIcon: '👑💰',
-        affectedTownNames: ['ทุกทวีปทั่วโลก'],
-        bountyReward: reward
-      };
-      this.activeCalamity = calamity;
-      this.calamityHistory.push(calamity.headline);
-      audio.fanfare();
-      return calamity;
-    }
-
-    if (pickedType === 'monster_stampede') {
-      const candidateTowns = allNodes.filter(n => n.type === 'town');
-      const shuffled = [...candidateTowns].sort(() => Math.random() - 0.5);
-      const besiegedTowns = shuffled.slice(0, 3);
-      const hp = Math.round(150 * scaleFactor);
-      const atk = Math.round(20 * scaleFactor);
-      const def = Math.round(14 * scaleFactor);
-      const reward = Math.round(750 * scaleFactor);
-
-      besiegedTowns.forEach(t => {
-        if (t.townData) {
-          t.townData.isOccupiedByMonster = true;
-          t.townData.monsterName = 'ฝูงคิเมร่ากลายพันธุ์คลั่ง';
-          t.townData.monsterHp = hp;
-          t.townData.monsterMaxHp = hp;
-          t.townData.monsterAtk = atk;
-          t.townData.monsterDef = def;
-        }
-      });
-
-      const affectedNames = besiegedTowns.map(t => t.name);
-      const calamity: CalamityEvent = {
-        id: `late_stampede_day_${dayCounter}`,
-        type: 'monster_stampede',
-        headline: `🚨 ภัยพิบัติใหญ่: ฝูงคิเมร่ากลายพันธุ์ปิดล้อม 3 เมือง (สัปดาห์ที่ ${weekCounter})!`,
-        loreDescription: `ฝูงคิเมร่าโบราณจากรอยแยกมิติเข้าปิดล้อม ${affectedNames.join(', ')}! กษัตริย์ริโก้ทรงตั้งรางวัลนำจับพิเศษ ${reward}G!`,
-        bannerIcon: '🦁🔥',
-        affectedTownNames: affectedNames,
-        bountyReward: reward
-      };
-      this.activeCalamity = calamity;
-      this.calamityHistory.push(calamity.headline);
-      audio.playBgm('battle');
-      return calamity;
-    }
-
-    if (pickedType === 'demon_incursion') {
-      const candidateTowns = allNodes.filter(n => n.type === 'town');
-      const targetTown = candidateTowns[Math.floor(Math.random() * candidateTowns.length)] || allNodes[4];
-      const hp = Math.round(260 * scaleFactor);
-      const atk = Math.round(28 * scaleFactor);
-      const def = Math.round(18 * scaleFactor);
-      const reward = Math.round(1000 * scaleFactor);
-
-      if (targetTown.townData) {
-        targetTown.townData.isOccupiedByMonster = true;
-        targetTown.townData.monsterName = 'แม่ทัพอเวจี อาซาเซล';
-        targetTown.townData.monsterHp = hp;
-        targetTown.townData.monsterMaxHp = hp;
-        targetTown.townData.monsterAtk = atk;
-        targetTown.townData.monsterDef = def;
-      }
-
-      const calamity: CalamityEvent = {
-        id: `late_demon_day_${dayCounter}`,
-        type: 'demon_incursion',
-        headline: `👹 กองทัพอเวจีบุก! แม่ทัพอาซาเซล ยึดครอง ${targetTown.name}!`,
-        loreDescription: `ม่านหมอกสีดำทมิฬปกคลุม ${targetTown.name}! แม่ทัพอเวจีอาซาเซลเข้ายึดครองหัวเมือง! ปลดปล่อยเมืองเพื่อรับรางวัล ${reward}G!`,
-        bannerIcon: '👿⚔️',
-        affectedTownNames: [targetTown.name],
-        bountyReward: reward
-      };
-      this.activeCalamity = calamity;
-      this.calamityHistory.push(calamity.headline);
-      audio.playBgm('boss');
-      return calamity;
-    }
-
-    // Default: World Boss Titan
-    const candidateNodes = allNodes.filter(n => n.type === 'town');
-    const targetNode = candidateNodes[Math.floor(Math.random() * candidateNodes.length)] || allNodes[0];
-    const hp = Math.round(440 * scaleFactor);
-    const atk = Math.round(40 * scaleFactor);
-    const def = Math.round(28 * scaleFactor);
-    const reward = Math.round(1800 * scaleFactor);
-
-    if (targetNode.townData) {
-      targetNode.townData.isOccupiedByMonster = true;
-      targetNode.townData.monsterName = 'ไททันโกเลมบรรพกาล อิลลิเธียม';
-      targetNode.townData.monsterHp = hp;
-      targetNode.townData.monsterMaxHp = hp;
-      targetNode.townData.monsterAtk = atk;
-      targetNode.townData.monsterDef = def;
-    }
-
-    const calamity: CalamityEvent = {
-      id: `late_titan_day_${dayCounter}`,
-      type: 'world_boss',
-      headline: `👑 บอสโลกจุติ: ไททันบรรพกาล 'อิลลิเธียม' บดขยี้ ${targetNode.name}!`,
-      loreDescription: `ผืนพิภพสั่นสะเทือนระดับแผ่นดินไหว! ไททันบรรพกาลอิลลิเธียมตื่นขึ้นและเข้ายึดครอง ${targetNode.name}! รางวัลมหาศาล ${reward}G รอคอยผู้กล้า!`,
-      bannerIcon: '🗿⚡',
-      affectedTownNames: [targetNode.name],
-      bountyReward: reward
-    };
-    this.activeCalamity = calamity;
-    this.calamityHistory.push(calamity.headline);
-    audio.limitBreak();
-    audio.playBgm('boss');
-    return calamity;
+    return event.bountyReward;
   }
 }
-
 export const worldCalamitySystem = new WorldCalamitySystem();

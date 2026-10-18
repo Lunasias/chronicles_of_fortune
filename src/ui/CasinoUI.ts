@@ -57,7 +57,7 @@ export class CasinoUI {
     if (player.isAI) {
       setTimeout(() => {
         if (player.gold >= this.hlBet) {
-          this.handleHighLowGuess(Math.random() > 0.5);
+          this.handleHighLowGuess(this.game.world.random() > 0.5);
           setTimeout(() => {
             if (this.hlStreak > 0) {
               this.handleHlCashOut();
@@ -411,7 +411,7 @@ export class CasinoUI {
       audio.coin();
     }
 
-    const nextCard = Math.floor(Math.random() * 13) + 1;
+    const nextCard = Math.floor(this.game.world.random() * 13) + 1;
     const isWin = guessHigher ? nextCard >= this.hlCurrentCard : nextCard <= this.hlCurrentCard;
     this.hlCurrentCard = nextCard;
 
@@ -495,7 +495,7 @@ export class CasinoUI {
     if (resEl) resEl.innerText = 'กำลังหมุนวงล้อ...';
 
     // Simulated wheel segments: 45% Red, 45% Blue, 10% Gold
-    const rand = Math.random();
+    const rand = this.game.world.random();
     const outcomeColor: 'red' | 'blue' | 'gold' = rand < 0.45 ? 'red' : rand < 0.90 ? 'blue' : 'gold';
 
     let spins = 0;
@@ -562,7 +562,7 @@ export class CasinoUI {
 
     // Determine winner based on weights
     const totalWeight = this.fighters.reduce((acc, f) => acc + f.weight, 0);
-    const rand = Math.random() * totalWeight;
+    const rand = this.game.world.random() * totalWeight;
     let accumulated = 0;
     let winnerIndex = 0;
     for (let i = 0; i < this.fighters.length; i++) {

@@ -37,6 +37,7 @@ export class WeeklyReportUI {
       document.getElementById('darklingPactModal')?.classList.add('hidden');
       const sorted = [...this.game.players].sort((a, b) => a.getNetWorth(this.game.allNodes) - b.getNetWorth(this.game.allNodes));
       const trailing = sorted[0]; // Last place
+      if (!this.game.allowDarkling || this.game.gameMode === 'coop_raid' || !darklingSystem.canTransform(trailing, this.game.players, this.game.allNodes)) return;
       darklingSystem.acceptPact(trailing, this.game.allNodes, spec);
       this.game.addLog(`😈 APOCALYPSE! ${trailing.displayName} สละวิญญาณทำสัญญาเป็น THE DARKLING (${spec.toUpperCase()})!`, 'darkling');
     };
@@ -68,6 +69,8 @@ export class WeeklyReportUI {
     const table = document.getElementById('weeklyRankingsTable')!;
     table.innerHTML = '';
 
+    const payRewards = this.game.world.memory(0).flags.reportPaidWeek !== this.game.weekCounter;
+    this.game.world.memory(0).flags.reportPaidWeek = this.game.weekCounter;
     sorted.forEach((p, idx) => {
       const netWorth = p.getNetWorth(this.game.allNodes);
       const isFirst = idx === 0;
@@ -91,25 +94,13 @@ export class WeeklyReportUI {
       table.appendChild(row);
 
       // Reward 1st place with royal stipend
-      if (isFirst) {
-        p.gold += 150;
+      if (isFirst && payRewards) {
+        p.gold += 150; p.matchStats.goldEarnedTotal += 150;
       }
 
-      // Check if last place gets offered Darkling Contract!
-      if (isLast && sorted.length >= 2 && !p.isDarkling) {
-        const gap = sorted[0].getNetWorth(this.game.allNodes) - netWorth;
-        if (gap >= 250) {
-          const speed = this.game.gameSpeed || 1;
-          setTimeout(() => {
-            document.getElementById('darklingPactModal')?.classList.remove('hidden');
-            if (p.isAI) {
-              setTimeout(() => {
-                document.getElementById('btnAcceptDarkling')?.click();
-              }, Math.max(150, Math.round(1200 / speed)));
-            }
-          }, Math.max(150, Math.round(1500 / speed)));
-        }
-      }
+      // Trailing players receive a modest recovery grant; Darkling remains a gate decision.
+      if (isLast && !isFirst && payRewards) { p.gold += 100; p.matchStats.goldEarnedTotal += 100; }
+
     });
 
     modal.classList.remove('hidden');

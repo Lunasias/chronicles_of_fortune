@@ -1,3 +1,5 @@
+import { assignTown } from './Rules';
+import { getWorld } from './WorldState';
 import { BoardNode } from './BoardMap';
 import { Player } from './Player';
 import { audio } from '../engine/AudioSynthesizer';
@@ -6,16 +8,12 @@ import { worldCalamitySystem } from './WorldCalamitySystem';
 
 export class TownManager {
   // Liberate town after defeating the monster
-  liberateTown(townNode: BoardNode, player: Player): { goldReward: number; xpReward: number; bountyReward: number } {
+  liberateTown(townNode: BoardNode, player: Player, players: Player[] = [player]): { goldReward: number; xpReward: number; bountyReward: number } {
     if (!townNode.townData) return { goldReward: 0, xpReward: 0, bountyReward: 0 };
 
     townNode.townData.isOccupiedByMonster = false;
-    townNode.townData.ownerId = player.id;
-    if (!player.townDeeds.includes(townNode.id)) {
-      player.townDeeds.push(townNode.id);
-    }
-    player.townsControlled = player.townDeeds.length;
-    const goldReward = 150 + townNode.townData.level * 50;
+    assignTown(townNode, player, players);
+    const goldReward = 80 + townNode.townData.level * 25;
     const xpReward = 80 + townNode.townData.level * 30;
 
     let bountyReward = 0;
@@ -23,11 +21,8 @@ export class TownManager {
       bountyReward = royalDecreeSystem.claimBounty(player);
     }
 
-    if (worldCalamitySystem.activeCalamity && worldCalamitySystem.activeCalamity.affectedTownNames.includes(townNode.name)) {
-      const calBounty = worldCalamitySystem.activeCalamity.bountyReward;
-      bountyReward += calBounty;
-      worldCalamitySystem.activeCalamity = null;
-    }
+    bountyReward += worldCalamitySystem.claimTown(townNode, player);
+    getWorld().threat[townNode.realmId] = Math.max(0, getWorld().threat[townNode.realmId] - 8);
 
     player.matchStats.townsCapturedTotal++;
     player.matchStats.goldEarnedTotal += (goldReward + bountyReward);
@@ -45,13 +40,13 @@ export class TownManager {
     if (townNode.townData.ownerId !== player.id) return { success: false, newLevel: townNode.townData.level, tierName: 'หมู่บ้านเล็ก' };
     if (townNode.townData.level >= 5) return { success: false, newLevel: townNode.townData.level, tierName: 'มหานคร' };
 
-    const cost = 150 * townNode.townData.level;
+    const cost = 200 * townNode.townData.level;
     if (player.gold < cost) return { success: false, newLevel: townNode.townData.level, tierName: 'หมู่บ้านเล็ก' };
 
     player.gold -= cost;
     townNode.townData.level++;
-    townNode.townData.baseValue = Math.floor(townNode.townData.baseValue * 1.5);
-    townNode.townData.taxYield = Math.floor(townNode.townData.taxYield * 1.4);
+    townNode.townData.baseValue = Math.floor(townNode.townData.baseValue * 1.2);
+    townNode.townData.taxYield = Math.floor(townNode.townData.taxYield * 1.15);
 
     const newLevel = townNode.townData.level;
     let tierName = 'หมู่บ้านเล็ก';
@@ -110,14 +105,14 @@ export class TownManager {
   calculateToll(townNode: BoardNode, visitor?: Player, allNodes?: BoardNode[], owner?: Player): number {
     if (!townNode.townData || !townNode.townData.ownerId) return 0;
     const decreeMult = royalDecreeSystem.activeDecree.id === 'ECONOMIC_BOOM' ? 2 : 1;
-    const tierMult = townNode.townData.level >= 3 ? 2.0 : 1.0;
+    const tierMult = 1 + (townNode.townData.level - 1) * 0.1;
     const specMult = townNode.townData.specialization === 'trade_port' ? 1.5 : 1.0;
     const tradeRouteMult = (allNodes && owner && this.isTownInTradeRoute(townNode, owner, allNodes)) ? 1.5 : 1.0;
     let toll = Math.floor((30 + townNode.townData.level * 25) * decreeMult * tierMult * specMult * tradeRouteMult);
     if (visitor && visitor.relics.includes('thief_band')) {
       toll = Math.floor(toll * 0.5);
     }
-    return toll;
+    return Math.round(toll * (getWorld().modifier?.tollMultiplier ?? 1));
   }
 
   // Set Town Specialization (Trading Port, Fortress, Mining Town)
@@ -125,6 +120,8 @@ export class TownManager {
     if (!townNode.townData || townNode.townData.ownerId !== player.id || townNode.townData.level < 3) {
       return false;
     }
+    if (townNode.townData.specialization || player.gold < 200) return false;
+    player.gold -= 200;
     townNode.townData.specialization = spec;
     audio.levelUp();
     return true;
@@ -177,25 +174,26 @@ export class TownManager {
     player.townDeeds.forEach(tId => {
       const node = allNodes.find(n => n.id === tId);
       if (node && node.townData && !node.townData.isOccupiedByMonster) {
-        const tierMult = node.townData.level >= 3 ? 2.0 : node.townData.level >= 2 ? 1.5 : 1.0;
-        let tax = Math.floor(node.townData.taxYield * decreeMult * tierMult);
+        const tierMult = 1 + (node.townData.level - 1) * 0.1;
+        let tax = Math.floor(Math.min(55, node.townData.taxYield * 0.5) * decreeMult * tierMult);
         if (node.townData.specialization === 'trade_port') tax = Math.floor(tax * 1.5);
-        if (node.townData.specialization === 'mining') tax += 100;
+        if (node.townData.specialization === 'mining') tax += 25;
         if (activeTradeRoutes.includes(node.realmId)) {
           tax = Math.floor(tax * 1.30); // 30% Trade Route bonus!
         }
-        totalTax += tax;
+        totalTax += Math.round(tax * (getWorld().modifier?.tollMultiplier ?? 1));
       }
     });
 
     // Banker's Ledger relic: 5% passive gold interest
     if (player.relics.includes('banker_ledger') && player.gold > 0) {
-      const interest = Math.floor(player.gold * 0.05);
+      const interest = Math.min(50, Math.floor(player.gold * 0.01));
       totalTax += interest;
     }
 
     if (totalTax > 0) {
       player.gold += totalTax;
+      player.matchStats.goldEarnedTotal += totalTax;
     }
     return totalTax;
   }

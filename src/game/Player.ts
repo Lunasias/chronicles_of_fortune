@@ -1,3 +1,4 @@
+import { getWorld } from './WorldState';
 import { EquipmentItem, IsoDirection, PrankState } from '../engine/PixelSpriteGenerator';
 import { BoardNode, DOKAPON_NODES } from './BoardMap';
 
@@ -517,6 +518,11 @@ export interface GuildQuest {
   targetCount: number;
   rewardGold: number;
   rewardXp: number;
+  targetRealm?: string;
+  targetNodeId?: number;
+  targetMonsterTags?: string[];
+  targetPlayerId?: number;
+  expiresDay?: number;
 }
 
 export interface CompanionData {
@@ -697,7 +703,7 @@ export class Player {
   // The Darkling Form
   public isDarkling = false;
   public darklingTurnsLeft = 0;
-  public backupNormalStats: { maxHp: number; atk: number; def: number; mag: number; spd: number } | null = null;
+  public backupNormalStats: { maxHp: number; atk: number; def: number; mag: number; spd: number; spells?: string[] } | null = null;
   public darklingSpecialization: 'destroyer' | 'reaper' | 'tormentor' | null = null;
 
   // Humiliating Prank System
@@ -816,7 +822,11 @@ export class Player {
     }
     let val = this[stat] || 0;
     if (this.isDarkling) {
-      val = Math.floor(val * 2.5);
+      const multiplier = stat === 'atk' || stat === 'mag' ? 2 : stat === 'def' || stat === 'spd' ? 1.5 : 1;
+      val = Math.floor(val * multiplier);
+      if (this.darklingSpecialization === 'destroyer' && stat === 'atk') val += 20;
+      if (this.darklingSpecialization === 'reaper' && stat === 'mag') val += 20;
+      if (this.darklingSpecialization === 'tormentor' && (stat === 'spd' || stat === 'luk')) val += 12;
     }
     Object.values(this.equipment).forEach(item => {
       if (item && item[stat]) val += item[stat]!;
@@ -882,14 +892,13 @@ export class Player {
   levelUp() {
     this.level++;
     this.xp -= this.xpNeeded;
-    this.xpNeeded = Math.floor(this.xpNeeded * 1.5);
+    this.xpNeeded = 80 + this.level * 35;
 
-    const hpGain = 20 + Math.floor(Math.random() * 8);
-    const mpGain = 10 + Math.floor(Math.random() * 6);
-    const atkGain = 2 + Math.floor(Math.random() * 3);
-    const defGain = 2 + Math.floor(Math.random() * 2);
-    const magGain = 2 + Math.floor(Math.random() * 2);
-
+    const growth = ({ warrior: [25, 8, 4, 3, 1], magician: [17, 14, 1, 1, 4], thief: [20, 9, 3, 2, 1], cleric: [22, 12, 1, 3, 3], spellblade: [22, 11, 3, 2, 3] } as Record<string, number[]>)[this.originalClassKey] ?? [22, 10, 3, 2, 2];
+    const hpGain = growth[0]; const mpGain = growth[1]; const atkGain = growth[2]; const defGain = growth[3]; const magGain = growth[4];
+    if (this.level % 3 === 0) this.spd += this.originalClassKey === 'thief' ? 2 : 1;
+    if (this.level % 4 === 0) this.luk++;
+    if (this.isDarkling && this.backupNormalStats) { this.backupNormalStats.maxHp += hpGain; this.maxHp += hpGain; }
     this.maxHp += hpGain;
     this.hp = this.maxHp;
     this.maxMp += mpGain;
@@ -963,25 +972,20 @@ export class Player {
   // Transform to The Darkling!
   becomeDarkling() {
     this.isDarkling = true;
-    this.darklingTurnsLeft = 14;
+    this.darklingTurnsLeft = 7;
 
     this.backupNormalStats = {
       maxHp: this.maxHp,
+      spells: [...this.fieldSpells],
       atk: this.atk,
       def: this.def,
       mag: this.mag,
       spd: this.spd
     };
 
-    // Boost stats
-    this.maxHp = Math.floor(this.maxHp * 2.5);
-    this.hp = this.maxHp;
-    this.atk = Math.floor(this.atk * 3.0);
-    this.def = Math.floor(this.def * 2.2);
-    this.spd = Math.floor(this.spd * 2.0);
-
-    // Darkling rolls 3 dice!
-    this.activeSpinnerMultiplier = 3;
+    // Base stats stay intact; temporary power is calculated exactly once in getTotalStat.
+    this.maxHp *= 2; this.hp = this.maxHp;
+    this.activeSpinnerMultiplier = 2;
     this.fieldSpells = ['dark_calamity', 'swap', 'dark_plague'];
   }
 
@@ -990,13 +994,12 @@ export class Player {
     this.isDarkling = false;
     this.darklingTurnsLeft = 0;
     if (this.backupNormalStats) {
+      const ratio = this.hp / this.maxHp;
       this.maxHp = this.backupNormalStats.maxHp;
-      this.hp = Math.min(this.hp, this.maxHp);
-      this.atk = this.backupNormalStats.atk;
-      this.def = this.backupNormalStats.def;
-      this.mag = this.backupNormalStats.mag;
-      this.spd = this.backupNormalStats.spd;
+      this.hp = Math.max(1, Math.min(this.maxHp, Math.round(this.maxHp * ratio)));
+      this.fieldSpells = [...(this.backupNormalStats.spells ?? [])];
     }
+    this.backupNormalStats = null; this.darklingSpecialization = null;
     this.activeSpinnerMultiplier = 1;
   }
 

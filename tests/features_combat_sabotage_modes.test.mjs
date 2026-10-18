@@ -1,3 +1,4 @@
+import { offerWeeklyDraft } from '../.test-build/ui/JourneyUI.js';
 import './_browser-stubs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -180,6 +181,7 @@ test('Companions: Bond levels up and triggers Duo EX Burst', () => {
   assert.equal(res?.leveledUp, true);
   assert.equal(player.companion.bondLevel, 3);
 
+  player.burstGauge = 100;
   // In battle, level >= 3 allows Duo EX Burst
   const heroCombatant = {
     name: player.displayName,
@@ -223,15 +225,13 @@ test('Game Modes: Co-op Demon Lord Raid concludes when boss nodes are defeated o
 
   assert.equal(game.gameMode, 'coop_raid');
 
-  // Liberate all boss nodes
-  game.allNodes.filter(n => n.type === 'boss').forEach(b => {
-    if (b.townData) {
-      b.townData.isOccupiedByMonster = false;
-    }
-  });
-
   game.checkWinConditions();
-  assert.equal(game.phase, 'VICTORY');
+  assert.equal(game.phase, 'BOARD_TURN', 'fresh co-op is not already won');
+  game.world.defeatedBosses.push(game.world.raidTargets[0]);
+  game.checkWinConditions(); assert.equal(game.phase, 'BOARD_TURN');
+  game.world.defeatedBosses = [...game.world.raidTargets];
+  game.checkWinConditions(); assert.equal(game.phase, 'VICTORY');
+  assert.equal(game.world.result.teamVictory, true);
 });
 
 test('Town Trade Routes: 3+ towns in realm activate trade route with 30% tax yield and 1.5x toll', () => {
@@ -307,14 +307,10 @@ test('Game Modes: Roguelike Draft mode grants starter draft kit & realm mutation
 
   assert.equal(game.gameMode, 'roguelike_draft');
   assert.ok(game.activeRoguelikeModifier !== null);
-  // Both players got drafted relics
-  assert.ok(game.players[0].relics.length > 0);
-  assert.ok(game.players[1].relics.length > 0);
-
-  // Check 28-day win condition
-  game.dayCounter = 28;
-  game.checkWinConditions();
-  assert.equal(game.phase, 'VICTORY');
+  assert.equal(game.players[0].relics.length, 0, 'players choose rather than receive an index-based kit');
+  for (let i = 0; i < 2; i++) { game.activePlayerIdx = i; game.players[i].isAI = true; offerWeeklyDraft(game); assert.ok(game.players[i].relics.length > 0); }
+  game.dayCounter = 28; game.checkWinConditions(); assert.equal(game.phase, 'BOARD_TURN');
+  game.dayCounter = 29; game.checkWinConditions(); assert.equal(game.phase, 'VICTORY');
 });
 
 test('P2P Network Room Manager: generates 6-char room code and manages room lifecycle', () => {

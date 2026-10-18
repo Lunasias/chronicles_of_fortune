@@ -1,3 +1,4 @@
+import { getWorld } from './WorldState';
 import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
@@ -91,22 +92,23 @@ export const ROYAL_DECREES: RoyalDecree[] = [
 ];
 
 export class RoyalDecreeSystem {
+  reset(): void { this.activeDecree = { ...ROYAL_DECREES[0] }; this.bountyClaimed = false; this.activeWantedBounty = null; }
   public activeDecree: RoyalDecree = ROYAL_DECREES[0];
   public bountyClaimed = false;
 
   generateWeeklyDecree(weekNumber: number, allNodes: BoardNode[], players: Player[]): RoyalDecree {
     // Pick decree rotation or random
-    const idx = (weekNumber - 1) % ROYAL_DECREES.length;
+    const idx = Math.floor(getWorld().random() * ROYAL_DECREES.length);
     const base = ROYAL_DECREES[idx];
 
     // Pick a random town for bounty
     const towns = allNodes.filter(n => n.type === 'town');
-    const targetTown = towns.length > 0 ? towns[Math.floor(Math.random() * towns.length)] : null;
+    const targetTown = towns.length > 0 ? towns[Math.floor(getWorld().random() * towns.length)] : null;
 
     this.activeDecree = {
       ...base,
       bountyTownId: targetTown ? targetTown.id : 12,
-      bountyRewardGold: 3000 + weekNumber * 500
+      bountyRewardGold: 250 + Math.min(500, weekNumber * 50)
     };
     this.bountyClaimed = false;
 
@@ -133,7 +135,7 @@ export class RoyalDecreeSystem {
   claimBounty(hero: Player): number {
     if (this.bountyClaimed) return 0;
     this.bountyClaimed = true;
-    const reward = this.activeDecree.bountyRewardGold || 3500;
+    const reward = this.activeDecree.bountyRewardGold || 350;
     hero.gold += reward;
     audio.fanfare();
     return reward;
@@ -141,7 +143,7 @@ export class RoyalDecreeSystem {
 
   public activeWantedBounty: WantedBounty | null = null;
 
-  issueWantedBounty(target: Player, rewardGold = 2500, reason = 'กลายร่างเป็น Darkling ผู้ทรยศต่อราชอาณาจักร!'): WantedBounty {
+  issueWantedBounty(target: Player, rewardGold = 650, reason = 'กลายร่างเป็น Darkling ผู้ทรยศต่อราชอาณาจักร!'): WantedBounty {
     this.activeWantedBounty = {
       targetPlayerId: target.id,
       targetPlayerName: target.name,

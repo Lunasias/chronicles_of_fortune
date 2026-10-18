@@ -1,3 +1,4 @@
+import { prepareCombatant } from '../game/CombatRules';
 import { GameState } from '../game/GameState';
 import { BattleEngine, AttackerAction, DefenderAction, Combatant, CombatGridPosition } from '../game/BattleEngine';
 import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelSpriteGenerator';
@@ -411,7 +412,9 @@ export class BattleUI {
 
     const currentNode = this.game.allNodes.find(n => n.id === p.nodeId);
     const biome = currentNode?.biome || 'grass';
-    this.game.activeBattle = new BattleEngine(playerCombatant, enemy, biome);
+    const preparedPlayer = currentNode ? prepareCombatant(playerCombatant, currentNode, this.game.world) : playerCombatant;
+    enemy = currentNode ? prepareCombatant(enemy, currentNode, this.game.world, true) : enemy;
+    this.game.activeBattle = new BattleEngine(preparedPlayer, enemy, biome);
     this.game.activeBattleEnemyCombatant = enemy;
     this.onBattleEndCallback = onBattleEnd;
 
@@ -593,7 +596,7 @@ export class BattleUI {
     if (b.defender.playerRef && b.defender.playerRef.isAI) {
       defAction = aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty);
     } else {
-      const roll = Math.random();
+      const roll = this.game.world.random();
       if (roll < 0.45) defAction = 'defend';
       else if (roll < 0.75) defAction = 'counter';
       else defAction = 'magic_guard';
@@ -626,7 +629,7 @@ export class BattleUI {
     if (!this.pendingAttackerAction && b.attacker.playerRef && b.attacker.playerRef.isAI) {
       atkAction = aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty);
     } else if (!this.pendingAttackerAction && !b.isPlayerAttacking) {
-      const roll = Math.random();
+      const roll = this.game.world.random();
       if (roll < 0.45) atkAction = 'attack';
       else if (roll < 0.75) atkAction = 'strike';
       else atkAction = 'magic';
@@ -719,6 +722,8 @@ export class BattleUI {
     const skillBtn = document.getElementById('btnCmdSkill');
     const skillLbl = document.getElementById('battleSkillLabel');
     if (skillBtn && skillLbl) {
+      (skillBtn as HTMLButtonElement).disabled = this.playerSkillUsedThisBattle || b.attacker.mp < BattleEngine.actionCost(b.attacker, 'skill');
+      skillBtn.title = 'MP ' + BattleEngine.actionCost(b.attacker, 'skill') + ' • ใช้ได้หนึ่งครั้งต่อการต่อสู้';
       if (this.playerSkillUsedThisBattle) {
         skillBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
         skillLbl.innerText = 'ท่าอาชีพ · ใช้แล้ว';
@@ -728,6 +733,8 @@ export class BattleUI {
       }
     }
 
+    const magicButton = document.getElementById('btnCmdMagic') as HTMLButtonElement | null;
+    if (magicButton) { magicButton.disabled = b.attacker.mp < 10; magicButton.title = 'เวทมนตร์ • ใช้ MP 10'; }
     // Update EX Burst Button visibility and state
     const burstBtn = document.getElementById('btnCmdBurst');
     if (burstBtn) {
@@ -916,7 +923,7 @@ export class BattleUI {
       setTimeout(() => {
         const action = b.attacker.playerRef
           ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
-          : (Math.random() < 0.45 ? 'attack' : Math.random() < 0.75 ? 'strike' : 'magic');
+          : (this.game.world.random() < 0.45 ? 'attack' : this.game.world.random() < 0.75 ? 'strike' : 'magic');
         this.pendingAttackerAction = action;
 
         const isDefenderHuman = b.defender.playerRef ? !b.defender.playerRef.isAI : !b.isPlayerAttacking;
@@ -926,7 +933,7 @@ export class BattleUI {
             while (b.attacker.hp > 0 && b.defender.hp > 0) {
               const aiAtk = b.attacker.playerRef
                 ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
-                : (Math.random() < 0.45 ? 'attack' : Math.random() < 0.75 ? 'strike' : 'magic');
+                : (this.game.world.random() < 0.45 ? 'attack' : this.game.world.random() < 0.75 ? 'strike' : 'magic');
               const aiDef = b.defender.playerRef
                 ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty)
                 : 'defend';
@@ -1346,7 +1353,7 @@ export class BattleUI {
             !this.companionUsedThisBattle &&
             playerC.hp > 0 &&
             playerC.hp < playerC.maxHp * 0.40 &&
-            Math.random() < 0.65
+            this.game.world.random() < 0.65
           ) {
             this.triggerEmergencyCompanionAssist(playerC, enemyC, () => {
               b.swapTurns();

@@ -27,7 +27,7 @@ event dialogs and unfinished-art flashes, and adds a brighter palette.
 - **PvP Revenge & Humiliation**:
   - Rob loser's gold, steal weapons/armor, take town deeds, or scribble hilarious graffiti on their face with the interactive canvas.
 - **The Darkling Pact**:
-  - Lagging behind? Make a demonic pact with Overlord Rico! Sacrifice your belongings for 3-dice rolls, 3x stats, and cast global calamities.
+  - Lagging behind? Make a demonic pact with Overlord Rico! Sacrifice your belongings for temporary combat bonuses, two movement dice, and global calamities.
 - **Royal Weekly Report**: Weekly net worth ceremonies hosted by the King.
 
 ### 2. 🎨 Fortuna pixel-art overhaul
@@ -69,12 +69,26 @@ emerald to sapphire, surrounded by four bursting high-pressure acid bubbles
 (`bladeGradient` and `bubbleBurst` in her recipe). `npm test` verifies that every companion
 has a shaded, uniquely-lit, non-duplicate model.
 
-### 5. ⚖️ Scaling Enemies
-Monster stats are authored as the balance point for a **level-1 hero** and then scaled at
-battle time to whoever is actually attacking. A tier-1 encounter stays a short skirmish and
-a tier-4 encounter stays lethal, whether the hero is level 1 or level 30 — no more
-one-shotting a region you have out-levelled, and no more walking into a fight you cannot
-lose. The scouting tooltip reports the fight it will actually be, in rounds.
+### 5. Living-world rules rebuild
+
+The campaign now uses one serializable world state for regional weather, forecasts, time,
+threat, event memory, dungeon expeditions and boss objectives. Time advances once per full
+round, regardless of party size. The event director contains 73 definitions across all 15
+biomes, including unique landmarks, weather/night encounters and delayed NPC follow-ups.
+
+Enemies retain authored regional strength: better equipment and character growth make old
+regions easier. Scouting and battle creation share the same roster, weather modifiers,
+elemental weaknesses and encounter probability. Magic consumes MP and class skills are
+limited to one use per battle. Class growth and the experience curve support campaign progression.
+
+Standard campaigns run for 42 days with optional 12,000G, eight-town or Abyss-guardian goals.
+Co-op requires three named regional guardians within 30 days; Blitz runs 20 days; Roguelike
+Draft offers a player choice every week for 28 days; Endless Spire continues with stronger
+bosses. Dungeon floors track torchlight, opened chests and guardian completion. Rewards,
+city income and catch-up mechanics have been rebalanced, with repeat-claim exploits closed.
+
+**Rules version 2 starts a new campaign; older saves are not migrated.**
+[Architecture, rules and verification](docs/RULES_REBUILD.md).
 
 ---
 
@@ -183,10 +197,10 @@ tests/      node:test suites (compiled from src by npm run pretest)
   and the art recipe for the 64×64 model. `CompanionDatabase.ts` reads it at runtime and
   `scripts/generate_companion_sprites.cjs` reads it to draw the PNGs, so a companion cannot
   exist without a model. `npm test` enforces that.
-- Enemy stats authored in `BoardMap` and the encounter tables are the **level-1 reference**,
-  not the numbers a hero fights. `src/game/BalanceSystem.ts` scales them to the actual
-  attacker; always build a `Combatant` through `scaleMonster()` so the fight matches what the
-  scouting tooltip promised.
+- Enemy stats in `BoardMap` and `MonsterDatabase` are authored regional strength. Build
+  encounters through `getNodeEncounterPreview()` and apply `prepareCombatant()` once, so
+  scouting, weather, elemental traits and the actual fight stay consistent. Never scale
+  an enemy in response to the hero’s gear or health.
 - `src/engine/IsometricBuildingPainter.ts` and `src/engine/IsometricFoliagePainter.ts` are pure
   buffer painters: they must not import anything that touches the DOM, because
   `scripts/generate_building_sprites.cjs` / `generate_foliage_sprites.cjs` compile and run them

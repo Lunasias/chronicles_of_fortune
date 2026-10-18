@@ -1,3 +1,4 @@
+import { assignTown } from '../game/Rules';
 import { Player } from '../game/Player';
 import { GameState } from '../game/GameState';
 import { audio } from '../engine/AudioSynthesizer';
@@ -25,10 +26,10 @@ export class WonderChestUI {
       name: 'แจ็คพอตสมบัติมหาศาล',
       icon: '💰',
       color: '#f59e0b',
-      desc: 'ขุมทองคำโบราณบรรจุเหรียญทองคำบริสุทธิ์นับพัน!',
+      desc: 'ห่อเหรียญจากคาราวานเก่า รับ 220–399G',
       rarity: 'SSR',
       apply: (player: Player) => {
-        const amount = 1000 + Math.floor(Math.random() * 500);
+        const amount = 220 + Math.floor(this.game.world.random() * 180);
         player.gold += amount;
         audio.chestOpen();
         return `🎉 แจ็คพอตแตก! ${player.displayName} ได้รับทองคำ ${amount}G เข้ากระเป๋าทันที!`;
@@ -77,7 +78,7 @@ export class WonderChestUI {
             icon: '👑'
           }
         ];
-        const relic = relicPool[Math.floor(Math.random() * relicPool.length)];
+        const relic = relicPool[Math.floor(this.game.world.random() * relicPool.length)];
         player.inventory.push(relic);
         audio.levelUp();
         return `⚔️ มหาศาสตราเทพ! ${player.displayName} ได้รับ [${relic.name}] เก็บลงในกระเป๋า!`;
@@ -91,7 +92,7 @@ export class WonderChestUI {
       desc: 'โอสถทิพย์ของเหล่าทวยเทพ เพิ่มค่าพลังพื้นฐานถาวร',
       rarity: 'SR',
       apply: (player: Player) => {
-        const roll = Math.random();
+        const roll = this.game.world.random();
         let statMsg = '';
         if (roll < 0.33) {
           player.atk += 2;
@@ -140,11 +141,11 @@ export class WonderChestUI {
       apply: (player: Player, game: GameState) => {
         const unownedTowns = game.allNodes.filter(n => n.type === 'town' && !n.townData?.ownerId);
         if (unownedTowns.length > 0) {
-          const chosen = unownedTowns[Math.floor(Math.random() * unownedTowns.length)];
+          const chosen = unownedTowns[Math.floor(this.game.world.random() * unownedTowns.length)];
           if (chosen.townData) {
-            chosen.townData.ownerId = player.id;
+            assignTown(chosen, player, game.players);
             chosen.townData.isOccupiedByMonster = false;
-            player.townsControlled++;
+
             if (!player.townDeeds.includes(chosen.id)) {
               player.townDeeds.push(chosen.id);
             }
@@ -152,7 +153,7 @@ export class WonderChestUI {
             return `👑 พระราชทานรางวัล! ${player.displayName} ได้รับการแต่งตั้งเป็นเจ้าเมือง [${chosen.name}] ทันที!`;
           }
         }
-        player.gold += 800;
+        player.gold += 180;
         audio.chestOpen();
         return `💰 ไม่มีเมืองว่าง! ${player.displayName} ได้รับเงินชดเชยค่าที่ดิน 800G แทน!`;
       }
@@ -206,6 +207,7 @@ export class WonderChestUI {
   }
 
   open(player: Player, onComplete: () => void) {
+    if (this.game.world.claimedTreasures.includes(player.nodeId)) { this.game.addLog('หีบนี้ถูกเปิดแล้ว'); onComplete(); return; }
     this.onCompleteCallback = onComplete;
     this.isSpinning = false;
     this.renderModal(player);
@@ -278,7 +280,7 @@ export class WonderChestUI {
     const totalSteps = 24;
     let delay = 60;
 
-    const chosenPrize = this.prizes[Math.floor(Math.random() * this.prizes.length)];
+    const chosenPrize = this.prizes[Math.floor(this.game.world.random() * this.prizes.length)];
 
     const cycle = () => {
       const p = this.prizes[step % this.prizes.length];
@@ -302,6 +304,7 @@ export class WonderChestUI {
         titleEl.style.color = chosenPrize.color;
         iconEl.style.transform = 'scale(1.25) rotate(0deg)';
 
+        this.game.world.claimedTreasures.push(player.nodeId);
         const resultLog = chosenPrize.apply(player, this.game);
         descEl.innerText = resultLog;
         this.game.addLog(resultLog, 'gold');

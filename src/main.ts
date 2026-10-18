@@ -1,3 +1,5 @@
+import { encounterChance, monsterRewards, RULES } from './game/Rules';
+import { chooseJourney, offerWeeklyDraft } from './ui/JourneyUI';
 import './styles/tailwind.css';
 import './styles/art-direction.css';
 import './styles/interface.css';
@@ -168,6 +170,7 @@ class DokaponApp {
       networkRoomManager.setStatus('playing');
       networkRoomManager.saveSessionSnapshot(opts.saveData);
     } else {
+      this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.initGame(opts.partyConfig, opts.winGoal || 'networth');
       this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
@@ -451,7 +454,7 @@ class DokaponApp {
       return;
     }
     const ai = this.game.activePlayer;
-    if (!ai.isDarkling && Math.random() < 0.25) {
+    if (!ai.isDarkling && this.game.world.random() < 0.25) {
       const trapDecision = aiSystem.chooseTrapPlacement(ai, this.game.allNodes, this.game.players, this.game.placedTraps);
       if (trapDecision) {
         ai.gold -= 60;
@@ -1749,12 +1752,16 @@ class DokaponApp {
     }
 
     // 1. Check for PvP Collision!
-    const rival = this.game.players.find(other => other.id !== p.id && other.nodeId === p.nodeId);
+    const rival = this.game.gameMode === 'coop_raid' ? undefined : this.game.players.find(other => other.id !== p.id && other.nodeId === p.nodeId);
     if (rival) {
       this.initiatePvPDuel(p, rival);
       return;
     }
 
+    this.game.world.focusRealm = tile.realmId;
+    if (['empty', 'isekai_event'].includes(tile.type) && this.game.world.random() * 100 < encounterChance(tile, this.game.world)) {
+      this.initiateRandomEncounter(tile); return;
+    }
     // 2. Execute Tile Events
     switch (tile.type) {
       case 'town':
@@ -1772,9 +1779,7 @@ class DokaponApp {
       case 'shop_item':
       case 'shop_weapon':
       case 'shop_magic':
-        this.fantasyEventUI.openEvent(p, tile, () => {
-          this.shopUI.open(tile.type, () => this.advanceTurn());
-        });
+        this.shopUI.open(tile.type, () => this.advanceTurn());
         break;
 
       case 'home':
@@ -1793,7 +1798,7 @@ class DokaponApp {
         break;
 
       case 'red':
-        if (Math.random() < 0.75) {
+        if (this.game.world.random() * 100 < encounterChance(tile, this.game.world)) {
           this.initiateRandomEncounter(tile);
         } else {
           this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
@@ -1807,14 +1812,8 @@ class DokaponApp {
       case 'dark_gate':
         if (p.isDarkling) {
           // Void Rift Shortcut for Darkling
-          const realmDestinations = [
-            { realm: 'solaria', nodeId: 0, name: 'Solaria Capital' },
-            { realm: 'sunfire', nodeId: 18, name: 'Sunfire Dunes' },
-            { realm: 'frostpeak', nodeId: 35, name: 'Frostpeak Glaciers' },
-            { realm: 'gloomspore', nodeId: 52, name: 'Gloomspore Swamps' },
-          ];
-          const warpDest = realmDestinations[Math.floor(Math.random() * realmDestinations.length)];
-          const targetNode = this.game.allNodes.find(n => n.id === warpDest.nodeId) || this.game.allNodes[0];
+          const destinations = this.game.allNodes.filter(n => n.type === 'town' && n.realmId !== tile.realmId && n.id < 1000);
+          const targetNode = this.game.world.pick(destinations.length ? destinations : this.game.allNodes);
           p.nodeId = targetNode.id;
           p.gridX = targetNode.gx;
           p.gridY = targetNode.gy;
@@ -1825,14 +1824,12 @@ class DokaponApp {
           this.advanceTurn();
           break;
         }
-        this.fantasyEventUI.openEvent(p, tile, () => {
-          if (darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
-            document.getElementById('darklingPactModal')?.classList.remove('hidden');
-          } else {
-            this.game.addLog(`แท่นบูชาแห่ง Rico ยังคงเงียบงัน มีเพียงลอร์ดผู้ต่ำต้อยที่สุดเท่านั้นที่สามารถทำสัญญามืดได้`);
-          }
-          this.advanceTurn();
-        });
+        if (this.game.allowDarkling && this.game.gameMode !== 'coop_raid' && darklingSystem.canTransform(p, this.game.players, this.game.allNodes)) {
+          chooseJourney(p, 'สัญญาแห่งประตูมืด', 'เสียเงิน สิ่งของและเมืองที่ถืออยู่ แลกอำนาจจอมมารชั่วคราว', [
+            ...(['destroyer', 'reaper', 'tormentor'] as const).map((spec, index) => ({ label: ['ผู้ทำลาย', 'ผู้เก็บเกี่ยว', 'ผู้ทรมาน'][index], detail: 'รับพลัง Darkling สาย ' + spec, score: 5 - index, run: () => { darklingSystem.acceptPact(p, this.game.allNodes, spec); this.advanceTurn(); } })),
+            { label: 'ปฏิเสธสัญญา', detail: 'เดินทางต่อด้วยพลังของตน', score: 2, run: () => this.advanceTurn() }
+          ]);
+        } else this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
         break;
 
       case 'mystery_chest':
@@ -1841,11 +1838,8 @@ class DokaponApp {
 
       case 'vault':
         if (dungeonSystem.isInDungeon(tile.id)) {
-          const vaultGold = 1500 + Math.floor(Math.random() * 1500);
-          p.gold += vaultGold;
-          p.matchStats.goldEarnedTotal += vaultGold;
-          audio.jackpotFanfare();
-          this.game.addLog(`💰 ${p.displayName} ปลดล็อกหีบมหาสมบัติสุสานหลวง! ได้รับเหรียญทองโบราณ +${vaultGold}G!`, 'gold');
+          const vaultGold = dungeonSystem.claimChest(p, tile.id);
+          this.game.addLog(vaultGold ? 'เปิดหีบสมบัติ +' + vaultGold + 'G' : 'หีบนี้ถูกเปิดแล้วในชั้นนี้', 'gold');
           this.advanceTurn();
         } else {
           this.promptDungeonRift(p, tile);
@@ -1853,37 +1847,28 @@ class DokaponApp {
         break;
 
       case 'boss':
-        if (tile.id === 1004) {
-          this.initiateCryptLordBattle(p);
-        } else {
-          if (!p.companion && Math.random() < 0.50) {
-            this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn());
-          } else {
-            this.initiateBossBattle();
-          }
-        }
+        if (dungeonSystem.isInDungeon(tile.id)) {
+          if (dungeonSystem.isGuardianDefeated(p)) this.offerDungeonContinuation(p);
+          else this.initiateCryptLordBattle(p);
+        } else if (this.game.world.defeatedBosses.includes(tile.id) && this.game.gameMode !== 'endless_spire') {
+          this.game.addLog('ผู้พิทักษ์แห่งสถานที่นี้ถูกปราบแล้ว'); this.advanceTurn();
+        } else this.initiateBossBattle(tile);
         break;
 
       case 'tavern':
-        this.fantasyEventUI.openEvent(p, tile, () => {
-          this.casinoUI.open(p, () => this.advanceTurn());
-        });
+        chooseJourney(p, 'โรงเตี๊ยม', 'เลือกพักฟื้น ฟังข่าว หรือเสี่ยงโชค', [
+          { label: 'พักและฟังข่าว', detail: 'รักษาตัวและรับพยากรณ์อากาศ', score: p.hp < p.maxHp * 0.6 ? 10 : 3, run: () => this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn()) },
+          { label: 'โต๊ะเสี่ยงโชค', detail: 'ใช้เงินเดิมพัน', score: 1, run: () => this.casinoUI.open(p, () => this.advanceTurn()) },
+          { label: 'เดินทางต่อ', detail: 'จบเทิร์น', score: 2, run: () => this.advanceTurn() }
+        ]);
         break;
 
       case 'guild':
-        this.fantasyEventUI.openEvent(p, tile, () => {
-          this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
-        });
+        this.isekaiEventUI.openGuild(p, () => this.advanceTurn());
         break;
 
       case 'fishing':
-        this.fantasyEventUI.openEvent(p, tile, () => {
-          this.isekaiEventUI.openFishing(
-            p,
-            () => this.advanceTurn(),
-            monsterName => this.initiateFishCombat(monsterName)
-          );
-        });
+        this.isekaiEventUI.openFishing(p, () => this.advanceTurn(), monsterName => this.initiateFishCombat(monsterName));
         break;
 
       case 'isekai_event':
@@ -1929,6 +1914,8 @@ class DokaponApp {
 
       // Check if loser was wanted by the Royal Court!
       const bounty = royalDecreeSystem.claimWantedBounty(winnerPlayer, loserPlayer);
+      const quest = isekaiEventManager.onGameAction(winnerPlayer, 'boss', { targetPlayerId: loserPlayer.id });
+      if (quest.message) this.game.addLog(quest.message, 'level');
       if (bounty > 0) {
         this.game.addLog(
           `👑 ค่าหัวหลวงถูกพิชิต! ${winnerPlayer.displayName} สยบผู้ต้องหา ${loserPlayer.displayName} และรับเงินรางวัลนำจับ ${bounty}G!`,
@@ -1955,6 +1942,7 @@ class DokaponApp {
   }
 
   private respawnPlayer(player: Player, causeName: string, lostGold: number) {
+    dungeonSystem.abandon(player);
     if (player.homeNodeId !== null) {
       const homeNode = this.game.allNodes.find(n => n.id === player.homeNodeId);
       if (homeNode) {
@@ -1992,33 +1980,9 @@ class DokaponApp {
     isCalamityBoss = false,
     tier = 1
   ): { gold: number; xp: number; droppedItem?: EquipmentItem } {
-    let gold = 25 + Math.floor(Math.random() * 30);
-    let xp = 30 + Math.floor(Math.random() * 25);
-    let dropChance = 0.35;
-
-    if (tier === 2) {
-      gold = 70 + Math.floor(Math.random() * 70);
-      xp = 80 + Math.floor(Math.random() * 50);
-      dropChance = 0.40;
-    } else if (tier === 3) {
-      gold = 180 + Math.floor(Math.random() * 150);
-      xp = 180 + Math.floor(Math.random() * 100);
-      dropChance = 0.45;
-    } else if (tier >= 4) {
-      gold = 380 + Math.floor(Math.random() * 280);
-      xp = 350 + Math.floor(Math.random() * 180);
-      dropChance = 0.50;
-    }
-
-    if (isCalamityBoss) {
-      gold = 800 + Math.floor(Math.random() * 450);
-      xp = 750;
-      dropChance = 1.0;
-    } else if (isTownBoss) {
-      gold = Math.round(gold * 2.2);
-      xp = Math.round(xp * 1.8);
-      dropChance = 0.75;
-    }
+    const node = this.game.allNodes.find(n => n.id === player.nodeId)!;
+    let { gold, xp } = monsterRewards(tier, this.game.world, node, isTownBoss || isCalamityBoss);
+    let dropChance = isCalamityBoss ? 0.8 : isTownBoss ? 0.5 : Math.min(0.45, 0.2 + tier * 0.04);
 
     if (royalDecreeSystem.activeDecree.id === 'ROYAL_FESTIVAL_HUNT') {
       gold = Math.round(gold * 2);
@@ -2037,7 +2001,7 @@ class DokaponApp {
     }
 
     let droppedItem: EquipmentItem | undefined = undefined;
-    if (Math.random() < dropChance && SHOP_CATALOG.length > 0) {
+    if (this.game.world.random() < dropChance && SHOP_CATALOG.length > 0) {
       // Filter loot catalog by progressive tier threshold so early monsters don't drop endgame gear!
       let availableLoot = SHOP_CATALOG;
       if (tier === 1 && !isTownBoss && !isCalamityBoss) {
@@ -2051,7 +2015,7 @@ class DokaponApp {
       }
 
       if (availableLoot.length === 0) availableLoot = SHOP_CATALOG;
-      const picked = availableLoot[Math.floor(Math.random() * availableLoot.length)];
+      const picked = availableLoot[Math.floor(this.game.world.random() * availableLoot.length)];
       if (picked) {
         droppedItem = { ...picked };
         if (picked.type === 'spell') {
@@ -2071,7 +2035,7 @@ class DokaponApp {
 
   private checkPostCombatCompanionRecruitment(winner: Player, defeatedName: string) {
     const recruitChance = 0.28 + Math.min(0.25, winner.getTotalStat('luk') * 0.015);
-    if (Math.random() > recruitChance) return;
+    if (this.game.world.random() > recruitChance) return;
 
     // The companion roster lives in companions.json so that every entry also has a 64x64
     // model generated from the same data (see scripts/generate_companion_sprites.cjs).
@@ -2097,40 +2061,23 @@ class DokaponApp {
 
   private initiateTownLiberationBattle(townNode: BoardNode) {
     const data = townNode.townData!;
+    const calamityBoss = worldCalamitySystem.activeCalamity?.type === 'world_boss' && !!worldCalamitySystem.activeCalamity.remainingTownIds?.includes(townNode.id);
     this.game.addLog(`⚔️ ${townNode.name} ถูกยึดครองโดย ${data.monsterName}! ต่อสู้เพื่อปลดปล่อยเมือง!`, 'battle');
 
-    // The town monster is scaled to the hero that is actually attacking, so a town can no
-    // longer be cleared with a single hit once the hero has levelled up.
     const authoredMaxHp = data.monsterMaxHp || data.monsterHp;
-    const remainingRatio = Math.max(0.05, Math.min(1, data.monsterHp / authoredMaxHp));
-    const monsterCombatant: Combatant = scaleMonster(
-      {
-        name: data.monsterName,
-        tier: tierForNode(townNode.realmId, townNode.biome),
-        baseHp: authoredMaxHp,
-        baseAtk: data.monsterAtk,
-        baseDef: data.monsterDef,
-        baseMag: Math.round(data.monsterAtk * 0.7),
-        baseSpd: Math.round(data.monsterDef * 1.1),
-        baseLuk: 6,
-        mp: 30,
-        skillName: 'Oppressive Strike'
-      },
-      this.game.activePlayer
-    );
-    // Keep the "whoever lands the last hit takes the town" mechanic working across a
-    // scaled fight by carrying the already-inflicted damage over as a ratio.
-    monsterCombatant.hp = Math.max(1, Math.round(monsterCombatant.maxHp * remainingRatio));
+    const profile = getNodeEncounterPreview(townNode, this.game.activePlayer).featuredMonster!;
+    const monsterCombatant: Combatant = { ...profile, isBoss: true };
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
-        const rewards = townManager.liberateTown(townNode, winner.playerRef);
+        const rewards = townManager.liberateTown(townNode, winner.playerRef, this.game.players);
         const loot = this.awardMonsterLoot(winner.playerRef, data.monsterName, true, false);
         this.game.addLog(`👑 ปลดปล่อยเมืองสำเร็จ! ${winner.playerRef.displayName} ปลดปล่อย ${townNode.name} (+${rewards.goldReward + loot.gold}G, +${rewards.xpReward + loot.xp} XP)!`, 'level');
         if (loot.droppedItem) {
           this.game.addLog(`🎁 ปลดปล่อยเมืองสำเร็จ! ได้รับรางวัลพิเศษ: "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
-        isekaiEventManager.onGameAction(winner.playerRef, 'town');
+        this.progressQuest(winner.playerRef, 'town', townNode, data.monsterName);
+        if (calamityBoss) this.progressQuest(winner.playerRef, 'boss', townNode, data.monsterName);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, data.monsterName);
       } else {
         // Monster survived! Persist the remaining HP back onto the authored scale so the
@@ -2175,6 +2122,7 @@ class DokaponApp {
       this.game.activePlayer
     );
 
+    if (townNode.townData?.specialization === 'fortress') { guardCombatant.hp = guardCombatant.maxHp = Math.round(guardCombatant.maxHp * 1.4); guardCombatant.atk = Math.round(guardCombatant.atk * 1.4); guardCombatant.def = Math.round(guardCombatant.def * 1.4); }
     this.battleUI.startBattle(guardCombatant, (winner, loser) => {
       if (winner.playerRef) {
         winner.playerRef.matchStats.monstersKilled++;
@@ -2187,77 +2135,12 @@ class DokaponApp {
   }
 
   private initiateRandomEncounter(tile: BoardNode) {
-    // Biome-specific authentic monster rosters
-    const biomeMonsters: Record<string, string[]> = {
-      solaria: ['Forest Goblin Marauder', 'Briar Kobold', 'Royal Slime Bloblet', 'Meadow Wolf', 'Shadow Panther'],
-      frostpeak: ['Frost Skeleton Soldier', 'Glacial Yeti Scout', 'Ice Wyrmling', 'Ice Golem', 'Frost Crypt Bat'],
-      sunfire: ['Dune Bandit Raider', 'Sandstone Mummy', 'Brimstone Fire Imp', 'Magma Scorpion', 'Obsidian Automaton'],
-      abyss: ['Nether Shadow Knight', 'Chaos Slime', 'Abyssal Siren', 'Lesser Kraken', 'Void Bat'],
-      steampunk: ['Steampunk Automaton Princess Alice', 'Steam Gear Gunner Victoria', 'Clockwork Maid Nicole'],
-      sakura_shrine: ['Kitsune Shrine Maiden Chiyo', 'Sakura Blossom Tengu Ayame', 'Dryad Nymph Alura']
-    };
-
-    const roster = biomeMonsters[tile.biome || ''] || biomeMonsters[tile.realmId] || ['Forest Goblin Marauder', 'Royal Slime Bloblet', 'Briar Kobold'];
-    const pickedName = roster[Math.floor(Math.random() * roster.length)];
-
-    // Progressive Tier-Based Monster Difficulty Curve
-    let tier: ThreatTier = 1;
-    const rId = tile.realmId;
-    const biome = tile.biome || '';
-
-    if (rId === 'abyss' || biome === 'abyss' || tile.type === 'dark_gate') {
-      tier = 4;
-    } else if (rId === 'frostpeak' || biome === 'snow' || biome === 'volcano' || rId === 'celestial') {
-      tier = 3;
-    } else if (rId === 'sunfire' || biome === 'desert' || biome === 'steampunk' || biome === 'sakura_shrine' || biome === 'cavern') {
-      tier = 2;
-    } else {
-      tier = 1;
-    }
-
-    let hp = 55 + Math.floor(Math.random() * 25);
-    let atk = 12 + Math.floor(Math.random() * 3);
-    let def = 7 + Math.floor(Math.random() * 3);
-    let mag = 7 + Math.floor(Math.random() * 3);
-    let spd = 7 + Math.floor(Math.random() * 3);
-
-    if (tier === 2) {
-      hp = 110 + Math.floor(Math.random() * 45);
-      atk = 20 + Math.floor(Math.random() * 5);
-      def = 14 + Math.floor(Math.random() * 4);
-      mag = 15 + Math.floor(Math.random() * 6);
-      spd = 12 + Math.floor(Math.random() * 4);
-    } else if (tier === 3) {
-      hp = 230 + Math.floor(Math.random() * 70);
-      atk = 32 + Math.floor(Math.random() * 8);
-      def = 24 + Math.floor(Math.random() * 6);
-      mag = 26 + Math.floor(Math.random() * 8);
-      spd = 18 + Math.floor(Math.random() * 6);
-    } else if (tier === 4) {
-      hp = 420 + Math.floor(Math.random() * 120);
-      atk = 48 + Math.floor(Math.random() * 12);
-      def = 35 + Math.floor(Math.random() * 8);
-      mag = 42 + Math.floor(Math.random() * 10);
-      spd = 24 + Math.floor(Math.random() * 8);
-    }
-
-    // Authored level-1 reference stats per tier. scaleMonster() grows them with the hero that
-    // walks into the encounter, so a tier-1 monster stays a short skirmish at any level
-    // instead of folding to a single hit, while a tier-4 monster stays lethal.
-    const monsterCombatant: Combatant = scaleMonster(
-      {
-        name: pickedName,
-        tier: tier as ThreatTier,
-        baseHp: hp,
-        baseAtk: atk,
-        baseDef: def,
-        baseMag: mag,
-        baseSpd: spd,
-        baseLuk: 5 + tier * 2,
-        mp: 20 + tier * 10
-      },
-      this.game.activePlayer
-    );
+    const preview = getNodeEncounterPreview(tile, this.game.activePlayer);
+    if (!preview.roster.length) { this.advanceTurn(); return; }
+    const profile = this.game.world.pick(preview.roster);
+    const pickedName = profile.name;
+    const tier = tierForNode(tile.realmId, tile.biome);
+    const monsterCombatant: Combatant = { ...profile, isBoss: false };
 
     this.battleUI.startBattle(monsterCombatant, (winner, loser) => {
       if (winner.playerRef) {
@@ -2266,7 +2149,7 @@ class DokaponApp {
         if (loot.droppedItem) {
           this.game.addLog(`🎁 มอนสเตอร์ทำไอเทมตก! ได้รับ "${loot.droppedItem.name}" ${loot.droppedItem.icon}!`, 'level');
         }
-        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.progressQuest(winner.playerRef, 'monster', this.game.allNodes.find(n => n.id === winner.playerRef!.nodeId), loser.name);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, pickedName);
       } else if (loser.playerRef) {
         if (loser.hp <= 0) {
@@ -2315,7 +2198,7 @@ class DokaponApp {
             this.game.addLog(`✨ ${winner.playerRef.name} สามารถเปลี่ยนคลาสระดับสูง (Tier 2) ได้แล้วที่หน้าต่างสถานะ!`, 'level');
           }
         }
-        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.progressQuest(winner.playerRef, 'monster', this.game.allNodes.find(n => n.id === winner.playerRef!.nodeId), loser.name);
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น ${monsterName} (+120G, +80 EXP)!`);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, monsterName);
       } else if (loser.playerRef) {
@@ -2346,7 +2229,7 @@ class DokaponApp {
 
     this.battleUI.startBattle(banditCombatant, (winner, loser) => {
       if (winner.playerRef) {
-        const stolenGold = 160 + Math.floor(Math.random() * 80);
+        const stolenGold = 160 + Math.floor(this.game.world.random() * 80);
         winner.playerRef.gold += stolenGold;
         winner.playerRef.matchStats.goldEarnedTotal += stolenGold;
         winner.playerRef.matchStats.monstersKilled++;
@@ -2357,7 +2240,7 @@ class DokaponApp {
             this.game.addLog(`✨ ${winner.playerRef.name} สามารถเปลี่ยนคลาสระดับสูง (Tier 2) ได้แล้วที่หน้าต่างสถานะ!`, 'level');
           }
         }
-        isekaiEventManager.onGameAction(winner.playerRef, 'monster');
+        this.progressQuest(winner.playerRef, 'monster', this.game.allNodes.find(n => n.id === winner.playerRef!.nodeId), loser.name);
         this.game.addLog(`🏆 ${winner.playerRef.displayName} โค่น Bandit Chief Garak และยึด ${stolenGold}G (+90 EXP)!`);
         this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Bandit Chief Garak');
       } else if (loser.playerRef) {
@@ -2369,58 +2252,36 @@ class DokaponApp {
     });
   }
 
-  private initiateBossBattle() {
-    // The boss scales with the challenger like every other monster, but the damage already
-    // inflicted is carried over as a ratio so the "last hit takes the glory" rule survives.
-    const authoredMaxHp = this.bossMaxHp;
-    const remainingRatio = Math.max(0.05, Math.min(1, this.bossCurrentHp / authoredMaxHp));
-    const bossCombatant: Combatant = scaleMonster(
-      {
-        name: 'Dragon Princess Ignis',
-        tier: 6,
-        isBoss: true,
-        baseHp: authoredMaxHp,
-        baseAtk: 65,
-        baseDef: 38,
-        baseMag: 48,
-        baseSpd: 22,
-        baseLuk: 15,
-        mp: 150,
-        skillName: 'Ancient Dragon Flare'
-      },
-      this.game.activePlayer
-    );
-    bossCombatant.hp = Math.max(1, Math.round(bossCombatant.maxHp * remainingRatio));
-
-    this.game.addLog(`⚠️ มังกรโบราณผู้ยิ่งใหญ่จุติลงมา! การต่อสู้แห่งตำนาน! (HP: ${bossCombatant.hp}/${bossCombatant.maxHp})`, 'battle');
-
-    this.battleUI.startBattle(bossCombatant, (winner, loser) => {
+  private initiateBossBattle(node = this.game.allNodes.find(n => n.id === this.game.activePlayer.nodeId)!) {
+    const profile = getNodeEncounterPreview(node, this.game.activePlayer).featuredMonster;
+    if (!profile) { this.advanceTurn(); return; }
+    const boss: Combatant = { ...profile, isBoss: true };
+    this.game.addLog('ผู้พิทักษ์: ' + boss.name + ' • HP ' + boss.hp + '/' + boss.maxHp, 'battle');
+    this.battleUI.startBattle(boss, (winner, loser) => {
       if (winner.playerRef) {
-        this.bossCurrentHp = 0;
-        winner.playerRef.matchStats.monstersKilled++;
-        isekaiEventManager.onGameAction(winner.playerRef, 'boss');
-        this.game.addLog(`👑 ${winner.playerRef.displayName} สังหารเจ้าหญิงมังกรเพลิงบรรพกาล! ความรุ่งโรจน์นิรันดร์!`, 'level');
-        this.checkPostCombatCompanionRecruitment(winner.playerRef, 'Dragon Princess Ignis');
-        this.game.phase = 'VICTORY';
-        this.triggerVictoryModal(winner.playerRef, 'สังหาร Dragon Princess Ignis');
+        if (!this.game.world.defeatedBosses.includes(node.id)) this.game.world.defeatedBosses.push(node.id);
+        this.game.world.bossKillers[node.id] = winner.playerRef.id;
+        delete this.game.world.bossHealth[node.id];
+        this.awardMonsterLoot(winner.playerRef, boss.name, false, true, tierForNode(node.realmId, node.biome));
+        this.game.world.threat[node.realmId] = Math.max(0, this.game.world.threat[node.realmId] - 25);
+        this.progressQuest(winner.playerRef, 'boss', node, boss.name);
+        this.checkPostCombatCompanionRecruitment(winner.playerRef, boss.name);
+        if (this.game.gameMode === 'endless_spire') this.game.world.spireFloor++;
+        this.game.addLog('พิชิต ' + boss.name + ' สำเร็จ • ' + this.game.objective, 'level');
       } else {
-        // Dragon survived! Persist the remaining HP back onto the authored scale.
-        const survivedRatio = bossCombatant.maxHp > 0 ? winner.hp / bossCombatant.maxHp : 0;
-        this.bossCurrentHp = Math.max(1, Math.round(authoredMaxHp * survivedRatio));
-        this.game.addLog(`🐉 Dragon Princess Ignis รอดตายโดยเหลือ ${this.bossCurrentHp}/${authoredMaxHp} HP! ผู้ท้าชิงคนต่อไปสามารถปิดฉากได้!`, 'battle');
-        if (loser.playerRef) {
-          const lostGold = Math.floor(loser.playerRef.gold * 0.40);
-          loser.playerRef.gold -= lostGold;
-          this.respawnPlayer(loser.playerRef, 'Dragon Princess Ignis', lostGold);
+        this.game.world.bossHealth[node.id] = Math.max(0.01, winner.hp / boss.maxHp);
+        if (loser.playerRef && loser.hp <= 0) {
+          const lost = Math.floor(loser.playerRef.gold * 0.25); loser.playerRef.gold -= lost;
+          this.respawnPlayer(loser.playerRef, boss.name, lost);
         }
-        this.advanceTurn();
       }
+      this.advanceTurn();
     });
   }
 
   private promptDungeonRift(player: Player, node: BoardNode) {
     if (player.isAI) {
-      if (player.hp > player.maxHp * 0.5 && Math.random() < 0.6) {
+      if (player.hp > player.maxHp * 0.5 && this.game.world.random() < 0.6) {
         dungeonSystem.enterDungeon(player, this.game);
         this.advanceTurn();
       } else {
@@ -2478,56 +2339,37 @@ class DokaponApp {
   }
 
   private initiateCryptLordBattle(player: Player) {
-    const bossCombatant = dungeonSystem.getCryptLordBossCombatant();
-    this.game.addLog(`💀 ราชันไร้ชีพ มัลธาซาร์ ตื่นจากนิทราใต้สุสาน! การต่อสู้ชี้ชะตาดันเจี้ยน!`, 'battle');
-
-    this.battleUI.startBattle(bossCombatant, (winner, loser) => {
+    const node = this.game.allNodes.find(n => n.id === player.nodeId)!;
+    const seed: Combatant = { ...getNodeEncounterPreview(node, player).featuredMonster!, isBoss: true };
+    this.battleUI.startBattle(seed, (winner, loser) => {
       if (winner.playerRef) {
-        winner.playerRef.matchStats.monstersKilled++;
-        const bonusGold = 1500;
-        const bonusXp = 350;
-        winner.playerRef.gold += bonusGold;
-        winner.playerRef.matchStats.goldEarnedTotal += bonusGold;
-        winner.playerRef.gainXP(bonusXp);
-        hallOfFameUI.unlockTrophy('MONSTER_HUNTER');
-        this.game.addLog(
-          `👑 ${winner.playerRef.displayName} ปราบราชันไร้ชีพ มัลธาซาร์ สำเร็จ! เส้นทางสู่ห้องมหาสมบัติเปิดออก! (+${bonusGold}G, +${bonusXp} XP)`,
-          'level'
-        );
-        audio.levelUpFanfare();
-        this.advanceTurn();
+        dungeonSystem.defeatGuardian(player, node.id);
+        this.awardMonsterLoot(player, seed.name, false, true, tierForNode(node.realmId, node.biome));
+        this.progressQuest(player, 'boss', node, seed.name);
+        this.offerDungeonContinuation(player);
       } else {
-        if (loser.playerRef) {
-          const lostGold = Math.floor(loser.playerRef.gold * 0.35);
-          loser.playerRef.gold -= lostGold;
-          this.respawnPlayer(loser.playerRef, 'Crypt Lord Malthazar', lostGold);
-        }
+        if (loser.playerRef && loser.hp <= 0) { const lost = Math.floor(player.gold * 0.25); player.gold -= lost; this.respawnPlayer(player, seed.name, lost); }
         this.advanceTurn();
       }
     });
   }
 
+  private offerDungeonContinuation(player: Player) {
+    chooseJourney(player, 'พิชิตผู้พิทักษ์แล้ว', 'รับโบนัสชั้นนี้ แล้วเลือกเส้นทางถัดไป', [
+      { label: 'ลงชั้นต่อไป', detail: 'รับโบนัส • เติมคบเพลิง • ศัตรูแข็งแกร่งขึ้น 20%', score: player.hp > player.maxHp * 0.7 ? 8 : 0, run: () => { dungeonSystem.descendDeeper(player, this.game); this.advanceTurn(); } },
+      { label: 'กลับสู่พื้นผิว', detail: 'รับโบนัสและออกจากดันเจี้ยน', score: 5, run: () => { dungeonSystem.exitDungeon(player, this.game); this.advanceTurn(); } },
+      { label: 'สำรวจชั้นนี้ต่อ', detail: 'เปิดหีบที่เหลือก่อนตัดสินใจ', score: 1, run: () => this.advanceTurn() }
+    ]);
+  }
+
+  private progressQuest(player: Player, action: 'monster' | 'town' | 'boss', node?: BoardNode, monsterName?: string) {
+    const result = isekaiEventManager.onGameAction(player, action, { node, monsterName });
+    if (result.message) this.game.addLog(result.message, 'level');
+  }
+
   private advanceTurn() {
-    // 1. Process active Food Buff expiration
-    const curP = this.game.activePlayer;
-    if (curP.foodBuff) {
-      curP.foodBuff.turnsRemaining--;
-      if (curP.foodBuff.turnsRemaining <= 0) {
-        this.game.addLog(`🍽️ บัฟอาหาร "${curP.foodBuff.name}" ของ ${curP.displayName} หมดฤทธิ์แล้ว`);
-        curP.foodBuff = null;
-      }
-    }
-
-    // 2. Advance Living Day / Night Cycle & Ecosystem
-    const timeRes = ecosystemSystem.advanceTime();
-    if (timeRes.timeChanged) {
-      const tInfo = ecosystemSystem.getTimeDisplay();
-      this.game.addLog(`⌛ เวลาผ่านไป: ตอนนี้เป็นเวลา ${tInfo.name.toUpperCase()} ${tInfo.icon}! (${tInfo.desc})`, 'level');
-    }
-    if (timeRes.weatherChanged) {
-      this.game.addLog(`🌦️ สภาพอากาศในทวีปเปลี่ยนแปลง: เมฆและลมพัดผ่านทั้งสี่ดินแดน!`);
-    }
-
+    this.game.checkWinConditions();
+    if (this.showMatchResult()) return;
     this.hud.update();
 
     // 3. Check for Grand World Calamity triggers
@@ -2572,6 +2414,7 @@ class DokaponApp {
       });
     });
 
+    if (this.showMatchResult()) return;
     if (this.game.phase === 'BOARD_TURN') {
       this.syncMultiplayerState();
       this.onTurnStarted();
@@ -2584,7 +2427,9 @@ class DokaponApp {
   private turnBannerTimeout: any = null;
 
   private onTurnStarted() {
+    if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
+    offerWeeklyDraft(this.game);
     // 1. Smoothly center camera on active player without jarring zoom jumps
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
 
@@ -2880,6 +2725,21 @@ class DokaponApp {
     modal.classList.remove('hidden');
   }
 
+  private showMatchResult(): boolean {
+    const result = this.game.world.result;
+    if (!result) return false;
+    const modal = document.getElementById('victoryModal');
+    if (modal && !modal.classList.contains('hidden')) return true;
+    const winner = this.game.players.find(p => p.id === result.winnerId) || this.game.players[0];
+    this.triggerVictoryModal(winner, result.reason);
+    if (result.teamVictory !== undefined) {
+      document.getElementById('victorySubtitle')!.textContent = result.teamVictory ? 'ทีมผู้กล้าพิชิตภารกิจสำเร็จ' : 'ภารกิจไม่สำเร็จ';
+      const gazette = document.getElementById('victoryGazetteContainer');
+      if (gazette) gazette.textContent = result.reason;
+    }
+    return true;
+  }
+
   private triggerVictoryModal(winner: Player, feat: string) {
     audio.fanfare();
     const modal = document.getElementById('victoryModal')!;
@@ -2888,7 +2748,7 @@ class DokaponApp {
     const netWorth = winner.getNetWorth(this.game.allNodes);
 
     // Save record to Hall of Fame & check trophies
-    if (!this.visualReviewActive) hallOfFameUI.recordVictory(winner, netWorth, feat);
+    if (!this.visualReviewActive && this.game.world.result?.teamVictory !== false) hallOfFameUI.recordVictory(winner, netWorth, feat);
 
     // Render The Fortuna Gazette Newspaper
     const gazetteEl = document.getElementById('victoryGazetteContainer');
@@ -3648,7 +3508,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
     this.visualReviewActive = true;
@@ -3662,12 +3522,26 @@ class DokaponApp {
     }
     const party = [{ name: 'Valeria', classKey, isAI: false }];
     if (['pvp', 'report', 'victory'].includes(scene)) party.push({ name: 'Lyra', classKey: 'magician', isAI: false });
+    if (scene === 'draft') this.game.gameMode = 'roguelike_draft';
     this.game.initGame(party);
     if (query.get('companion') === 'true') this.game.activePlayer.companion = createCompanion('pudding');
     const requestedBiome = query.get('biome') || 'forest';
     const node = this.game.allNodes.find(n => n.id === Number(query.get('node') ?? NaN)) || this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
+    if (['event', 'draft', 'expedition_choice'].includes(scene)) {
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      const hero = this.game.activePlayer;
+      const eventNode = this.game.allNodes.find(n => n.biome === requestedBiome && n.type === 'empty') || node;
+      Object.assign(hero, { nodeId: eventNode.id, gridX: eventNode.gx, gridY: eventNode.gy, gridZ: eventNode.gz });
+      this.game.world.weather[eventNode.realmId] = 'rain'; this.game.world.focusRealm = eventNode.realmId;
+      this.renderer.centerCameraOn(hero.gridX, hero.gridY, hero.gridZ); this.hud.update();
+      if (scene === 'draft') offerWeeklyDraft(this.game);
+      else if (scene === 'event') this.fantasyEventUI.openEvent(hero, eventNode, () => this.advanceTurn());
+      else { dungeonSystem.enterDungeon(hero, this.game); dungeonSystem.defeatGuardian(hero, hero.nodeId); this.offerDungeonContinuation(hero); }
+      return;
+    }
     if (scene === 'world') {
       Object.assign(this.game.activePlayer, {gridX:node.gx,gridY:node.gy,gridZ:node.gz});
       document.getElementById('topHUD')?.classList.remove('hidden');
@@ -3698,7 +3572,7 @@ class DokaponApp {
     const finish = () => { this.game.phase = 'TITLE'; this.visualReviewActive = false; this.visualReviewMeter?.remove(); this.visualReviewMeter = null; document.getElementById('titleScreen')?.classList.remove('hidden'); };
     if (!['battle', 'boss', 'pvp'].includes(scene)) {
       this.hud.update();
-      if (scene === 'fantasy_guild') this.fantasyEventUI.openEvent(this.game.activePlayer, this.game.allNodes.find(n => n.type === 'guild')!, finish);
+      if (scene === 'fantasy_guild') this.isekaiEventUI.openGuild(this.game.activePlayer, finish);
       else if (scene === 'town') this.townUI.open(this.game.allNodes.find(n => n.type === 'town')!, finish, () => {});
       else if (scene.startsWith('shop_')) this.shopUI.open(scene, finish);
       else if (scene === 'inspect') this.inspectUI.openInspect(this.game.activePlayer);

@@ -8,7 +8,7 @@
  * The class is recomputed from the DOM rather than tracked with a counter, so two panels
  * racing each other open and closed can never leave it stuck on (or off).
  */
-const FEED_PANELS = ['shopModal', 'townModal'];
+const FEED_PANELS = ['shopModal', 'townModal', 'journeyDecision'];
 
 export function syncFeedPanelClass(): void {
   if (typeof document === 'undefined') return;

@@ -1,3 +1,7 @@
+import { WorldState, bindWorld } from './WorldState';
+import { aiSystem } from './AISystem';
+import { royalDecreeSystem, RoyalDecree } from './RoyalDecreeSystem';
+import type { CombatMoveHistory } from './AISystem';
 import { GameState } from './GameState';
 import { Player, FoodBuff, GuildQuest, CompanionData } from './Player';
 import { TownData, HomeData } from './BoardMap';
@@ -101,6 +105,13 @@ export interface SerializedPlayer {
 }
 
 export interface SaveGameData {
+  world: WorldState;
+  allowDarkling: boolean;
+  blitzDayLimit: number;
+  coopRaidDayLimit: number;
+  aiState: { grudgeMatrix: Record<number, Record<number, number>>; moveHistory: Record<number, CombatMoveHistory> };
+  decree: { activeDecree: RoyalDecree; bountyClaimed: boolean; activeWantedBounty: typeof royalDecreeSystem.activeWantedBounty };
+
   version: number;
   savedAt: number;
   dateStr: string;
@@ -127,7 +138,7 @@ const META_KEY = 'chronicles_of_fortune_savemeta';
  * add the corresponding migration in `load` - before this existed the field was written
  * but never read, so an incompatible save silently produced NaN stats instead of failing.
  */
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 /** Reads a finite number out of untrusted JSON, falling back when it is missing or NaN. */
 function numOr(value: unknown, fallback: number): number {
@@ -258,6 +269,7 @@ export class SaveManager {
         equipment: JSON.parse(JSON.stringify(p.equipment)),
         inventory: JSON.parse(JSON.stringify(p.inventory)),
         fieldSpells: [...p.fieldSpells],
+        sleepTurns: p.sleepTurns, squidInkTurns: p.squidInkTurns, downerTurns: p.downerTurns, bountyReward: p.bountyReward,
         rustTurns: p.rustTurns,
         poisonTurns: p.poisonTurns,
         freezeTurns: p.freezeTurns,
@@ -301,6 +313,10 @@ export class SaveManager {
     });
 
     return {
+      world: JSON.parse(JSON.stringify(game.world)),
+      allowDarkling: game.allowDarkling, blitzDayLimit: game.blitzDayLimit, coopRaidDayLimit: game.coopRaidDayLimit,
+      aiState: JSON.parse(JSON.stringify({ grudgeMatrix: aiSystem.grudgeMatrix, moveHistory: aiSystem.moveHistory })),
+      decree: JSON.parse(JSON.stringify({ activeDecree: royalDecreeSystem.activeDecree, bountyClaimed: royalDecreeSystem.bountyClaimed, activeWantedBounty: royalDecreeSystem.activeWantedBounty })),
       version: SAVE_VERSION, savedAt: Date.now(), dateStr,
       dayCounter: game.dayCounter, weekCounter: game.weekCounter,
       winGoal: game.winGoal, activePlayerIdx: game.activePlayerIdx,
@@ -321,8 +337,8 @@ export class SaveManager {
       }
 
       const version = numOr(data.version, 0);
-      if (version < 1) {
-        return { success: false, error: 'ไฟล์บันทึกไม่มีเลขเวอร์ชันหรือเก่าเกินกว่าจะโหลดได้' };
+      if (version < SAVE_VERSION) {
+        return { success: false, error: 'เซฟนี้เป็นกติกาเดิม กรุณาเริ่มการเดินทางใหม่' };
       }
       if (version > SAVE_VERSION) {
         return {
@@ -334,9 +350,17 @@ export class SaveManager {
         return { success: false, error: 'ไฟล์บันทึกไม่มีข้อมูลผู้เล่น' };
       }
 
+      if (!data.world || data.world.rulesVersion !== 2) return { success: false, error: 'ไม่พบสถานะโลกของกติกาใหม่' };
+      game.world = WorldState.restore(data.world); bindWorld(game.world);
+      game.allowDarkling = data.allowDarkling;
+      game.blitzDayLimit = data.blitzDayLimit; game.coopRaidDayLimit = data.coopRaidDayLimit;
+      aiSystem.grudgeMatrix = data.aiState?.grudgeMatrix ?? {}; aiSystem.moveHistory = data.aiState?.moveHistory ?? {};
+      if (data.decree) { royalDecreeSystem.activeDecree = data.decree.activeDecree; royalDecreeSystem.bountyClaimed = data.decree.bountyClaimed; royalDecreeSystem.activeWantedBounty = data.decree.activeWantedBounty; }
+      game.resetBoard();
       if (data.players.some(p => dungeonSystem.isInDungeon(p.nodeId))) dungeonSystem.ensureDungeonLoaded(game);
       const nodesById = new Map(game.allNodes.map(n => [n.id, n]));
 
+      const savedRandomState = game.world.rng;
       game.players = data.players.map(sp => {
         const p = new Player(numOr(sp.id, 1), sp.name, sp.classKey, sp.isAI, numOr(sp.nodeId, 0), numOr(sp.skinVariant, 0));
         p.level = Math.max(1, numOr(sp.level, 1));
@@ -365,6 +389,7 @@ export class SaveManager {
         p.equipment = { ...DEFAULT_EQUIPMENT, ...(sp.equipment || {}) };
         p.inventory = Array.isArray(sp.inventory) ? sp.inventory : [];
         p.fieldSpells = Array.isArray(sp.fieldSpells) ? sp.fieldSpells : [];
+        p.sleepTurns = Math.max(0, numOr(sp.sleepTurns, 0)); p.squidInkTurns = Math.max(0, numOr(sp.squidInkTurns, 0)); p.downerTurns = Math.max(0, numOr(sp.downerTurns, 0)); p.bountyReward = Math.max(0, numOr(sp.bountyReward, 0));
         p.rustTurns = Math.max(0, numOr(sp.rustTurns, 0));
         p.poisonTurns = Math.max(0, numOr(sp.poisonTurns, 0));
         p.freezeTurns = Math.max(0, numOr(sp.freezeTurns, 0));
@@ -407,6 +432,7 @@ export class SaveManager {
         return p;
       });
 
+      game.world.rng = savedRandomState;
       if (Array.isArray(data.townStates)) {
         data.townStates.forEach(ts => {
           const node = nodesById.get(numOr(ts?.nodeId, -1));
@@ -426,6 +452,10 @@ export class SaveManager {
         });
       }
 
+      for (const player of game.players) {
+        player.townDeeds = game.allNodes.filter(n => n.townData?.ownerId === player.id).map(n => n.id);
+        player.townsControlled = player.townDeeds.length;
+      }
       game.dayCounter = Math.max(1, numOr(data.dayCounter, 1));
       game.weekCounter = Math.max(1, numOr(data.weekCounter, 1));
       game.winGoal = data.winGoal || 'networth';
@@ -436,7 +466,7 @@ export class SaveManager {
         game.placedTraps = data.placedTraps;
       }
       game.activePlayerIdx = Math.min(Math.max(0, numOr(data.activePlayerIdx, 0)), game.players.length - 1);
-      game.phase = 'BOARD_TURN';
+      game.phase = game.world.result ? 'VICTORY' : 'BOARD_TURN';
       game.remainingMoves = 0;
       game.highlightedNodes = [];
       game.activePreviewPath = [];

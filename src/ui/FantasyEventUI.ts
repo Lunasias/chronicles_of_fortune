@@ -34,7 +34,7 @@ export class FantasyEventUI {
       }
     }
 
-    const event = fantasyEventManager.getRandomEvent(node);
+    const event = fantasyEventManager.getRandomEvent(node, player, this.game.world);
 
     // If Church and a rival is Darkling, offer Holy Exorcism
     if (node.type === 'church') {
@@ -82,7 +82,7 @@ export class FantasyEventUI {
 
     // Render 3 choices
     choicesContainer.innerHTML = event.choices.map((choice, idx) => `
-      <button class="fe-choice-btn pixel-btn p-3 bg-slate-900/90 border border-slate-700 hover:border-amber-400 flex items-center gap-3 text-left group" data-choice-idx="${idx}">
+      <button class="fe-choice-btn pixel-btn p-3 bg-slate-900/90 border border-slate-700 hover:border-amber-400 flex items-center gap-3 text-left group" data-choice-idx="${idx}" ${player.gold < (choice.cost ?? 0) || (choice.requires && !choice.requires(player)) ? 'disabled aria-disabled="true"' : ''}>
         <span class="text-2xl">${choice.icon}</span>
         <div class="flex-1">
           <div class="text-xs font-bold text-amber-300 group-hover:text-amber-200">${choice.text}</div>
@@ -92,10 +92,14 @@ export class FantasyEventUI {
       </button>
     `).join('');
 
+    let selected = false;
     const handleChoiceSelection = (choiceIdx: number) => {
+      if (selected) return;
       const selectedChoice = event.choices[choiceIdx];
       if (!selectedChoice) return;
 
+      if (player.gold < (selectedChoice.cost ?? 0) || (selectedChoice.requires && !selectedChoice.requires(player))) return;
+      selected = true;
       const outcome = selectedChoice.resolve(player, node);
 
       // Play audio based on outcome
@@ -142,12 +146,12 @@ export class FantasyEventUI {
       const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         // AI chooses choice 0 or 1 with higher probability
-        const aiIdx = Math.random() > 0.3 ? 0 : (Math.random() > 0.5 ? 1 : 2);
+        const aiIdx = fantasyEventManager.chooseForAI(event, player);
         handleChoiceSelection(aiIdx);
         setTimeout(() => {
           document.getElementById('btnFeDismiss')?.click();
-        }, Math.max(120, Math.round(1500 / speed)));
-      }, Math.max(120, Math.round(1000 / speed)));
+        }, Math.max(120, Math.round(250 / speed)));
+      }, Math.max(120, Math.round(200 / speed)));
     }
   }
 }

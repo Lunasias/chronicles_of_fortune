@@ -1,3 +1,4 @@
+import { getWorld } from './WorldState';
 import { Player, FoodBuff, GuildQuest } from './Player';
 import { BoardNode } from './BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
@@ -97,7 +98,7 @@ export class IsekaiEventManager {
     player.gold -= cost;
     player.hp = player.maxHp;
     player.mp = player.maxMp;
-    player.rustTurns = 0;
+    player.cleanseAilments();
     if (player.prank.hasGraffiti) {
       player.prank.hasGraffiti = false;
       player.prank.turnsRemaining = 0;
@@ -133,85 +134,28 @@ export class IsekaiEventManager {
   }
 
   // Generate Guild Quests suitable for player's current rank
-  public getAvailableGuildQuests(player: Player): GuildQuest[] {
+  public getAvailableGuildQuests(player: Player, node?: BoardNode): GuildQuest[] {
+    const world = getWorld(); const realm = node?.realmId ?? world.focusRealm;
+    const ranks = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
+    const rank = ranks.indexOf(player.guildRank);
     const quests: GuildQuest[] = [
-      {
-        id: 'q_exterminate_1',
-        title: 'กวาดล้างสไลม์และก็อบลิน',
-        rank: 'F',
-        desc: 'กำจัดมอนสเตอร์ในป่า 1 ตัวตามเส้นทางผจญภัย',
-        targetType: 'monster',
-        currentProgress: 0,
-        targetCount: 1,
-        rewardGold: 100,
-        rewardXp: 50
-      },
-      {
-        id: 'q_patrol_town',
-        title: 'พิทักษ์เมืองจากอสูร',
-        rank: 'E',
-        desc: 'ปลดปล่อยหรือปกป้องเมืองที่ถูกยึดครอง 1 แห่ง',
-        targetType: 'town',
-        currentProgress: 0,
-        targetCount: 1,
-        rewardGold: 220,
-        rewardXp: 90
-      },
-      {
-        id: 'q_monster_hunt_2',
-        title: 'กวาดล้างภัยคุกคามในป่าลึก',
-        rank: 'D',
-        desc: 'เอาชนะมอนสเตอร์ในป่า 2 ตัวในการต่อสู้',
-        targetType: 'monster',
-        currentProgress: 0,
-        targetCount: 2,
-        rewardGold: 320,
-        rewardXp: 140
-      },
-      {
-        id: 'q_boss_bounty',
-        title: 'หมายจับแม่ทัพเงาแห่งจอมมาร',
-        rank: 'A',
-        desc: 'ปราบจอมราชันมังกร หรือแม่ทัพจอมมารมหันตภัย',
-        targetType: 'boss',
-        currentProgress: 0,
-        targetCount: 1,
-        rewardGold: 850,
-        rewardXp: 400
-      },
-      {
-        id: 'q_apex_world_boss',
-        title: '👑 ค่าหัวมังกรบรรพกาล โอโรโบรอส (Apex World Boss)',
-        rank: 'S',
-        desc: 'กำจัดมังกรบรรพกาล หรือบอสระดับสูงสุดแห่งมิติเพื่อเกียรติยศสูงสุด',
-        targetType: 'boss',
-        currentProgress: 0,
-        targetCount: 1,
-        rewardGold: 1500,
-        rewardXp: 800
-      }
+      { id: 'hunt_' + realm + '_' + world.day, title: 'ลาดตระเวนภูมิภาค ' + realm, rank: 'F', desc: 'ปราบมอนสเตอร์ 2 ตัวในภูมิภาค ' + realm, targetType: 'monster', targetRealm: realm, targetCount: 2, currentProgress: 0, rewardGold: 110, rewardXp: 70 },
+      { id: 'town_' + realm + '_' + world.day, title: 'ปลดปล่อยชุมชน ' + realm, rank: 'E', desc: 'ปลดปล่อยเมือง 1 แห่งในภูมิภาค ' + realm, targetType: 'town', targetRealm: realm, targetCount: 1, currentProgress: 0, rewardGold: 180, rewardXp: 100 },
+      { id: 'hunt_night_' + realm + '_' + world.day, title: 'กวาดล้างภัยใน ' + realm, rank: 'D', desc: 'ปราบมอนสเตอร์ 4 ตัวในภูมิภาค ' + realm, targetType: 'monster', targetRealm: realm, targetCount: 4, currentProgress: 0, rewardGold: 260, rewardXp: 160 },
+      { id: 'boss_' + realm + '_' + world.day, title: 'พิชิตผู้พิทักษ์ ' + realm, rank: 'B', desc: 'พิชิตบอส 1 ตัวในภูมิภาค ' + realm, targetType: 'boss', targetRealm: realm, targetCount: 1, currentProgress: 0, rewardGold: 450, rewardXp: 250 }
     ];
-
-    if (royalDecreeSystem.activeWantedBounty) {
-      const wb = royalDecreeSystem.activeWantedBounty;
-      quests.unshift({
-        id: 'q_wanted_pvp',
-        title: `💀 หมายจับกิลด์: ล่าจอมมาร [${wb.targetPlayerName}]!`,
-        rank: 'S',
-        desc: `${wb.reason} สังหารเพื่อรับค่าหัวหลวง ${wb.rewardGold}G!`,
-        targetType: 'boss',
-        currentProgress: 0,
-        targetCount: 1,
-        rewardGold: wb.rewardGold,
-        rewardXp: 600
-      });
-    }
-
-    return quests;
+    const crisis = world.calamity;
+    if (crisis?.remainingTownIds?.length) quests.push({ id: 'crisis_' + crisis.id, title: 'ภารกิจฉุกเฉิน: ' + crisis.headline, rank: 'F', desc: 'ปลดปล่อยเมืองเป้าหมายก่อนวิกฤตสิ้นสุด', targetType: 'town', targetNodeId: crisis.remainingTownIds[0], currentProgress: 0, targetCount: 1, rewardGold: 200, rewardXp: 120 });
+    const wanted = royalDecreeSystem.activeWantedBounty;
+    if (wanted) quests.push({ id: 'wanted_' + wanted.targetPlayerId, title: 'หมายจับ: ' + wanted.targetPlayerName, rank: 'C', desc: 'ชนะ PvP กับผู้มีหมายจับเท่านั้น', targetType: 'boss', targetPlayerId: wanted.targetPlayerId, currentProgress: 0, targetCount: 1, rewardGold: 250, rewardXp: 180 });
+    return quests.filter(q => ranks.indexOf(q.rank) <= rank).map(q => ({ ...q, expiresDay: q.id.startsWith('crisis_') ? crisis!.expiresDay : world.day + 10 }));
   }
 
   // Accept a quest
   public acceptQuest(player: Player, quest: GuildQuest): { success: boolean; message: string } {
+    if (player.activeGuildQuest) return { success: false, message: 'มีเควสต์อยู่แล้ว ต้องทำให้สำเร็จหรือยกเลิกก่อน' };
+    if ((quest.expiresDay ?? Infinity) < getWorld().day) return { success: false, message: 'เควสต์นี้หมดเวลาแล้ว' };
+    if (['F', 'E', 'D', 'C', 'B', 'A', 'S'].indexOf(quest.rank) > ['F', 'E', 'D', 'C', 'B', 'A', 'S'].indexOf(player.guildRank)) return { success: false, message: 'แรงก์กิลด์ยังไม่ถึง' };
     player.activeGuildQuest = { ...quest };
     audio.fanfare();
     return {
@@ -221,22 +165,25 @@ export class IsekaiEventManager {
   }
 
   // Progress quest (called on monster kill, town liberate, etc.)
-  public onGameAction(player: Player, actionType: 'monster' | 'town' | 'boss'): { completed: boolean; message?: string } {
+  public onGameAction(player: Player, actionType: 'monster' | 'town' | 'boss', context: { node?: BoardNode; monsterName?: string; targetPlayerId?: number } = {}): { completed: boolean; message?: string } {
     const q = player.activeGuildQuest;
     if (!q || q.targetType !== actionType) return { completed: false };
 
+    if ((q.expiresDay ?? Infinity) < getWorld().day) { player.activeGuildQuest = null; return { completed: false, message: 'เควสต์หมดเวลา: ' + q.title }; }
+    if (q.targetRealm && q.targetRealm !== context.node?.realmId) return { completed: false };
+    if (q.targetNodeId !== undefined && q.targetNodeId !== context.node?.id) return { completed: false };
+    if (q.targetPlayerId !== undefined && q.targetPlayerId !== context.targetPlayerId) return { completed: false };
+    if (q.targetMonsterTags?.length && !q.targetMonsterTags.some(tag => context.monsterName?.toLowerCase().includes(tag.toLowerCase()))) return { completed: false };
     q.currentProgress++;
     if (q.currentProgress >= q.targetCount) {
       player.gold += q.rewardGold;
       player.gainXP(q.rewardXp);
       player.completedQuestsCount++;
       
-      // Check for Guild Rank Up
-      if (player.completedQuestsCount >= 5) player.guildRank = 'S';
-      else if (player.completedQuestsCount >= 4) player.guildRank = 'A';
-      else if (player.completedQuestsCount >= 3) player.guildRank = 'B';
-      else if (player.completedQuestsCount >= 2) player.guildRank = 'C';
-      else if (player.completedQuestsCount >= 1) player.guildRank = 'D';
+      player.matchStats.goldEarnedTotal += q.rewardGold;
+      const ranks = ['F', 'E', 'D', 'C', 'B', 'A', 'S'] as const;
+      player.guildRank = ranks[Math.min(6, Math.floor(player.completedQuestsCount / 2))];
+
 
       const rewardMsg = `🎉 เควสต์กิลด์สำเร็จ! ${player.displayName} บรรลุเควสต์ [${q.title}]! (+${q.rewardGold}G, +${q.rewardXp} XP, แรงค์กิลด์เลื่อนเป็น: ${player.guildRank})!`;
       player.activeGuildQuest = null;
@@ -249,11 +196,20 @@ export class IsekaiEventManager {
 
   // Fishing Minigame
   public executeFishing(player: Player, accuracy?: 'perfect' | 'great' | 'miss'): FishingResult {
+    const result = this.rollFishing(player, accuracy);
+    const flags = getWorld().memory(player.id).flags;
+    if (flags.specialBait && result.goldAmount) {
+      const bonus = Math.floor(result.goldAmount * 0.5); player.gold += bonus; player.matchStats.goldEarnedTotal += bonus;
+      result.goldAmount += bonus; result.desc += ' • เหยื่อพิเศษเพิ่ม ' + bonus + 'G'; flags.specialBait = 0;
+    }
+    return result;
+  }
+  private rollFishing(player: Player, accuracy?: 'perfect' | 'great' | 'miss'): FishingResult {
     audio.reelSplash();
 
     if (accuracy === 'perfect') {
-      if (Math.random() < 0.5) {
-        const gold = 260 + Math.floor(Math.random() * 80);
+      if (getWorld().random() < 0.5) {
+        const gold = 260 + Math.floor(getWorld().random() * 80);
         player.gold += gold;
         player.maxHp += 10;
         player.hp = Math.min(player.maxHp, player.hp + 20);
@@ -265,7 +221,7 @@ export class IsekaiEventManager {
           goldAmount: gold
         };
       } else {
-        const gold = 200 + Math.floor(Math.random() * 60);
+        const gold = 200 + Math.floor(getWorld().random() * 60);
         player.gold += gold;
         player.inventory.push({
           id: 'pot_hp_super',
@@ -284,8 +240,8 @@ export class IsekaiEventManager {
         };
       }
     } else if (accuracy === 'great') {
-      if (Math.random() < 0.5) {
-        const gold = 100 + Math.floor(Math.random() * 50);
+      if (getWorld().random() < 0.5) {
+        const gold = 100 + Math.floor(getWorld().random() * 50);
         player.gold += gold;
         return {
           title: 'ปลาคาร์ปทองคำนำโชค! (GREAT CATCH)',
@@ -306,7 +262,7 @@ export class IsekaiEventManager {
         };
       }
     } else if (accuracy === 'miss') {
-      if (Math.random() < 0.6) {
+      if (getWorld().random() < 0.6) {
         const gold = 5;
         player.gold += gold;
         return {
@@ -327,7 +283,7 @@ export class IsekaiEventManager {
       }
     }
 
-    const roll = Math.random();
+    const roll = getWorld().random();
     if (roll < 0.35) {
       const heal = 45;
       player.hp = Math.min(player.maxHp, player.hp + heal);
@@ -339,7 +295,7 @@ export class IsekaiEventManager {
         healAmount: heal
       };
     } else if (roll < 0.65) {
-      const gold = 75 + Math.floor(Math.random() * 85);
+      const gold = 75 + Math.floor(getWorld().random() * 85);
       player.gold += gold;
       return {
         title: 'ปลาคาร์ปทองคำนำโชค!',
@@ -349,7 +305,7 @@ export class IsekaiEventManager {
         goldAmount: gold
       };
     } else if (roll < 0.88) {
-      const gold = 100 + Math.floor(Math.random() * 100);
+      const gold = 100 + Math.floor(getWorld().random() * 100);
       player.gold += gold;
       player.inventory.push({
         id: 'pot_hp_super',
@@ -396,9 +352,9 @@ export class IsekaiEventManager {
 
     if (choice === 'trick') {
       const statCheck = Math.max(player.getTotalStat('mag'), player.getTotalStat('spd'), player.getTotalStat('luk'));
-      const success = statCheck >= 12 || Math.random() > 0.4;
+      const success = statCheck >= 12 || getWorld().random() > 0.4;
       if (success) {
-        const loot = 60 + Math.floor(Math.random() * 60);
+        const loot = 60 + Math.floor(getWorld().random() * 60);
         player.gold += loot;
         audio.fanfare();
         return {
@@ -427,7 +383,7 @@ export class IsekaiEventManager {
   // Goddess Lumina Shrine Event
   public visitGoddessShrine(player: Player): { title: string; message: string; icon: string } {
     audio.fanfare();
-    const roll = Math.random();
+    const roll = getWorld().random();
     if (roll < 0.4) {
       player.mp = player.maxMp;
       player.hp = player.maxHp;
@@ -474,7 +430,7 @@ export class IsekaiEventManager {
     }
 
     player.gold -= bet;
-    const roll = Math.random();
+    const roll = getWorld().random();
 
     if (roll < 0.12) {
       // 12% Jackpot: 6x bet!
@@ -505,7 +461,7 @@ export class IsekaiEventManager {
     } else if (roll < 0.60) {
       // 20% Magic Spell
       const spells = ['zap', 'swap', 'holy_sanctuary', 'tax_audit', 'curse_rust'];
-      const wonSpell = spells[Math.floor(Math.random() * spells.length)];
+      const wonSpell = spells[Math.floor(getWorld().random() * spells.length)];
       if (!player.fieldSpells.includes(wonSpell)) {
         player.fieldSpells.push(wonSpell);
       }

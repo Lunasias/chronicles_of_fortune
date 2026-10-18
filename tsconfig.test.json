@@ -31,6 +31,9 @@
     "src/game/SaveManager.ts",
     "src/ui/MobileDisplayManager.ts",
     "src/util/Html.ts",
-    "src/game/MonsterDatabase.ts"
+    "src/game/MonsterDatabase.ts",
+    "src/game/EventDirector.ts",
+    "src/ui/JourneyUI.ts",
+    "src/game/IsekaiEventManager.ts"
   ]
 }

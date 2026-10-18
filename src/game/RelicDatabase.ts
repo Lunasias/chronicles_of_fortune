@@ -46,7 +46,7 @@ export const RELIC_CATALOG: Record<string, RelicItem> = {
     nameEn: "Banker's Ledger",
     icon: '📜💰',
     rarity: 'epic',
-    desc: 'รับดอกเบี้ยเงินฝาก 5% ของทองคำทั้งหมดในกระเป๋าทุกสัปดาห์',
+    desc: 'รับดอกเบี้ย 1% ของทองในกระเป๋าต่อเทิร์น สูงสุด 50G',
     color: '#eab308',
     cost: 2200
   },

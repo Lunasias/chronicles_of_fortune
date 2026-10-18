@@ -2,6 +2,10 @@ import { Player } from './Player';
 import { BoardNode } from './BoardMap';
 import { AttackerAction, DefenderAction } from './BattleEngine';
 import { EquipmentItem } from '../engine/PixelSpriteGenerator';
+import { getWorld } from './WorldState';
+import { getNodeEncounterPreview } from './MonsterDatabase';
+import { estimateRoundsToSurvive, estimateRoundsToKill } from './BalanceSystem';
+import { isDungeonExit } from './DungeonLocations';
 
 export interface CombatMoveHistory {
   [key: string]: number;
@@ -72,6 +76,37 @@ export class AISystem {
   ): number {
     if (candidateNodeIds.length === 1) return candidateNodeIds[0];
 
+    const world = getWorld();
+    const memory = world.memory(aiPlayer.id);
+    const distanceFrom = (start: number): Map<number, number> => {
+      const byId = new Map(allNodes.map(n => [n.id, n]));
+      const distances = new Map<number, number>([[start, 0]]); const queue = [start];
+      for (let i = 0; i < queue.length; i++) for (const id of byId.get(queue[i])?.neighbors ?? []) {
+        if (!distances.has(id)) { distances.set(id, distances.get(queue[i])! + 1); queue.push(id); }
+      }
+      return distances;
+    };
+    const distances = distanceFrom(aiPlayer.nodeId);
+    let goal = allNodes.find(n => n.id === memory.flags.goalNodeId && n.id !== aiPlayer.nodeId);
+    if (!goal || aiPlayer.hp < aiPlayer.maxHp * 0.4 || (memory.flags.goalUntil ?? 0) < world.day) {
+      const quest = aiPlayer.activeGuildQuest;
+      const candidates = allNodes.filter(n => {
+        const run = world.expeditions[aiPlayer.id];
+        if (run) return run.guardians.includes(run.depth) || aiPlayer.hp < aiPlayer.maxHp * 0.4 ? isDungeonExit(n.id) : n.type === 'boss';
+        if (aiPlayer.hp < aiPlayer.maxHp * 0.4) return n.type === 'church' || n.type === 'tavern' || n.homeData?.ownerId === aiPlayer.id;
+        if (quest?.targetNodeId !== undefined) return n.id === quest.targetNodeId;
+        if (quest?.targetRealm && quest.targetRealm !== n.realmId) return false;
+        if (quest?.targetType === 'boss') return n.type === 'boss' && !world.defeatedBosses.includes(n.id);
+        if (world.mode === 'coop_raid' && aiPlayer.level >= 7 && world.raidTargets.includes(n.id) && !world.defeatedBosses.includes(n.id)) return true;
+        if (!quest && aiPlayer.gold >= 200 && !aiPlayer.equipment.weapon) return n.type === 'shop_weapon';
+        if (quest?.targetType === 'monster') return n.type === 'red';
+        return n.type === 'town' && n.townData?.isOccupiedByMonster;
+      });
+      goal = candidates.filter(n => distances.has(n.id)).sort((a, b) => distances.get(a.id)! - distances.get(b.id)!)[0];
+      if (goal) { memory.flags.goalNodeId = goal.id; memory.flags.goalUntil = world.day + 5; }
+    }
+    const distanceToGoal = goal ? distanceFrom(goal.id) : new Map<number, number>();
+
     const personality = aiPlayer.aiPersonality || 'balanced';
     const leader = this.getLeader(allPlayers);
 
@@ -92,6 +127,14 @@ export class AISystem {
       if (!node) return;
 
       let score = 0;
+      if (goal) score += Math.max(-150, 150 - (distanceToGoal.get(id) ?? 100) * 10);
+      const preview = getNodeEncounterPreview(node, aiPlayer);
+      if (preview.encounterChancePercent > 0 && preview.featuredMonster) {
+        const kill = estimateRoundsToKill(preview.featuredMonster, aiPlayer);
+        const survive = estimateRoundsToSurvive(preview.featuredMonster, aiPlayer);
+        if (survive < kill) score -= 180 * preview.encounterChancePercent / 100;
+      }
+      if (node.type === 'boss' && getWorld().defeatedBosses.includes(node.id)) score -= 100;
       if (node.type === 'town') {
         if (node.townData?.isOccupiedByMonster) {
           const maxHp = node.townData.monsterMaxHp || node.townData.monsterHp;
@@ -145,7 +188,7 @@ export class AISystem {
       }
 
       // Add a bit of unpredictability
-      score += Math.random() * (difficulty === 'casual' ? 25 : 8);
+      score += getWorld().random() * (difficulty === 'casual' ? 25 : 8);
 
       if (score > bestScore) {
         bestScore = score;
@@ -162,10 +205,10 @@ export class AISystem {
     opponent: { hp: number; maxHp: number; def: number; mag: number; playerRef?: Player },
     difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
   ): AttackerAction {
-    const roll = Math.random();
+    const roll = getWorld().random();
     if (difficulty === 'casual' && roll < 0.50) {
       const actions: AttackerAction[] = ['attack', 'attack', 'strike', 'magic'];
-      return actions[Math.floor(Math.random() * actions.length)];
+      return actions[Math.floor(getWorld().random() * actions.length)];
     }
 
     const personality = ai.aiPersonality || 'balanced';
@@ -228,10 +271,10 @@ export class AISystem {
     attacker: { atk: number; mag: number; classKey?: string; playerRef?: Player },
     difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
   ): DefenderAction {
-    const roll = Math.random();
+    const roll = getWorld().random();
     if (difficulty === 'casual' && roll < 0.50) {
       const actions: DefenderAction[] = ['defend', 'defend', 'counter', 'magic_guard'];
-      return actions[Math.floor(Math.random() * actions.length)];
+      return actions[Math.floor(getWorld().random() * actions.length)];
     }
 
     const personality = ai.aiPersonality || 'balanced';
@@ -300,7 +343,7 @@ export class AISystem {
 
     if (personality === 'hunter') {
       // Hunter loves humiliating rivals or taking their prized towns!
-      if (victim.townDeeds.length > 0 && Math.random() < 0.6) return 'town';
+      if (victim.townDeeds.length > 0 && getWorld().random() < 0.6) return 'town';
       return 'prank';
     }
 
@@ -354,7 +397,7 @@ export class AISystem {
     if (townData.level >= 5) return false;
     if (ai.aiPersonality === 'economist') return true;
     if (ai.aiPersonality === 'tactician' && ai.gold >= cost * 2) return true;
-    return Math.random() < 0.6;
+    return getWorld().random() < 0.6;
   }
 
   // Strategic decision: select the most beneficial equipment to purchase from a shop
@@ -430,9 +473,9 @@ export class AISystem {
     const validCandidates = candidateNodeIds.filter(id => !trappedNodeIds.has(id));
     if (validCandidates.length === 0) return null;
 
-    const chosenNodeId = validCandidates[Math.floor(Math.random() * validCandidates.length)];
+    const chosenNodeId = validCandidates[Math.floor(getWorld().random() * validCandidates.length)];
     const types: Array<'damage' | 'pitfall' | 'greed' | 'rust'> = ['damage', 'greed', 'pitfall', 'rust'];
-    const chosenType = ai.aiPersonality === 'economist' ? 'greed' : (ai.aiPersonality === 'hunter' ? 'damage' : types[Math.floor(Math.random() * types.length)]);
+    const chosenType = ai.aiPersonality === 'economist' ? 'greed' : (ai.aiPersonality === 'hunter' ? 'damage' : types[Math.floor(getWorld().random() * types.length)]);
 
     return { nodeId: chosenNodeId, type: chosenType };
   }

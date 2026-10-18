@@ -1,3 +1,7 @@
+import { WorldState, bindWorld } from './WorldState';
+import { evaluateMatch, matchObjective } from './MatchRules';
+import { worldCalamitySystem } from './WorldCalamitySystem';
+import { dungeonSystem } from './DungeonSystem';
 import { Player, FIELD_SPELLS } from './Player';
 import { IsoDirection } from '../engine/PixelSpriteGenerator';
 import { BoardNode, DOKAPON_NODES } from './BoardMap';
@@ -36,6 +40,7 @@ export interface RoguelikeModifier {
   desc: string;
   atkMultiplier: number;
   defMultiplier: number;
+  magMultiplier?: number;
   tollMultiplier: number;
   diceBonus: number;
 }
@@ -76,14 +81,19 @@ export const ROGUELIKE_MODIFIERS: RoguelikeModifier[] = [
     name: 'Arcane Surge (คลื่นมนตราเอ่อล้น)',
     icon: '🔮',
     desc: 'สมาธิด้านเวทมนตร์เพิ่มพูน พลังเวทและสกิลรุนแรงขึ้น!',
-    atkMultiplier: 1.2,
-    defMultiplier: 1.2,
+    atkMultiplier: 1.0,
+    defMultiplier: 1.0,
+    magMultiplier: 1.3,
     tollMultiplier: 1.0,
     diceBonus: 0
   }
 ];
 
 export class GameState {
+  public world = new WorldState();
+  constructor() { bindWorld(this.world); }
+  get objective(): string { return matchObjective(this); }
+
   public phase: GamePhase = 'TITLE';
   public players: Player[] = [];
   public activePlayerIdx = 0;
@@ -99,8 +109,10 @@ export class GameState {
   public gameSpeed = 1;
 
   // Game Mode & House Rules
-  public gameMode: GameModeType = 'standard';
-  public activeRoguelikeModifier: RoguelikeModifier | null = null;
+  get gameMode(): GameModeType { return this.world.mode; }
+  set gameMode(mode: GameModeType) { this.world.mode = mode; }
+  get activeRoguelikeModifier(): RoguelikeModifier | null { return this.world.modifier; }
+  set activeRoguelikeModifier(modifier: RoguelikeModifier | null) { this.world.modifier = modifier; }
   public blitzDayLimit: number = 20;
   public coopRaidDayLimit: number = 30;
   public allowDarkling: boolean = true;
@@ -235,7 +247,13 @@ export class GameState {
 
   initGame(partyConfig: Array<{ name: string; classKey: string; isAI: boolean; skinVariant?: number }>, winGoal = 'networth') {
     this.resetBoard();
-
+    const mode = this.gameMode;
+    this.world = new WorldState(); this.world.mode = mode; bindWorld(this.world);
+    this.placedTraps = [];
+    aiSystem.grudgeMatrix = {}; aiSystem.moveHistory = {};
+    worldCalamitySystem.reset(); royalDecreeSystem.reset(); dungeonSystem.reset();
+    this.world.raidTargets = ['solaria', 'sunfire', 'frostpeak'].map(realm => this.allNodes.find(n => n.type === 'boss' && n.realmId === realm)?.id).filter((id): id is number => id !== undefined);
+    this.world.campaignBossId = this.allNodes.find(n => n.type === 'boss' && n.realmId === 'abyss')?.id ?? null;
     this.players = partyConfig.map((cfg, idx) => new Player(idx + 1, cfg.name, cfg.classKey, cfg.isAI, 0, cfg.skinVariant || 0));
     this.winGoal = winGoal;
     this.activePlayerIdx = 0;
@@ -256,20 +274,8 @@ export class GameState {
 
     this.addLog(`⚔️ The Grand Dokapon Expedition เริ่มต้นขึ้นแล้วทั้ง ${this.getTownCount()} เมือง!`, 'level');
 
-    if (this.gameMode === 'roguelike_draft') {
-      const draftRelics = ['angel_feather', 'thief_band', 'speed_boots', 'shield_ring'];
-      const draftSpells = ['zap', 'swap', 'holy_sanctuary', 'tax_audit'];
-      this.players.forEach((p, idx) => {
-        const relic = draftRelics[idx % draftRelics.length];
-        const spell = draftSpells[idx % draftSpells.length];
-        p.relics.push(relic);
-        if (!p.fieldSpells.includes(spell)) {
-          p.fieldSpells.push(spell);
-        }
-      });
-      this.activeRoguelikeModifier = ROGUELIKE_MODIFIERS[0];
-      this.addLog(`🎲 ROGUELIKE DRAFT: ผู้เล่นทุกคนได้รับ Relic และ คัมภีร์เวทเริ่มต้น! สภาพแวดล้อม: ${this.activeRoguelikeModifier.icon} ${this.activeRoguelikeModifier.name}`, 'level');
-    }
+    this.activeRoguelikeModifier = this.gameMode === 'roguelike_draft' ? this.world.pick(ROGUELIKE_MODIFIERS) : null;
+    this.addLog(this.objective, 'level');
 
     this.startTurn();
   }
@@ -282,6 +288,10 @@ export class GameState {
 
   startTurn() {
     const p = this.activePlayer;
+    this.world.focusPlayerId = p.id;
+    this.world.focusRealm = this.allNodes.find(n => n.id === p.nodeId)?.realmId ?? 'solaria';
+    this.checkWinConditions();
+    if (this.world.result) return;
 
     // Check Sleep Status: Skips turn if sleeping!
     if (p.sleepTurns > 0) {
@@ -292,16 +302,15 @@ export class GameState {
     }
 
     this.phase = 'BOARD_TURN';
-    const turnRes = p.tickTurn();
-    if (turnRes?.companionDeparted) {
-      this.addLog(`⌛ สัญญาจ้างคู่หู ${turnRes.companionDeparted} สิ้นสุดลงแล้ว (ครบ 3 เทิร์น) เธอโบกมือลาและเดินทางกลับกิลด์!`, 'level');
-    }
 
     // Start overworld chiptune music if not active
     if (audio.getCurrentTrack() !== 'overworld') {
       audio.playBgm('overworld');
     }
 
+    const memory = this.world.memory(p.id);
+    if (memory.flags.farmPayments > 0) { p.gold += 20; p.matchStats.goldEarnedTotal += 20; memory.flags.farmPayments--; this.addLog('ส่วนแบ่งจากกังหันชาวนา +20G', 'gold'); }
+    if (p.activeGuildQuest && (p.activeGuildQuest.expiresDay ?? Infinity) < this.dayCounter) { this.addLog('เควสต์หมดเวลา: ' + p.activeGuildQuest.title); p.activeGuildQuest = null; }
     // Collect daily town tax
     const taxEarned = townManager.collectTurnRevenue(p, this.allNodes);
     if (taxEarned > 0) {
@@ -424,7 +433,7 @@ export class GameState {
 
     if (spellKey === 'banish' && target) {
       const farNodes = this.allNodes.filter(n => Math.hypot(n.gx - target!.gridX, n.gy - target!.gridY) > 40);
-      const destNode = farNodes.length > 0 ? farNodes[Math.floor(Math.random() * farNodes.length)] : this.allNodes[Math.floor(Math.random() * this.allNodes.length)];
+      const destNode = farNodes.length > 0 ? farNodes[Math.floor(this.world.random() * farNodes.length)] : this.allNodes[Math.floor(this.world.random() * this.allNodes.length)];
       target.nodeId = destNode.id;
       target.gridX = destNode.gx;
       target.gridY = destNode.gy;
@@ -459,7 +468,7 @@ export class GameState {
       const otherTowns = this.allNodes.filter(n => n.townData && n.townData.ownerId !== null && n.townData.ownerId !== caster.id);
       const affected: string[] = [];
       for (let i = 0; i < Math.min(2, otherTowns.length); i++) {
-        const picked = otherTowns[Math.floor(Math.random() * otherTowns.length)];
+        const picked = otherTowns[Math.floor(this.world.random() * otherTowns.length)];
         if (picked && picked.townData) {
           picked.townData.ownerId = null;
           picked.townData.isOccupiedByMonster = true;
@@ -525,17 +534,17 @@ export class GameState {
 
     if (p.isDarkling) {
       // Darkling rolls multi-dice (2d6 standard)
-      totalRoll = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+      totalRoll = Math.floor(this.world.random() * 6) + 1 + Math.floor(this.world.random() * 6) + 1;
       this.addLog(`😈 พลังจอมมารคลั่ง! ทอยลูกเต๋าคู่มรณะ ก้าวเดินได้ถึง ${totalRoll} ก้าว!`, 'darkling');
     } else {
       const numDice = Math.max(1, p.activeSpinnerMultiplier);
       for (let i = 0; i < numDice; i++) {
-        totalRoll += Math.floor(Math.random() * 6) + 1;
+        totalRoll += Math.floor(this.world.random() * 6) + 1;
       }
 
       // SPD Stat Overworld Bonus: High speed heroines sprint faster!
       const playerSpd = p.getTotalStat('spd');
-      if (playerSpd >= 15 && Math.random() < Math.min(0.55, playerSpd * 0.022)) {
+      if (playerSpd >= 15 && this.world.random() < Math.min(0.55, playerSpd * 0.022)) {
         const bonusStep = playerSpd >= 25 ? 2 : 1;
         totalRoll += bonusStep;
         this.addLog(`👟 ฝีเท้าคล่องตัวสูง! (SPD ${playerSpd}) มอบโบนัสการก้าวเดินเพิ่ม +${bonusStep} ก้าว!`, 'level');
@@ -554,18 +563,18 @@ export class GameState {
     }
 
     const hereNode = this.allNodes.find(n => n.id === p.nodeId);
-    const weatherMod = weatherSystem.getMovementDiceModifier(hereNode?.biome || '');
+    const ward = this.world.memory(p.id).flags.weatherWard ?? 0;
+    const localWeather = hereNode ? this.world.weatherAt(hereNode) : 'sunny';
+    const weatherMod = ward > 0 ? 0 : localWeather === 'snow' || localWeather === 'sandstorm' ? -1 : 0;
+    if (ward > 0) this.world.memory(p.id).flags.weatherWard--;
     if (weatherMod < 0 && totalRoll > 1) {
       totalRoll = Math.max(1, totalRoll + weatherMod);
       this.addLog(`❄️ ลมพายุหิมะพัดต้านอย่างรุนแรง! ลดการก้าวเดินลง 1 ก้าว (เหลือ ${totalRoll} ก้าว)`, 'info');
     }
 
-    // Regional living ecosystem rain slide perk: 20% chance to slide +1 bonus step on wet roads
-    const localWeather = hereNode ? ecosystemSystem.getNodeWeather(hereNode) : 'sunny';
-    if (localWeather === 'rain' && Math.random() < 0.20) {
-      totalRoll += 1;
-      this.addLog(`🌧️ ถนนเปียกลื่นจากสายฝน! เท้าไถลลื่นไปข้างหน้าเพิ่ม +1 ก้าว!`, 'info');
-    }
+    if (this.activeRoguelikeModifier) totalRoll += this.activeRoguelikeModifier.diceBonus;
+    if (p.freezeTurns > 0 || p.polymorphTurns > 0) totalRoll = 1;
+    totalRoll = Math.max(1, totalRoll);
 
     p.activeSpinnerMultiplier = 1;
     this.remainingMoves = totalRoll;
@@ -718,6 +727,8 @@ export class GameState {
 
     p.prevNodeId = p.nodeId;
     p.nodeId = nextNodeId;
+    this.world.focusRealm = targetNode.realmId;
+    if (dungeonSystem.isInDungeon(nextNodeId)) dungeonSystem.recordStep(p, nextNodeId);
     audio.step();
 
     const startGX = p.gridX;
@@ -772,6 +783,7 @@ export class GameState {
     // Process active player end-of-turn effects
     const prevP = this.activePlayer;
     prevP.hasFlexibleMovement = false;
+    if (prevP.foodBuff && --prevP.foodBuff.turnsRemaining <= 0) prevP.foodBuff = null;
     const tickRes = prevP.tickTurn();
     if (tickRes.poisonDamage) {
       this.addLog(`☠️ พิษแล่นเข้าสู่หัวใจ! ${prevP.displayName} เสียเลือด ${tickRes.poisonDamage} HP!`, 'battle');
@@ -794,6 +806,7 @@ export class GameState {
 
     if (this.activePlayerIdx === 0) {
       this.dayCounter++;
+      this.world.advanceRound(this.dayCounter);
 
       // Advance dynamic atmospheric weather
       const weatherChange = weatherSystem.advanceDay(this.dayCounter);
@@ -808,8 +821,7 @@ export class GameState {
         this.addLog(`📜 พระราชกฤษฎีกา: ${royalDecreeSystem.activeDecree.headline}`, 'gold');
 
         if (this.gameMode === 'roguelike_draft') {
-          const modIdx = (this.weekCounter - 1) % ROGUELIKE_MODIFIERS.length;
-          this.activeRoguelikeModifier = ROGUELIKE_MODIFIERS[modIdx];
+          this.activeRoguelikeModifier = this.world.pick(ROGUELIKE_MODIFIERS.filter(m => m.id !== this.activeRoguelikeModifier?.id));
           this.addLog(`🎲 ROGUELIKE REALM MUTATION: ${this.activeRoguelikeModifier.icon} ${this.activeRoguelikeModifier.name} - ${this.activeRoguelikeModifier.desc}`, 'level');
         }
 
@@ -825,49 +837,8 @@ export class GameState {
   }
 
   checkWinConditions() {
-    // Blitz Mode: Match concludes when blitzDayLimit is reached (highest net worth wins!)
-    if (this.gameMode === 'blitz' && this.dayCounter >= this.blitzDayLimit) {
-      this.phase = 'VICTORY';
-      return;
-    }
-
-    // Co-op Demon Lord Raid: Cooperatively slay boss or survive invasion
-    if (this.gameMode === 'coop_raid') {
-      const bossNodes = this.allNodes.filter(n => n.type === 'boss');
-      const allBossesDefeated = bossNodes.every(b => !b.townData?.isOccupiedByMonster);
-      if (allBossesDefeated && bossNodes.length > 0) {
-        this.addLog('👑 กองกำลังร่วมมือพิชิตจอมมารสำเร็จ! อาณาจักรฟอร์ทูนารอดพ้นจากหายนะ!', 'level');
-        this.phase = 'VICTORY';
-        return;
-      }
-      if (this.dayCounter >= this.coopRaidDayLimit) {
-        this.addLog('⌛ ครบกำหนดเวลา 30 วันการรุกรานของจอมมาร!', 'darkling');
-        this.phase = 'VICTORY';
-        return;
-      }
-    }
-
-    // Endless Spire Mode
-    if (this.gameMode === 'endless_spire' && this.dayCounter >= 40) {
-      this.phase = 'VICTORY';
-      return;
-    }
-
-    // Roguelike Draft Mode
-    if (this.gameMode === 'roguelike_draft' && this.dayCounter >= 28) {
-      this.phase = 'VICTORY';
-      return;
-    }
-
-    this.players.forEach(p => {
-      if (this.winGoal === 'gold' && p.gold >= 3000) {
-        this.phase = 'VICTORY';
-      } else if (this.winGoal === 'towns' && p.townsControlled >= 4) {
-        this.phase = 'VICTORY';
-      } else if (this.winGoal === 'networth' && this.weekCounter > 4) {
-        this.phase = 'VICTORY';
-      }
-    });
+    const result = evaluateMatch(this);
+    if (result) { this.world.result = result; this.phase = 'VICTORY'; }
   }
 
   public calculateIsoDirection(dgx: number, dgy: number, fallback: IsoDirection = 'SE'): IsoDirection {
