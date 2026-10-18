@@ -11,15 +11,15 @@ export function backdropKey(biome: string, nodeId = 0): BackdropKey {
   return BACKDROP_KEYS.includes(biome as BackdropKey) ? biome as BackdropKey : 'grass';
 }
 
-export function backdropCover(sourceW: number, sourceH: number, width: number, height: number) {
+export function backdropCover(sourceW: number, sourceH: number, width: number, height: number, anchorY = .5) {
   const scale = Math.max(width / sourceW, height / sourceH);
   const sw = width / scale, sh = height / scale;
-  return { sx: Math.round((sourceW-sw)/2), sy: Math.round((sourceH-sh)/2), sw: Math.round(sw), sh: Math.round(sh) };
+  return { sx: Math.round((sourceW-sw)/2), sy: Math.round((sourceH-sh)*Math.max(0,Math.min(1,anchorY))), sw: Math.round(sw), sh: Math.round(sh) };
 }
 
 class GeneratedBackdrops {
   private images = new Map<BackdropKey, HTMLImageElement>();
-  draw(ctx: CanvasRenderingContext2D, w: number, h: number, key: BackdropKey, timeOfDay: TimeOfDay) {
+  draw(ctx: CanvasRenderingContext2D, w: number, h: number, key: BackdropKey, timeOfDay: TimeOfDay, anchorY = .5) {
     let image = this.images.get(key);
     if (!image) {
       image = createArtworkImage();
@@ -29,7 +29,7 @@ class GeneratedBackdrops {
     ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#152636'; ctx.fillRect(0, 0, w, h);
     if (image.complete && image.naturalWidth) {
-      const crop = backdropCover(image.naturalWidth, image.naturalHeight, w, h);
+      const crop = backdropCover(image.naturalWidth, image.naturalHeight, w, h, anchorY);
       ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
       // Local artwork lighting follows the world clock without filtering the UI or sprites.
       const interior = key.startsWith('dungeon_') || ['cavern','crystal_cavern','coral','abyss'].includes(key);

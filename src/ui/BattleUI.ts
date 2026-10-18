@@ -1481,7 +1481,7 @@ export class BattleUI {
       w,
       h,
       time,
-      `${w}x${h}|${biome}|${ecosystemSystem.timeOfDay}|${currentNode?.type ?? 'empty'}|${isBoss ? 1 : 0}`,
+      `${w}x${h}|${biome}|${ecosystemSystem.timeOfDay}|${currentNode?.id ?? 0}|${currentNode?.type ?? 'empty'}|${isBoss ? 1 : 0}`,
       layerCtx => this.drawDynamicLocationBackdrop(layerCtx, w, h, time, currentNode, isBoss)
     );
     ctx.drawImage(backdropLayer, 0, 0);

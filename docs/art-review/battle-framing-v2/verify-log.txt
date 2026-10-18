@@ -1,0 +1,271 @@
+
+> chronicles-of-fortuna-dokapon@1.0.0 verify
+> npm run typecheck && npm run build && npm test && npm run check:css
+
+
+> chronicles-of-fortuna-dokapon@1.0.0 typecheck
+> tsc --noEmit
+
+
+> chronicles-of-fortuna-dokapon@1.0.0 build
+> tsc && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 131 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/effects-review.html                   1.99 kB │ gzip:   1.20 kB
+dist/art-review.html                       4.90 kB │ gzip:   2.44 kB
+dist/index.html                          124.35 kB │ gzip:  29.25 kB
+dist/assets/game-CYGhyo_u.css             72.84 kB │ gzip:  15.38 kB
+dist/assets/BattleScenery-3VQaI9bs.js      0.40 kB │ gzip:   0.29 kB
+dist/assets/effectsReview-CMLQEp4c.js      3.51 kB │ gzip:   1.89 kB
+dist/assets/artReview-sbFg1Gly.js          7.92 kB │ gzip:   3.80 kB
+dist/assets/CombatVFXEngine-BwdPELS5.js   58.61 kB │ gzip:  17.06 kB
+dist/assets/events-data-DlFPSeiE.js       85.68 kB │ gzip:  36.83 kB
+dist/assets/ShopUI-DUd6FvJx.js            90.68 kB │ gzip:  30.46 kB
+dist/assets/bundler-DXD5IzWF.js          117.37 kB │ gzip:  31.82 kB
+dist/assets/engine-art-QzZiUJQZ.js       136.78 kB │ gzip:  42.38 kB
+dist/assets/game-world-BDkLjxes.js       232.33 kB │ gzip:  34.96 kB
+dist/assets/game-CUl4gM3W.js             437.99 kB │ gzip: 127.37 kB
+✓ built in 6.27s
+
+> chronicles-of-fortuna-dokapon@1.0.0 pretest
+> tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs
+
+prepare-test-build: 65 files scanned, 100 import specifiers resolved, 2 JSON import attributes added
+
+> chronicles-of-fortuna-dokapon@1.0.0 test
+> node --test "tests/**/*.test.mjs"
+
+✔ atlas extraction discards detached neighbor fragments and retains the full main sprite (1.6853ms)
+✔ graphics preferences tolerate damaged storage and retain valid accessibility choices (1.2193ms)
+✔ attack timing reaches impact and recovery without repeating the wind-up (0.4003ms)
+✔ effect duration is consistent at 30, 60, 144 and 240 Hz and bounds resume catch-up (0.461ms)
+✔ job rendering preserves ranger identity and maps promoted knight bases (0.2562ms)
+✔ every promoted job keeps the silhouette of its original playable class (0.3544ms)
+✔ the cleric run cycle never picks the prayer or casting row (0.3783ms)
+✔ world and battle vegetation preserve the identity of special realms (1.9504ms)
+✔ all shipped class atlases contain an occupied sprite in every direction and pose cell (866.7502ms)
+✔ supplemental actions, monsters and companions have no empty production cells (1274.5483ms)
+✔ promoted magic retains its elemental identity and each element has a distinct ramp (0.3682ms)
+✔ combat spells use generated image frames and preserve the caller canvas state (1.9479ms)
+✔ long combat announcements fit a narrow phone without stretching the text (0.8508ms)
+✔ environment palette increases chroma without changing alpha, transparent pixels or neutral white (3.5959ms)
+✔ art loading waits for every image and two repaints, including failed requests (4.6082ms)
+✔ every board biome and dungeon has unique generated production backdrop artwork (125.4719ms)
+✔ dungeon node identity overrides surface biome including all three exits (1.3305ms)
+✔ backdrop cover preserves aspect ratio and never exposes blank viewport edges (0.8177ms)
+✔ without a hero the authored stats pass through untouched (1.6015ms)
+✔ a level-1 hero faces the authored stats, bar the documented minimum-fight floor (1.1623ms)
+✔ no single hit, not even a critical, can delete a tier-1 monster (1.1063ms)
+✔ a levelled hero never one-shots a tier-1 encounter (0.8204ms)
+✔ fights stay in a sensible band as the hero levels (0.592ms)
+✔ a levelled hero still takes real damage from a tier-1 monster (0.2756ms)
+✔ the hero can survive several hits at every level (0.3048ms)
+✔ higher threat tiers stay harder than lower ones for the same hero (0.3199ms)
+✔ scaled stats stay finite, positive and readable (1.7306ms)
+✔ monster DEF can never grind a fight to the minimum-damage floor (1.0949ms)
+✔ judgeThreat reports a coherent verdict (0.2659ms)
+✔ tierForNode maps realms to a rising difficulty (0.2275ms)
+✔ every effect family plays generated frames only, stays deterministic and balances canvas state (6.7241ms)
+✔ effect lifecycle delays release, bounds chains, expires and clears without a wall-clock timer (1.8727ms)
+✔ real combat entry points route physical, elemental, boss, promoted skill and summon image assets (3.8065ms)
+✔ fixed update bounds debris, keeps impact animation flowing and suppresses shake for reduced motion (4.8715ms)
+✔ all playable jobs, realm monsters, occupied towns and companions have explicit owner art (8.3074ms)
+✔ all 33 delivered generated PNGs match provenance and contain 792 distinct nonempty source frames (150.5826ms)
+✔ frame timing advances through six painted frames and reduced motion holds a readable peak (0.2881ms)
+✔ atlas extraction copies generated frames, cleans transparency and bounds decoded caches (168.3966ms)
+✔ frame gutters remove rectangular matte without removing detached bright sparks or changing RGB (1.656ms)
+✔ a complete owner signature wins its hit zone while distinct targets and delayed aftermath remain readable (1.22ms)
+✔ skills render a single generated signature without boxed vignette layers or a second title (4.6661ms)
+✔ all 792 shipped frames retain visible art with completely clear exterior gutters after extraction (3701.3538ms)
+✔ battle contact points stay on the authored foreground on phones and desktop (2.2916ms)
+✔ battle framing keeps the full foreground at every aspect ratio without stretching (0.4564ms)
+✔ battle uses the authored scene without board-floor or miniature-prop overlays (0.3852ms)
+✔ exports a non-empty node array (1.7072ms)
+✔ node ids are unique and form a contiguous 0..N-1 range (6.0246ms)
+✔ no two nodes occupy the same grid position (0.9331ms)
+✔ every node has a finite grid position (1.062ms)
+✔ neighbour links are symmetric (3.0184ms)
+✔ neighbour links never dangle outside the map (0.5514ms)
+✔ no node links to itself or repeats a neighbour (0.4552ms)
+✔ every road edge spans a sane distance (0.6592ms)
+✔ the whole board is reachable from node 0 (0.9302ms)
+✔ no node is isolated (0.3984ms)
+✔ townData is present exactly when the node type is town (0.5022ms)
+✔ every occupied town has complete and consistent monster stats (0.3662ms)
+✔ every town starts unowned and monster-occupied (0.3159ms)
+✔ pre-built home plots are vacant land (0.2621ms)
+✔ type, biome and realm values are all declared in their unions (5.177ms)
+✔ every node carries the fields the renderer reads (0.893ms)
+✔ every structure paints at 64x64 (1.42ms)
+✔ every structure has an exported model at 64x64 (17.5467ms)
+✔ the exported models match what the painter draws (26.7482ms)
+✔ no orphaned structure models are left behind (0.5009ms)
+✔ aliases paint exactly like their canonical structure (9.9632ms)
+✔ every structure is shaded, not a flat silhouette (6.1944ms)
+✔ every structure is lit from the left (3.1332ms)
+✔ the top of a structure outranks its shaded wall (3.4752ms)
+✔ every structure has substance and seats on its tile (2.0595ms)
+✔ no two structures share a model (0.5242ms)
+✔ an owner colour changes a town but not a shop (10.7053ms)
+✔ the companion catalogue is populated (2.5064ms)
+✔ every companion has a 64x64 model on disk (70.4134ms)
+✔ no orphaned models are left behind (0.4791ms)
+✔ every model is visually distinct (29.1334ms)
+✔ every model actually contains pixels (36.3203ms)
+✔ every model is shaded, not a flat silhouette (135.5301ms)
+✔ every model is lit from the top-left (176.4033ms)
+✔ the sprite path helper points at the generated files (2.5363ms)
+✔ every monster in the recruitment roster maps to a real companion (2.9728ms)
+✔ an unknown monster still yields a usable companion (0.3036ms)
+✔ createCompanion fills in every field the UI reads (0.5393ms)
+✔ hired companions carry a contract length (0.1461ms)
+✔ older save ids still resolve to the right model (0.1688ms)
+✔ a companion from an unrecognised save falls back instead of breaking (0.1709ms)
+✔ every art descriptor uses vocabulary the generator understands (3.0905ms)
+✔ only weapons that actually use a gel blade declare a gradient (3.6844ms)
+✔ the Slime Princess matches her brief (1.5572ms)
+✔ each companion has a silhouette of its own (0.2757ms)
+✔ late-loaded dungeons rebuild terrain and remain reachable by focus, resize and return (1506.5201ms)
+✔ every dungeon end portal returns to its original surface node after saving and reloading (34.788ms)
+✔ environment layers use integer pixel clusters at phone and desktop dimensions (12.5432ms)
+✔ every promotion tier gains an actual outer silhouette, rather than just recoloring (2.9416ms)
+✔ dungeon scene boundaries isolate each route and leave the surface separate (0.3021ms)
+✔ escapes the characters that can break out of text or an attribute (3.0337ms)
+✔ neutralises a script injection attempt (0.5752ms)
+✔ escapes the ampersand before the other entities it produces (0.1692ms)
+✔ leaves ordinary names untouched (2.3431ms)
+✔ handles non-string input without throwing (0.3762ms)
+✔ is idempotent only for text that needs no escaping (0.1977ms)
+✔ maps every grid step to the expected isometric facing (1.3958ms)
+✔ all eight facings are reachable (1.0356ms)
+✔ a step with no on-screen bearing keeps the current facing (0.1925ms)
+✔ every road edge on the board yields a valid facing (3.1602ms)
+✔ Dokapon exact movement rule: only landing on exact dice steps unless flexible step crystal used (8.2536ms)
+✔ Town Hostile Takeover: rival buys out town at 2x base value (2.8795ms)
+✔ Darkling Comeback: 3x ATK, multi-dice roll, and dark spells (0.3361ms)
+✔ Combat Status Effects: Freeze skips action, Blind has miss chance, Burn applies DoT (2.8443ms)
+✔ Movement pathfinding performance on high rolls (10 steps) executes instantly without freezing (5.497ms)
+✔ Combat Depth: Shatter reaction deals critical bonus damage and clears freeze (4.8866ms)
+✔ Combat Depth: Chain Shock reaction deals 75% bonus damage on wet or shocked enemy (0.5253ms)
+✔ Combat Depth: Knockback pushes defender into tactical grid trap hazard (0.356ms)
+✔ Board Sabotage: Field spells (Sleepy, Squid Ink, Downer, Banish, Bounty) (7.6845ms)
+✔ Companions: Bond levels up and triggers Duo EX Burst (0.5751ms)
+✔ Game Modes: Co-op Demon Lord Raid concludes when boss nodes are defeated or day limit reached (5.2978ms)
+✔ Town Trade Routes: 3+ towns in realm activate trade route with 30% tax yield and 1.5x toll (8.5256ms)
+✔ Darkling Specializations: Destroyer, Reaper, Tormentor branches and Oblivion Slash (5.9332ms)
+✔ Game Modes: Roguelike Draft mode grants starter draft kit & realm mutations (5.4337ms)
+✔ P2P Network Room Manager: generates 6-char room code and manages room lifecycle (3.436ms)
+✔ Multiplayer State Sync: SaveManager.serializeGameState and applySaveData cleanly synchronizes board between peers (40.9439ms)
+✔ Multiplayer Reconnection & Session Recovery: saves snapshots, restores session, handles REJOIN_ROOM packet and reconnects (1.5456ms)
+✔ Town Milestone Perks: town level 2+ provides regeneration for owner (4.417ms)
+✔ Mobile Display Manager: manages preferences, orientation checks and drawer anti-overlap (0.614ms)
+✔ every tree paints at 64x64 (1.605ms)
+✔ every tree has an exported model at 64x64 (23.9817ms)
+✔ the exported models match what the painter draws (53.8133ms)
+✔ no orphaned tree models are left behind (0.4649ms)
+✔ every renderer tree name resolves to a painted species (0.6313ms)
+✔ aliases paint exactly like their canonical species (88.1113ms)
+✔ a variant is normalised, so any integer is accepted (8.2912ms)
+✔ every tree is shaded, not a flat silhouette (7.1374ms)
+✔ every tree is lit from the left (5.6078ms)
+✔ every tree is lit from above as well as the left (2.8026ms)
+✔ every tree has substance and its trunk base sits on the anchor (3.4428ms)
+✔ no two tree models share a sprite (1.1877ms)
+✔ the species are distinguishable by silhouette (1.3266ms)
+✔ large continent contains dense deterministic scenery with clear walking corridors (359.3995ms)
+✔ new material sheet is opaque RGB and every detail atlas cell contains isolated artwork (304.1283ms)
+✔ ground material projection preserves alpha, seams and cliffs, and shades night pixels (35.8175ms)
+✔ winding paths keep exact endpoints and minimap fits expanded world and dungeon coordinates (2.1961ms)
+✔ navigation is private to the local human choosing a move and disappears during travel (1.5671ms)
+✔ offscreen destinations map to all eight generated arrow directions and stay near the hero (2.336ms)
+✔ visible markers need no compass and many far destinations in one direction share a count and nearest camera target (0.228ms)
+✔ panned-offscreen actors and narrow phone screens keep direction buttons in reach (0.431ms)
+✔ generated navigation PNG has real transparency and a visible icon in every atlas cell (151.6665ms)
+✔ the zoom is always a whole number of screen pixels per world pixel (1.4407ms)
+✔ an in-between scale is never reachable (2.0683ms)
+✔ the ladder is monotonic and reachable in both directions (0.217ms)
+✔ degenerate input falls back instead of producing a broken transform (0.3244ms)
+✔ the default zoom is an even scale at every viewport width (0.3409ms)
+✔ every prop combination paints at the sprite size (495.9202ms)
+✔ the generator scale maps onto the baked size buckets (0.1764ms)
+✔ every prop is shaded, not a flat silhouette (415.8976ms)
+✔ every prop is lit from the left (271.8861ms)
+✔ every prop sits in a cast shadow (226.6937ms)
+✔ every prop has substance and fits inside its sprite (211.0446ms)
+✔ the five prop types are distinguishable (2.0322ms)
+✔ every variant of a type is a different shape (4.2708ms)
+✔ a biome changes how its clutter looks, and night dims it (24.7687ms)
+✔ the crystal shimmers and the matte props ignore the pulse (2.2115ms)
+✔ an unknown biome falls back instead of throwing (0.961ms)
+✔ a save taken mid-walk restores the hero onto its node (44.256ms)
+✔ every stored hero position belongs to its stored node (6.0237ms)
+✔ load rejects a save written by a newer format version (4.0486ms)
+✔ load rejects malformed JSON instead of throwing (0.3799ms)
+✔ load rejects a save with no players (0.4667ms)
+✔ missing or corrupt numbers fall back to sane values (4.5764ms)
+✔ a restored hero always has all four equipment slots (5.0007ms)
+✔ town deeds pointing at nodes that no longer exist are dropped (7.6347ms)
+✔ starting a new game resets the board instead of inheriting the previous one (13.1078ms)
+✔ starting a new game clears leftover transient state (7.8917ms)
+✔ the sky is banded, not a gradient (57.7632ms)
+✔ each sky row is flat and its dither repeats, so the tile is seamless (87.0461ms)
+✔ the sky bands run from zenith to horizon and brighten downward (61.5095ms)
+✔ the sky covers every pixel and honours the requested height (126.8975ms)
+✔ an unknown time of day falls back to the day sky (3.0727ms)
+✔ every celestial body is a shaded disc inside a dithered halo (48.6712ms)
+✔ the sun is lit from the upper-left and the moon is a crescent (13.9895ms)
+✔ the cloud size buckets are distinct and ordered (7.7247ms)
+✔ a sea cloud is flatter than a sky cloud (9.1335ms)
+✔ every cloud is shaded, lit from above and carries a rim (64.0809ms)
+✔ cloud shapes, sizes and times of day all differ (60.3082ms)
+✔ the exported sky models match what the painter draws (38.5778ms)
+✔ no orphaned sky models are left behind (0.4568ms)
+✔ biome transitions blend only the border without changing the interior, cliffs or opacity (58.127ms)
+✔ every biome paints at the sprite size in all four variants (0.2761ms)
+✔ the tile geometry matches the 2:1 board projection (0.1819ms)
+✔ every tile has an exported model at the sprite size (63.1385ms)
+✔ the exported tiles match what the painter draws (173.1461ms)
+✔ no orphaned tile models are left behind (1.27ms)
+✔ an unknown biome falls back instead of painting nothing (8.1917ms)
+✔ the top face is solid, so the sky never shows through the ground (7.3137ms)
+✔ a flat tile has no cliff and a cliffed tile does (4.7839ms)
+✔ nothing spills outside the sprite or above the north vertex (2.8966ms)
+✔ every tile is shaded, not a flat colour fill (40.7574ms)
+✔ flat ground is neutral, so a run of tiles reads as one surface (9.8159ms)
+✔ a cliffed tile is lit from the left, where the light actually is (3.8534ms)
+✔ the ground grain is sparse, neutral, and NOT a regular grid (30.2825ms)
+✔ every biome actually paints its own surface detail (25.5794ms)
+✔ every biome scatters its detail differently from tile to tile (52.9271ms)
+✔ the two cliff faces agree with the top face about the light (63.0197ms)
+✔ every biome is a distinct colour and day differs from night (4.8539ms)
+✔ the day and night palettes are authored for every biome (0.7093ms)
+✔ no two biomes share a tile (2.2123ms)
+✔ all 15 regions have towns, services, optional treasure and real step-by-step interregional crossings (5.5857ms)
+✔ each dungeon has six connected rooms, loops, a guardian and a reachable surface exit (51.6625ms)
+✔ regional artwork has 432 occupied transparent cells, unique sheets and a corresponding building role for every service (1970.6492ms)
+✔ expanded dungeons give enough torch time for exploration and still reach darkness (0.6417ms)
+ℹ tests 209
+ℹ suites 0
+ℹ pass 209
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4237.6751
+
+> chronicles-of-fortuna-dokapon@1.0.0 check:css
+> node scripts/check-css-coverage.cjs
+
+stylesheet: dist/assets/game-CYGhyo_u.css (71.1 kB)
+style classes checked: 664
+covered by custom inline CSS / JS-only selectors: 35
+spot checks: 10/10 present
+pixel UI components in dist/index.html: 12/12
+no glass chrome in dist/index.html: 8/8 clean
+no screen filters in dist/index.html: 5/5 clean
+
+OK: compiled stylesheet covers every utility class used by the app.

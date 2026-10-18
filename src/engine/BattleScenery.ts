@@ -1,129 +1,19 @@
-import { regionalArt } from './RegionalScenery';
 import { generatedBackdrops, backdropKey } from './GeneratedBackdrops';
-import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
-import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
-import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import type { TimeOfDay } from '../game/EcosystemSystem';
-import { foliageForBiome } from './BiomeArt';
-import { resolveBiome, terrainPalette } from './IsometricTerrainPainter';
-import { drawGroundClusters } from './EnvironmentArt';
-import { worldDetails } from './WorldDetails';
-import { BIOME_DRESSING, SETTLEMENT_DRESSING, worldNoise } from './WorldEcology';
-import type { WorldDetailName } from './WorldDetails';
 
-/** All scenery and combatants share this ground plane, without separate raised platforms. */
+/** Both fighters stand on the authored foreground, including on tall phone viewports. */
 export function battleGroundLayout(w: number, h: number) {
-  const floorY = Math.round(h * .64);
+  const floorY = Math.round(h * (w / h < 1.3 ? .82 : .77));
   const spread = Math.round(Math.min(220, w * .23));
-  const depth = Math.round(Math.min(48, w * .055));
+  const depth = Math.round(Math.min(32, h * .045, w * .055));
   return { floorY, playerX: Math.round(w / 2) - spread, playerY: floorY + depth,
     enemyX: Math.round(w / 2) + spread, enemyY: floorY - depth };
 }
 
-/** Dense scenery surrounds a clearing; full sprite bounds avoid combat silhouettes. */
-export function battleDressingLayout(w: number, h: number) {
-  const ground = battleGroundLayout(w, h);
-  const horizon = ground.floorY - (Math.max(4, Math.round(h * .22 / 24)) + 2) * 24 + 12;
-  const scale = w >= 760 ? 2 : 1;
-  const placements: { x: number; y: number; scale: number; tree: boolean; seed: number }[] = [];
-  const clear = (x: number, y: number, size: number) =>
-    [[ground.playerX, ground.playerY], [ground.enemyX, ground.enemyY]].every(([fx, fy]) =>
-      x + size / 2 < fx - 76 || x - size / 2 > fx + 76 || y < fy - 160 || y - size > fy + 26) &&
-    (x + size / 2 < ground.playerX - 76 || x - size / 2 > ground.enemyX + 76 ||
-      y < ground.enemyY - 60 || y - size > ground.playerY + 32);
-  for (let row = 0; row < 3; row++) {
-    const size = row === 0 ? 1 : scale, step = row === 0 ? 70 : 96 * scale * .62;
-    for (let i = -1; i <= Math.ceil(w / step); i++) {
-      const x = Math.round(i * step + (row % 2) * step / 2);
-      const y = Math.round(horizon + 12 + row * 28 + worldNoise(i, row, 4) * 18);
-      if (clear(x, y, 96 * size)) placements.push({ x, y, scale: size, tree: (i + row) % 3 === 0, seed: i + row * 29 });
-    }
-  }
-  for (let row = 0; row < 5; row++) {
-    const y = Math.round(horizon + 90 + row * (h - horizon - 70) / 4);
-    // Narrow screens keep partial edge clusters rather than crowding the fighters.
-    if (w < 760) for (const x of [-24, w + 24]) {
-      if (clear(x, y, 96)) placements.push({ x, y, scale: 1, tree: row < 3, seed: row * 17 + x });
-    }
-    for (let i = 0; i < Math.ceil(w / (78 * scale)); i++) {
-      const x = Math.round((i + .3 + worldNoise(i, row, 8) * .5) * 78 * scale);
-      if (clear(x, y, 96 * scale)) placements.push({ x, y, scale, tree: row < 3 && i % 3 === 0, seed: i + row * 37 + 100 });
-    }
-  }
-  return placements.sort((a, b) => a.y - b.y);
-}
-
-const sceneryFeet = new WeakMap<HTMLCanvasElement, number>();
-/** Anchor visible pixels rather than transparent canvas padding, with a tight contact shadow. */
-function drawGroundedScenery(ctx: CanvasRenderingContext2D, image: HTMLCanvasElement, x: number, y: number, scale: number, night: boolean) {
-  let foot = Number(image.dataset.footY);
-  if (!Number.isFinite(foot)) {
-    foot = sceneryFeet.get(image) ?? -1;
-    if (foot < 0) {
-      const data = image.getContext('2d')!.getImageData(0, 0, image.width, image.height).data;
-      foot = image.height - 1;
-      findFoot: for (let row = image.height - 1; row >= 0; row--) for (let col = 0; col < image.width; col++) {
-        if (data[(row * image.width + col) * 4 + 3] >= 80) { foot = row; break findFoot; }
-      }
-      sceneryFeet.set(image, foot);
-    }
-  }
-  ctx.save();
-  ctx.fillStyle = night ? '#101923' : '#20271e';
-  ctx.globalAlpha = .32;
-  const rx = Math.max(5, image.width * scale * .23), ry = Math.max(2, Math.round(scale * 4));
-  for (let row = -ry; row <= ry; row++) {
-    const half = Math.round(rx * Math.sqrt(Math.max(0, 1 - (row / (ry + 1)) ** 2)));
-    ctx.fillRect(Math.round(x - half), Math.round(y + row), half * 2, 1);
-  }
-  ctx.restore();
-  ctx.drawImage(image, Math.round(x - image.width * scale / 2), Math.round(y - foot * scale), image.width * scale, image.height * scale);
-}
-
-/** Arena scenery shares the board's pixels, materials, light and vegetation. */
-export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: number, biome: string, time: number, timeOfDay: TimeOfDay, boss = false, town = false, nodeId = 0) {
+/** Preserve the generated scene's own floor, architecture and vegetation as one coherent space. */
+export function drawBattleScenery(ctx: CanvasRenderingContext2D, w: number, h: number, biome: string, _time: number, timeOfDay: TimeOfDay, boss = false, _town = false, nodeId = 0) {
   ctx.imageSmoothingEnabled = false;
-  generatedBackdrops.draw(ctx, w, h, backdropKey(biome, nodeId), boss ? 'DUSK' : timeOfDay);
-  const { floorY } = battleGroundLayout(w, h), night = timeOfDay === 'NIGHT';
-  // Extend the floor beyond the viewport. A visible diamond edge makes the arena look airborne.
-  const columns = Math.ceil(w / 96) + 2;
-  const rearDepth = -(Math.max(4, Math.round(h * .22 / 24)) + 2);
-  const frontDepth = Math.ceil((h - floorY) / 24) + 2;
-  const horizon = floorY + rearDepth * 24 + 12;
-  const palette = terrainPalette(resolveBiome(biome), night);
-  ctx.save(); ctx.beginPath(); ctx.rect(0, horizon, w, h - horizon); ctx.clip();
-  ctx.fillStyle = palette.top; ctx.fillRect(0, horizon, w, h - horizon);
-  for (let depth = rearDepth; depth <= frontDepth; depth++) for (let column = -columns; column <= columns; column++) {
-    const x = Math.round(w / 2 + column * 96 + (Math.abs(depth) % 2) * 48), y = floorY + depth * 24;
-    const tile = isometricTerrainRenderer.getTileSprite(backdropKey(biome,nodeId), { cliffs: false, night, variant: Math.abs(column * 7 + depth * 13) % 4 });
-    ctx.drawImage(tile, x - 52, y - 28);
-  }
-  // Quiet the repeating board texture so fighters remain the visual focus.
-  ctx.fillStyle = palette.top; ctx.globalAlpha = .22; ctx.fillRect(0, horizon, w, h - horizon);
-  ctx.restore();
-  drawGroundClusters(ctx, w, h, horizon, palette.top, palette.cliffLeft);
-  // A worn approach links architecture to the arena, leaving the center clear.
-  for (let i = 0; i < 14; i++) {
-    const x = Math.round(w * .5 - 90 + i * 13), y = horizon + 24 + i * 5;
-    ctx.fillStyle = palette.cliffLeft; ctx.globalAlpha = .3;
-    ctx.fillRect(x, y, 38 + i % 3 * 4, 6); ctx.fillRect(x + 8, y + 6, 22, 3);
-  }
-  ctx.globalAlpha = 1;
-  const theme=backdropKey(biome,nodeId);
-  const ground=battleGroundLayout(w,h);
-  // The same purpose-built regional objects frame both map and battle clearings.
-  for(let i=0;i<Math.ceil(w*h/18000);i++){
-    const x=Math.round(worldNoise(i,1,31)*w),y=Math.round(horizon+42+worldNoise(i,2,31)*(h-horizon-42));
-    if([[ground.playerX,ground.playerY],[ground.enemyX,ground.enemyY]].some(([fx,fy])=>Math.abs(x-fx)<100&&Math.abs(y-fy)<70))continue;
-    const image=regionalArt.get(theme,i%3?'undergrowth':'rocks');
-    if(image)drawGroundedScenery(ctx,image,x,y,1,night);
-  }
-  for(const placement of battleDressingLayout(w,h)){
-    const index=Math.abs(placement.seed);
-    const slot=placement.tree?(theme.startsWith('dungeon_')?'cliff':index%2?'nature_large':'nature_alternate'):index%4===0?'wall':index%3===0?'cliff':'undergrowth';
-    const image=regionalArt.get(theme,slot);if(!image)continue;
-    drawGroundedScenery(ctx,image,placement.x,placement.y,1,night);
-  }
-  const landmark=regionalArt.get(theme,boss?'boss':town?'capital':'landmark');
-  if(landmark)drawGroundedScenery(ctx,landmark,w/2,horizon+26,1,night);
+  // Bottom-aligned cover retains the walkable foreground instead of cropping it out.
+  // No board tiles or miniature map props are painted over the authored battle scene.
+  generatedBackdrops.draw(ctx, w, h, backdropKey(biome, nodeId), boss ? 'DUSK' : timeOfDay, 1);
 }
