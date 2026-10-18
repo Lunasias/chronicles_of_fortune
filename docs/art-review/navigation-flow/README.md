@@ -6,9 +6,11 @@ Destination markers and eight compass directions use [original generated transpa
 
 After a roll, offscreen destinations are grouped by their actual screen-space bearing around the hero. Count badges show how many destinations lie in each direction, including markers hidden behind the minimap. Clicking a compass arrow focuses the camera on a destination; it does not spend movement. Click the destination marker to choose the actual move. Marker placement and picking share the same building clearance.
 
+Navigation is private client UI: destination markers, compass and path preview are passed to the renderer only while the local human player is choosing a destination with moves remaining. They disappear during travel, AI turns and other network players' turns. Mouse, touch and gamepad selection use the same ownership/phase policy. Shared game state is retained for movement and synchronization.
+
 ## Verification
 
-- `npm run verify`: TypeScript, production build, 200 tests and CSS coverage checks pass.
+- `npm run verify`: TypeScript, production build, 201 tests and CSS coverage checks pass, including navigation ownership and movement-phase regression coverage.
 - Browser: real reachable-path calculation with a 24-step roll, compass click, camera focus and return to hero.
 - Browser: 390 × 844 portrait layout and desktop viewport.
 - Browser: actual magician skill command, primary impact, recovery and turn swap without the delayed blue shield. Manual playback covers this representative skill, not every job/monster combination or physical device.

@@ -1,5 +1,10 @@
 import { createArtworkImage } from './ArtworkLoading';
 
+/** Navigation is private input UI, visible only while this client chooses its move. */
+export function canShowMovementNavigation(phase: string, remainingMoves: number, isAI: boolean, isLocalTurn: boolean): boolean {
+  return phase === 'CHOOSING_PATH' && remainingMoves > 0 && !isAI && isLocalTurn;
+}
+
 export interface NavigationPoint { id: number; x: number; y: number }
 export interface DirectionGuide extends NavigationPoint { sector: number; count: number }
 export function markerClearance(type: string): number {

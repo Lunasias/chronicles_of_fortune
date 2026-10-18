@@ -6,6 +6,7 @@ import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
+import { canShowMovementNavigation } from './engine/NavigationArrows';
 import { HUD } from './ui/HUD';
 import { BattleUI } from './ui/BattleUI';
 import { TownUI } from './ui/TownUI';
@@ -153,6 +154,10 @@ class DokaponApp {
     if (!networkRoomManager.isInRoom()) return true;
     if (this.game.activePlayer.isAI) return false;
     return this.game.activePlayerIdx === networkRoomManager.getLocalPlayerIndex();
+  }
+
+  private canShowMovementNavigation(): boolean {
+    return canShowMovementNavigation(this.game.phase, this.game.remainingMoves, this.game.activePlayer.isAI, this.isMyTurn());
   }
 
   private startMultiplayerGame(opts: MultiplayerStartOptions) {
@@ -475,9 +480,8 @@ class DokaponApp {
   }
 
   private selectNodeToMove(targetNode: BoardNode) {
-    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
+    if (!this.canShowMovementNavigation()) return;
     if (!this.game.highlightedNodes.includes(targetNode.id)) return;
-    if (networkRoomManager.isInRoom() && !this.isMyTurn()) return;
 
     let path = this.game.findPathToTarget(targetNode.id);
     if (!path || path.length <= 1) {
@@ -588,8 +592,7 @@ class DokaponApp {
   // INTERACTIVE CLICK / TAP-TO-MOVE TILE SELECTION ON THE 2.5D BOARD
   // =========================================================================
   private handleCanvasSelectAt(clientX: number, clientY: number) {
-    if (this.game.remainingMoves <= 0 || this.game.phase === 'MOVING') return;
-    if (networkRoomManager.isInRoom() && !this.isMyTurn()) return;
+    if (!this.canShowMovementNavigation()) return;
 
     const directionId = this.renderer.navigationTargetAt(clientX, clientY);
     if (directionId !== null && this.game.highlightedNodes.includes(directionId)) {
@@ -722,6 +725,7 @@ class DokaponApp {
   }
 
   private cycleHighlightedNode(direction: number) {
+    if (!this.canShowMovementNavigation()) return;
     if (this.game.highlightedNodes.length === 0) return;
     const curIdx = this.game.highlightedNodes.indexOf(this.renderer.hoveredNodeId ?? -1);
     let nextIdx = curIdx + direction;
@@ -791,7 +795,9 @@ class DokaponApp {
   private bindInteractiveTileSelection() {
     // Mouse hover over 2.5D isometric tiles
     this.canvas.addEventListener('mousemove', e => {
-      if (this.isDragging || this.game.phase === 'MOVING' || this.game.phase === 'TITLE') {
+      if (this.isDragging || !this.canShowMovementNavigation()) {
+        this.renderer.hoveredNodeId = null;
+        this.canvas.style.cursor = 'default';
         this.inspectUI.hideMoveDestinationPreview();
         return;
       }
@@ -3731,8 +3737,8 @@ class DokaponApp {
           this.game.allNodes,
           this.game.players,
           this.game.activePlayer,
-          this.game.highlightedNodes,
-          this.renderer.previewPathNodeIds,
+          this.canShowMovementNavigation() ? this.game.highlightedNodes : [],
+          this.canShowMovementNavigation() ? this.renderer.previewPathNodeIds : [],
           time
         );
       }

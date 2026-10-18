@@ -2,8 +2,18 @@ import './_browser-stubs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { offscreenDirectionGuides, markerClearance } from '../.test-build/engine/NavigationArrows.js';
+import { offscreenDirectionGuides, markerClearance, canShowMovementNavigation } from '../.test-build/engine/NavigationArrows.js';
 const {decodePNG}=createRequire(import.meta.url)('../scripts/lib/png.cjs');
+
+test('navigation is private to the local human choosing a move and disappears during travel',()=>{
+  assert.equal(canShowMovementNavigation('CHOOSING_PATH',24,false,true),true);
+  for(const phase of ['MOVING','BOARD_TURN','ROLLING','TILE_EVENT','TITLE']) {
+    assert.equal(canShowMovementNavigation(phase,24,false,true),false);
+  }
+  assert.equal(canShowMovementNavigation('CHOOSING_PATH',24,false,false),false);
+  assert.equal(canShowMovementNavigation('CHOOSING_PATH',24,true,true),false);
+  assert.equal(canShowMovementNavigation('CHOOSING_PATH',0,false,true),false);
+});
 
 test('offscreen destinations map to all eight generated arrow directions and stay near the hero',()=>{
   const hero={x:640,y:400};
