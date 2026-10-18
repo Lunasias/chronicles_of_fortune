@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fortuna · ภาพและแอนิเมชันใหม่</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0b1928;color:#f3e7c9;font-family:Tahoma,sans-serif}main{max-width:1240px;margin:auto;padding:36px 24px}header{border-bottom:1px solid #5c7692;padding-bottom:24px}header small{color:#e1b965;letter-spacing:3px;font-size:11px}h1{font-size:30px;font-weight:500;margin:14px 0}p{color:#b7cbdb;font-size:13px;line-height:1.8}nav,.controls{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0;align-items:center}button,a{font:inherit;color:inherit}button{padding:10px 16px;background:#173451;border:1px solid #627e98;cursor:pointer}button[aria-pressed=true]{background:#d7b674;color:#11253a}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #e8c680;outline-offset:3px}a{color:#e4bd77}input[type=range]{accent-color:#dfbf81;flex:1;min-width:120px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.card{border:1px solid #3b5873;background:#102a43;overflow:hidden}.card canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background:linear-gradient(#153654,#11253a)}.card h2{font-size:14px;margin:14px 16px 6px;font-weight:500;overflow-wrap:anywhere}.card p{font-size:11px;margin:0 16px 16px}.review-note{border-left:2px solid #d5b479;padding-left:14px}#artworkLoading{position:fixed;inset:0;background:#0b1928eF;z-index:100;display:grid;place-items:center;text-align:center}#artworkLoading[hidden]{display:none}#artworkLoading button[hidden]{display:none}#artworkLoading progress{accent-color:#dfbf81;width:260px}#artworkLoading h2{font-size:20px}footer{margin-top:32px;border-top:1px solid #395570;padding-top:18px;font-size:12px}@media(max-width:500px){main{padding:24px 14px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.card h2{font-size:12px;margin:10px 10px 5px}.card p{margin:0 10px 10px}h1{font-size:23px}nav button{flex:1;padding:10px 8px}}
+  </style>
+</head>
+<body><main>
+  <header><small>FORTUNA / PRESENTATION ATELIER</small><h1>ภาพใหม่ที่เคลื่อนไหวในเกมจริง</h1><p>อาชีพขั้นสูง 18 อาชีพ · คู่หู 27 ตัว · ปะทะ 6 แบบ · รายละเอียดโลก 6 แบบ<br>ใช้ภาพและตัวตัดเฟรมชุดเดียวกับเกม เลื่อนดูจังหวะหรือหยุดเทียบแต่ละท่าได้</p></header>
+  <nav aria-label="ประเภทภาพ"><button data-tab="heroes" aria-pressed="true">อาชีพขั้นสูง</button><button data-tab="companions" aria-pressed="false">คู่หู</button><button data-tab="impact" aria-pressed="false">จังหวะปะทะ</button><button data-tab="world" aria-pressed="false">โลกเคลื่อนไหว</button></nav>
+  <div class="controls"><button id="play" aria-pressed="true">หยุด</button><label for="timeline">จังหวะ</label><input id="timeline" type="range" min="0" max="100" value="0"><output id="frameLabel">0%</output><label><input id="reduced" type="checkbox"> ลดการเคลื่อนไหว</label></div>
+  <p class="review-note" id="reviewNote">เตรียมท่า → ปล่อยพลัง → คืนท่า · ภาพอาชีพใหม่ใช้ในสนามต่อสู้ ส่วนบนแมพยังใช้ภาพแปดทิศทาง</p>
+  <section class="grid" id="gallery" aria-label="แกลเลอรีภาพ"></section>
+  <footer><a href="/">กลับเกม</a> · <a href="/effects-review.html">เอฟเฟกต์สกิลทั้งหมด</a> · <a href="/art-review.html">แกลเลอรีโลกและตัวละคร</a></footer>
+</main><script type="module" src="/src/presentation-review.ts"></script></body>
+</html>

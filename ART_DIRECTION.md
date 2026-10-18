@@ -1,5 +1,7 @@
 # Fortuna — visual production guide
 
+The [presentation update](docs/art-review/presentation-v1/README.md) adds seven versioned generated atlases (225 cells), dedicated battle identities for all eighteen promoted jobs, companion action poses, contact feedback and ambient world loops. Its runtime gallery is `/presentation-review.html`; provenance and generation prompts live in `public/assets/presentation-v1/`.
+
 The [2026-10-18 world rebuild](docs/art-review/world-rebuild-v1/README.md) supersedes the historical 312-node layout and generic foreground dressing below: 760 surface nodes, 108 dungeon nodes, 432 generated regional sprites and twenty new ground materials are now the production baseline.
 
 ## North star

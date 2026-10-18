@@ -19,6 +19,10 @@ import { actorScaleForViewport, EffectClock } from '../engine/ArtDirection';
 import { prefersReducedMotion } from './GraphicsSettings';
 import { drawBattleScenery, battleGroundLayout } from '../engine/BattleScenery';
 import { magicElementForJob } from '../engine/MagicArt';
+import { presentationArt } from '../engine/PresentationArt';
+import { JOB_VISUALS } from '../engine/JobVisuals';
+import { updateBattlePresentation } from './BattlePresentation';
+import { combatMotion } from '../engine/CombatMotion';
 
 export class BattleUI {
   private game: GameState;
@@ -70,14 +74,16 @@ export class BattleUI {
       return;
     }
 
-    const sprite = companionSprites.getCompanionSprite(summon.companion);
+    const progress = Math.min(1, elapsed / summon.duration);
+    const sprite = presentationArt.companion(resolveCompanionKey(summon.companion), progress, prefersReducedMotion()) || companionSprites.getCompanionSprite(summon.companion);
     if (!sprite) return;
 
     // Fade in quickly, hold, then fade out over the final third.
-    const fadeIn = Math.min(1, elapsed / 220);
-    const fadeOut = Math.min(1, (summon.duration - elapsed) / 420);
+    const fadeIn = Math.min(1, elapsed / (summon.duration * .12));
+    const fadeOut = Math.min(1, (summon.duration - elapsed) / (summon.duration * .22));
     const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
-    const rise = Math.round((1 - fadeIn) * 14);
+    const rise = prefersReducedMotion() ? 0 : Math.round((1 - fadeIn) * 14);
+    const assistStep = prefersReducedMotion() ? 0 : Math.round(Math.sin(progress * Math.PI) * 24);
     const scale = this.canvas.width >= 900 ? 2 : 1;
 
     const w = COMPANION_SPRITE_SIZE * scale;
@@ -91,11 +97,11 @@ export class BattleUI {
     ctx.fillStyle = summon.companion.color || '#ec4899';
     ctx.globalAlpha = alpha * 0.25;
     ctx.beginPath();
-    pixelEllipse(ctx, summon.x, summon.y + h * 0.30, w * 0.34, h * 0.13, ctx.fillStyle);
+    pixelEllipse(ctx, summon.x, summon.y + 3, w * 0.34, h * 0.13, ctx.fillStyle);
     ctx.fill();
 
     ctx.globalAlpha = alpha;
-    ctx.drawImage(sprite, Math.round(summon.x - w / 2), Math.round(summon.y - h * 0.84 - rise), w, h);
+    ctx.drawImage(sprite, Math.round(summon.x - w / 2 + assistStep), Math.round(summon.y - h * 0.84 - rise), w, h);
     ctx.restore();
   }
 
@@ -133,7 +139,7 @@ export class BattleUI {
   // Cinematic Combat Cutscene State
   public cutscene = {
     active: false,
-    phase: 'idle' as 'idle' | 'dash' | 'impact' | 'leap_back',
+    phase: 'idle' as 'idle' | 'anticipation' | 'dash' | 'impact' | 'leap_back',
     phaseStartTime: 0,
     phaseDuration: 0,
     startX: 0,
@@ -221,7 +227,7 @@ export class BattleUI {
   }
 
   startCutscenePhase(
-    phase: 'dash' | 'impact' | 'leap_back',
+    phase: 'anticipation' | 'dash' | 'impact' | 'leap_back',
     durationMs: number,
     targetOffsetX: number = 0,
     targetOffsetY: number = 0,
@@ -427,6 +433,12 @@ export class BattleUI {
     this.playerSkillUsedThisBattle = false;
     // Never carry a summon over from a previous battle.
     this.activeSummon = null;
+    document.getElementById('battleArrival')?.remove();
+    void presentationArt.preload('impact');
+    for (const hero of [p, enemy.playerRef]) {
+      if (hero && JOB_VISUALS[hero.classKey]) void presentationArt.preload(JOB_VISUALS[hero.classKey].tier === 3 ? 'promotion-3' : 'promotion-2');
+    }
+    if (p.companion) presentationArt.companion(resolveCompanionKey(p.companion), 0, true);
 
     void combatVFX.preloadOwner({job:p.classKey,isDarkling:p.isDarkling});
     void combatVFX.preloadOwner({name:enemy.name,skill:enemy.skillName});
@@ -442,6 +454,7 @@ export class BattleUI {
     audio.voiceFight();
 
     document.getElementById('battleScreen')?.classList.remove('hidden');
+    if (enemy.isBoss) this.showBossArrival(enemy);
     document.getElementById('battleScoutModal')?.classList.add('hidden');
     if (this.canvas.parentElement) {
       this.canvas.width = this.canvas.parentElement.clientWidth || 800;
@@ -517,6 +530,26 @@ export class BattleUI {
     const eHpPct = Math.min(100, Math.max(0, (curEHP / maxEHP) * 100));
     document.getElementById('battleEnemyHP')!.style.width = `${eHpPct}%`;
     document.getElementById('battleEnemyHPText')!.innerText = `${curEHP}/${maxEHP}`;
+    updateBattlePresentation(b, this.playerSkillUsedThisBattle);
+  }
+
+  private showBossArrival(enemy: Combatant) {
+    const battle = this.game.activeBattle;
+    const arrival = document.createElement('div');
+    arrival.id = 'battleArrival'; arrival.className = 'battle-arrival';
+    arrival.setAttribute('role', 'status');
+    const heading = document.createElement('strong'); heading.textContent = enemy.name;
+    const eyebrow = document.createElement('span'); eyebrow.textContent = 'ผู้พิทักษ์ปรากฏตัว';
+    const note = document.createElement('small'); note.textContent = 'ตรวจจุดอ่อนและเตรียมรับการโจมตี';
+    arrival.append(eyebrow, heading, note);
+    const reveal = () => {
+      if (this.game.activeBattle !== battle) return;
+      const loading = document.getElementById('artworkLoading');
+      if (loading && !loading.hidden) { requestAnimationFrame(reveal); return; }
+      document.getElementById('battleScreen')?.append(arrival);
+      setTimeout(() => arrival.remove(), this.getSpeedDelay(2200));
+    };
+    requestAnimationFrame(reveal);
   }
 
   private isPvPLocal(): boolean {
@@ -778,6 +811,7 @@ export class BattleUI {
 
     const magicButton = document.getElementById('btnCmdMagic') as HTMLButtonElement | null;
     if (magicButton) { magicButton.disabled = b.attacker.mp < 10; magicButton.title = 'เวทมนตร์ • ใช้ MP 10'; }
+    updateBattlePresentation(b, this.playerSkillUsedThisBattle);
     // Update EX Burst Button visibility and state
     const burstBtn = document.getElementById('btnCmdBurst');
     if (burstBtn) {
@@ -847,7 +881,7 @@ export class BattleUI {
 
     const companion = player.companion;
     // Materialise the companion's 64x64 model on the battlefield for the length of the summon.
-    this.activeSummon = { companion, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
+    this.activeSummon = { companion, x: summonX, y: summonY, startedAt: performance.now(), duration: this.getSpeedDelay(1800) };
 
     // Spawn magical companion warp portal
     combatVFX.setOwner({companionKey:resolveCompanionKey(companion)});
@@ -924,7 +958,7 @@ export class BattleUI {
     combatVFX.setOwner({companionKey:resolveCompanionKey(comp)});
     combatVFX.spawnCompanionSummonPortal(summonX, summonY, comp.color || '#ec4899');
     combatVFX.spawnFloatingCombatText(summonX, summonY - 50, `💖 ${comp.name}!`, 'crit');
-    this.activeSummon = { companion: comp, x: summonX, y: summonY, startedAt: performance.now(), duration: 2400 };
+    this.activeSummon = { companion: comp, x: summonX, y: summonY, startedAt: performance.now(), duration: this.getSpeedDelay(1800) };
 
     // Heal player
     const healAmt = Math.max(25, Math.floor(playerC.maxHp * 0.35));
@@ -1040,6 +1074,7 @@ export class BattleUI {
     const artOwner={job:b.attacker.playerRef?.classKey,name:b.attacker.playerRef?undefined:b.attacker.name,skill:b.attacker.skillName,isDarkling:b.attacker.playerRef?.isDarkling};
     combatVFX.setOwner(artOwner);
     await combatVFX.preloadOwner(artOwner);
+    await presentationArt.preload('impact');
     if(this.game.activeBattle!==b){this.isExecutingRound=false;return;}
     combatVFX.choreography.clear();
     combatVFX.activeCutscene = null;
@@ -1056,6 +1091,7 @@ export class BattleUI {
     const isPAtk = b.isPlayerAttacking;
 
     // Vector from Attacker to Defender
+    const motion = combatMotion(b.attacker.playerRef?.classKey ?? b.attacker.classKey ?? customIsometricMonsterRenderer.getMonsterArchetypeKey(b.attacker.name), atkAction);
     const atkBaseX = isPAtk ? pxCenter : exCenter;
     const atkBaseY = isPAtk ? pyCenter : eyCenter;
     const defBaseX = isPAtk ? exCenter : pxCenter;
@@ -1142,7 +1178,7 @@ export class BattleUI {
       targetAtkDY = fullDY * 0.48;
       targetDefDX = -fullDX * 0.48;
       targetDefDY = -fullDY * 0.48;
-    } else if (atkAction === 'magic') {
+    } else if (atkAction === 'magic' || (atkAction === 'skill' && motion.ranged)) {
       targetAtkDX = fullDX * 0.22;
       targetAtkDY = fullDY * 0.22;
     } else if (atkAction === 'strike' || atkAction === 'burst') {
@@ -1162,12 +1198,19 @@ export class BattleUI {
       targetAtkDY = fullDY - (isPAtk ? 15 : -15);
     }
 
+    // A readable windup shows the promoted class's authored preparation pose.
+    this.attackerAnim = motion.ranged ? 'magic' : 'strike';
+    this.defenderAnim = 'counter';
+    this.startCutscenePhase('anticipation', motion.windup);
+    await new Promise<void>(resolve => setTimeout(resolve, this.getSpeedDelay(motion.windup)));
+    if (this.game.activeBattle !== b) { this.isExecutingRound = false; return; }
+
     // Set dash animation pose
     this.attackerAnim = (atkAction === 'strike' || atkAction === 'burst') ? 'strike' : atkAction === 'magic' ? 'magic' : 'run';
     this.defenderAnim = 'counter';
 
     // Start Phase 1: Dash forward across the arena! (280ms)
-    this.startCutscenePhase('dash', 280, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+    this.startCutscenePhase('dash', motion.dash, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
     // Trigger Anime Speed Lines for rapid dash movement!
     if (atkAction === 'burst') {
@@ -1195,6 +1238,7 @@ export class BattleUI {
 
     // Phase 2: Impact & Combat Resolution (after dash completes at 280ms)
     setTimeout(() => {
+      if (this.game.activeBattle !== b) return;
       this.cutscene.bannerAlpha = 0;
       this.cutscene.targetBannerAlpha = 0;
       combatVFX.activeCutInBanner = null;
@@ -1245,7 +1289,7 @@ export class BattleUI {
           atkBaseX,
           atkBaseY
         );
-        this.startCutscenePhase('impact', 420, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
+        this.startCutscenePhase('impact', motion.impact, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
       } else {
         if (result.damageToDefender > 0) {
           this.defenderAnim = 'hurt';
@@ -1264,7 +1308,7 @@ export class BattleUI {
         } else if (atkAction === 'skill') {
           combatVFX.triggerSpeedLines('rgba(236, 72, 153, 0.9)', 32);
         }
-        this.startCutscenePhase('impact', 420, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
+        this.startCutscenePhase('impact', motion.impact, targetAtkDX, targetAtkDY, targetDefDX, targetDefDY);
 
         const hitX = defBaseX + targetDefDX;
         const hitY = defBaseY + targetDefDY;
@@ -1318,6 +1362,16 @@ export class BattleUI {
         }
       }
 
+      // Physical contacts get a single readable impact; signature skills retain their own artwork.
+      if (!result.isGiveUp && !result.isMiss && !result.isDodged && (result.isCounterSuccess || result.isMagicBlocked || atkAction === 'attack' || atkAction === 'strike')) {
+        const style = result.isCounterSuccess ? 'counter' : result.isMagicBlocked ? 'ward' : result.isCritical ? 'critical' : result.isStrikeSuccess ? 'heavy' : defAction === 'defend' ? 'block' : 'normal';
+        const x = result.isCounterSuccess ? atkBaseX + this.cutscene.attackerOffsetX : defBaseX + targetDefDX;
+        const y = result.isCounterSuccess ? atkBaseY + this.cutscene.attackerOffsetY : defBaseY + targetDefDY;
+        combatVFX.choreography.clear();
+        combatVFX.choreography.impact(style, x, y - 36);
+        combatVFX.triggerScreenShake(style === 'critical' ? 12 : style === 'heavy' ? 10 : style === 'counter' ? 8 : style === 'block' || style === 'ward' ? 3 : 5);
+      }
+
       // Sync HP
       if (b.attacker.playerRef) b.attacker.playerRef.hp = b.attacker.hp;
       if (b.defender.playerRef) b.defender.playerRef.hp = b.defender.hp;
@@ -1333,8 +1387,8 @@ export class BattleUI {
         audio.miss();
       } else if (result.isCounterSuccess) {
         combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ PARRY COUNTER!! -${result.damageToAttacker}`, 'counter');
-      } else if (result.isStrikeSuccess) {
-        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `💥 CRITICAL SMASH!! -${result.damageToDefender}`, 'crit');
+      } else if (result.isStrikeSuccess || result.isCritical) {
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'crit');
       } else if (atkAction === 'magic') {
         if (result.isMagicBlocked) {
           combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🛡️ BARRIER BLOCKED! -${result.damageToDefender}`, 'magic');
@@ -1362,13 +1416,15 @@ export class BattleUI {
 
       // Phase 3: Airborne backdash leap returning to dais (after 420ms impact)
       setTimeout(() => {
+        if (this.game.activeBattle !== b) return;
         this.cutscene.targetZoom = 1.0;
         this.cutscene.targetBannerAlpha = 0;
         this.attackerAnim = 'run';
-        this.startCutscenePhase('leap_back', 340, 0, 0, 0, 0);
+        this.startCutscenePhase('leap_back', motion.recovery, 0, 0, 0, 0);
 
         // Phase 4: Settle & Turn Swap (after 340ms leap)
         setTimeout(() => {
+          if (this.game.activeBattle !== b) return;
           this.cutscene.active = false;
           this.cutscene.phase = 'idle';
           this.attackerAnim = 'idle';
@@ -1413,9 +1469,9 @@ export class BattleUI {
           this.updateUI();
           this.updateCommandMenu();
           this.checkAITurn();
-        }, this.getSpeedDelay(340));
-      }, this.getSpeedDelay(420));
-    }, this.getSpeedDelay(280));
+        }, this.getSpeedDelay(motion.recovery));
+      }, this.getSpeedDelay(motion.impact));
+    }, this.getSpeedDelay(motion.dash));
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
@@ -1476,7 +1532,10 @@ export class BattleUI {
       const elapsed = now - this.cutscene.phaseStartTime;
       const p = Math.min(1.0, Math.max(0, elapsed / Math.max(1, this.cutscene.phaseDuration)));
 
-      if (this.cutscene.phase === 'dash') {
+      if (prefersReducedMotion()) {
+        this.cutscene.attackerOffsetX = this.cutscene.attackerOffsetY = 0;
+        this.cutscene.defenderOffsetX = this.cutscene.defenderOffsetY = 0;
+      } else if (this.cutscene.phase === 'dash') {
         const ease = 1 - Math.pow(1 - p, 3);
         this.cutscene.attackerOffsetX = this.cutscene.startX + (this.cutscene.targetX - this.cutscene.startX) * ease;
         this.cutscene.attackerOffsetY = this.cutscene.startY + (this.cutscene.targetY - this.cutscene.startY) * ease;
@@ -1605,8 +1664,10 @@ export class BattleUI {
       const elapsed = now - this.cutscene.phaseStartTime;
       const progress = Math.min(1.0, Math.max(0, elapsed / Math.max(1, this.cutscene.phaseDuration)));
 
-      if (this.cutscene.phase === 'impact') {
-        const atkFrame = Math.min(7, Math.floor(progress * 8));
+      if (this.cutscene.phase === 'anticipation') {
+        if (isPlayerAtk) pFrame = 1; else eFrame = 1;
+      } else if (this.cutscene.phase === 'impact') {
+        const atkFrame = Math.min(7, 2 + Math.floor(progress * 6));
         const flinchFrame = Math.min(7, Math.floor(progress * 6));
         if (isPlayerAtk) {
           pFrame = atkFrame;
@@ -1622,7 +1683,7 @@ export class BattleUI {
       }
     }
 
-    const heroSprite = customIsometricHeroRenderer.getHeroSprite(
+    const heroSprite = (!p.isDarkling && !p.skinVariant && !p.prank.hasGraffiti && !p.prank.hasAfro ? presentationArt.promoted(p.classKey, pAnim, pFrame, false) : null) || customIsometricHeroRenderer.getHeroSprite(
       p.classKey,
       heroDir,
       pAnim,
@@ -1650,7 +1711,8 @@ export class BattleUI {
     if (enemyCombatant.isBoss) {
       enemySprite = customIsometricMonsterRenderer.getMonsterSprite(enemyCombatant.name, enemyDir, eAnim, eFrame);
     } else if (enemyCombatant.playerRef) {
-      enemySprite = customIsometricHeroRenderer.getHeroSprite(
+      const rival = enemyCombatant.playerRef;
+      enemySprite = (!rival.isDarkling && !rival.skinVariant && !rival.prank.hasGraffiti && !rival.prank.hasAfro ? presentationArt.promoted(rival.classKey, eAnim, eFrame, true) : null) || customIsometricHeroRenderer.getHeroSprite(
         enemyCombatant.playerRef.classKey,
         enemyDir,
         eAnim,

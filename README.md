@@ -269,3 +269,5 @@ The [generated background collection](docs/art-review/backdrops-v1/README.md) su
 The [combat flow and navigation update](docs/art-review/navigation-flow/README.md) adds continuous recovery, generated destination markers and clickable offscreen direction guidance around the hero.
 
 The [generated combat artwork](docs/art-review/combat-v3/README.md) delivers 132 owner-specific and shared animations (792 frames) in 33 transparent PNG atlases. Every effect pixel comes from generated raster artwork. Open `/effects-review.html` to select a job, monster or companion and scrub its animation.
+
+The [presentation update](docs/art-review/presentation-v1/README.md) adds 225 generated animation cells for all 18 promoted jobs, all 27 companions, six contact effects and six living-world details. Combat has class-specific preparation and recovery, boss introductions and visible MP/status hints. Equipment comparisons and inventory filters work on desktop and mobile. Open `/presentation-review.html` to inspect the new runtime artwork and animation phases.

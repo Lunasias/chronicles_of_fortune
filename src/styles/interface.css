@@ -372,6 +372,66 @@ body.panel-open #floatingEventToast { top: 10px !important; bottom: auto; max-wi
   body #shopItemList { grid-template-columns: minmax(0, 1fr); }
 }
 body :is(#mobileDisplayModal, #mobileRotateGuideOverlay) { z-index: 80; }
+/* Battle and equipment presentation: readable resources, distinct contact feedback. */
+.command-resource { display: block; margin-top: 5px; font-family: 'Kanit', sans-serif; font-size: 12px; font-weight: 500; line-height: 1.45; color: #d0e5ed; }
+body #battleScreen .command-card > span.command-resource { display: block; }
+body #btnCmdStrike .command-resource { color: #332a19; }
+body .command-card { border-top: 3px solid #c29d64; gap: 2px; }
+body .command-card[data-availability='blocked'] { opacity: .72; filter: none; background: #253447; border-color: #7d7174; }
+.command-card[data-availability='blocked'] .command-resource { color: #ffb6aa; }
+.combat-status-rack { display: flex; flex-wrap: wrap; gap: 4px; flex-basis: 100%; margin-top: 5px; }
+.combat-identity { flex-wrap: wrap; }
+.combat-status-rack[hidden] { display: none; }
+.combat-status-chip { padding: 2px 6px; border: 1px solid #6487a4; background: #0c2541; color: #d0eaff; font: 11px/1.5 'Kanit', sans-serif; }
+body :is(#battlePlayerHP, #battleEnemyHP)[data-low='true'] { background: #e2645a; }
+.battle-arrival { position: absolute; z-index: 10; pointer-events: none; left: 50%; top: 25%; transform: translateX(-50%); width: min(440px, calc(100% - 28px)); padding: 18px 24px; border-top: 2px solid #e3b965; border-bottom: 2px solid #e3b965; background: #102744f5; color: #fff1d0; text-align: center; animation: guardian-arrival 2.2s steps(8, end) both; }
+.battle-arrival span { display: block; font: 12px 'Kanit', sans-serif; color: #e8b96d; letter-spacing: 2px; }
+.battle-arrival strong { display: block; font: 600 24px/1.4 'Kanit', sans-serif; margin: 8px 0; overflow-wrap: anywhere; }
+.battle-arrival small { font: 12px 'Kanit', sans-serif; color: #b9d0e0; }
+@keyframes guardian-arrival { 0%, 78% { opacity: 1; } 100% { opacity: 0; } }
+.equipment-comparison { width: 100%; padding: 9px 0 2px; margin-top: 6px; border-top: 1px solid #6384a44d; text-align: left; }
+.equipment-baseline { display: block; font: 11px/1.5 'Kanit', sans-serif; color: #bdd0df; overflow-wrap: anywhere; }
+.equipment-deltas { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.equipment-delta { display: inline-block; padding: 2px 6px; border: 1px solid #6588a3; background: #102744; color: #d8e7f0; font: 600 12px/1.5 'Kanit', sans-serif; }
+.equipment-delta[data-change='up'] { color: #a6e7bf; border-color: #507e70; }
+.equipment-delta[data-change='down'] { color: #ffb6aa; border-color: #ac7770; }
+.equipment-passive { display: block; font: 11px/1.5 'Kanit', sans-serif; color: #dec298; margin-top: 5px; }
+body #satchelItemsList > .inventory-item-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; min-height: 0; }
+body #satchelItemsList > .inventory-item-card > div:first-child { min-width: 0; align-items: flex-start; }
+body #satchelItemsList > .inventory-item-card > button { grid-row: 3; width: 100%; align-self: end; }
+body #satchelItemsList > .inventory-item-card > .equipment-comparison { width: 100%; min-width: 0; }
+body #satchelItemsList > [hidden] { display: none; }
+body #shopItemList > .shop-product-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-content: start; }
+body #shopItemList > .shop-product-card > div:first-child { min-width: 0; }
+body #shopItemList > .shop-product-card > button { align-self: start; white-space: nowrap; }
+.shop-product-card .equipment-comparison, .shop-unavailable { grid-column: 1 / -1; }
+.shop-unavailable { color: #ffb6aa; font: 11px 'Kanit', sans-serif; text-align: right; }
+.inventory-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+body .inventory-filters .pixel-btn { min-height: 36px; padding: 5px 12px; font: 12px 'Kanit', sans-serif; }
+body .inventory-filters .pixel-btn[aria-pressed='true'] { background: #d5b97c; border-color: #efcf91; color: #172b39; }
+.inventory-filter-count { margin-left: auto; color: #bdd1dc; font: 12px 'Kanit', sans-serif; }
+.inventory-filter-empty { text-align: center; padding: 24px; color: #bdd1dc; font: 13px 'Kanit', sans-serif; }
+@media (max-width: 760px) {
+  body #satchelItemsList { grid-template-columns: minmax(0, 1fr); overflow-y: visible; flex: none; }
+  body #equippedSlotsList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  body #equippedSlotsList > div { min-height: 40px; padding: 6px; margin: 0; overflow-wrap: anywhere; }
+  body #statBreakdownList { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  body #statBreakdownList > div { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .command-resource { font-size: 11px; margin-top: 3px; }
+  .combat-status-chip { padding: 1px 4px; font-size: 10px; }
+  .battle-arrival { top: 30%; padding: 12px 16px; }
+  .battle-arrival strong { font-size: 19px; }
+  body #battleCommandDock { max-height: 45dvh; }
+  body #attackerCommandGroup, body #defenderCommandGroup { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  body #battleCommandDock .command-card { min-height: 88px; padding: 8px 5px; }
+  body #battleScreen :is(#btnCmdSummonCompanion, #btnDefSummonCompanion) { grid-column: 1 / -1; flex-direction: row; min-height: 50px !important; gap: 10px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  body #attackerCommandGroup, body #defenderCommandGroup { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)) !important; }
+  body #battleScreen .command-card > .command-resource { font-size: 10px; margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .battle-arrival { animation: none; } }
+body[data-reduced-motion='true'] .battle-arrival { animation: none; }
 @media (max-width: 768px) {
   body [id$='Modal'] > div:first-child[class*='pixel-box'] { padding: 16px; }
 }

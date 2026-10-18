@@ -16,6 +16,7 @@ import { worldDetails } from './WorldDetails';
 import { isometricTerrainRenderer } from './IsometricTerrainRenderer';
 import { roadPoint } from './WorldEcology';
 import { navigationArrows, markerClearance, offscreenDirectionGuides, type DirectionGuide } from './NavigationArrows';
+import { presentationArt, ambientFrame } from './PresentationArt';
 
 export interface Camera2D {
   x: number;
@@ -473,6 +474,7 @@ export class IsometricRenderer {
       }});
     }
 
+    let animatedDetails = 0;
     // 1. Add Isometric Blocks & Props within viewport
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
@@ -504,6 +506,23 @@ export class IsometricRenderer {
           }
         }
       });
+
+      // Small, grounded animated accents live beside service buildings, off the road.
+      const ambientRow = node.type === 'town' ? (node.id % 2 ? 4 : 0)
+        : node.type === 'shop_weapon' ? 1 : node.type === 'fishing' ? 2
+        : node.biome === 'steampunk' && node.type === 'shop_item' ? 3
+        : node.type === 'empty' && node.biome === 'forest' && node.id % 17 === 0 ? 5 : -1;
+      if (ambientRow >= 0 && !this.sceneGroup && animatedDetails < (graphicsPreferences.quality === 'balanced' ? 6 : 14)) {
+        animatedDetails++;
+        const dx = Math.round(px + (node.id % 2 ? -64 : 64)), dy = Math.round(py + 14);
+        renderList.push({depth: depth + 65, draw: () => {
+          const sprite = presentationArt.cell('world', ambientFrame(time, node.id, prefersReducedMotion()), ambientRow, 64);
+          if (!sprite) return;
+          ctx.save();
+          if (obscuresActor(dx,dy,64,64)) ctx.globalAlpha = .25;
+          ctx.drawImage(sprite, dx - 32, dy - 58); ctx.restore();
+        }});
+      }
 
       // Buildings
       const hasBuilding =

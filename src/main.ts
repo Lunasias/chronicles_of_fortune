@@ -6,6 +6,9 @@ import './styles/interface.css';
 import { installInterface } from './ui/Interface';
 import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
+import { equipmentComparison } from './ui/EquipmentComparison';
+import { installInventoryTools } from './ui/InventoryTools';
+import { JOB_VISUALS } from './engine/JobVisuals';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
 import { canAcceptTurnPacket, applyNetworkState } from './engine/MultiplayerSync';
@@ -17,7 +20,7 @@ import { ShopUI, SHOP_CATALOG } from './ui/ShopUI';
 import { PrankUI } from './ui/PrankUI';
 import { WeeklyReportUI } from './ui/WeeklyReportUI';
 import { IsekaiEventUI } from './ui/IsekaiEventUI';
-import { HERO_CLASSES, HERO_SKINS, Player, FIELD_SPELLS } from './game/Player';
+import { HERO_CLASSES, HERO_SKINS, Player, FIELD_SPELLS, TIER3_PROMOTIONS } from './game/Player';
 import { EquipmentItem, pixelSprites } from './engine/PixelSpriteGenerator';
 import { BoardNode } from './game/BoardMap';
 import { Combatant } from './game/BattleEngine';
@@ -3035,6 +3038,10 @@ class DokaponApp {
         }
       };
 
+      const comparison = equipmentComparison(p, item);
+      if (comparison) row.insertAdjacentHTML('beforeend', comparison);
+      row.classList.add('inventory-item-card');
+      row.dataset.category = isEquip ? 'equipment' : 'supplies';
       bagList.appendChild(row);
     });
 
@@ -3045,6 +3052,7 @@ class DokaponApp {
       emptySlot.textContent = `ช่องว่าง ${String(slot + 1).padStart(2, '0')}`;
       bagList.appendChild(emptySlot);
     }
+    installInventoryTools(bagList);
 
     modal.classList.remove('hidden');
   }
@@ -3564,7 +3572,7 @@ class DokaponApp {
     const scene = query.get('art-scene');
     if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
-    const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : 'warrior';
+    const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : JOB_VISUALS[requestedClass]?.base || 'warrior';
     this.visualReviewActive = true;
     if (query.get('metrics') === 'true') {
       this.visualReviewMeter = document.createElement('output');
@@ -3578,6 +3586,14 @@ class DokaponApp {
     if (['pvp', 'report', 'victory'].includes(scene)) party.push({ name: 'Lyra', classKey: 'magician', isAI: false });
     if (scene === 'draft') this.game.gameMode = 'roguelike_draft';
     this.game.initGame(party);
+    if (scene === 'inventory') this.game.activePlayer.inventory.push(...SHOP_CATALOG.filter(item => item.type === 'weapon' || item.type === 'armor').slice(0, 3).map(item => ({ ...item })));
+    if (JOB_VISUALS[requestedClass]) {
+      const hero = this.game.activePlayer;
+      hero.level = 20;
+      const first = JOB_VISUALS[requestedClass].tier === 2 ? requestedClass : Object.entries(TIER3_PROMOTIONS).find(([, entries]) => entries.some(entry => entry.tier2Key === requestedClass))?.[0];
+      if (first) hero.promote(first);
+      if (JOB_VISUALS[requestedClass].tier === 3) hero.promote(requestedClass);
+    }
     if (query.get('companion') === 'true') this.game.activePlayer.companion = createCompanion('pudding');
     const requestedBiome = query.get('biome') || 'forest';
     const node = this.game.allNodes.find(n => n.id === Number(query.get('node') ?? NaN)) || this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];

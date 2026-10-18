@@ -1,4 +1,5 @@
 import { GameState } from '../game/GameState';
+import { equipmentComparison } from './EquipmentComparison';
 import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
@@ -194,8 +195,15 @@ export class ShopUI {
         `;
 
         const buyButton = row.querySelector<HTMLButtonElement>('button')!;
+        const comparison = equipmentComparison(p, item);
+        if (comparison) row.insertAdjacentHTML('beforeend', comparison);
+        row.classList.add('shop-product-card');
         buyButton.disabled = p.gold < item.cost || p.inventory.length >= 12;
         buyButton.title = p.inventory.length >= 12 ? 'กระเป๋าเต็ม' : p.gold < item.cost ? 'ทองไม่เพียงพอ' : `ซื้อ ${item.name}`;
+        if (buyButton.disabled) {
+          const reason = document.createElement('small'); reason.className = 'shop-unavailable';
+          reason.textContent = buyButton.title; row.append(reason);
+        }
 
         row.querySelector('button')!.onclick = () => {
           if (p.gold < item.cost) {

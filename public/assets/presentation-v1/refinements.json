@@ -1,0 +1,14 @@
+{
+  "provider": "OpenAI built-in image generation",
+  "purpose": "Refine cell gutters and complete weapon tips while preserving identities.",
+  "refinements": [
+    {
+      "asset": "promotion-2.png",
+      "prompt": "Edit target: this exact production sprite atlas. Preserve ALL 9 character identities, all4 poses per row, exact4-column9-row grid and transparent background. Fix sprite clipping at cell borders: reconstruct any cut-off weapon tip, staff crystal, spell skull or hand, then make EACH individual sprite composition smaller within ITS OWN cell with at least15percent transparent padding on ALL four sides. Each of the36 individual sprites must be completely visible and separated. Same character sizes consistently across rows and within animation row. Keep foot anchor at85percent of cell height and centerbody at50percent width. Keep crisp chibi pixelart, original colors, outfit and poses. Do not add cells, do not merge cells, do not add text or borders. Remove large sweeping spell trails where necessary so weapons and bodies fit their cells cleanly. The goal is generous transparent gutters and COMPLETE uncropped characters. Exactly4columns9rows."
+    },
+    {
+      "asset": "promotion-3.png",
+      "prompt": "Edit target: exact tier3 hero sprite atlas supplied. Preserve ALL9 identities, their4 poses each and strict4-column9-row grid, genuine transparent background. FIX CLIPPING: reconstruct any missing axe, scythe or sword tips, staff crystals and wings, and SHRINK each of36 separate sprite compositions within its own cell to have at least15percent EMPTY transparent padding on EVERY side. No sprite may touch any cell edge. Align all feet in each row at85percent of cell height and bodies at horizontal center. Keep original pixelart style and costumes and same body size across poses. Remove oversized magic sweeps if they don't fit; character animation is primary and spellFX are separate in game. No inter-cell overlap, no huge halos, no cropped wings. All cells equal; do not add rows or columns or text. Required final layout: exactly4columns9rows with each COMPLETE sprite isolated in broad gutters. Keep transparency."
+    }
+  ]
+}

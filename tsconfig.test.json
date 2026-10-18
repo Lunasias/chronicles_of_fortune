@@ -36,6 +36,7 @@
     "src/game/MonsterDatabase.ts",
     "src/game/EventDirector.ts",
     "src/ui/JourneyUI.ts",
+    "src/ui/EquipmentComparison.ts",
     "src/game/IsekaiEventManager.ts"
   ]
 }
