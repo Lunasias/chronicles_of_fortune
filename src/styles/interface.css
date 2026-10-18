@@ -332,6 +332,45 @@ body #titleScreen::before { background: linear-gradient(90deg, #08172200 25%, #0
 #artworkLoading progress { width: 100%; height: 12px; accent-color: #ffd061; }
 #artworkLoading button { margin-top: 20px; padding: 10px 20px; }
 #artworkLoading button[hidden] { display: none; }
+
+/* Shop workspace: artwork, full-width services and unobscured feedback. */
+body.shop-open #gameEventFeedWindow { display: none !important; }
+body.panel-open #shopModal { justify-content: center !important; align-items: center !important; padding: 64px 16px 16px !important; }
+body #shopModal > div.shop-dialog { width: min(1160px, 100%); max-width: 1160px; max-height: calc(100dvh - 88px) !important; padding: 20px; gap: 12px; }
+body #shopModal .pixel-head { margin-bottom: 0; flex-shrink: 0; gap: 12px; }
+body #shopModal #shopTitle { font-size: 18px; }
+.shop-workspace { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr); min-height: 0; gap: 20px; }
+.shop-art-panel { min-width: 0; margin: 0; align-self: start; }
+body #shopModal #shopDioramaCanvas { display: block; width: 100%; height: auto; max-height: none; aspect-ratio: 3 / 2; margin: 0; }
+.shop-welcome { padding: 14px; margin: 0; border: 1px solid #5985af; border-top: 0; color: #ffe4a2; background: #102c50; font-size: 13px; line-height: 1.7; }
+.shop-catalog-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 10px; }
+.shop-catalog-panel > div:first-child { flex-shrink: 0; flex-wrap: wrap; margin: 0; }
+body #shopItemList { max-height: min(50dvh, 490px); min-height: 100px; margin: 0; padding: 2px 6px 8px 0; }
+body #shopItemList > .pixel-box { flex-direction: column; align-items: stretch; padding: 12px; }
+body #shopItemList > .pixel-box > button { align-self: flex-end; margin-top: auto; }
+body #shopItemList[data-mode='forge'] { display: block; }
+body #shopItemList[data-mode='forge'] > .pixel-box { width: 100%; }
+body #shopItemList[data-mode='forge'] > .pixel-box > div { width: 100%; }
+body #shopItemList[data-mode='forge'] > .pixel-box > div:first-child { flex-wrap: wrap; gap: 10px; }
+body #shopItemList[data-mode='forge'] > .pixel-box > div:nth-child(2) { gap: 12px; flex-wrap: wrap; }
+.shop-notice { flex-shrink: 0; padding: 10px 12px; border: 1px solid #d3a555; background: #10284a; color: #fff0c9; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+body #floatingEventToast { z-index: 120; pointer-events: none; width: max-content; }
+body #floatingToastText { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; max-width: none; }
+body.panel-open #floatingEventToast { top: 10px !important; bottom: auto; max-width: min(760px, calc(100vw - 24px)); max-height: 100px; overflow-y: auto; background: #163d6a; color: #fff1cb; border-color: #ffd073; }
+@media (max-width: 760px) {
+  body.panel-open #shopModal { padding: 60px 8px 8px !important; }
+  body #shopModal > div.shop-dialog { max-height: calc(100dvh - 76px) !important; padding: 12px; overflow-y: auto; }
+  .shop-workspace { grid-template-columns: minmax(0, 1fr); gap: 12px; overflow: visible; }
+  body #shopModal #shopDioramaCanvas { max-height: 220px; object-fit: contain; background: #102744; }
+  .shop-welcome { padding: 8px 10px; font-size: 12px; }
+  body #shopItemList { max-height: 44dvh; flex: auto; }
+  body #shopModal #shopTitle { font-size: 15px; }
+  body #shopItemList > .pixel-box { padding: 10px; }
+  body.panel-open #floatingEventToast { font-size: 12px; padding: 7px 10px; max-height: none; overflow: visible; }
+}
+@media (max-width: 420px) {
+  body #shopItemList { grid-template-columns: minmax(0, 1fr); }
+}
 body :is(#mobileDisplayModal, #mobileRotateGuideOverlay) { z-index: 80; }
 @media (max-width: 768px) {
   body [id$='Modal'] > div:first-child[class*='pixel-box'] { padding: 16px; }

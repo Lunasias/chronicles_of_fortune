@@ -1,0 +1,34 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-10-18",
+  "assets": [
+    {
+      "id": "shop_item",
+      "scene": "Cozy fantasy adventurer general store interior, beautiful carved oak counter, abundant potion bottles, packed herb drawers, ropes, lanterns, backpacks, lucky dice and travel supplies. Warm amber sunlight and emerald glass accents. A friendly adult shopkeeper behind the counter on the right.",
+      "prompt": "Use case: stylized-concept. Production game interior illustration, landscape 1536x1024. Richly detailed authentic crisp pixel art matching high detail fantasy isometric RPG sprites. Clear pixel clusters, vibrant jewel colors, deep warm shadows, no blur, no photorealism. One complete spacious shop interior viewed at a modest elevated isometric angle, no dollhouse exterior, no panels or borders. Plenty of lovingly arranged merchandise and believable floor/counter contact, unified scale. Counter and shopkeeper at middle right; beautiful shelves and architecture across whole image. No UI, buttons, prices, readable text, logos, floating cards, grids or HUD. Scene: Cozy fantasy adventurer general store interior, beautiful carved oak counter, abundant potion bottles, packed herb drawers, ropes, lanterns, backpacks, lucky dice and travel supplies. Warm amber sunlight and emerald glass accents. A friendly adult shopkeeper behind the counter on the right.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-8af45d85-f77b-490f-88aa-4fe164916fc0.png",
+      "asset": "public/assets/art-v2/shop-interiors-v1/shop_item.png"
+    },
+    {
+      "id": "shop_weapon",
+      "scene": "Fantasy dwarven armory interior, elaborate racks of swords, shields and armor, a small glowing forge furnace, carved stone arches and heavy wood counter. Copper amber furnace light and cool steel blue. An adult master blacksmith behind the counter on the right.",
+      "prompt": "Use case: stylized-concept. Production game interior illustration, landscape 1536x1024. Richly detailed authentic crisp pixel art matching high detail fantasy isometric RPG sprites. Clear pixel clusters, vibrant jewel colors, deep warm shadows, no blur, no photorealism. One complete spacious shop interior viewed at a modest elevated isometric angle, no dollhouse exterior, no panels or borders. Plenty of lovingly arranged merchandise and believable floor/counter contact, unified scale. Counter and shopkeeper at middle right; beautiful shelves and architecture across whole image. No UI, buttons, prices, readable text, logos, floating cards, grids or HUD. Scene: Fantasy dwarven armory interior, elaborate racks of swords, shields and armor, a small glowing forge furnace, carved stone arches and heavy wood counter. Copper amber furnace light and cool steel blue. An adult master blacksmith behind the counter on the right.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-0d8c23f3-eeeb-4743-86b7-139ca3a3f911.png",
+      "asset": "public/assets/art-v2/shop-interiors-v1/shop_weapon.png"
+    },
+    {
+      "id": "shop_magic",
+      "scene": "Enchanted fantasy magic shop interior, soaring bookcases, spell scrolls, amethyst crystals, floating candles, brass astrolabes, stained glass windows, ornate curved counter. Rich violet emerald and gold, luminous mystical atmosphere. An adult robed mage shopkeeper behind the counter on the right.",
+      "prompt": "Use case: stylized-concept. Production game interior illustration, landscape 1536x1024. Richly detailed authentic crisp pixel art matching high detail fantasy isometric RPG sprites. Clear pixel clusters, vibrant jewel colors, deep warm shadows, no blur, no photorealism. One complete spacious shop interior viewed at a modest elevated isometric angle, no dollhouse exterior, no panels or borders. Plenty of lovingly arranged merchandise and believable floor/counter contact, unified scale. Counter and shopkeeper at middle right; beautiful shelves and architecture across whole image. No UI, buttons, prices, readable text, logos, floating cards, grids or HUD. Scene: Enchanted fantasy magic shop interior, soaring bookcases, spell scrolls, amethyst crystals, floating candles, brass astrolabes, stained glass windows, ornate curved counter. Rich violet emerald and gold, luminous mystical atmosphere. An adult robed mage shopkeeper behind the counter on the right.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-768b2f9c-dd5b-4de4-9d74-0d8a095bf807.png",
+      "asset": "public/assets/art-v2/shop-interiors-v1/shop_magic.png"
+    },
+    {
+      "id": "shop_forge",
+      "scene": "Fantasy weapon upgrade and elemental rune workshop INTERIOR, huge anvil workbench, engraving tools, four small distinct colored elemental crystals, sword clamped in rune press, glowing furnace, gem cabinets. Amber fire, turquoise mithril and royal purple runes. An adult runesmith behind the workbench on the right.",
+      "prompt": "Use case: stylized-concept. Production game interior illustration, landscape 1536x1024. Richly detailed authentic crisp pixel art matching high detail fantasy isometric RPG sprites. Clear pixel clusters, vibrant jewel colors, deep warm shadows, no blur, no photorealism. One complete spacious shop interior viewed at a modest elevated isometric angle, no dollhouse exterior, no panels or borders. Plenty of lovingly arranged merchandise and believable floor/counter contact, unified scale. Counter and shopkeeper at middle right; beautiful shelves and architecture across whole image. No UI, buttons, prices, readable text, logos, floating cards, grids or HUD. Scene: Fantasy weapon upgrade and elemental rune workshop INTERIOR, huge anvil workbench, engraving tools, four small distinct colored elemental crystals, sword clamped in rune press, glowing furnace, gem cabinets. Amber fire, turquoise mithril and royal purple runes. An adult runesmith behind the workbench on the right.",
+      "source": "C:\\Users\\usEr\\.codex\\generated_images\\01a1455d-ed5e-73a3-8be4-189b5620d076\\exec-9e569db5-0873-457b-8cd1-9d5126c7586b.png",
+      "asset": "public/assets/art-v2/shop-interiors-v1/shop_forge.png"
+    }
+  ]
+}

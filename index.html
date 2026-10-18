@@ -1829,7 +1829,7 @@
 
   <!-- SHOP MODAL (z-40) -->
   <div id="shopModal" class="hidden absolute inset-0 z-40 bg-black/75 flex items-center justify-center p-3 sm:p-4 pointer-events-auto">
-    <div class="pixel-box max-w-[95vw] sm:max-w-2xl w-full p-4 sm:p-5 border-slate-700 flex flex-col max-h-[90vh]">
+    <div class="pixel-box shop-dialog max-w-[95vw] sm:max-w-2xl w-full p-4 sm:p-5 border-slate-700 flex flex-col max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
       <div class="flex justify-between items-center pixel-head pb-2 mb-3">
         <div class="flex items-center gap-2">
           <span class="text-lg">🏪</span>
@@ -1841,8 +1841,12 @@
         </div>
       </div>
 
-      <!-- 2.5D Isometric Shop Interior Diorama -->
-      <canvas id="shopDioramaCanvas" width="560" height="144" class="w-full h-20 sm:h-24 block border border-slate-700 bg-slate-950 mb-2.5"></canvas>
+      <div class="shop-workspace">
+      <aside class="shop-art-panel">
+        <canvas id="shopDioramaCanvas" width="768" height="512" class="w-full block border border-slate-700 bg-slate-950" role="img" aria-label="ภาพภายในร้านค้าแฟนตาซี"></canvas>
+        <p id="shopWelcome" class="shop-welcome">เตรียมเสบียงและอุปกรณ์ให้พร้อมก่อนออกเดินทาง</p>
+      </aside>
+      <section class="shop-catalog-panel" aria-label="บริการและสินค้าของร้าน">
 
       <div class="flex gap-2 mb-2.5">
         <button id="btnShopTabBuy" class="pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950">
@@ -1857,6 +1861,9 @@
       </div>
 
       <div id="shopItemList" class="flex-1 overflow-y-auto space-y-2 pr-1 mb-3"></div>
+      <div id="shopNotice" class="shop-notice" role="status" aria-live="polite" aria-atomic="true">เลือกสินค้าเพื่อดูราคาและซื้อได้ทันที</div>
+      </section>
+      </div>
 
       <div class="flex justify-end pt-2 border-t border-slate-800">
         <button id="btnCloseShop" class="pixel-btn px-5 py-1.5 text-xs font-bold text-slate-300 hover:text-white">

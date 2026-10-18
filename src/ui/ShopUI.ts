@@ -74,12 +74,13 @@ export const SHOP_CATALOG: EquipmentItem[] = [
 export class ShopUI {
   private game: GameState;
   private currentType: string = 'item';
+  private currentMode: 'buy' | 'sell' | 'forge' = 'buy';
   private onLeaveCallback?: () => void;
 
   constructor(game: GameState) {
     this.game = game;
     refreshSettlementOnLoad('shopDioramaCanvas', 'shopModal', () => {
-      this.renderShopInteriorDiorama(document.getElementById('shopDioramaCanvas') as HTMLCanvasElement, this.currentType);
+      this.renderShopInteriorDiorama(document.getElementById('shopDioramaCanvas') as HTMLCanvasElement, this.currentMode === 'forge' ? 'shop_forge' : this.currentType);
     });
     this.bindButtons();
   }
@@ -102,6 +103,7 @@ export class ShopUI {
 
   open(type: string, onLeave: () => void) {
     this.currentType = type;
+    this.currentMode = 'buy';
     this.onLeaveCallback = onLeave;
 
     const modal = document.getElementById('shopModal')!;
@@ -117,6 +119,7 @@ export class ShopUI {
       this.renderShopInteriorDiorama(canvas, type);
     }
 
+    document.getElementById('shopNotice')!.textContent = 'เลือกซื้อ ขาย หรือใช้บริการตีบวกและสลักรูนได้ที่นี่';
     this.renderList('buy');
     modal.classList.remove('hidden');
     // Keep the live event feed readable next to the shop panel.
@@ -132,7 +135,7 @@ export class ShopUI {
           if (spin && p.gold >= spin.cost) {
             p.gold -= spin.cost;
             p.inventory.push({ ...spin });
-            this.game.addLog(`AI ${p.displayName} ซื้อ 2-Spinner!`, 'gold');
+            this.notify(`AI ${p.displayName} ซื้อ 2-Spinner!`, 'gold');
           }
         }
         setTimeout(() => this.handleLeave(), Math.max(100, Math.round(600 / speed)));
@@ -141,9 +144,15 @@ export class ShopUI {
   }
 
   private renderList(mode: 'buy' | 'sell' | 'forge') {
+    this.currentMode = mode;
+    const canvas = document.getElementById('shopDioramaCanvas') as HTMLCanvasElement;
+    if (canvas) this.renderShopInteriorDiorama(canvas, mode === 'forge' ? 'shop_forge' : this.currentType);
+    const welcome = document.getElementById('shopWelcome');
+    if (welcome) welcome.textContent = mode === 'forge' ? 'ไอรอนฟอร์จ · เพิ่มความแกร่งและสลักรูนธาตุให้อาวุธคู่ใจ' : this.currentType === 'shop_magic' ? 'หอมนตรา · คัมภีร์และเวทมนตร์สำหรับการเดินทาง' : this.currentType === 'shop_weapon' ? 'คลังสรรพาวุธ · เลือกอุปกรณ์คู่ใจให้พร้อมสำหรับศึกหน้า' : 'ร้านนักเดินทาง · เสบียง น้ำยา และสปินเนอร์นำโชค';
     const p = this.game.activePlayer;
     document.getElementById('shopPlayerGold')!.innerText = `${p.gold}G`;
     const container = document.getElementById('shopItemList')!;
+    container.dataset.mode = mode;
     container.innerHTML = '';
 
     // Tab button visual styles
@@ -151,6 +160,7 @@ export class ShopUI {
     const tabSell = document.getElementById('btnShopTabSell');
     const tabForge = document.getElementById('btnShopTabForge');
     if (tabBuy && tabSell && tabForge) {
+      for (const [button, value] of [[tabBuy, 'buy'], [tabSell, 'sell'], [tabForge, 'forge']] as const) button.setAttribute('aria-pressed', String(mode === value));
       tabBuy.className = mode === 'buy' ? 'pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
       tabSell.className = mode === 'sell' ? 'pixel-btn pixel-btn-gold px-3.5 py-1 text-xs font-bold text-slate-950' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
       tabForge.className = mode === 'forge' ? 'pixel-btn pixel-btn-red px-3.5 py-1 text-xs font-bold text-white' : 'pixel-btn px-3.5 py-1 text-xs text-slate-300';
@@ -189,17 +199,17 @@ export class ShopUI {
 
         row.querySelector('button')!.onclick = () => {
           if (p.gold < item.cost) {
-            this.game.addLog(`${p.displayName} มีเงินทองไม่พอซื้อ ${item.name}!`);
+            this.notify(`${p.displayName} มีเงินทองไม่พอซื้อ ${item.name}!`);
             return;
           }
           if (p.inventory.length >= 12) {
-            this.game.addLog(`กระเป๋าสัมภาระเต็มแล้ว! ไม่สามารถบรรจุไอเทมเพิ่มได้ (สูงสุด 12 ช่อง)`);
+            this.notify(`กระเป๋าสัมภาระเต็มแล้ว! ไม่สามารถบรรจุไอเทมเพิ่มได้ (สูงสุด 12 ช่อง)`);
             return;
           }
           p.gold -= item.cost;
           p.inventory.push({ ...item });
           audio.coin();
-          this.game.addLog(`🛒 ${p.displayName} ซื้อ ${item.name} สำเร็จ!`, 'gold');
+          this.notify(`🛒 ${p.displayName} ซื้อ ${item.name} สำเร็จ!`, 'gold');
           this.renderList('buy');
         };
 
@@ -233,7 +243,7 @@ export class ShopUI {
           p.gold += sellVal;
           p.inventory.splice(idx, 1);
           audio.coin();
-          this.game.addLog(`ขาย ${item.name} ได้เงิน ${sellVal}G!`, 'gold');
+          this.notify(`ขาย ${item.name} ได้เงิน ${sellVal}G!`, 'gold');
           this.renderList('sell');
         };
 
@@ -308,27 +318,27 @@ export class ShopUI {
       forgeBox.querySelector('#btnDoForge')?.addEventListener('click', () => {
         if (p.weaponUpgradeLevel >= 9) return;
         if (p.gold < forgeCost) {
-          this.game.addLog(`ช่างตีเหล็ก: "เจ้ามีทองไม่พอตีบวก! ต้องการ ${forgeCost}G"`);
+          this.notify(`ช่างตีเหล็ก: "เจ้ามีทองไม่พอตีบวก! ต้องการ ${forgeCost}G"`);
           return;
         }
         p.gold -= forgeCost;
         p.weaponUpgradeLevel++;
         audio.anvilStrike();
-        this.game.addLog(`🔨 ไอรอนฟอร์จ: ${p.displayName} ตีบวก ${wpnName} เป็นระดับ +${p.weaponUpgradeLevel} สำเร็จ! (+3 ATK, +1 SPD)`, 'level');
+        this.notify(`🔨 ไอรอนฟอร์จ: ${p.displayName} ตีบวก ${wpnName} เป็นระดับ +${p.weaponUpgradeLevel} สำเร็จ! (+3 ATK, +1 SPD)`, 'level');
         this.renderList('forge');
       });
 
       const applyRune = (rune: 'fire' | 'ice' | 'thunder' | 'poison', runeName: string) => {
         const cost = 450;
         if (p.gold < cost) {
-          this.game.addLog(`จอมอาคม: "เจ้ามีทองไม่พอสลักรูน! ต้องการ ${cost}G"`);
+          this.notify(`จอมอาคม: "เจ้ามีทองไม่พอสลักรูน! ต้องการ ${cost}G"`);
           return;
         }
         p.gold -= cost;
         p.weaponRune = rune;
         audio.anvilStrike();
         audio.relicChime();
-        this.game.addLog(`✨ สลักรูนสำเร็จ! อาวุธของ ${p.displayName} อาบพลัง [${runeName}] พร้อมแผดเผาศัตรูในสนามรบ!`, 'level');
+        this.notify(`✨ สลักรูนสำเร็จ! อาวุธของ ${p.displayName} อาบพลัง [${runeName}] พร้อมแผดเผาศัตรูในสนามรบ!`, 'level');
         this.renderList('forge');
       };
 
@@ -339,6 +349,12 @@ export class ShopUI {
 
       container.appendChild(forgeBox);
     }
+  }
+
+  private notify(text: string, type: Parameters<GameState['addLog']>[1] = 'info') {
+    this.game.addLog(text, type);
+    const notice = document.getElementById('shopNotice');
+    if (notice) notice.textContent = text;
   }
 
   private handleLeave() {
