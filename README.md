@@ -4,6 +4,20 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring origin
 
 Single-player board campaign against up to 3 AI rivals, local hot-seat play, and online P2P rooms for 2–4 players with optional AI slots.
 
+### Choosing where to walk
+
+Every turn can start in either direction, including back along the road you used last
+turn. Roll the dice, then click/tap a highlighted destination or use the new destination
+dock: **ก่อนหน้า / ถัดไป** previews each option and **เดินไปที่นี่** confirms it.
+The preview shows the actual step count, region, encounter chance and rival presence.
+Use **arrow keys / WASD** to browse, **Enter** to walk, and **F** to return the camera
+to your hero. Controller D-pad and confirm use the same destination selection.
+
+Normal movement still uses the exact dice total; a flexible movement crystal allows
+shorter stops. During a route, U-turns are allowed at dead ends. Roads, step totals and
+turn state are validated before travel so stale clicks cannot skip tiles or start two moves.
+Destination controls are private to the active human and pause while a dialog is open.
+
 ### Online multiplayer
 
 Choose **ผจญภัยกับเพื่อน**, create a room, and share its `CF-1234` code or invitation link.

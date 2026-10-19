@@ -442,3 +442,30 @@ body[data-reduced-motion='true'] .battle-arrival { animation: none; }
 @media (max-width: 768px) {
   body [id$='Modal'] > div:first-child[class*='pixel-box'] { padding: 16px; }
 }
+/* Destination controls stay readable and reachable on touch screens. */
+#movementNavigator {
+  position: fixed; z-index: 30; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom));
+  transform: translateX(-50%); width: min(560px, calc(100vw - 24px));
+  padding: 12px 14px; color: #eee3c9; background: #142936;
+  border: 2px solid #ba9d65; box-shadow: 0 4px 0 #08151d, 0 8px 24px #0006;
+  font-size: 12px; line-height: 1.6; pointer-events: auto;
+}
+#movementNavigator[hidden] { display: none; }
+.movement-heading { display: flex; justify-content: space-between; gap: 8px; color: #e9c27b; }
+#movementDestination { margin: 6px 0 10px; min-height: 44px; }
+#movementDetail { margin: 3px 0 0; font-size: 11px; color: #b8c9cf; }
+.movement-actions { display: grid; grid-template-columns: 1fr 1fr 1.25fr 1fr; gap: 6px; }
+.movement-actions button { min-height: 44px; padding: 5px; font-size: 11px; }
+.movement-actions button:disabled { opacity: .45; }
+.movement-help { margin: 8px 0 0; color: #b8c9cf; font-size: 10px; }
+#movementNavigator button:focus-visible { outline: 2px solid #8de0cd; outline-offset: 3px; }
+@media (max-width: 768px) {
+  #movementNavigator { bottom: calc(116px + env(safe-area-inset-bottom)); padding: 9px 10px; }
+  .movement-help { display: none; }
+  .movement-actions { grid-template-columns: 1fr 1fr 1.25fr; }
+  #btnMoveCenter { display: none; }
+}
+@media (max-height: 500px) and (min-width: 600px) {
+  #movementNavigator { left: auto; right: 10px; bottom: 90px; transform: none; width: 340px; padding: 8px; }
+  .movement-help { display: none; }
+}

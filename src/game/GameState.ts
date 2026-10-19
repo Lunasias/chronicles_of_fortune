@@ -1,4 +1,5 @@
 import { WorldState, bindWorld } from './WorldState';
+import { movementRoutes, isLegalMovementPath } from './Movement';
 import { evaluateMatch, matchObjective } from './MatchRules';
 import { worldCalamitySystem } from './WorldCalamitySystem';
 import { dungeonSystem } from './DungeonSystem';
@@ -581,103 +582,18 @@ export class GameState {
     return totalRoll;
   }
 
-  // Calculate all reachable destination nodes:
-  // Core Dokapon rules: Destination MUST match exact rolled steps, UNLESS flexible step item is active!
+  // Highlighting and execution use the same rules, including reversing between turns.
   updateReachableHighlights() {
-    if (this.remainingMoves <= 0) {
-      this.highlightedNodes = [];
-      return;
-    }
-
-    const reachable = new Set<number>();
-    const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
-    const visited = new Set<string>();
-    // BFS tracking path history to avoid immediate 180-degree reversals in the same turn
-    const queue: Array<{ nodeId: number; prevId: number | null; steps: number }> = [
-      { nodeId: this.activePlayer.nodeId, prevId: this.activePlayer.prevNodeId ?? null, steps: 0 }
-    ];
-    let head = 0;
-
-    while (head < queue.length) {
-      const { nodeId, prevId, steps } = queue[head++];
-      const stateKey = `${nodeId}_${prevId ?? 'none'}_${steps}`;
-      if (visited.has(stateKey)) continue;
-      visited.add(stateKey);
-
-      // Valid landing destinations:
-      // Exact steps required by default, or flexible if special crystal item used
-      if (allowFlexible) {
-        if (steps >= 1 && steps <= this.remainingMoves && nodeId !== this.activePlayer.nodeId) {
-          reachable.add(nodeId);
-        }
-      } else {
-        if (steps === this.remainingMoves && nodeId !== this.activePlayer.nodeId) {
-          reachable.add(nodeId);
-        }
-      }
-
-      if (steps >= this.remainingMoves) {
-        continue;
-      }
-
-      const node = this.allNodes.find(n => n.id === nodeId);
-      if (!node) continue;
-
-      for (const nextId of node.neighbors) {
-        // Prevent immediate 180-degree reversal if other path choices exist
-        if (prevId !== null && nextId === prevId && node.neighbors.length > 1) {
-          continue;
-        }
-        queue.push({ nodeId: nextId, prevId: nodeId, steps: steps + 1 });
-      }
-    }
-
-    this.highlightedNodes = Array.from(reachable);
+    this.highlightedNodes = [...movementRoutes(
+      this.allNodes, this.activePlayer.nodeId, this.remainingMoves, !!this.activePlayer.hasFlexibleMovement
+    ).keys()];
   }
 
-  // Pathfinding: Find valid directional route from current position to chosen target node
   findPathToTarget(targetNodeId: number): number[] | null {
     if (!this.highlightedNodes.includes(targetNodeId)) return null;
-    const allowFlexible = !!this.activePlayer.hasFlexibleMovement;
-
-    const visited = new Set<string>();
-    const queue: Array<{ path: number[] }> = [{ path: [this.activePlayer.nodeId] }];
-    let head = 0;
-
-    while (head < queue.length) {
-      const { path } = queue[head++];
-      const currentId = path[path.length - 1];
-      const steps = path.length - 1;
-
-      const matchesTarget = allowFlexible
-        ? (currentId === targetNodeId && steps >= 1 && steps <= this.remainingMoves)
-        : (currentId === targetNodeId && steps === this.remainingMoves);
-
-      if (matchesTarget) {
-        return path;
-      }
-
-      if (steps >= this.remainingMoves) {
-        continue;
-      }
-
-      const prevId = path.length >= 2 ? path[path.length - 2] : (this.activePlayer.prevNodeId ?? null);
-      const stateKey = `${currentId}_${prevId ?? 'none'}_${steps}`;
-      if (visited.has(stateKey)) continue;
-      visited.add(stateKey);
-
-      const node = this.allNodes.find(n => n.id === currentId);
-      if (!node) continue;
-
-      for (const nextId of node.neighbors) {
-        if (prevId !== null && nextId === prevId && node.neighbors.length > 1) {
-          continue;
-        }
-        queue.push({ path: [...path, nextId] });
-      }
-    }
-
-    return null;
+    return movementRoutes(
+      this.allNodes, this.activePlayer.nodeId, this.remainingMoves, !!this.activePlayer.hasFlexibleMovement
+    ).get(targetNodeId) ?? null;
   }
 
   // Execute full sequential path chosen by the player (Click-to-Move!)
@@ -686,7 +602,9 @@ export class GameState {
     onStepCallback: () => void,
     onArrivalCallback: (tile: BoardNode) => void
   ) {
-    if (path.length <= 1) return;
+    if (this.phase !== 'CHOOSING_PATH' || !isLegalMovementPath(
+      this.allNodes, this.activePlayer.nodeId, this.remainingMoves, !!this.activePlayer.hasFlexibleMovement, path
+    )) return;
     this.phase = 'MOVING';
     this.activePreviewPath = path;
 

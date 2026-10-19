@@ -10,10 +10,12 @@ import { equipmentComparison } from './ui/EquipmentComparison';
 import { installInventoryTools } from './ui/InventoryTools';
 import { JOB_VISUALS } from './engine/JobVisuals';
 import { GameState } from './game/GameState';
+import { isLegalMovementPath } from './game/Movement';
 import { IsometricRenderer } from './engine/IsometricRenderer';
 import { canAcceptTurnPacket, applyNetworkState } from './engine/MultiplayerSync';
 import { canShowMovementNavigation } from './engine/NavigationArrows';
 import { HUD } from './ui/HUD';
+import { MovementUI } from './ui/MovementUI';
 import { BattleUI } from './ui/BattleUI';
 import { TownUI } from './ui/TownUI';
 import { ShopUI, SHOP_CATALOG } from './ui/ShopUI';
@@ -61,6 +63,8 @@ class DokaponApp {
   private renderer: IsometricRenderer;
   private game: GameState;
   private hud: HUD;
+  private movementUI: MovementUI;
+  private selectedMoveNodeId: number | null = null;
   private battleUI: BattleUI;
   private gamepadController!: GamepadController;
   private townUI: TownUI;
@@ -98,6 +102,11 @@ class DokaponApp {
     this.game = new GameState();
 
     this.hud = new HUD(this.game);
+    this.movementUI = new MovementUI(
+      direction => this.cycleHighlightedNode(direction),
+      () => this.confirmMoveDestination(),
+      () => this.centerOnHero()
+    );
     this.battleUI = new BattleUI(this.game);
     this.townUI = new TownUI(this.game);
     this.shopUI = new ShopUI(this.game);
@@ -172,7 +181,8 @@ class DokaponApp {
   }
 
   private canShowMovementNavigation(): boolean {
-    return canShowMovementNavigation(this.game.phase, this.game.remainingMoves, this.game.activePlayer.isAI, this.isMyTurn());
+    return !!this.game.activePlayer && canShowMovementNavigation(this.game.phase, this.game.remainingMoves, this.game.activePlayer.isAI, this.isMyTurn())
+      && !Array.from(document.querySelectorAll('[role="dialog"], #diceRollModal')).some(panel => !panel.closest('.hidden, [hidden]'));
   }
 
   private startMultiplayerGame(opts: MultiplayerStartOptions) {
@@ -239,7 +249,9 @@ class DokaponApp {
       } else if (pkt.type === 'MOVE_PATH') {
         if (!this.isTurnPacket(pkt) || this.game.phase !== 'CHOOSING_PATH') return;
         const path = pkt.payload?.path;
-        if (!Array.isArray(path) || path.length < 2 || path[0] !== this.game.activePlayer.nodeId) return;
+        if (!Array.isArray(path) || !isLegalMovementPath(
+          this.game.allNodes, this.game.activePlayer.nodeId, this.game.remainingMoves, !!this.game.activePlayer.hasFlexibleMovement, path
+        )) return;
         const node = this.game.allNodes.find(n => n.id === path[path.length - 1]);
         if (!node) return;
         // Spectators never run tile events, random encounters, movement damage or AI.
@@ -532,10 +544,7 @@ class DokaponApp {
     if (!this.canShowMovementNavigation()) return;
     if (!this.game.highlightedNodes.includes(targetNode.id)) return;
 
-    let path = this.game.findPathToTarget(targetNode.id);
-    if (!path || path.length <= 1) {
-      path = [this.game.activePlayer.nodeId, targetNode.id];
-    }
+    const path = this.game.findPathToTarget(targetNode.id);
     if (!path || path.length <= 1) return;
 
     this.inspectUI.hideMoveDestinationPreview();
@@ -649,6 +658,7 @@ class DokaponApp {
       if (target) {
         this.renderer.centerCameraOn(target.gx, target.gy, target.gz);
         this.renderer.hoveredNodeId = target.id;
+        this.selectedMoveNodeId = target.id;
       }
       return;
     }
@@ -683,6 +693,10 @@ class DokaponApp {
             document.getElementById('btnCmdDefend')?.click();
           }
         } else {
+          if (this.canShowMovementNavigation()) {
+            this.confirmMoveDestination();
+            return;
+          }
           // On board: Roll dice / spinner if waiting for roll
           const rollBtn = document.getElementById('btnRollDice');
           const spinnerBtn = document.getElementById('btnRollSpinner');
@@ -773,17 +787,35 @@ class DokaponApp {
     });
   }
 
+  private confirmMoveDestination() {
+    if (!this.canShowMovementNavigation()) return;
+    const node = this.game.allNodes.find(n => n.id === this.selectedMoveNodeId);
+    if (node) this.selectNodeToMove(node);
+  }
+
+  private centerOnHero() {
+    const p = this.game.activePlayer;
+    if (p) this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+  }
+
   private cycleHighlightedNode(direction: number) {
     if (!this.canShowMovementNavigation()) return;
     if (this.game.highlightedNodes.length === 0) return;
-    const curIdx = this.game.highlightedNodes.indexOf(this.renderer.hoveredNodeId ?? -1);
-    let nextIdx = curIdx + direction;
+    const curIdx = this.game.highlightedNodes.indexOf(this.selectedMoveNodeId ?? -1);
+    let nextIdx = curIdx < 0 ? (direction < 0 ? this.game.highlightedNodes.length - 1 : 0) : curIdx + direction;
     if (nextIdx < 0) nextIdx = this.game.highlightedNodes.length - 1;
     if (nextIdx >= this.game.highlightedNodes.length) nextIdx = 0;
     const targetId = this.game.highlightedNodes[nextIdx];
     const targetNode = this.game.allNodes.find(n => n.id === targetId);
     if (targetNode) {
       this.renderer.hoveredNodeId = targetId;
+      this.selectedMoveNodeId = targetId;
+      const path = this.game.findPathToTarget(targetId);
+      const next = path && this.game.allNodes.find(n => n.id === path[1]);
+      if (next) {
+        const p = this.game.activePlayer;
+        p.facing = this.game.calculateIsoDirection(next.gx - p.gridX, next.gy - p.gridY, p.facing);
+      }
       this.renderer.centerCameraOn(targetNode.gx, targetNode.gy, targetNode.gz);
       audio.click();
     }
@@ -863,10 +895,8 @@ class DokaponApp {
         this.canvas.style.cursor = 'pointer';
 
         // Calculate and preview path
-        let path = this.game.findPathToTarget(hoveredNode.id);
-        if (!path || path.length <= 1) {
-          path = [this.game.activePlayer.nodeId, hoveredNode.id];
-        }
+        const path = this.game.findPathToTarget(hoveredNode.id);
+        this.selectedMoveNodeId = hoveredNode.id;
         // Do not render moving/bouncing neon path line per user request ("ไม่เอาเส้นทางเดินขยับๆ")
         this.renderer.previewPathNodeIds = [];
 
@@ -1253,7 +1283,21 @@ class DokaponApp {
     // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas, Space rolls dice
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (e.defaultPrevented || target?.closest('button, summary, input, textarea, select, [contenteditable="true"]')) return;
+      if (e.defaultPrevented || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      // Enter/Space retain native button activation; direction keys work after clicking the dock.
+      if (target?.closest('button, summary') && (e.key === 'Enter' || e.key === ' ')) return;
+
+      if (this.canShowMovementNavigation()) {
+        const key = e.key.toLowerCase();
+        if (['arrowleft', 'arrowup', 'a', 'w', 'arrowright', 'arrowdown', 'd', 's', 'enter', 'f'].includes(key)) {
+          e.preventDefault();
+          if (e.repeat) return;
+          if (key === 'enter') this.confirmMoveDestination();
+          else if (key === 'f') this.centerOnHero();
+          else this.cycleHighlightedNode(['arrowleft', 'arrowup', 'a', 'w'].includes(key) ? -1 : 1);
+          return;
+        }
+      }
 
       if (e.key === ' ' || e.code === 'Space') {
         const rollBtn = document.getElementById('btnRollDice');
@@ -1712,12 +1756,6 @@ class DokaponApp {
               for (const altNodeId of this.game.highlightedNodes) {
                 path = this.game.findPathToTarget(altNodeId);
                 if (path) break;
-              }
-            }
-            if (!path) {
-              const target = chosenTarget ?? this.game.highlightedNodes[0];
-              if (target !== undefined && target !== this.game.activePlayer.nodeId) {
-                path = [this.game.activePlayer.nodeId, target];
               }
             }
             if (path && path.length > 1) {
@@ -3670,6 +3708,8 @@ class DokaponApp {
       }
     }
     this.gamepadController?.update();
+    if (this.game.phase !== 'CHOOSING_PATH') this.selectedMoveNodeId = null;
+    this.movementUI.update(this.game, this.selectedMoveNodeId, this.canShowMovementNavigation());
 
     if (this.game.phase !== 'TITLE') {
       if (this.game.activeBattle) {
