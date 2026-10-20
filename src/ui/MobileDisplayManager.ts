@@ -85,9 +85,7 @@ export class MobileDisplayManager {
     document.body.classList.toggle('is-mobile-landscape', isMob && !isPort);
 
     // Adjust minimap and feed defaults for small screens
-    if (isMob && isPort) {
-      document.body.classList.add('mobile-portrait-mode');
-    }
+    document.body.classList.toggle('mobile-portrait-mode', isMob && isPort);
   }
 
   public bindDOM(): void {

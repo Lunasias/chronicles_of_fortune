@@ -3,6 +3,7 @@ import { chooseJourney, offerWeeklyDraft } from './ui/JourneyUI';
 import './styles/tailwind.css';
 import './styles/art-direction.css';
 import './styles/interface.css';
+import './styles/responsive-hud.css';
 import { installInterface } from './ui/Interface';
 import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
@@ -1284,24 +1285,14 @@ class DokaponApp {
     });
 
     // Minimap collapse toggle on mobile
-    let isMinimapCollapsed = window.innerWidth <= 768;
     document.getElementById('btnToggleMinimap')?.addEventListener('click', () => {
       audio.click();
       const wrap = document.getElementById('minimapCanvasWrapper');
       const btn = document.getElementById('btnToggleMinimap');
       if (!wrap || !btn) return;
-      if (window.innerWidth <= 768) {
+      if (window.matchMedia('(max-width: 1024px), (max-height: 600px)').matches) {
         wrap.classList.toggle('mobile-expanded');
         btn.innerText = wrap.classList.contains('mobile-expanded') ? '▲' : '▼';
-      } else {
-        isMinimapCollapsed = !isMinimapCollapsed;
-        if (isMinimapCollapsed) {
-          wrap.classList.add('hidden');
-          btn.innerText = '▲';
-        } else {
-          wrap.classList.remove('hidden');
-          btn.innerText = '▼';
-        }
       }
     });
 

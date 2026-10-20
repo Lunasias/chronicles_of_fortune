@@ -1,0 +1,129 @@
+/* One viewport-aware layout for the world HUD. Short landscape screens need
+   the compact layout even when their CSS width exceeds the phone breakpoint. */
+:root {
+  --hud-edge: 12px;
+  --dock-clearance: 88px;
+  --hud-clearance: 110px;
+}
+body #topHUD {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  top: max(var(--hud-edge), env(safe-area-inset-top));
+  left: max(var(--hud-edge), env(safe-area-inset-left));
+  right: max(var(--hud-edge), env(safe-area-inset-right));
+}
+body #topHUD.hidden, body #bottomBar.hidden { display: none; }
+body #topHUD > #hudHeroCard { min-width: 0; max-width: 100%; padding: 10px 12px; }
+body #topHUD > div:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  gap: 8px;
+}
+body #topHUD #hudMatchStatus { min-width: 0; max-width: 100%; padding: 8px 12px; gap: 10px; }
+.hero-card-details { min-width: 0; flex: 1; }
+.hero-card-details > div:first-of-type + div { flex-wrap: wrap; }
+body #hudPlayerName { max-width: 140px; }
+body #hudPlayerClass { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+body #hudPlayerAvatarWrapper { flex-shrink: 0; }
+body #hudWeatherText { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body #topHUD #hudRosterStrip {
+  position: fixed;
+  left: max(var(--hud-edge), env(safe-area-inset-left));
+  bottom: var(--dock-clearance);
+  width: max-content;
+  max-width: calc(100% - max(var(--hud-edge), env(safe-area-inset-left)) - max(var(--hud-edge), env(safe-area-inset-right)));
+  margin: 0;
+  padding: 4px 6px;
+  overflow-x: auto;
+}
+body #hudRosterButtonsContainer button { min-height: 36px; }
+body #bottomBar {
+  bottom: max(var(--hud-edge), env(safe-area-inset-bottom));
+  padding: 0 max(var(--hud-edge), env(safe-area-inset-right)) 0 max(var(--hud-edge), env(safe-area-inset-left));
+}
+body #bottomBar > div {
+  max-width: 100%;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 6px;
+  gap: 6px;
+  scroll-padding-left: 150px;
+  overscroll-behavior-x: contain;
+}
+body #bottomBar button { flex-shrink: 0; min-height: 44px; white-space: nowrap; }
+body #btnRollDice { position: sticky; left: 0; z-index: 2; min-width: 140px; }
+body #turnStartBanner { top: var(--hud-clearance) !important; width: max-content; max-width: calc(100% - 32px); }
+body #floatingEventToast { bottom: calc(var(--dock-clearance) + 54px); max-width: min(500px, calc(100% - 32px)); }
+body #movementNavigator { bottom: calc(var(--dock-clearance) + 48px); }
+body #minimapCanvasWrapper { min-height: 0; height: auto; }
+.system-menu-content { max-width: calc(100vw - 32px); max-height: calc(100dvh - var(--hud-clearance) - 16px); overflow-y: auto; }
+
+@media (max-width: 1024px), (max-height: 600px) {
+  :root { --hud-edge: 8px; }
+  body #topHUD { grid-template-columns: minmax(0, 290px) minmax(0, 1fr); gap: 8px; }
+  body #topHUD > #hudHeroCard { padding: 6px 8px; gap: 8px; }
+  body #hudPlayerAvatarWrapper { width: 40px !important; height: 44px !important; }
+  body #hudAvatarCanvas { width: 40px !important; height: 40px !important; }
+  .hero-card-details .ui-eyebrow, .dock-label { display: none; }
+  body #hudPlayerName { font-size: 13px; }
+  body #topHUD #hudMatchStatus { padding: 4px 8px; gap: 6px; min-height: 52px; }
+  body #hudPlayerGold, body #hudPlayerNetWorth { font-size: 11px; }
+  body #hudMatchStatus > div { font-size: 10px; }
+  body #hudTimeText, body #hudWeatherText { display: none; }
+  .system-menu { padding-left: 6px; margin-left: auto; }
+  .system-menu summary { min-width: 44px; min-height: 44px; justify-content: center; }
+  .system-menu summary > span { display: none; }
+  .system-menu-content { position: fixed; top: var(--hud-clearance); right: max(8px, env(safe-area-inset-right)); }
+  body #minimapBox { padding: 4px 6px; }
+  body #minimapBox #btnToggleMinimap { display: block; min-width: 44px; min-height: 36px; }
+  body #minimapCanvasWrapper { display: none; }
+  body #minimapCanvasWrapper.mobile-expanded { display: block; position: static; width: 142px; height: auto; padding: 0; border: 0; }
+  body #minimapCanvas { height: 140px; }
+  body #bottomBar button { padding: 6px 10px; font-size: 12px; min-height: 44px; }
+  body #btnRollDice { min-width: 120px; }
+  body #hudRosterStrip { padding: 3px 5px; }
+  body #hudRosterButtonsContainer button { min-height: 32px; padding: 4px 8px; font-size: 11px; }
+  body :is(#gameEventFeedWindow, #questTrackerHUD) {
+    top: auto !important;
+    bottom: calc(var(--dock-clearance) + 44px) !important;
+    max-height: min(48dvh, 300px) !important;
+    transform: none !important;
+  }
+  body :is(#gameEventFeedList, #questTrackerList) { min-height: 0; overflow-y: auto; }
+}
+
+@media (max-width: 600px) {
+  body #topHUD { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  body #topHUD > #hudHeroCard { width: 100%; max-width: 100%; }
+  body #topHUD > div:nth-child(3) { grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-items: start; }
+  body #topHUD #hudMatchStatus { flex: 0 0 100%; width: 100%; justify-content: space-between; }
+  body #hudMatchStatus > div:nth-child(2) > span:nth-child(2),
+  body #hudMatchStatus > div:first-child > span:nth-child(2) { display: none; }
+  body #minimapBox { position: relative; top: auto; right: auto; margin-left: auto; }
+  body #minimapBox .pixel-head > span { display: inline; }
+  body #hudPlayerName { max-width: 130px; }
+  body #bottomBar button > span:not(.pixel-icon) { display: inline; }
+  body #bottomBar button { min-width: 60px; }
+  body #btnRollDice { min-width: 112px; }
+  body #floatingEventToast { font-size: 12px; padding: 7px 10px; }
+  body #turnStartBanner { top: calc(var(--hud-clearance) + 52px) !important; }
+}
+
+@media (max-width: 380px) {
+  body #hudMatchStatus > div:nth-child(3) { display: none; }
+}
+
+@media (max-height: 600px) and (min-width: 601px) {
+  body #hudMatchStatus > div:nth-child(2), body #hudMatchStatus > div:nth-child(3) { display: none; }
+  body #minimapBox > .pixel-head { padding-bottom: 0; }
+  body #movementNavigator { bottom: var(--dock-clearance); }
+  body #turnStartBanner > div { padding: 5px 12px; }
+  body #turnBannerTitle { font-size: 13px; }
+  body #turnBannerSubtitle { font-size: 10px; }
+}

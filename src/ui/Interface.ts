@@ -1,6 +1,24 @@
 /** Shared interaction polish for the interface. Native details keeps the system
  * menu keyboard-accessible without duplicating game button handlers. */
 export function installInterface(): void {
+  // Reserve actual rendered space: font loading, browser zoom and orientation
+  // changes can all change the HUD height without crossing a CSS breakpoint.
+  const measureHUD = () => {
+    const dock = document.getElementById('bottomBar')?.getBoundingClientRect();
+    const cards = ['hudHeroCard', 'hudMatchStatus'].map(id =>
+      document.getElementById(id)?.getBoundingClientRect().bottom || 0);
+    document.body.style.setProperty('--hud-clearance', `${Math.max(...cards) + 10}px`);
+    if (dock && dock.height) {
+      document.body.style.setProperty('--dock-clearance', `${window.innerHeight - dock.top + 8}px`);
+    }
+  };
+  const layoutObserver = new ResizeObserver(measureHUD);
+  for (const id of ['bottomBar', 'hudHeroCard', 'hudMatchStatus']) {
+    const element = document.getElementById(id);
+    if (element) layoutObserver.observe(element);
+  }
+  window.addEventListener('resize', measureHUD);
+  measureHUD();
   const menu = document.querySelector<HTMLDetailsElement>('#hudSystemMenu');
   const labels: Record<string, string> = {
     btnToggleCrisisTracker: 'ภารกิจ', btnToggleLogHistory: 'บันทึกเหตุการณ์',
