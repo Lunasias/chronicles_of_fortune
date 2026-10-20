@@ -434,6 +434,8 @@ body[data-reduced-motion='true'] .battle-arrival { animation: none; }
   font-size: 12px; line-height: 1.6; pointer-events: auto;
 }
 #movementNavigator[hidden] { display: none; }
+/* Floating notices sit above the destination dock so they never cover its buttons. */
+body.movement-open #floatingEventToast { top: auto !important; bottom: var(--movement-clearance, 300px) !important; max-width: min(560px, calc(100vw - 24px)); }
 .movement-heading { display: flex; justify-content: space-between; gap: 8px; color: #e9c27b; }
 #movementDestination { margin: 6px 0 10px; min-height: 44px; }
 #movementDetail { margin: 3px 0 0; font-size: 11px; color: #b8c9cf; }

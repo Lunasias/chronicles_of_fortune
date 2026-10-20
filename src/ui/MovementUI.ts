@@ -39,7 +39,11 @@ export class MovementUI {
 
   update(game: GameState, selectedId: number | null, visible: boolean) {
     this.panel.hidden = !visible;
+    document.body.classList.toggle('movement-open', visible);
     if (!visible) { this.key = ''; return; }
+    // Keep floating notices above the destination dock instead of on top of its buttons.
+    const clearance = Math.max(0, Math.round(window.innerHeight - this.panel.getBoundingClientRect().top + 8));
+    document.body.style.setProperty('--movement-clearance', `${clearance}px`);
     const key = `${game.activePlayer.id}:${game.activePlayer.nodeId}:${game.remainingMoves}:${selectedId}:${game.highlightedNodes.join(',')}`;
     if (key === this.key) return;
     this.key = key;
