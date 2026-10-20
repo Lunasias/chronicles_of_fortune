@@ -23,7 +23,6 @@ body :is(.pixel-box, .pixel-box-gold, .pixel-box-pink, .pixel-box-purple, .pixel
 body .pixel-box-gold { border-color: var(--ui-gold); }
 body .pixel-head { background: transparent; box-shadow: none; border-bottom: 1px solid #c9ab724d; padding-bottom: 10px; }
 body :is(.pixel-btn, .command-card) {
-  position: relative;
   background-color: #275a91;
   border: 1px solid #77b3d6;
   border-radius: 0;
@@ -33,6 +32,7 @@ body :is(.pixel-btn, .command-card) {
   line-height: 1.4;
   transition: background-color 120ms, border-color 120ms, transform 120ms;
 }
+body :is(.pixel-btn, .command-card):not(.absolute):not(.fixed) { position: relative; }
 body :is(.pixel-btn, .command-card):hover:not(:disabled) { background-color: #3576ad; border-color: #ffe09a; transform: translateY(-1px); }
 
 #weeklyAutoClose { margin: -4px auto 12px; max-width: 360px; text-align: left; }

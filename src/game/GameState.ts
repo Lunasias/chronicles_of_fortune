@@ -317,10 +317,9 @@ export class GameState {
 
     this.phase = 'BOARD_TURN';
 
-    // Start overworld chiptune music if not active
-    if (audio.getCurrentTrack() !== 'overworld') {
-      audio.playBgm('overworld');
-    }
+    const audioNode = this.allNodes.find(node => node.id === p.nodeId);
+    if (p.isDarkling) audio.playBgm('darkling');
+    else audio.playBiomeBgm(audioNode?.biome || 'forest');
 
     const memory = this.world.memory(p.id);
     if (memory.flags.farmPayments > 0) { p.gold += 20; p.matchStats.goldEarnedTotal += 20; memory.flags.farmPayments--; this.addLog('ส่วนแบ่งจากกังหันชาวนา +20G', 'gold'); }

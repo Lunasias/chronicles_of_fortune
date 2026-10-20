@@ -5,6 +5,7 @@ import './styles/art-direction.css';
 import './styles/interface.css';
 import './styles/responsive-hud.css';
 import { installInterface } from './ui/Interface';
+import { installAudioSettings } from './ui/AudioSettings';
 import { installPixelIcons } from './ui/PixelIcons';
 import { installGraphicsSettings } from './ui/GraphicsSettings';
 import { equipmentComparison } from './ui/EquipmentComparison';
@@ -1469,23 +1470,6 @@ class DokaponApp {
       document.getElementById('settingsModal')?.classList.add('hidden');
     });
 
-    // Audio Volume Sliders
-    const bgmSlider = document.getElementById('sliderBgmVolume') as HTMLInputElement | null;
-    const bgmValText = document.getElementById('bgmVolumeVal');
-    bgmSlider?.addEventListener('input', () => {
-      const val = parseInt(bgmSlider.value, 10) || 0;
-      if (bgmValText) bgmValText.innerText = `${val}%`;
-      audio.setBgmVolume(val / 100);
-    });
-
-    const sfxSlider = document.getElementById('sliderSfxVolume') as HTMLInputElement | null;
-    const sfxValText = document.getElementById('sfxVolumeVal');
-    sfxSlider?.addEventListener('input', () => {
-      const val = parseInt(sfxSlider.value, 10) || 0;
-      if (sfxValText) sfxValText.innerText = `${val}%`;
-      audio.setSfxVolume(val / 100);
-    });
-
     // In-game Save & Load Handlers
     document.getElementById('btnSaveGame')?.addEventListener('click', () => {
       this.saveGameProgress(true);
@@ -1543,11 +1527,6 @@ class DokaponApp {
           alert(`นำเข้าไม่สำเร็จ: ${res.error || 'รหัสไม่ถูกต้อง'}`);
         }
       }
-    });
-
-    // Audio & scanline settings
-    document.getElementById('checkSound')?.addEventListener('change', e => {
-      audio.enabled = (e.target as HTMLInputElement).checked;
     });
 
     // Play again
@@ -1833,9 +1812,10 @@ class DokaponApp {
     const p = this.game.activePlayer;
     this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
 
-    // Dynamically transition chiptune BGM according to region/biome
+    // Transition score and weather ambience together after arriving in a region.
     if (!p.isDarkling && this.game.phase !== 'BATTLE') {
       audio.playBiomeBgm(tile.biome || tile.realmId);
+      audio.setEnvironment(tile.biome || tile.realmId, ecosystemSystem.getNodeWeather(tile));
     }
 
     // 0. Check for Triggered Field Trap!
@@ -2550,6 +2530,13 @@ class DokaponApp {
   private onTurnStarted() {
     if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
+    const audioNode = this.game.allNodes.find(node => node.id === p.nodeId);
+    if (p.isDarkling) audio.playBgm('darkling');
+    else if (audioNode) {
+      audio.playBiomeBgm(audioNode.biome || audioNode.realmId);
+      audio.setEnvironment(audioNode.biome || audioNode.realmId, ecosystemSystem.getNodeWeather(audioNode));
+    }
+    if (!p.isAI) audio.turnStart();
     (darklingSystem as any).calamityUsedThisTurn = false;
     if (this.ownsActiveTurn()) offerWeeklyDraft(this.game);
     // 1. Smoothly center camera on active player without jarring zoom jumps
@@ -3637,7 +3624,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice', 'chest'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : JOB_VISUALS[requestedClass]?.base || 'warrior';
     this.visualReviewActive = true;
@@ -3666,6 +3653,15 @@ class DokaponApp {
     const node = this.game.allNodes.find(n => n.id === Number(query.get('node') ?? NaN)) || this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
+    if (scene === 'chest') {
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      Object.assign(this.game.activePlayer, { gridX: node.gx, gridY: node.gy, gridZ: node.gz });
+      this.renderer.centerCameraOn(node.gx, node.gy, node.gz);
+      this.hud.update();
+      this.wonderChestUI.open(this.game.activePlayer, () => {});
+      return;
+    }
     if (['event', 'draft', 'expedition_choice'].includes(scene)) {
       document.getElementById('topHUD')?.classList.remove('hidden');
       document.getElementById('bottomBar')?.classList.remove('hidden');
@@ -3765,9 +3761,11 @@ class DokaponApp {
 function startApp() {
   installPixelIcons();
   installInterface();
+  installAudioSettings();
   installGraphicsSettings();
   const app = new DokaponApp();
   app.startVisualReview();
+  if (!document.getElementById('titleScreen')?.classList.contains('hidden')) audio.playBgm('title');
   app.loop(0);
 
   // Register PWA Service Worker

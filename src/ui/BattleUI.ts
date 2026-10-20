@@ -1500,7 +1500,7 @@ export class BattleUI {
     document.getElementById('battleScreen')?.classList.add('hidden');
     document.getElementById('battleScoutModal')?.classList.add('hidden');
     this.isScoutOpen = false;
-    audio.playBgm('overworld');
+    audio.restoreWorldBgm();
 
     if (this.onBattleEndCallback) {
       this.onBattleEndCallback(winner, loser);

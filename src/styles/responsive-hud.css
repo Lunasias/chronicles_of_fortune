@@ -61,8 +61,32 @@ body #btnRollDice { position: sticky; left: 0; z-index: 2; min-width: 140px; }
 body #turnStartBanner { top: var(--hud-clearance) !important; width: max-content; max-width: calc(100% - 32px); }
 body #floatingEventToast { bottom: calc(var(--dock-clearance) + 54px); max-width: min(500px, calc(100% - 32px)); }
 body #movementNavigator { bottom: calc(var(--dock-clearance) + 48px); }
-body #minimapCanvasWrapper { min-height: 0; height: auto; }
+body #topHUD #minimapCanvasWrapper { min-height: 0; height: auto; width: 142px; overflow: hidden; }
+body #topHUD #minimapCanvas { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+body #minimapCanvasWrapper > div:last-child:not(#matchObjectiveText) { position: static; text-align: right; padding: 3px 5px; }
+body #wonderChestModal { position: fixed; padding: 12px; }
+body #wonderChestModal > div.pixel-box-gold { overflow-y: auto; max-height: calc(100dvh - 24px); align-items: stretch; }
+body #wonderChestModal .wonder-chest-heading { padding: 48px 0 8px; justify-content: center; flex-shrink: 0; }
+body #wonderChestModal h2 { font-size: clamp(16px, 3vw, 21px); overflow-wrap: anywhere; }
+body #btnCloseWonderChest { position: absolute; top: 10px; right: 10px; min-height: 36px; }
+body #wonderChestViewport { min-height: 160px; flex-shrink: 0; }
+body #wonderIconLarge .pixel-icon { width: 56px; height: 56px; }
+body #wonderIconLarge { min-height: 64px; }
+body #btnSpinWonderChest { align-self: center; flex-shrink: 0; white-space: normal; }
+@media (max-height: 500px) {
+  body #wonderChestModal > div.pixel-box-gold { padding: 12px; }
+  body #wonderChestModal .wonder-chest-heading { padding-top: 40px; }
+  body #wonderChestViewport { min-height: 110px; padding: 10px; margin-bottom: 8px; }
+  body #wonderIconLarge { min-height: 40px; }
+  body #wonderIconLarge .pixel-icon { width: 36px; height: 36px; }
+}
 .system-menu-content { max-width: calc(100vw - 32px); max-height: calc(100dvh - var(--hud-clearance) - 16px); overflow-y: auto; }
+.audio-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.audio-setting-row label { font-size: 12px; }
+.audio-setting-row input[type='range'] { width: clamp(90px, 24vw, 180px); min-height: 36px; accent-color: #f3bf53; }
+.audio-setting-row output { width: 36px; text-align: right; color: #ffda79; font-variant-numeric: tabular-nums; }
+.audio-test-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.audio-test-actions button { padding: 6px 12px; font-size: 12px; flex: 1; }
 
 @media (max-width: 1024px), (max-height: 600px) {
   :root { --hud-edge: 8px; }

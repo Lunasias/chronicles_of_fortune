@@ -37,6 +37,7 @@ export class TownUI {
     onLeave: () => void,
     onInitiateRob: (townNode: BoardNode) => void
   ) {
+    audio.playBgm('town');
     this.currentTown = townNode;
     this.onTownLeaveCallback = onLeave;
     this.onInitiateRobCallback = onInitiateRob;
@@ -264,6 +265,7 @@ export class TownUI {
 
   private handleLeave() {
     audio.click();
+    audio.restoreWorldBgm();
     document.getElementById('townModal')?.classList.add('hidden');
     syncFeedPanelClass();
     this.currentTown = null;

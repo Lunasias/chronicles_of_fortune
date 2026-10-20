@@ -3,6 +3,7 @@ import { Player } from '../game/Player';
 import { GameState } from '../game/GameState';
 import { audio } from '../engine/AudioSynthesizer';
 import { EquipmentItem } from '../engine/PixelSpriteGenerator';
+import { escapeHtml } from '../util/Html';
 
 export interface WonderPrize {
   id: string;
@@ -20,6 +21,8 @@ export class WonderChestUI {
   private isSpinning = false;
   private spinFinished = false;
   private autoCloseTimer: any = null;
+  private spinTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoStartTimer: ReturnType<typeof setTimeout> | null = null;
   private onCompleteCallback?: () => void;
 
   private prizes: WonderPrize[] = [
@@ -209,6 +212,7 @@ export class WonderChestUI {
   }
 
   open(player: Player, onComplete: () => void) {
+    this.clearTimers();
     if (this.game.world.claimedTreasures.includes(player.nodeId)) { this.game.addLog('หีบนี้ถูกเปิดแล้ว'); onComplete(); return; }
     if (this.autoCloseTimer) {
       clearTimeout(this.autoCloseTimer);
@@ -222,7 +226,7 @@ export class WonderChestUI {
 
     if (player.isAI) {
       const speed = this.game.gameSpeed || 1;
-      setTimeout(() => this.startSpin(player), Math.max(120, Math.round(900 / speed)));
+      this.autoStartTimer = setTimeout(() => this.startSpin(player), Math.max(120, Math.round(900 / speed)));
     }
   }
 
@@ -231,13 +235,13 @@ export class WonderChestUI {
       <div class="pixel-box-gold max-w-lg w-full p-6 text-center relative flex flex-col items-center">
         <button id="btnCloseWonderChest" class="pixel-btn px-2.5 py-1 text-xs text-slate-300 hover:text-white absolute top-3 right-3">✖ ปิด</button>
         <!-- Header Banner -->
-        <div class="flex items-center gap-2 mb-1">
+        <div class="wonder-chest-heading flex items-center gap-2 mb-1">
           <span class="text-3xl animate-bounce">🎁</span>
           <h2 class="text-lg md:text-xl font-bold text-amber-300 tracking-wider">กล่องสุ่มมหัศจรรย์แห่งฟอร์จูน่า</h2>
           <span class="text-3xl animate-bounce">✨</span>
         </div>
         <p class="text-[11px] text-amber-200/80 mb-4">
-          ${player.displayName} เหยียบช่องมหัศจรรย์! เสี่ยงทายดวงชะตาเพื่อลุ้นรับมหาขุมทรัพย์ Dokapon!
+          ${escapeHtml(player.displayName)} เหยียบช่องมหัศจรรย์! เสี่ยงทายดวงชะตาเพื่อลุ้นรับมหาขุมทรัพย์ Dokapon!
         </p>
 
         <!-- Wonder Chest Diorama / Roulette Viewport -->
@@ -282,8 +286,11 @@ export class WonderChestUI {
   }
 
   private startSpin(player: Player) {
+    if (this.isSpinning || this.modal.classList.contains('hidden')) return;
     this.isSpinning = true;
     audio.click();
+    const closeButton = document.getElementById('btnCloseWonderChest') as HTMLButtonElement | null;
+    if (closeButton) closeButton.disabled = true;
 
     const btn = document.getElementById('btnSpinWonderChest') as HTMLButtonElement;
     const btnText = document.getElementById('btnSpinText') as HTMLElement;
@@ -307,7 +314,7 @@ export class WonderChestUI {
       titleEl.innerText = p.name;
       titleEl.style.color = p.color;
       descEl.innerText = p.desc;
-      audio.coin();
+      audio.chestTick();
 
       // Shake animation
       iconEl.style.transform = `scale(${1 + (step % 2) * 0.15}) rotate(${(step % 2 === 0 ? -8 : 8)}deg)`;
@@ -315,7 +322,7 @@ export class WonderChestUI {
       step++;
       if (step < totalSteps) {
         delay += 12; // Gradually slow down like a real wheel
-        setTimeout(cycle, delay);
+        this.spinTimer = setTimeout(cycle, delay);
       } else {
         // Land on the final chosen prize!
         iconEl.innerText = chosenPrize.icon;
@@ -329,6 +336,7 @@ export class WonderChestUI {
         this.game.addLog(resultLog, 'gold');
 
         this.spinFinished = true;
+        if (closeButton) closeButton.disabled = false;
         if (btn) btn.disabled = false;
         if (btnText) btnText.innerText = '✔ รับรางวัลเรียบร้อย (กดเพื่อปิด)';
 
@@ -344,6 +352,7 @@ export class WonderChestUI {
   }
 
   private close() {
+    this.clearTimers();
     if (this.autoCloseTimer) {
       clearTimeout(this.autoCloseTimer);
       this.autoCloseTimer = null;
@@ -356,5 +365,12 @@ export class WonderChestUI {
       this.onCompleteCallback = undefined;
       cb();
     }
+  }
+
+  private clearTimers() {
+    if (this.spinTimer !== null) clearTimeout(this.spinTimer);
+    if (this.autoStartTimer !== null) clearTimeout(this.autoStartTimer);
+    if (this.autoCloseTimer !== null) clearTimeout(this.autoCloseTimer);
+    this.spinTimer = this.autoStartTimer = this.autoCloseTimer = null;
   }
 }

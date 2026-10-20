@@ -104,6 +104,7 @@ export class ShopUI {
   }
 
   open(type: string, onLeave: () => void) {
+    audio.playBgm('town');
     this.currentType = type;
     this.currentMode = 'buy';
     this.onLeaveCallback = onLeave;
@@ -426,6 +427,7 @@ export class ShopUI {
 
   private handleLeave() {
     audio.click();
+    audio.restoreWorldBgm();
     document.getElementById('shopModal')?.classList.add('hidden');
     syncFeedPanelClass();
     if (this.onLeaveCallback) {
