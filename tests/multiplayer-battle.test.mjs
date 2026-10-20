@@ -4,6 +4,82 @@ import assert from 'node:assert/strict';
 import { BattleUI } from '../.test-build/ui/BattleUI.js';
 import { networkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
 import { GameState } from '../.test-build/game/GameState.js';
+import { BattleEngine } from '../.test-build/game/BattleEngine.js';
+import { createPlayerCombatant } from '../.test-build/game/CombatRules.js';
+import { captureBattle, restoreBattle } from '../.test-build/engine/MultiplayerBattle.js';
+
+test('spectator snapshots preserve HP, roles, equipment and hazards without simulating or mutating board players', () => {
+  const game = new GameState();
+  game.initGame([{ name: 'Host', classKey: 'warrior', isAI: false }, { name: 'Guest', classKey: 'cleric', isAI: false }]);
+  const battle = new BattleEngine(createPlayerCombatant(game.players[1]), createPlayerCombatant(game.players[0]), 'volcano');
+  battle.attacker.hp -= 10;
+  battle.swapTurns();
+  const before = { rng: game.world.rng, hp: game.players.map(p => p.hp), gold: game.players.map(p => p.gold) };
+  const snapshot = structuredClone(captureBattle(battle, game.players));
+  const restored = restoreBattle(snapshot, game);
+  assert.ok(restored instanceof BattleEngine);
+  assert.equal(restored.isPlayerAttacking, battle.isPlayerAttacking);
+  assert.equal(restored.attacker.name, battle.attacker.name);
+  assert.equal(restored.defender.hp, battle.defender.hp);
+  assert.deepEqual(restored.playerHazards, battle.playerHazards);
+  assert.deepEqual(restored.defender.playerRef.equipment, battle.defender.playerRef.equipment);
+  assert.notEqual(restored.defender.playerRef, battle.defender.playerRef);
+  restored.defender.playerRef.burstGauge = 99;
+  assert.notEqual(battle.defender.playerRef.burstGauge, 99);
+  assert.deepEqual({ rng: game.world.rng, hp: game.players.map(p => p.hp), gold: game.players.map(p => p.gold) }, before);
+  assert.equal(restoreBattle({ ...snapshot, attacker: { name: 'invalid' } }, game), null);
+});
+
+test('guest battle streams reach a host spectator; stale, forged and duplicate views cannot replay combat', t => {
+  const previousDocument = globalThis.document, previousChannel = globalThis.BroadcastChannel;
+  const originalBroadcast = networkRoomManager.broadcast;
+  globalThis.BroadcastChannel = undefined;
+  networkRoomManager.createRoom();
+  networkRoomManager.getRoomInfo().connectedPeers.push({ id: 'guest', name: 'Guest', playerIndex: 1, isHost: false });
+  const game = new GameState();
+  game.initGame([{ name: 'Host', classKey: 'warrior', isAI: false }, { name: 'Guest', classKey: 'cleric', isAI: false }]);
+  game.activePlayerIdx = 1;
+  const battle = new BattleEngine(createPlayerCombatant(game.players[1]), createPlayerCombatant(game.players[0]));
+  const views = [];
+  const node = { textContent: 'เลือกคำสั่ง', classList: { add() {}, remove() {} } };
+  globalThis.document = { getElementById: () => node };
+  networkRoomManager.broadcast = packet => views.push(packet);
+  const ui = Object.create(BattleUI.prototype);
+  Object.assign(ui, { game, canvas: { width: 800, height: 450, parentElement: { clientWidth: 200, clientHeight: 100 } },
+    cutscene: { active: false, phaseStartTime: 0, phaseDuration: 200, attackerOffsetX: 80, attackerOffsetY: 45, ghostTrails: [] },
+    effectClock: { reset() {} }, isSpectating: false, battleViewId: 'guest-battle', battleViewSequence: 0,
+    lastViewSentAt: -Infinity, remoteViewSequence: -1, updateUI() {} });
+  t.after(() => { networkRoomManager.broadcast = originalBroadcast; networkRoomManager.leaveRoom(); globalThis.document = previousDocument; globalThis.BroadcastChannel = previousChannel; });
+  game.activeBattle = battle;
+  networkRoomManager.setLocalPlayerIndex(0);
+  ui.syncSpectatorView(1000, true);
+  assert.equal(views.length, 0, 'host spectator cannot broadcast a guest battle');
+  networkRoomManager.setLocalPlayerIndex(1);
+  ui.syncSpectatorView(1000, true);
+  assert.equal(views.length, 1);
+  const packet = { ...structuredClone(views[0]), senderId: 'guest' };
+  networkRoomManager.setLocalPlayerIndex(0);
+  game.activeBattle = null;
+  const rng = game.world.rng;
+  ui.receiveBattleView({ ...packet, senderId: 'intruder' });
+  assert.equal(game.activeBattle, null);
+  ui.receiveBattleView(packet);
+  assert.equal(ui.isSpectating, true);
+  assert.equal(game.phase, 'BATTLE');
+  assert.equal(ui.cutscene.attackerOffsetX, 20);
+  assert.equal(ui.cutscene.attackerOffsetY, 10);
+  const rendered = game.activeBattle;
+  ui.receiveBattleView(packet);
+  assert.equal(game.activeBattle, rendered, 'duplicate frame ignored');
+  ui.handleAttackerInput('attack'); ui.handleDefenderInput('counter'); ui.handleCompanionSummon(); ui.checkAITurn();
+  assert.equal(game.world.rng, rng);
+  ui.receiveBattleView({ ...packet, payload: { ...packet.payload, sequence: 2, ended: true } });
+  assert.equal(game.activeBattle, null);
+  assert.equal(ui.isSpectating, false);
+  assert.equal(game.phase, 'TILE_EVENT');
+  ui.receiveBattleView(packet);
+  assert.equal(game.activeBattle, null, 'late frame cannot reopen a finished battle');
+});
 
 test('PvP prompts the remote attacker and defender, accepts only their current reply once', async t => {
   const previousDocument = globalThis.document;

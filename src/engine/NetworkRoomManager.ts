@@ -21,6 +21,7 @@ export type NetworkPacketType =
   | 'USE_SPELL'
   | 'USE_SPINNER'
   | 'BATTLE_ACTION'
+  | 'BATTLE_VIEW'
   | 'ADVANCE_TURN'
   | 'SYNC_STATE'
   | 'CHAT_MSG'

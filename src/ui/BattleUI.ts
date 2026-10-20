@@ -23,12 +23,108 @@ import { presentationArt } from '../engine/PresentationArt';
 import { JOB_VISUALS } from '../engine/JobVisuals';
 import { updateBattlePresentation } from './BattlePresentation';
 import { combatMotion } from '../engine/CombatMotion';
+import { captureBattle, restoreBattle } from '../engine/MultiplayerBattle';
+import { canAcceptTurnPacket } from '../engine/MultiplayerSync';
 
 export class BattleUI {
   private game: GameState;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private onBattleEndCallback?: (winner: Combatant, loser: Combatant) => void;
+  public isSpectating = false;
+  private battleViewId = '';
+  private battleViewSequence = 0;
+  private remoteViewSequence = -1;
+  private lastViewSentAt = -Infinity;
+
+  public syncSpectatorView(time: number, force = false, ended = false): void {
+    if (!networkRoomManager.isInRoom() || this.isSpectating || !this.game.activeBattle) return;
+    if (this.game.activePlayer.isAI ? !networkRoomManager.isHost() : this.game.activePlayerIdx !== networkRoomManager.getLocalPlayerIndex()) return;
+    if (!force && time - this.lastViewSentAt < (this.isExecutingRound ? 80 : 500)) return;
+    this.lastViewSentAt = time;
+    const cutscene = Object.fromEntries(Object.entries(this.cutscene).filter(([key]) => key !== 'ghostTrails'));
+    networkRoomManager.broadcast({ packetId: `${this.battleViewId}_view_${++this.battleViewSequence}`, type: 'BATTLE_VIEW',
+      roomCode: networkRoomManager.getRoomCode()!, senderId: networkRoomManager.getMyPeerId(), senderName: this.game.activePlayer.displayName,
+      payload: { playerIdx: this.game.activePlayerIdx, battleId: this.battleViewId, sequence: this.battleViewSequence, ended,
+        battle: ended ? null : captureBattle(this.game.activeBattle, this.game.players), nodeId: this.game.activePlayer.nodeId,
+        attackerAnim: this.attackerAnim, defenderAnim: this.defenderAnim, executing: this.isExecutingRound,
+        skillUsed: this.playerSkillUsedThisBattle, cutscene,
+        phaseElapsed: Math.max(0, performance.now() - this.cutscene.phaseStartTime), width: this.canvas.width, height: this.canvas.height,
+        narration: document.getElementById('battleNarration')?.textContent || '',
+        turnText: document.getElementById('battleTurnText')?.textContent || '' }, timestamp: Date.now() });
+  }
+
+  public receiveBattleView(packet: NetworkPacket): void {
+    if (!canAcceptTurnPacket(this.game, networkRoomManager.getRoomInfo(), packet)) return;
+    const view = packet.payload;
+    if (!view || typeof view.battleId !== 'string' || !Number.isInteger(view.sequence)) return;
+    if (view.battleId === this.battleViewId && view.sequence <= this.remoteViewSequence) return;
+    if (view.ended) {
+      if (view.battleId === this.battleViewId) { this.remoteViewSequence = view.sequence; this.closeSpectatorView(); }
+      return;
+    }
+    const battle = restoreBattle(view.battle, this.game);
+    if (!battle) return;
+    const opening = !this.isSpectating;
+    if (opening) {
+      combatVFX.reset();
+      this.effectClock.reset(performance.now());
+      this.onBattleEndCallback = undefined;
+      this.activeSummon = null;
+      this.isScoutOpen = false;
+      document.getElementById('battleScoutModal')?.classList.add('hidden');
+      audio.playBgm(battle.attacker.isBoss || battle.defender.isBoss ? 'boss' : 'battle');
+    }
+    this.isSpectating = true;
+    this.battleViewId = view.battleId;
+    this.remoteViewSequence = view.sequence;
+    this.game.activeBattle = battle;
+    this.game.phase = 'BATTLE';
+    const node = this.game.allNodes.find(n => n.id === view.nodeId);
+    if (node) Object.assign(this.game.activePlayer, { nodeId: node.id, gridX: node.gx, gridY: node.gy, gridZ: node.gz, walkFrame: 0 });
+    document.getElementById('battleScreen')?.classList.remove('hidden');
+    document.getElementById('battleScreen')?.classList.add('is-spectating');
+    if (this.canvas.parentElement) {
+      this.canvas.width = this.canvas.parentElement.clientWidth || 800;
+      this.canvas.height = this.canvas.parentElement.clientHeight || 450;
+    }
+    this.attackerAnim = view.attackerAnim || 'idle'; this.defenderAnim = view.defenderAnim || 'idle';
+    this.isExecutingRound = !!view.executing;
+    this.playerSkillUsedThisBattle = !!view.skillUsed;
+    const scaleX = this.canvas.width / Math.max(1, Number(view.width) || 1);
+    const scaleY = this.canvas.height / Math.max(1, Number(view.height) || 1);
+    if (view.cutscene && typeof view.cutscene === 'object') {
+      for (const key of Object.keys(this.cutscene)) {
+        if (key === 'ghostTrails' || key === 'phaseStartTime') continue;
+        const value = view.cutscene[key];
+        if (typeof value === 'number' && Number.isFinite(value)) (this.cutscene as any)[key] = value * (key.endsWith('X') ? scaleX : key.endsWith('Y') ? scaleY : 1);
+        else if (typeof value === 'boolean' || typeof value === 'string') (this.cutscene as any)[key] = value;
+      }
+      this.cutscene.phaseStartTime = performance.now() - Math.max(0, Number(view.phaseElapsed) || 0);
+      this.cutscene.ghostTrails = [];
+    }
+    this.updateUI();
+    const narration = document.getElementById('battleNarration');
+    if (narration) narration.textContent = String(view.narration || '');
+    const turn = document.getElementById('battleTurnText');
+    if (turn) turn.textContent = `กำลังชม · ${String(view.turnText || this.game.activePlayer.displayName)}`;
+  }
+
+  public closeSpectatorView(): void {
+    if (!this.isSpectating) return;
+    this.isSpectating = false;
+    this.game.activeBattle = null;
+    this.game.activeBattleEnemyCombatant = null;
+    if (this.game.phase === 'BATTLE') this.game.phase = 'TILE_EVENT';
+    this.isExecutingRound = false;
+    this.cutscene.active = false;
+    document.getElementById('battleScreen')?.classList.add('hidden');
+    document.getElementById('battleScreen')?.classList.remove('is-spectating');
+    document.getElementById('battleScoutModal')?.classList.add('hidden');
+    document.getElementById('journeyDecision')?.classList.add('hidden');
+    this.isScoutOpen = false;
+    audio.restoreWorldBgm();
+  }
 
   // Combat Animation States
   public attackerAnim: CharacterAnimState = 'idle';
@@ -307,6 +403,7 @@ export class BattleUI {
 
     // Brown Dust 2 Tactical Formation Row Selection
     const setPlayerFormation = (pos: CombatGridPosition) => {
+      if (this.isSpectating) return;
       const b = this.game.activeBattle;
       if (!b || this.isExecutingRound) return;
       const human = b.attacker.playerRef && !b.attacker.playerRef.isAI
@@ -394,6 +491,10 @@ export class BattleUI {
     enemy: Combatant,
     onBattleEnd: (winner: Combatant, loser: Combatant) => void
   ) {
+    this.closeSpectatorView();
+    this.battleViewId = `${networkRoomManager.getMyPeerId()}_battle_${Date.now()}`;
+    this.battleViewSequence = 0;
+    this.lastViewSentAt = -Infinity;
     combatVFX.reset();
     const p = this.game.activePlayer;
     const playerCombatant = createPlayerCombatant(p, enemy.isPvP || false);
@@ -451,6 +552,7 @@ export class BattleUI {
     this.updateCommandMenu();
 
     this.checkAITurn();
+    this.syncSpectatorView(performance.now(), true);
   }
 
   private updateUI() {
@@ -603,6 +705,7 @@ export class BattleUI {
   }
 
   private handleAttackerInput(atkAction: AttackerAction, isRemote = false) {
+    if (this.isSpectating) return;
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
 
@@ -668,6 +771,7 @@ export class BattleUI {
   }
 
   private handleDefenderInput(defAction: DefenderAction, isRemote = false) {
+    if (this.isSpectating) return;
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
 
@@ -839,6 +943,7 @@ export class BattleUI {
   }
 
   public handleCompanionSummon() {
+    if (this.isSpectating) return;
     if (this.companionUsedThisBattle || this.isExecutingRound) return;
     const b = this.game.activeBattle;
     if (!b) return;
@@ -975,6 +1080,7 @@ export class BattleUI {
   }
 
   private checkAITurn() {
+    if (this.isSpectating) return;
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
 
@@ -1057,6 +1163,7 @@ export class BattleUI {
   }
 
   private async executeRoundWithAnimation(atkAction: AttackerAction, defAction: DefenderAction) {
+    if (this.isSpectating) return;
     const b = this.game.activeBattle;
     if (!b) return;
 
@@ -1454,6 +1561,8 @@ export class BattleUI {
   }
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
+    if (this.isSpectating) return;
+    this.syncSpectatorView(performance.now(), true, true);
     if (winner.playerRef && !winner.playerRef.isAI) {
       audio.victory();
     } else if (loser.playerRef && !loser.playerRef.isAI) {

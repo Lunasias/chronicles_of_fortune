@@ -16,6 +16,31 @@ body #topHUD {
 }
 body #topHUD.hidden, body #bottomBar.hidden { display: none; }
 body #topHUD > #hudHeroCard { min-width: 0; max-width: 100%; padding: 10px 12px; }
+/* Room and turn belong to the hero card, not a full-width row over the world. */
+body #hudMultiplayerBadge.multiplayer-turn-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: 240px;
+  min-width: 0;
+  min-height: 32px;
+  margin-top: 5px;
+  padding: 3px 7px;
+  background: #0b2244;
+  border: 1px solid #5687ad;
+  color: #b9dded;
+  font-size: 11px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+body #hudMultiplayerBadge.hidden { display: none; }
+body #hudMultiplayerBadge[data-my-turn='true'] { border-color: #f3bf53; color: #ffda79; }
+.multiplayer-room-code { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.multiplayer-turn-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+body #battleScreen.is-spectating :is(#battleCommandDock, #btnSkipAIBattle, #btnBattleSpeedToggle) { display: none !important; }
+body #battleScreen.is-spectating #battleTurnText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 body #topHUD > div:nth-child(3) {
   grid-column: 2;
   grid-row: 1;
@@ -126,6 +151,7 @@ body #btnSpinWonderChest { align-self: center; flex-shrink: 0; white-space: norm
 }
 
 @media (max-width: 600px) {
+  body #hudMultiplayerBadge { min-height: 36px; max-width: 100%; font-size: 11px; }
   body #topHUD { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   body #topHUD > #hudHeroCard { width: 100%; max-width: 100%; }
   body #topHUD > div:nth-child(3) { grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-items: start; }

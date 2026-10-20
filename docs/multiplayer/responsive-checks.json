@@ -1,0 +1,66 @@
+[
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 568,
+    "statusInsideScreen": true,
+    "width": 320
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 640,
+    "statusInsideScreen": true,
+    "width": 360
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 844,
+    "statusInsideScreen": true,
+    "width": 390
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 932,
+    "statusInsideScreen": true,
+    "width": 430
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 1024,
+    "statusInsideScreen": true,
+    "width": 768
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 390,
+    "statusInsideScreen": true,
+    "width": 844
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 720,
+    "statusInsideScreen": true,
+    "width": 1280
+  },
+  {
+    "badgeInsideCard": true,
+    "bannerHidden": true,
+    "cardInsideScreen": true,
+    "height": 1080,
+    "statusInsideScreen": true,
+    "width": 1920
+  }
+]

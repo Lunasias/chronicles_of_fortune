@@ -1,6 +1,18 @@
 import type { GameState } from '../game/GameState';
 import { SaveManager } from '../game/SaveManager';
 import type { NetworkPacket, RoomInfo } from './NetworkRoomManager';
+import { isLegalMovementPath } from '../game/Movement';
+
+/** A move carries its dice budget, so it does not depend on a separate dice packet. */
+export function acceptNetworkMovement(game: GameState, room: RoomInfo | null, packet: NetworkPacket): number[] | null {
+  if (!canAcceptTurnPacket(game, room, packet) || !['BOARD_TURN', 'DICE_ROLLING', 'CHOOSING_PATH'].includes(game.phase)) return null;
+  const moves = packet.payload?.remainingMoves ?? game.remainingMoves;
+  const path = packet.payload?.path;
+  if (!Number.isInteger(moves) || moves < 1 || moves > 32 || !Array.isArray(path) ||
+    !isLegalMovementPath(game.allNodes, game.activePlayer.nodeId, moves, !!game.activePlayer.hasFlexibleMovement, path)) return null;
+  game.remainingMoves = moves;
+  return path;
+}
 
 /** Visual playback only: remote turns must never execute tile rules or consume RNG. */
 export class RemoteMovementPlayback {
@@ -16,7 +28,7 @@ export class RemoteMovementPlayback {
     this.movingPlayer = null;
   }
 
-  play(game: GameState, path: number[], onStep: () => void): void {
+  play(game: GameState, path: number[], onStep: () => void, speed = game.gameSpeed): void {
     this.cancel();
     const generation = this.generation;
     const player = game.activePlayer;
@@ -32,7 +44,8 @@ export class RemoteMovementPlayback {
       const start = { x: player.gridX, y: player.gridY, z: player.gridZ };
       const dx = target.gx - start.x, dy = target.gy - start.y;
       player.facing = game.calculateIsoDirection(dx, dy, player.facing);
-      const duration = Math.max(60, Math.round((150 + Math.hypot(dx, dy) * 30) / game.gameSpeed));
+      const playbackSpeed = Number.isFinite(speed) ? Math.max(0.25, Math.min(8, speed)) : 1;
+      const duration = Math.max(60, Math.round((150 + Math.hypot(dx, dy) * 30) / playbackSpeed));
       const started = Date.now();
       const animate = () => {
         if (generation !== this.generation || game.activePlayer !== player) return;
@@ -41,7 +54,7 @@ export class RemoteMovementPlayback {
         player.gridX = start.x + dx * progress;
         player.gridY = start.y + dy * progress;
         player.gridZ = start.z + (target.gz - start.z) * progress;
-        player.walkFrame = progress < 1 ? (Math.floor(elapsed / Math.max(10, Math.round(30 / game.gameSpeed))) % 8) + 1 : 0;
+        player.walkFrame = progress < 1 ? (Math.floor(elapsed / Math.max(10, Math.round(30 / playbackSpeed))) % 8) + 1 : 0;
         if (progress === 1) {
           player.prevNodeId = player.nodeId;
           player.nodeId = target.id;

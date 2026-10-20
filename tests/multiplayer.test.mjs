@@ -2,7 +2,7 @@ import './_browser-stubs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NetworkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
-import { canAcceptTurnPacket, applyNetworkState, RemoteMovementPlayback } from '../.test-build/engine/MultiplayerSync.js';
+import { canAcceptTurnPacket, acceptNetworkMovement, applyNetworkState, RemoteMovementPlayback } from '../.test-build/engine/MultiplayerSync.js';
 import { GameState } from '../.test-build/game/GameState.js';
 import { SaveManager } from '../.test-build/game/SaveManager.js';
 
@@ -138,6 +138,29 @@ test('invalid room codes do not destroy the existing room', t => {
   const code = host.getRoomCode();
   assert.equal(host.joinRoom('bad-code'), false);
   assert.equal(host.getRoomCode(), code);
+});
+
+test('both host and guest moves carry their dice budget even when dice delivery is missing', async t => {
+  const { host, guests: [guest] } = await roomWithGuests(t);
+  const game = new GameState();
+  game.initGame([{ name: 'Host', classKey: 'warrior', isAI: false }, { name: 'Guest', classKey: 'cleric', isAI: false }]);
+  for (const [seat, sender, receiver] of [[0, host, guest], [1, guest, host]]) {
+    game.activePlayerIdx = seat;
+    game.phase = 'BOARD_TURN'; game.remainingMoves = 0;
+    const start = game.allNodes.find(n => n.id === game.activePlayer.nodeId);
+    const path = [start.id, start.neighbors[0]];
+    const move = packet(sender, sender.getMyPeerId(), 'MOVE_PATH', { playerIdx: seat, path, remainingMoves: 1, gameSpeed: 4 });
+    let received;
+    const unsubscribe = receiver.onPacket(p => { if (p.type === 'MOVE_PATH') received = p; });
+    sender.broadcast(move); await flush(); unsubscribe();
+    assert.deepEqual(acceptNetworkMovement(game, receiver.getRoomInfo(), received), path);
+    assert.equal(game.remainingMoves, 1);
+    assert.equal(received.payload.gameSpeed, 4);
+    assert.equal(acceptNetworkMovement(game, receiver.getRoomInfo(), { ...received, senderId: 'intruder' }), null);
+    assert.equal(acceptNetworkMovement(game, receiver.getRoomInfo(), { ...received, payload: { ...received.payload, remainingMoves: 6 } }), null);
+    game.phase = 'MOVING';
+    assert.equal(acceptNetworkMovement(game, receiver.getRoomInfo(), received), null);
+  }
 });
 
 test('new joins from duplicated tabs get separate session identities and seats', async t => {

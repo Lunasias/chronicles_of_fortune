@@ -17,6 +17,15 @@ and a guest could no longer send the final snapshot after changing the active pl
   using the same walking duration as the turn owner. Incoming snapshots cancel old
   animation before it can overwrite the new turn. Multiplayer starts at the same
   viewport-dependent zoom as single-player and keeps manual zoom during movement.
+- Every movement packet carries its dice budget and speed, including guest, AI and
+  pre-combat scouting paths. A valid current-owner move can recover from a missing
+  dice packet; duplicate moves and invalid routes are rejected.
+- The turn owner streams battle presentation to everyone else: combatants, HP/MP,
+  roles, status effects, animation poses and camera choreography. Spectators restore
+  render-only combatants without constructing/resolving a second battle, changing
+  board players, consuming RNG or opening command controls. PvP prompts remain
+  private to the requested participant. A final battle packet and turn snapshots
+  close the spectator arena; old frames cannot reopen the completed battle.
 - PvP choices carry a unique prompt ID, role and player seat. Only the requested player
   can reply, and duplicate/stale replies are ignored. Role swaps preserve the chosen attack.
 - The host bridges WebRTC and BroadcastChannel using the original packet ID. Duplicate
@@ -68,3 +77,28 @@ Both sides also rejoined their original seats after a reload. No browser warning
 errors were captured in the guest's final run.
 
 ![Guest camera and playable turn after host handoff](multiplayer/guest-camera.png)
+
+## Spectators, guest movement and responsive turn UI
+
+The room/turn control now lives inside the hero card; multiplayer suppresses the
+duplicate turn-start banner. The room button retains keyboard access and opens
+the lobby/chat, and its accessible label includes the active hero's name.
+Waiting action buttons are disabled using native button semantics and use a short
+seat label, so a long player name cannot stretch the sticky dice button on phones.
+
+Verification covers 275 tests, type checking, production build and CSS coverage.
+The two-origin WebRTC browser run verified host movement, guest movement with the
+camera following on the host, and live battle viewing on the waiting guest. Both
+devices showed matching HP (77/90 for Host and later 39/85 for the opponent), role
+swaps, status effects and attack poses. Spectator command controls stayed hidden.
+After the host won, the guest arena closed and the guest received its playable turn.
+
+Turn UI bounds were checked at 320×568, 360×640, 390×844, 430×932, 768×1024,
+844×390, 1280×720 and 1920×1080. Room/turn controls remained inside the hero
+card and the status panel remained on screen. Phone portrait was also inspected
+visually; the spectator arena was inspected at 390×844 and desktop size.
+
+![Waiting guest viewing combat on desktop](multiplayer/spectator-battle-desktop.png)
+![Waiting guest viewing combat on phone](multiplayer/spectator-battle-phone.png)
+![Host camera following a moving guest](multiplayer/host-following-guest.png)
+![Compact turn control on phone](multiplayer/turn-ui-phone.png)
