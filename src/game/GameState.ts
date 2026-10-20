@@ -131,6 +131,7 @@ export class GameState {
   // Log drawer messages
   public logs: Array<{ text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }> = [];
   public onLogAdded?: (entry: { text: string; type: 'info' | 'gold' | 'battle' | 'level' | 'darkling' }) => void;
+  private weeklyReportCallback?: () => void;
 
   get activePlayer(): Player {
     return this.players[this.activePlayerIdx] || this.players[0];
@@ -289,17 +290,29 @@ export class GameState {
 
   startTurn() {
     const p = this.activePlayer;
+    darklingSystem.calamityUsedThisTurn = false;
     this.world.focusPlayerId = p.id;
     this.world.focusRealm = this.allNodes.find(n => n.id === p.nodeId)?.realmId ?? 'solaria';
     this.checkWinConditions();
     if (this.world.result) return;
 
+    if (p.relics.includes('dragon_heart')) {
+      p.freezeTurns = 0;
+    }
+
     // Check Sleep Status: Skips turn if sleeping!
     if (p.sleepTurns > 0) {
       p.sleepTurns--;
       this.addLog(`💤 ${p.displayName} กำลังหลับใหลอย่างลึกซึ้งจากมนตรา Sleepy Slumber! จึงข้ามเทิร์นนี้ไป!`, 'battle');
-      this.endTurn();
+      this.endTurn(this.weeklyReportCallback);
       return;
+    }
+
+    if (p.isAI && p.canPromote()) {
+      const promotedClass = aiSystem.autoPromoteIfEligible(p);
+      if (promotedClass) {
+        this.addLog(`🌟 ${p.displayName} เลื่อนขั้นคลาสเป็น [${promotedClass}] สำเร็จ!`, 'level');
+      }
     }
 
     this.phase = 'BOARD_TURN';
@@ -403,6 +416,11 @@ export class GameState {
     }
 
     if (spellKey === 'frost_freeze' && target) {
+      if (target.relics.includes('dragon_heart')) {
+        target.freezeTurns = 0;
+        this.addLog(`❤️‍🔥🐉 หัวใจมังกรบรรพกาลของ ${target.displayName} ต้านทานพายุเยือกแข็ง Frost Freeze ได้อย่างสมบูรณ์!`, 'info');
+        return { success: true, message: `❤️‍🔥🐉 ${target.displayName} มีภูมิคุ้มกันแช่แข็งจาก Dragon Heart!` };
+      }
       target.freezeTurns = 2;
       this.addLog(`❄️ ${caster.displayName} ร่ายพายุ Frost Freeze แช่แข็ง ${target.displayName}! (ติดสถานะ Freeze 2 เทิร์น ทอยเต๋าได้แค่ 1 แต้ม)`, 'battle');
       return { success: true, message: `❄️ แช่แข็ง ${target.displayName}! ทอยเต๋าได้แค่ 1 แต้ม` };
@@ -471,6 +489,7 @@ export class GameState {
       for (let i = 0; i < Math.min(2, otherTowns.length); i++) {
         const picked = otherTowns[Math.floor(this.world.random() * otherTowns.length)];
         if (picked && picked.townData) {
+          const prevOwnerId = picked.townData.ownerId;
           picked.townData.ownerId = null;
           picked.townData.isOccupiedByMonster = true;
           picked.townData.monsterName = 'Demonic Abomination';
@@ -478,6 +497,13 @@ export class GameState {
           picked.townData.monsterMaxHp = 180;
           picked.townData.monsterAtk = 22;
           picked.townData.monsterDef = 14;
+          if (prevOwnerId !== null) {
+            const ownerPlayer = this.players.find(pl => pl.id === prevOwnerId);
+            if (ownerPlayer) {
+              ownerPlayer.townDeeds = ownerPlayer.townDeeds.filter(id => id !== picked.id);
+              ownerPlayer.townsControlled = ownerPlayer.townDeeds.length;
+            }
+          }
           affected.push(picked.name);
         }
       }
@@ -550,6 +576,10 @@ export class GameState {
         totalRoll += bonusStep;
         this.addLog(`👟 ฝีเท้าคล่องตัวสูง! (SPD ${playerSpd}) มอบโบนัสการก้าวเดินเพิ่ม +${bonusStep} ก้าว!`, 'level');
       }
+    }
+
+    if (p.relics.includes('dragon_heart')) {
+      p.freezeTurns = 0;
     }
 
     if (p.freezeTurns > 0) {
@@ -695,20 +725,27 @@ export class GameState {
 
   // End turn & advance round / check week
   endTurn(onWeeklyReportCallback?: () => void) {
+    if (onWeeklyReportCallback) {
+      this.weeklyReportCallback = onWeeklyReportCallback;
+    }
     this.checkWinConditions();
     if (this.phase === 'VICTORY') return;
 
     // Process active player end-of-turn effects
     const prevP = this.activePlayer;
     prevP.hasFlexibleMovement = false;
-    if (prevP.foodBuff && --prevP.foodBuff.turnsRemaining <= 0) prevP.foodBuff = null;
     const tickRes = prevP.tickTurn();
+    if (prevP.foodBuff && --prevP.foodBuff.turnsRemaining <= 0) prevP.foodBuff = null;
     if (tickRes.poisonDamage) {
       this.addLog(`☠️ พิษแล่นเข้าสู่หัวใจ! ${prevP.displayName} เสียเลือด ${tickRes.poisonDamage} HP!`, 'battle');
     }
     if (tickRes.curseTriggered) {
       audio.darklingRoar();
       this.addLog(`💀 คำสาปมรณะ (Doom Curse) ทำงาน! เลือดของ ${prevP.displayName} ลดฮวบเหลือ 1 HP!`, 'darkling');
+    }
+    if (tickRes.cursedBoxExploded) {
+      audio.curseExplosion();
+      this.addLog(`📦💥 กล่องระเบิดต้องสาปทำงาน! ${prevP.displayName} โดนระเบิดเสียเลือด ${tickRes.cursedBoxDamage} HP และสูญเสียทองคำ 25%!`, 'darkling');
     }
     if (tickRes.hpHealed) {
       this.addLog(`✨ พลังฟื้นฟูเยียวยา! ${prevP.displayName} ฟื้นฟู HP +${tickRes.hpHealed}!`, 'level');
@@ -724,10 +761,14 @@ export class GameState {
 
     if (this.activePlayerIdx === 0) {
       this.dayCounter++;
+      const prevWeatherType = weatherSystem.currentWeather?.type;
       this.world.advanceRound(this.dayCounter);
 
       // Advance dynamic atmospheric weather
       const weatherChange = weatherSystem.advanceDay(this.dayCounter);
+      if (prevWeatherType && weatherChange.newWeather.type !== prevWeatherType) {
+        weatherChange.changed = true;
+      }
       if (weatherChange.changed) {
         this.addLog(`${weatherChange.newWeather.icon} สภาพอากาศเปลี่ยนแปลง: ${weatherChange.newWeather.name} - ${weatherChange.newWeather.desc}`, 'level');
       }
@@ -744,8 +785,9 @@ export class GameState {
         }
 
         this.phase = 'WEEKLY_REPORT';
-        if (onWeeklyReportCallback) {
-          onWeeklyReportCallback();
+        const reportCb = onWeeklyReportCallback || this.weeklyReportCallback;
+        if (reportCb) {
+          reportCb();
           return;
         }
       }

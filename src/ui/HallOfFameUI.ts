@@ -258,14 +258,14 @@ export class HallOfFameUI {
     return this.champions.map((c, i) => `
       <div class="p-3 bg-slate-950/90 border ${i === 0 ? 'border-amber-400 bg-amber-950/20' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-slate-900 border ${i === 0 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'} flex items-center justify-center font-bold text-sm shrink-0">
+          <div class="w-8 h-8 bg-slate-900 border ${i === 0 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'} flex items-center justify-center font-bold text-sm shrink-0">
             ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
           </div>
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-sm">${c.avatar}</span>
               <strong class="text-amber-300 text-xs sm:text-sm">${escapeHtml(c.playerName)}</strong>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${escapeHtml(c.playerClass)}</span>
+              <span class="text-[9px] px-1.5 py-0.5 bg-slate-800 text-slate-400">${escapeHtml(c.playerClass)}</span>
               ${c.isAI ? '<span class="text-[8px] px-1 bg-indigo-950 border border-indigo-700 text-indigo-300">BOT</span>' : ''}
             </div>
             <div class="text-[10px] text-slate-400 mt-0.5">
@@ -285,7 +285,7 @@ export class HallOfFameUI {
   private renderTrophiesList(): string {
     return this.trophies.map(t => `
       <div class="p-3 bg-slate-950/90 border ${t.unlocked ? 'border-amber-500/70 bg-amber-950/20' : 'border-slate-800 opacity-60'} flex items-center gap-3 text-xs">
-        <div class="w-10 h-10 rounded border ${t.unlocked ? 'border-amber-400 bg-amber-500/20 text-2xl' : 'border-slate-700 bg-slate-900 text-xl grayscale'} flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 border ${t.unlocked ? 'border-amber-400 bg-amber-500/20 text-2xl' : 'border-slate-700 bg-slate-900 text-xl grayscale'} flex items-center justify-center shrink-0">
           ${t.icon}
         </div>
         <div class="flex-1">

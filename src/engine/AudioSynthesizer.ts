@@ -2,11 +2,19 @@ export type BgmTrack = 'overworld' | 'battle' | 'boss' | 'darkling' | 'casino' |
 
 export class AudioSynthesizer {
   private ctx: AudioContext | null = null;
-  public enabled: boolean = true;
+  private _enabled: boolean = true;
+  public get enabled(): boolean { return this._enabled; }
+  public set enabled(val: boolean) {
+    this._enabled = Boolean(val);
+    if (this.ctx && this.bgmGainNode) {
+      this.bgmGainNode.gain.setValueAtTime(this._enabled && this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
+    }
+    if (!this._enabled) this.stopBgm();
+  }
   public bgmEnabled: boolean = true;
-  public sfxVolume: number = 0.40;
+  public sfxVolume: number = 0.50;
   // BGM volume is strictly kept at 50% of SFX volume per user requirement
-  public bgmVolume: number = 0.20;
+  public bgmVolume: number = 0.35;
 
   private currentTrack: BgmTrack = 'none';
   private bgmTimer: number | null = null;
@@ -34,7 +42,7 @@ export class AudioSynthesizer {
   setBgmVolume(val: number) {
     this.bgmVolume = Math.max(0, Math.min(1, val));
     if (this.ctx && this.bgmGainNode) {
-      this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
+      this.bgmGainNode.gain.setValueAtTime(this.enabled && this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
     }
   }
 
@@ -45,7 +53,7 @@ export class AudioSynthesizer {
   toggleBgm(): boolean {
     this.bgmEnabled = !this.bgmEnabled;
     if (this.ctx && this.bgmGainNode) {
-      this.bgmGainNode.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
+      this.bgmGainNode.gain.setValueAtTime(this.enabled && this.bgmEnabled ? this.bgmVolume : 0, this.ctx.currentTime);
     }
     if (this.bgmEnabled && this.currentTrack !== 'none') {
       const tr = this.currentTrack;
@@ -62,7 +70,7 @@ export class AudioSynthesizer {
     if (this.currentTrack === track && this.bgmTimer !== null) return;
     this.stopBgm();
     this.currentTrack = track;
-    if (track === 'none' || !this.bgmEnabled) return;
+    if (track === 'none' || !this.enabled || !this.bgmEnabled) return;
 
     this.init();
     this.bgmStep = 0;
@@ -111,7 +119,7 @@ export class AudioSynthesizer {
   }
 
   private tickBgmSequencer(track: BgmTrack) {
-    if (!this.ctx || !this.bgmEnabled || !this.bgmGainNode) return;
+    if (!this.ctx || !this.enabled || !this.bgmEnabled || !this.bgmGainNode) return;
     const step = this.bgmStep;
     this.bgmStep = (this.bgmStep + 1) % 32;
 
@@ -355,7 +363,7 @@ export class AudioSynthesizer {
       const gain = this.ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-      gain.gain.setValueAtTime(gainVal * (this.sfxVolume / 0.35), this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal * Math.min(1.5, this.sfxVolume * 1.25), this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
       osc.connect(gain);
       gain.connect(this.ctx.destination);

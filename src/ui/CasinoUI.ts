@@ -73,12 +73,17 @@ export class CasinoUI {
 
   close() {
     this.modal.classList.add('hidden');
-    audio.playBiomeBgm(this.game.activePlayer.nodeId.toString());
+    const node = this.game.allNodes.find(n => n.id === this.game.activePlayer.nodeId);
+    audio.playBiomeBgm(node?.biome || 'grass');
     if (this.onFinishedCallback) {
       const cb = this.onFinishedCallback;
       this.onFinishedCallback = undefined;
       cb();
     }
+  }
+
+  private getFestivalMult(): number {
+    return royalDecreeSystem.activeDecree.id === 'ROYAL_CASINO_FESTIVAL' ? 1.5 : 1.0;
   }
 
   private render() {
@@ -130,7 +135,7 @@ export class CasinoUI {
         <div id="casinoHighLowPanel" class="flex flex-col gap-3">
           <div class="bg-slate-950/90 border border-slate-800 p-3 sm:p-4 text-center">
             <div class="text-[10px] text-amber-300 uppercase tracking-widest mb-1">ไพ่ปัจจุบัน</div>
-            <div id="hlCardDisplay" class="w-20 h-28 mx-auto bg-amber-100 border-4 border-amber-800 flex flex-col items-center justify-center text-slate-950 shadow-lg my-2">
+            <div id="hlCardDisplay" class="w-20 h-28 mx-auto bg-amber-100 border-4 border-amber-800 flex flex-col items-center justify-center text-slate-950 my-2">
               <span id="hlCardSuit" class="text-lg">♠️</span>
               <span id="hlCardValue" class="text-3xl font-extrabold">${this.cardToLabel(this.hlCurrentCard)}</span>
             </div>
@@ -139,7 +144,7 @@ export class CasinoUI {
               (ชนะต่อเนื่อง: <span id="hlStreakText" class="text-emerald-400 font-bold">${this.hlStreak}</span> ครั้ง)
             </div>
             <div id="hlPotText" class="text-sm font-bold text-yellow-300 mt-1">
-              เงินรางวัลหากถอนตอนนี้: ${Math.round(this.hlBet * this.hlMultiplier)}G
+              เงินรางวัลหากถอนตอนนี้: ${Math.round(this.hlBet * this.hlMultiplier * this.getFestivalMult())}G
             </div>
           </div>
 
@@ -161,7 +166,7 @@ export class CasinoUI {
               <button class="hl-bet-btn pixel-btn px-2 py-0.5 text-[10px]" data-bet="100">100G</button>
             </div>
             <button id="btnHlCashOut" class="pixel-btn pixel-btn-gold px-4 py-1.5 text-xs font-bold text-slate-950" ${this.hlStreak === 0 ? 'disabled' : ''}>
-              💰 ถอนเงิน (${Math.round(this.hlBet * this.hlMultiplier)}G)
+              💰 ถอนเงิน (${Math.round(this.hlBet * this.hlMultiplier * this.getFestivalMult())}G)
             </button>
           </div>
           <div id="hlMessage" class="text-center text-xs font-bold min-h-[1.25rem] text-amber-300"></div>
@@ -171,7 +176,7 @@ export class CasinoUI {
         <div id="casinoRoulettePanel" class="hidden flex flex-col gap-3">
           <div class="bg-slate-950/90 border border-slate-800 p-4 text-center">
             <div class="text-[10px] text-amber-300 uppercase tracking-widest mb-1">วงล้อหมุนกงล้อโชค</div>
-            <div id="rouletteWheel" class="w-28 h-28 mx-auto rounded-none border-4 border-amber-500 bg-slate-900 flex items-center justify-center my-3 relative overflow-hidden">
+            <div id="rouletteWheel" class="w-28 h-28 mx-auto border-4 border-amber-500 bg-slate-900 flex items-center justify-center my-3 relative overflow-hidden">
               <div id="roulettePointer" class="text-4xl">⭐</div>
             </div>
             <div id="rouletteResultText" class="text-xs text-slate-300 min-h-[1.5rem] font-bold">
@@ -258,7 +263,6 @@ export class CasinoUI {
             </button>
           </div>
         </div>
-      </div>
       </div>
     `;
 
@@ -408,17 +412,25 @@ export class CasinoUI {
       this.hlActive = true;
       this.hlMultiplier = 1.0;
       this.hlStreak = 0;
+      this.updateGoldDisplay();
       audio.coin();
     }
 
-    const nextCard = Math.floor(this.game.world.random() * 13) + 1;
-    const isWin = guessHigher ? nextCard >= this.hlCurrentCard : nextCard <= this.hlCurrentCard;
+    let nextCard = Math.floor(this.game.world.random() * 13) + 1;
+    if (nextCard === this.hlCurrentCard) {
+      nextCard = (nextCard % 13) + 1;
+    }
+    const isWin = guessHigher ? nextCard > this.hlCurrentCard : nextCard < this.hlCurrentCard;
     this.hlCurrentCard = nextCard;
 
     if (isWin) {
       this.hlStreak++;
       this.hlMultiplier = this.hlStreak === 1 ? 1.8 : this.hlStreak === 2 ? 3.5 : this.hlStreak === 3 ? 7.0 : 15.0;
       audio.levelUp();
+      if (this.hlStreak >= 4) {
+        this.handleHlCashOut();
+        return;
+      }
       this.setHlMessage(`🎉 ถูกต้อง! ไพ่ออก ${this.cardToLabel(nextCard)}! ทวีคูณ x${this.hlMultiplier.toFixed(1)}!`);
     } else {
       audio.hurt();
@@ -435,10 +447,11 @@ export class CasinoUI {
     const p = this.currentPlayer;
     if (!p || this.hlStreak === 0) return;
 
-    const festivalMult = royalDecreeSystem.activeDecree.id === 'ROYAL_CASINO_FESTIVAL' ? 1.5 : 1.0;
+    const festivalMult = this.getFestivalMult();
     const winnings = Math.round(this.hlBet * this.hlMultiplier * festivalMult);
     p.gold += winnings;
     p.matchStats.goldEarnedTotal += winnings;
+    this.updateGoldDisplay();
     audio.jackpotFanfare();
     const festTag = festivalMult > 1 ? ' [โบนัสเทศกาล +50%!]' : '';
     this.setHlMessage(`💰 ยินดีด้วย! คุณถอนกำไรสำเร็จ +${winnings}G!${festTag}`);
@@ -468,11 +481,15 @@ export class CasinoUI {
     const strEl = document.getElementById('hlStreakText');
     if (strEl) strEl.innerText = `${this.hlStreak}`;
 
+    const pot = Math.round(this.hlBet * this.hlMultiplier * this.getFestivalMult());
     const potEl = document.getElementById('hlPotText');
-    if (potEl) potEl.innerText = `เงินรางวัลหากถอนตอนนี้: ${Math.round(this.hlBet * this.hlMultiplier)}G`;
+    if (potEl) potEl.innerText = `เงินรางวัลหากถอนตอนนี้: ${pot}G`;
 
     const cashBtn = document.getElementById('btnHlCashOut') as HTMLButtonElement | null;
-    if (cashBtn) cashBtn.disabled = this.hlStreak === 0;
+    if (cashBtn) {
+      cashBtn.disabled = this.hlStreak === 0;
+      cashBtn.innerText = `💰 ถอนเงิน (${pot}G)`;
+    }
   }
 
   private handleSpinRoulette() {
@@ -487,6 +504,7 @@ export class CasinoUI {
     }
 
     p.gold -= this.rouletteBet;
+    this.updateGoldDisplay();
     this.rouletteSpinning = true;
     audio.coin();
 
@@ -517,6 +535,7 @@ export class CasinoUI {
           const payout = Math.round(this.rouletteBet * mult * festivalMult);
           p.gold += payout;
           p.matchStats.goldEarnedTotal += payout;
+          this.updateGoldDisplay();
           audio.jackpotFanfare();
           const festTag = festivalMult > 1 ? ' [โบนัสเทศกาล +50%!]' : '';
           if (resEl) resEl.innerText = `🎉 แจ็กพอตแตก! วงล้อหยุดที่ ${icon}! ได้รับเงินรางวัล x${mult} (+${payout}G)${festTag}!`;

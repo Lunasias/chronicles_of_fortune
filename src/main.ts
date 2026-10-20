@@ -680,7 +680,7 @@ class DokaponApp {
       },
       onZoom: (delta) => {
         if (!this.game.activeBattle) {
-          this.renderer.camera.targetZoom = Math.max(0.35, Math.min(2.5, this.renderer.camera.targetZoom + delta));
+          this.stepCameraZoom(delta > 0 ? 1 : -1);
           this.renderer.clampCameraBounds();
         }
       },
@@ -699,7 +699,7 @@ class DokaponApp {
           }
           // On board: Roll dice / spinner if waiting for roll
           const rollBtn = document.getElementById('btnRollDice');
-          const spinnerBtn = document.getElementById('btnRollSpinner');
+          const spinnerBtn = document.getElementById('btnUseSpinner');
           if (rollBtn && !rollBtn.classList.contains('hidden') && !rollBtn.hasAttribute('disabled')) {
             rollBtn.click();
             return;
@@ -727,7 +727,7 @@ class DokaponApp {
           const modals = [
             'worldMapModal',
             'inventoryModal',
-            'modalBag',
+            // modalBag consolidated into inventoryModal
             'settingsModal',
             'shopModal',
             'townModal',
@@ -737,6 +737,9 @@ class DokaponApp {
           for (const mId of modals) {
             const el = document.getElementById(mId);
             if (el && !el.classList.contains('hidden')) {
+              if (mId === 'shopModal') { this.shopUI.close(); return; }
+              if (mId === 'townModal') { this.townUI.close(); return; }
+              if (mId === 'inventoryModal') { document.getElementById('btnCloseInventory')?.click(); return; }
               el.classList.add('hidden');
               audio.click();
               return;
@@ -753,7 +756,7 @@ class DokaponApp {
             document.getElementById('btnCmdMagicGuard')?.click();
           }
         } else {
-          document.getElementById('btnOpenBag')?.click();
+          document.getElementById('btnInventory')?.click();
         }
       },
       onSpecial: () => {
@@ -778,13 +781,31 @@ class DokaponApp {
         document.getElementById('btnInspectHero')?.click();
       },
       onStart: () => {
-        document.getElementById('btnOpenSettings')?.click();
+        document.getElementById('btnSettings')?.click();
       },
       onDpadLeft: () => this.cycleHighlightedNode(-1),
       onDpadRight: () => this.cycleHighlightedNode(1),
       onDpadUp: () => this.cycleHighlightedNode(-1),
       onDpadDown: () => this.cycleHighlightedNode(1)
     });
+  }
+
+  private stepCameraZoom(direction: 1 | -1) {
+    const steps = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+    const current = this.renderer.camera.targetZoom;
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < steps.length; i++) {
+      const diff = Math.abs(steps[i] - current);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
+    }
+    const nextIdx = Math.max(0, Math.min(steps.length - 1, closestIdx + direction));
+    this.renderer.camera.targetZoom = steps[nextIdx];
+    this.renderer.camera.zoom = steps[nextIdx];
+    this.renderer.clampCameraBounds();
   }
 
   private confirmMoveDestination() {
@@ -1068,6 +1089,10 @@ class DokaponApp {
       audio.click();
       const p = this.game.activePlayer;
       if (p.isDarkling) {
+        if ((darklingSystem as any).calamityUsedThisTurn) {
+          this.game.addLog(`⏳ ใช้พลังภัยพิบัติจอมมารไปแล้วในเทิร์นนี้!`, 'darkling');
+          return;
+        }
         document.getElementById('darklingSpellsModal')?.classList.remove('hidden');
       } else {
         this.openFieldMagicModal();
@@ -1081,6 +1106,8 @@ class DokaponApp {
     // Darkling Calamities
     document.getElementById('btnCalamityInvade')?.addEventListener('click', () => {
       if (!this.ownsActiveTurn()) return;
+      if ((darklingSystem as any).calamityUsedThisTurn) return;
+      (darklingSystem as any).calamityUsedThisTurn = true;
       const msg = darklingSystem.castSummonInvaders(this.game.activePlayer, this.game.allNodes, this.game.players);
       this.game.addLog(msg, 'darkling');
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
@@ -1088,6 +1115,8 @@ class DokaponApp {
     });
     document.getElementById('btnCalamityPlague')?.addEventListener('click', () => {
       if (!this.ownsActiveTurn()) return;
+      if ((darklingSystem as any).calamityUsedThisTurn) return;
+      (darklingSystem as any).calamityUsedThisTurn = true;
       const msg = darklingSystem.castGlobalPlague(this.game.activePlayer, this.game.players);
       this.game.addLog(msg, 'darkling');
       document.getElementById('darklingSpellsModal')?.classList.add('hidden');
@@ -1095,6 +1124,8 @@ class DokaponApp {
     });
     document.getElementById('btnCalamityWarp')?.addEventListener('click', () => {
       if (!this.ownsActiveTurn()) return;
+      if ((darklingSystem as any).calamityUsedThisTurn) return;
+      (darklingSystem as any).calamityUsedThisTurn = true;
       const res = darklingSystem.castDemonWarp(this.game.activePlayer, this.game.players, this.game.allNodes);
       this.game.addLog(res.message, 'darkling');
       this.syncMultiplayerState();
@@ -1171,8 +1202,8 @@ class DokaponApp {
     // Mouse Wheel Zoom
     this.canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-      this.renderer.camera.targetZoom = Math.max(0.55, Math.min(1.8, this.renderer.camera.targetZoom * zoomFactor));
+      this.stepCameraZoom(e.deltaY < 0 ? 1 : -1);
+      // discrete zoom handled by stepCameraZoom
       this.renderer.camera.zoom = this.renderer.camera.targetZoom;
       this.renderer.clampCameraBounds();
     }, { passive: false });
@@ -1851,6 +1882,13 @@ class DokaponApp {
     }
 
     this.game.world.focusRealm = tile.realmId;
+    if (dungeonSystem.isExitNode(tile.id)) {
+      dungeonSystem.exitDungeon(p, this.game);
+      this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+      hallOfFameUI.unlockTrophy('DUNGEON_CRAWLER');
+      this.advanceTurn();
+      return;
+    }
     if (['empty', 'isekai_event'].includes(tile.type) && this.game.world.random() * 100 < encounterChance(tile, this.game.world)) {
       this.initiateRandomEncounter(tile); return;
     }
@@ -1949,6 +1987,7 @@ class DokaponApp {
 
       case 'tavern':
         chooseJourney(p, 'โรงเตี๊ยม', 'เลือกพักฟื้น ฟังข่าว หรือเสี่ยงโชค', [
+          { label: 'สั่งอาหารและซื้อข่าวลือ', detail: 'รับประทานอาหารเพิ่มบัฟ หรือซื้อเบาะแสลับ', score: p.gold >= 60 ? 6 : 2, run: () => this.isekaiEventUI.openTavern(p, () => this.advanceTurn()) },
           { label: 'พักและฟังข่าว', detail: 'รักษาตัวและรับพยากรณ์อากาศ', score: p.hp < p.maxHp * 0.6 ? 10 : 3, run: () => this.fantasyEventUI.openEvent(p, tile, () => this.advanceTurn()) },
           { label: 'โต๊ะเสี่ยงโชค', detail: 'ใช้เงินเดิมพัน', score: 1, run: () => this.casinoUI.open(p, () => this.advanceTurn()) },
           { label: 'เดินทางต่อ', detail: 'จบเทิร์น', score: 2, run: () => this.advanceTurn() }
@@ -2073,12 +2112,10 @@ class DokaponApp {
     tier = 1
   ): { gold: number; xp: number; droppedItem?: EquipmentItem } {
     const node = this.game.allNodes.find(n => n.id === player.nodeId)!;
-    let { gold, xp } = monsterRewards(tier, this.game.world, node, isTownBoss || isCalamityBoss);
+    let { gold, xp } = monsterRewards(tier, this.game.world, node, isTownBoss || isCalamityBoss, player);
     let dropChance = isCalamityBoss ? 0.8 : isTownBoss ? 0.5 : Math.min(0.45, 0.2 + tier * 0.04);
-
-    if (royalDecreeSystem.activeDecree.id === 'ROYAL_FESTIVAL_HUNT') {
-      gold = Math.round(gold * 2);
-      xp = Math.round(xp * 2);
+    if (royalDecreeSystem.activeDecree.id === 'BLOOD_MOON' && node?.type === 'red') {
+      dropChance = 1.0;
     }
 
     player.gold += gold;
@@ -2101,9 +2138,9 @@ class DokaponApp {
       } else if (tier === 2 && !isTownBoss && !isCalamityBoss) {
         availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 1500);
       } else if (tier === 3 && !isTownBoss && !isCalamityBoss) {
-        availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 5000);
+        availableLoot = SHOP_CATALOG.filter(it => (it.cost || 0) <= 2500);
       } else if (isTownBoss || isCalamityBoss) {
-        availableLoot = SHOP_CATALOG.filter(it => it.type === 'weapon' || it.type === 'armor' || it.type === 'accessory' || it.id === 'pot_elixir' || it.type === 'spell');
+        availableLoot = SHOP_CATALOG.filter(it => it.type === 'weapon' || it.type === 'shield' || it.type === 'armor' || it.type === 'accessory' || it.id === 'pot_elixir' || it.type === 'spell');
       }
 
       if (availableLoot.length === 0) availableLoot = SHOP_CATALOG;
@@ -2522,6 +2559,7 @@ class DokaponApp {
   private onTurnStarted() {
     if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
+    (darklingSystem as any).calamityUsedThisTurn = false;
     if (this.ownsActiveTurn()) offerWeeklyDraft(this.game);
     // 1. Smoothly center camera on active player without jarring zoom jumps
     this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);

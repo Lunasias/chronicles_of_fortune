@@ -32,7 +32,11 @@ export function offerWeeklyDraft(game: GameState): void {
     { id: 'phoenix_amulet', name: 'ขนนกผู้พิทักษ์', detail: 'Relic คืนชีพ ช่วยรับมือพื้นที่อันตราย', score: player.hp < player.maxHp * 0.5 ? 10 : 4 },
     { id: 'thief_band', name: 'สายรัดจอมโจร', detail: 'ลดค่าผ่านทาง เหมาะกับการเดินผ่านเมืองคู่แข่ง', score: player.aiPersonality === 'economist' ? 9 : 4 },
     { id: 'windstrider_horseshoe', name: 'รองเท้าวายุ', detail: 'ปรับผลทอยลูกเต๋าขั้นต่ำเป็น 3', score: player.aiPersonality === 'hunter' ? 9 : 5 },
-    { id: 'aegis_crest', name: 'แหวนพิทักษ์', detail: 'เกราะแสงดูดซับความเสียหาย 25 หน่วยแรก', score: 6 }
+    { id: 'aegis_crest', name: 'แหวนพิทักษ์', detail: 'เกราะแสงดูดซับความเสียหาย 25 หน่วยแรก', score: 6 },
+    { id: 'banker_ledger', name: 'สมุดบัญชีหลวง', detail: 'รับโบนัสดอกเบี้ยและเงินสดประจำสัปดาห์ +15%', score: player.aiPersonality === 'economist' ? 10 : 5 },
+    { id: 'berserker_fang', name: 'เขี้ยวคลั่งสงคราม', detail: 'เพิ่มพลังโจมตี +35% เมื่อพลังชีวิตต่ำกว่า 40%', score: player.aiPersonality === 'hunter' ? 8 : 5 },
+    { id: 'dragon_heart', name: 'หัวใจมังกรโบราณ', detail: 'ฟื้นฟู 8% ของ Max HP ทุกจุดเริ่มต้นเทิร์น', score: 7 },
+    { id: 'midas_touch', name: 'หัตถ์ทองคำไมดาส', detail: 'ได้รับเหรียญทองจากการชนะการต่อสู้เพิ่มขึ้น +35%', score: 8 }
   ].filter(relic => !player.relics.includes(relic.id));
   const selected = [];
   while (pool.length && selected.length < 3) selected.push(pool.splice(Math.floor(game.world.random() * pool.length), 1)[0]);

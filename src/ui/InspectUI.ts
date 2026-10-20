@@ -3,6 +3,7 @@ import { GameState } from '../game/GameState';
 import { BoardNode } from '../game/BoardMap';
 import { audio } from '../engine/AudioSynthesizer';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
+import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { getNodeEncounterPreview, MonsterProfile } from '../game/MonsterDatabase';
 import { escapeHtml } from '../util/Html';
 
@@ -84,6 +85,9 @@ export class InspectUI {
     const weaponDesc = player.equipment.weapon
       ? `${player.equipment.weapon.icon} ${player.equipment.weapon.name} (+${player.equipment.weapon.atk || 0} ATK)`
       : '🗡️ กำปั้นเปล่า (ไม่มีอาวุธ)';
+    const shieldDesc = player.equipment.shield
+      ? `${player.equipment.shield.icon} ${player.equipment.shield.name} (+${player.equipment.shield.def || 0} DEF)`
+      : '🛡️ ไม่มีโล่';
     const armorDesc = player.equipment.armor
       ? `${player.equipment.armor.icon} ${player.equipment.armor.name} (+${player.equipment.armor.def || 0} DEF)`
       : '🛡️ เสื้อผ้าธรรมดา (ไม่มีเกราะ)';
@@ -135,7 +139,8 @@ export class InspectUI {
       companionHtml = `
         <div class="mb-3 p-2.5 bg-pink-950/70 border border-pink-700 text-pink-200 text-xs flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xl">${comp.avatar || '💖'}</span>
+            <canvas id="inspectCompanionCanvas" width="64" height="64" class="w-10 h-10 image-pixelated hidden"></canvas>
+            <span id="inspectCompanionIcon" class="text-xl">${comp.avatar || '💖'}</span>
             <div>
               <div class="font-bold text-pink-300">${comp.name} (${comp.title || 'คู่หู'})</div>
               <div class="text-[10px] text-pink-100">${roleText}</div>
@@ -285,6 +290,9 @@ export class InspectUI {
               <strong class="text-slate-400">อาวุธ:</strong> ${weaponDesc}
             </div>
             <div class="text-[11px] text-slate-200">
+              <strong class="text-slate-400">โล่:</strong> ${shieldDesc}
+            </div>
+            <div class="text-[11px] text-slate-200">
               <strong class="text-slate-400">ชุดเกราะ:</strong> ${armorDesc}
             </div>
             <div class="text-[11px] text-slate-200">
@@ -346,6 +354,14 @@ export class InspectUI {
         player.skinVariant
       );
       ctx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
+    }
+
+    if (player.companion) {
+      const compCanvas = document.getElementById('inspectCompanionCanvas') as HTMLCanvasElement | null;
+      const compIcon = document.getElementById('inspectCompanionIcon');
+      const painted = compCanvas ? companionSprites.paintInto(compCanvas, player.companion, compIcon) : false;
+      if (compIcon) compIcon.classList.toggle('hidden', painted);
+      compCanvas?.classList.toggle('hidden', !painted);
     }
 
   }
@@ -526,7 +542,8 @@ export class InspectUI {
             <!-- Gear -->
             <div class="text-[10px] text-slate-300 space-y-0.5">
               <div><strong>อาวุธ:</strong> ${attacker.equipment.weapon ? attacker.equipment.weapon.name : 'กำปั้นเปล่า'}</div>
-              <div><strong>โล่/เกราะ:</strong> ${attacker.equipment.armor ? attacker.equipment.armor.name : 'ไม่มี'}</div>
+              <div><strong>โล่:</strong> ${attacker.equipment.shield ? attacker.equipment.shield.name : 'ไม่มี'}</div>
+              <div><strong>ชุดเกราะ:</strong> ${attacker.equipment.armor ? attacker.equipment.armor.name : 'ไม่มี'}</div>
               <div><strong>สกิล:</strong> <span class="text-cyan-300 font-bold">${attacker.skillName}</span></div>
             </div>
           </div>
@@ -566,7 +583,8 @@ export class InspectUI {
             <!-- Gear -->
             <div class="text-[10px] text-slate-300 space-y-0.5">
               <div><strong>อาวุธ:</strong> ${defender.equipment.weapon ? defender.equipment.weapon.name : 'กำปั้นเปล่า'}</div>
-              <div><strong>โล่/เกราะ:</strong> ${defender.equipment.armor ? defender.equipment.armor.name : 'ไม่มี'}</div>
+              <div><strong>โล่:</strong> ${defender.equipment.shield ? defender.equipment.shield.name : 'ไม่มี'}</div>
+              <div><strong>ชุดเกราะ:</strong> ${defender.equipment.armor ? defender.equipment.armor.name : 'ไม่มี'}</div>
               <div><strong>สกิล:</strong> <span class="text-rose-300 font-bold">${defender.skillName}</span></div>
             </div>
           </div>

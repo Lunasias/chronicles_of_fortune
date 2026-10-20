@@ -5,6 +5,12 @@ import { audio } from '../engine/AudioSynthesizer';
 import { royalDecreeSystem } from './RoyalDecreeSystem';
 
 export class DarklingSystem {
+  public calamityUsedThisTurn: boolean = false;
+
+  resetTurn(): void {
+    this.calamityUsedThisTurn = false;
+  }
+
   // Check if player qualifies for Darkling transformation
   canTransform(player: Player, allPlayers: Player[], allNodes: BoardNode[]): boolean {
     if (player.isDarkling || getWorld().mode === 'coop_raid' || getWorld().day < (getWorld().memory(player.id).flags.darklingAfterDay ?? 0)) return false;
@@ -26,6 +32,7 @@ export class DarklingSystem {
 
   // Execute the Demonic Pact with Overlord Rico
   acceptPact(darklingPlayer: Player, allNodes: BoardNode[], spec: 'destroyer' | 'reaper' | 'tormentor' = 'destroyer') {
+    this.calamityUsedThisTurn = false;
     getWorld().memory(darklingPlayer.id).flags.darklingAfterDay = getWorld().day + 14;
     darklingPlayer.equipment = { weapon: null, armor: null, shield: null, accessory: null };
     // Sacrifice everything
@@ -38,6 +45,7 @@ export class DarklingSystem {
       if (node && node.townData) {
         node.townData.ownerId = null;
         node.townData.isOccupiedByMonster = true;
+        node.townData.monsterHp = node.townData.monsterMaxHp || node.townData.monsterHp || 120;
       }
     });
     darklingPlayer.townDeeds = [];
@@ -99,12 +107,20 @@ export class DarklingSystem {
 
   // Calamity 1: Summon Monsters to re-occupy opponents' towns
   castSummonInvaders(darklingPlayer: Player, allNodes: BoardNode[], allPlayers: Player[]): string {
+    if (this.calamityUsedThisTurn) {
+      return '⚠️ จอมมารสามารถปลดปล่อยมหาภัยพิบัติ (Calamity) ได้เพียงเทิร์นละ 1 ครั้งเท่านั้น!';
+    }
+    this.calamityUsedThisTurn = true;
     let townsOccupied = 0;
     allNodes.forEach(node => {
       if (node.type === 'town' && node.townData && node.townData.ownerId !== null) {
         const victim = allPlayers.find(p => p.id === node.townData!.ownerId);
         if (victim && victim.id !== darklingPlayer.id) {
           node.townData.isOccupiedByMonster = true;
+          node.townData.ownerId = null;
+          node.townData.monsterHp = node.townData.monsterMaxHp || node.townData.monsterHp || 120;
+          victim.townDeeds = victim.townDeeds.filter(id => id !== node.id);
+          victim.townsControlled = victim.townDeeds.length;
           townsOccupied++;
         }
       }
@@ -116,6 +132,10 @@ export class DarklingSystem {
 
   // Calamity 2: Plague of Pestilence (strips gold and damages rivals)
   castGlobalPlague(darklingPlayer: Player, allPlayers: Player[]): string {
+    if (this.calamityUsedThisTurn) {
+      return '⚠️ จอมมารสามารถปลดปล่อยมหาภัยพิบัติ (Calamity) ได้เพียงเทิร์นละ 1 ครั้งเท่านั้น!';
+    }
+    this.calamityUsedThisTurn = true;
     let totalPlundered = 0;
     allPlayers.forEach(p => {
       if (p.id !== darklingPlayer.id) {
@@ -131,8 +151,18 @@ export class DarklingSystem {
     return `💀 GLOBAL PLAGUE! All rivals lost 30% HP and forfeited a combined ${totalPlundered}G to the Darkling!`;
   }
 
+  castPlagueWind(darklingPlayer: Player, allPlayers: Player[]): string {
+    return this.castGlobalPlague(darklingPlayer, allPlayers);
+  }
+
   // Calamity 3: Demon Warp to richest rival
   castDemonWarp(darklingPlayer: Player, allPlayers: Player[], allNodes: BoardNode[]): { message: string; targetNodeId: number } {
+    if (this.calamityUsedThisTurn) {
+      return {
+        message: '⚠️ จอมมารสามารถปลดปล่อยมหาภัยพิบัติ (Calamity) ได้เพียงเทิร์นละ 1 ครั้งเท่านั้น!',
+        targetNodeId: darklingPlayer.nodeId
+      };
+    }
     const sorted = [...allPlayers].filter(p => p.id !== darklingPlayer.id).sort((a, b) => b.getNetWorth(allNodes) - a.getNetWorth(allNodes));
     const targetPlayer = sorted[0];
 
@@ -140,6 +170,7 @@ export class DarklingSystem {
       return { message: 'No rivals to target!', targetNodeId: darklingPlayer.nodeId };
     }
 
+    this.calamityUsedThisTurn = true;
     // Warp to adjacent or same node
     darklingPlayer.nodeId = targetPlayer.nodeId;
     const node = allNodes.find(n => n.id === targetPlayer.nodeId) || allNodes[0];
@@ -152,6 +183,10 @@ export class DarklingSystem {
       message: `⚡ DEMON WARP! The Darkling teleported right beside ${targetPlayer.name} to hunt them down!`,
       targetNodeId: node.id
     };
+  }
+
+  castChaoticWarp(darklingPlayer: Player, allPlayers: Player[], allNodes: BoardNode[]): { message: string; targetNodeId: number } {
+    return this.castDemonWarp(darklingPlayer, allPlayers, allNodes);
   }
 }
 

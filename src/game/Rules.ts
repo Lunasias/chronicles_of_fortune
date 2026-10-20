@@ -1,6 +1,7 @@
 import type { BoardNode } from './BoardMap';
 import type { Player } from './Player';
 import { WorldState } from './WorldState';
+import { royalDecreeSystem } from './RoyalDecreeSystem';
 
 export const RULES = {
   goldGoal: 12000, townGoal: 8, campaignDays: 42, blitzDays: 20, raidDays: 30,
@@ -23,11 +24,22 @@ export function encounterChance(node: BoardNode, world: WorldState): number {
   return Math.min(90, chance);
 }
 
-export function monsterRewards(tier: number, world: WorldState, node: BoardNode, boss = false): { gold: number; xp: number } {
+export function monsterRewards(tier: number, world: WorldState, node: BoardNode, boss = false, player?: Player): { gold: number; xp: number } {
   const base = [0, 45, 85, 150, 240, 350, 500][Math.min(6, Math.max(1, tier))];
   const weather = world.weatherAt(node) === 'blood_moon' ? 1.6 : 1;
-  return { gold: Math.round(base * weather * (boss ? 1.6 : 1)), xp: Math.round(base * weather * (boss ? 2 : 1.2)) };
+  const decreeId = typeof (royalDecreeSystem.activeDecree as any) === 'string'
+    ? (royalDecreeSystem.activeDecree as unknown as string)
+    : royalDecreeSystem.activeDecree?.id;
+  const isBloodMoonDecree = decreeId === 'BLOOD_MOON';
+  const xpDecreeMult = isBloodMoonDecree && (!node || node.type === 'red') ? 2.5 : (decreeId === 'ROYAL_FESTIVAL_HUNT' ? 2.0 : 1);
+  const goldDecreeMult = decreeId === 'ROYAL_FESTIVAL_HUNT' ? 2.0 : 1;
+  const midasMult = player?.relics?.includes('midas_touch') ? 1.3 : 1;
+  return {
+    gold: Math.round(base * weather * (boss ? 1.6 : 1) * goldDecreeMult * midasMult),
+    xp: Math.round(base * weather * (boss ? 2 : 1.2) * xpDecreeMult)
+  };
 }
+export const monsterReward = monsterRewards;
 
 /** All ownership changes use this transaction, including liberation after an invasion. */
 export function assignTown(node: BoardNode, owner: Player, players: Player[]): void {

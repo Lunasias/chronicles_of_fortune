@@ -93,6 +93,8 @@ export class IsometricRenderer {
     alpha: number;
   }> = [];
   private depthRenderList: Array<{ depth: number; draw: () => void }> = [];
+  private static readonly ZOOM_STEPS = [0.25, 1 / 3, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0] as const;
+  private lastSnappedTargetZoom = 1.0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -102,6 +104,7 @@ export class IsometricRenderer {
     const defaultZ = this.getDefaultZoom();
     this.camera.zoom = defaultZ;
     this.camera.targetZoom = defaultZ;
+    this.lastSnappedTargetZoom = defaultZ;
     this.initParticles();
   }
 
@@ -224,9 +227,10 @@ export class IsometricRenderer {
     const rect = this.canvas.getBoundingClientRect();
     const sx = clientX - rect.left;
     const sy = clientY - rect.top;
+    const zoom = this.snapZoom(this.camera.zoom);
 
-    const worldX = (sx - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
-    const worldY = (sy - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
+    const worldX = (sx - this.canvas.width / 2) / zoom + this.camera.x;
+    const worldY = (sy - this.canvas.height / 2) / zoom + this.camera.y;
 
     let closestNode: BoardNode | null = null;
     let minDistance = 99999;
@@ -310,21 +314,25 @@ export class IsometricRenderer {
     // shimmers and crawls while the camera moves. With a regular micro-pattern on the floor it is
     // worse still - uneven sampling of a regular grid produces moire, which is the large
     // slow-moving interference that reads as "the pixels are making me dizzy".
-    this.camera.targetZoom = this.snapZoom(this.camera.targetZoom);
+    this.resolveTargetZoom();
     if (prefersReducedMotion()) {
       this.camera.x = this.camera.targetX;
       this.camera.y = this.camera.targetY;
+      this.camera.zoom = this.snapZoom(this.camera.targetZoom);
+    } else {
+      this.camera.x += (this.camera.targetX - this.camera.x) * 0.16;
+      this.camera.y += (this.camera.targetY - this.camera.y) * 0.16;
+      this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.16;
+      if (Math.abs(this.camera.targetZoom - this.camera.zoom) < 0.01) {
+        this.camera.zoom = this.snapZoom(this.camera.targetZoom);
+      }
     }
-    this.camera.x += (this.camera.targetX - this.camera.x) * 0.16;
-    this.camera.y += (this.camera.targetY - this.camera.y) * 0.16;
-    this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.16;
 
     // Draw with the snapped zoom, not the interpolated one, so the scale on screen is always an
     // even one. The interpolation still drives the transition; it just resolves to even scales.
     // The camera is snapped for the same reason: a world blit at a fractional screen position is
     // resampled onto an irregular grid even when the scale itself is even.
     const zoom = this.snapZoom(this.camera.zoom);
-    this.camera.zoom = zoom;
     const camX = snapWorld(this.camera.x, zoom);
     const camY = snapWorld(this.camera.y, zoom);
 
@@ -353,8 +361,8 @@ export class IsometricRenderer {
       worldBackground.renderCloudSea(ctx, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isometricTerrainEngine.worldBounds);
     }
 
-    const halfW = (w / 2) / this.camera.zoom + 200;
-    const halfH = (h / 2) / this.camera.zoom + 200;
+    const halfW = (w / 2) / zoom + 200;
+    const halfH = (h / 2) / zoom + 200;
     const minX = this.camera.x - halfW;
     const maxX = this.camera.x + halfW;
     const minY = this.camera.y - halfH;
@@ -426,7 +434,7 @@ export class IsometricRenderer {
       const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
       // Finish each entire layer before the next, so stamp shadows never cut
       // vertical seams through the preceding stone (the old fence-like pattern).
-      for (const layer of [{ color: '#394339', w: 18, h: 8 }, { color: roadMaterial || seg.roadColor, w: 16, h: 6 }]) {
+      for (const layer of [{ color: seg.edgeColor || 'rgba(42, 52, 44, 0.45)', w: 17, h: 7 }, { color: roadMaterial || seg.roadColor, w: 16, h: 6 }]) {
         ctx.fillStyle = layer.color;
         for (let i = 0; i <= steps; i++) {
           const {x,y} = roadPoint(seg.x1,seg.y1,dx,dy,i/steps);
@@ -853,10 +861,12 @@ export class IsometricRenderer {
     const built = !['empty', 'blue', 'red'].includes(node.type);
     // Buildings already carry foundations. Open spaces get a small inset waystone.
     if (!built) {
-      pixelEllipse(ctx, cx, cy + 2, 15, 7, '#303f3c');
-      pixelEllipse(ctx, cx, cy, 14, 6, '#8a9275');
-      pixelEllipse(ctx, cx, cy - 1, 12, 5, node.type === 'blue' ? '#496d81' : node.type === 'red' ? '#8b5858' : '#626f67');
-      this.drawNodeSigil(ctx, cx, cy - 1, node.type, '', isHovered, isHighlighted);
+      pixelEllipse(ctx, cx, cy + 1, 14, 6, 'rgba(38, 52, 49, 0.55)');
+      pixelEllipse(ctx, cx, cy, 13, 5, '#7c866d');
+      pixelEllipse(ctx, cx, cy - 1, 11, 4, node.type === 'blue' ? '#496d81' : node.type === 'red' ? '#8b5858' : '#657369');
+      if (node.type !== 'empty') {
+        this.drawNodeSigil(ctx, cx, cy - 1, node.type, '', isHovered, isHighlighted);
+      }
     }
     if (isHovered || isHighlighted) {
       const color = isHovered ? '#f1d89b' : '#9ed5bf';
@@ -1098,7 +1108,7 @@ export class IsometricRenderer {
   private renderNavigationCompass(ctx:CanvasRenderingContext2D,nodes:BoardNode[],player:Player|null,ids:number[]) {
     this.directionGuides=[];
     if(!player||!ids.length)return;
-    const zoom=this.camera.zoom,cx=snapWorld(this.camera.x,zoom),cy=snapWorld(this.camera.y,zoom);
+    const zoom=this.snapZoom(this.camera.zoom),cx=snapWorld(this.camera.x,zoom),cy=snapWorld(this.camera.y,zoom);
     const project=(x:number,y:number)=>({x:this.canvas.width/2+(x-cx)*zoom,y:this.canvas.height/2+(y-cy)*zoom});
     const heroWorld=this.toScreen(player.gridX,player.gridY,player.gridZ),hero=project(heroWorld.x,heroWorld.y);
     const targets=nodes.filter(n=>ids.includes(n.id)).map(n=>{const p=this.toScreen(n.gx,n.gy,n.gz);return{id:n.id,...project(p.x,p.y-markerClearance(n.type))};});
@@ -1528,7 +1538,57 @@ export class IsometricRenderer {
    * pixels. The rule itself lives in `PixelScale` so it can be tested without a canvas.
    */
   public snapZoom(zoom: number): number {
-    return snapZoom(zoom);
+    if (!Number.isFinite(zoom) || zoom <= 0) return 1;
+    let best = 1;
+    let bestDist = Infinity;
+    for (const step of IsometricRenderer.ZOOM_STEPS) {
+      const dist = Math.abs(zoom - step);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = step;
+      }
+    }
+    return best;
+  }
+
+  public adjustZoom(factorOrDelta: number, mode: 'multiply' | 'add' = 'multiply'): number {
+    this.camera.targetZoom = mode === 'multiply'
+      ? this.camera.targetZoom * factorOrDelta
+      : this.camera.targetZoom + factorOrDelta;
+    this.clampCameraBounds();
+    return this.camera.targetZoom;
+  }
+
+  private resolveTargetZoom() {
+    if (!Number.isFinite(this.camera.targetZoom) || this.camera.targetZoom <= 0) {
+      this.camera.targetZoom = 1;
+    }
+    const clamped = Math.max(0.5, Math.min(2.0, this.camera.targetZoom));
+    const delta = clamped - this.lastSnappedTargetZoom;
+    if (Math.abs(delta) >= 0.04) {
+      const snapped = this.snapZoom(clamped);
+      if (snapped === this.lastSnappedTargetZoom) {
+        const steps = IsometricRenderer.ZOOM_STEPS;
+        const idx = steps.indexOf(this.lastSnappedTargetZoom as typeof steps[number]);
+        if (idx >= 0) {
+          const nextIdx = delta > 0
+            ? Math.min(steps.length - 1, idx + 1)
+            : Math.max(0, idx - 1);
+          this.camera.targetZoom = Math.max(0.5, Math.min(2.0, steps[nextIdx]));
+          this.lastSnappedTargetZoom = this.camera.targetZoom;
+          return;
+        }
+      } else {
+        this.camera.targetZoom = Math.max(0.5, Math.min(2.0, snapped));
+        this.lastSnappedTargetZoom = this.camera.targetZoom;
+        return;
+      }
+    }
+    this.camera.targetZoom = clamped;
+    const currentSnapped = this.snapZoom(clamped);
+    if (currentSnapped !== this.lastSnappedTargetZoom) {
+      this.lastSnappedTargetZoom = currentSnapped;
+    }
   }
 
   public getDefaultZoom(): number {
@@ -1542,10 +1602,8 @@ export class IsometricRenderer {
     this.camera.targetY = Math.max(minY, Math.min(maxY, this.camera.targetY));
     this.camera.x = Math.max(minX, Math.min(maxX, this.camera.x));
     this.camera.y = Math.max(minY, Math.min(maxY, this.camera.y));
-    // Snapped rather than merely clamped, so a wheel or pinch zoom cannot land between the even
-    // scales and bring the irregular pixel grid back.
-    this.camera.zoom = this.snapZoom(Math.max(0.25, Math.min(3, this.camera.zoom)));
-    this.camera.targetZoom = this.snapZoom(Math.max(0.25, Math.min(3, this.camera.targetZoom)));
+    this.camera.zoom = Math.max(0.5, Math.min(2.0, this.camera.zoom));
+    this.resolveTargetZoom();
   }
 
   centerCameraOn(gx: number, gy: number, gz: number) {

@@ -798,7 +798,7 @@ export class PixelSpriteGenerator {
     animState: string = 'idle',
     frame: number = 0
   ): HTMLCanvasElement {
-    const validAnim = animState === 'attack' || animState === 'hurt' ? animState : 'idle';
+    const validAnim: CharacterAnimState = (animState === 'attack' || animState === 'strike' || animState === 'magic' || animState === 'counter' || animState === 'hurt' || animState === 'defeat' || animState === 'victory' || animState === 'run') ? animState : 'idle';
     return customIsometricMonsterRenderer.getMonsterSprite(
       monsterKey,
       dir,

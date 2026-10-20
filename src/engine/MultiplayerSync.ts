@@ -15,6 +15,19 @@ export function applyNetworkState(game: GameState, payload: any) {
   if (!payload?.state || !phases.includes(payload.phase)) return { success: false };
   const result = SaveManager.applySaveData(game, payload.state, false);
   if (!result.success) return result;
+  const savedPlayers = Array.isArray(payload.state?.players) ? payload.state.players : Array.isArray(payload.players) ? payload.players : null;
+  if (savedPlayers) {
+    const extKeys = ['originalClassKey', 'promotionTier', 'weaponUpgradeLevel', 'weaponRune', 'fieldSpells', 'activeGuildQuest', 'foodBuff', 'relics', 'companion', 'rustTurns', 'freezeTurns', 'curseTurns', 'squidInkTurns', 'downerTurns', 'polymorphTurns', 'polymorphType', 'cursedBoxTurns', 'dungeonReturnNodeId', 'homeNodeId', 'burstGauge', 'hasFlexibleMovement', 'skillName'] as const;
+    game.players.forEach((player, idx) => {
+      const src = savedPlayers[idx];
+      if (!src) return;
+      for (const key of extKeys) {
+        if (src[key] !== undefined) {
+          (player as any)[key] = typeof structuredClone === 'function' ? structuredClone(src[key]) : src[key];
+        }
+      }
+    });
+  }
   game.phase = payload.phase;
   game.remainingMoves = Math.max(0, Math.min(32, Number(payload.remainingMoves) || 0));
   if (game.phase === 'CHOOSING_PATH') game.updateReachableHighlights();

@@ -18,6 +18,8 @@ export class WonderChestUI {
   private game: GameState;
   private modal: HTMLElement;
   private isSpinning = false;
+  private spinFinished = false;
+  private autoCloseTimer: any = null;
   private onCompleteCallback?: () => void;
 
   private prizes: WonderPrize[] = [
@@ -57,7 +59,7 @@ export class WonderChestUI {
           {
             id: 'aegis_wonder',
             name: 'โล่ศักดิ์สิทธิ์อีจิส',
-            type: 'armor',
+            type: 'shield',
             cost: 800,
             def: 24,
             mag: 8,
@@ -153,9 +155,9 @@ export class WonderChestUI {
             return `👑 พระราชทานรางวัล! ${player.displayName} ได้รับการแต่งตั้งเป็นเจ้าเมือง [${chosen.name}] ทันที!`;
           }
         }
-        player.gold += 180;
+        player.gold += 500;
         audio.chestOpen();
-        return `💰 ไม่มีเมืองว่าง! ${player.displayName} ได้รับเงินชดเชยค่าที่ดิน 800G แทน!`;
+        return `💰 ไม่มีเมืองว่าง! ${player.displayName} ได้รับเงินชดเชยค่าที่ดิน 500G แทน!`;
       }
     },
     {
@@ -208,8 +210,13 @@ export class WonderChestUI {
 
   open(player: Player, onComplete: () => void) {
     if (this.game.world.claimedTreasures.includes(player.nodeId)) { this.game.addLog('หีบนี้ถูกเปิดแล้ว'); onComplete(); return; }
+    if (this.autoCloseTimer) {
+      clearTimeout(this.autoCloseTimer);
+      this.autoCloseTimer = null;
+    }
     this.onCompleteCallback = onComplete;
     this.isSpinning = false;
+    this.spinFinished = false;
     this.renderModal(player);
     this.modal.classList.remove('hidden');
 
@@ -222,6 +229,7 @@ export class WonderChestUI {
   private renderModal(player: Player) {
     this.modal.innerHTML = `
       <div class="pixel-box-gold max-w-lg w-full p-6 text-center relative flex flex-col items-center">
+        <button id="btnCloseWonderChest" class="pixel-btn px-2.5 py-1 text-xs text-slate-300 hover:text-white absolute top-3 right-3">✖ ปิด</button>
         <!-- Header Banner -->
         <div class="flex items-center gap-2 mb-1">
           <span class="text-3xl animate-bounce">🎁</span>
@@ -256,7 +264,18 @@ export class WonderChestUI {
       </div>
     `;
 
+    document.getElementById('btnCloseWonderChest')?.addEventListener('click', () => {
+      if (this.isSpinning && !this.spinFinished) return;
+      audio.click();
+      this.close();
+    });
+
     document.getElementById('btnSpinWonderChest')?.addEventListener('click', () => {
+      if (this.spinFinished) {
+        audio.click();
+        this.close();
+        return;
+      }
       if (this.isSpinning) return;
       this.startSpin(player);
     });
@@ -309,11 +328,13 @@ export class WonderChestUI {
         descEl.innerText = resultLog;
         this.game.addLog(resultLog, 'gold');
 
-        if (btnText) btnText.innerText = '✔ รับรางวัลเรียบร้อย';
+        this.spinFinished = true;
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = '✔ รับรางวัลเรียบร้อย (กดเพื่อปิด)';
 
         // Auto-dismiss or allow click
         const speed = this.game.gameSpeed || 1;
-        setTimeout(() => {
+        this.autoCloseTimer = setTimeout(() => {
           this.close();
         }, Math.max(180, Math.round((player.isAI ? 1800 : 2500) / speed)));
       }
@@ -323,10 +344,17 @@ export class WonderChestUI {
   }
 
   private close() {
+    if (this.autoCloseTimer) {
+      clearTimeout(this.autoCloseTimer);
+      this.autoCloseTimer = null;
+    }
     this.modal.classList.add('hidden');
     this.isSpinning = false;
+    this.spinFinished = false;
     if (this.onCompleteCallback) {
-      this.onCompleteCallback();
+      const cb = this.onCompleteCallback;
+      this.onCompleteCallback = undefined;
+      cb();
     }
   }
 }

@@ -15,6 +15,8 @@ import { isekaiEventManager } from '../.test-build/game/IsekaiEventManager.js';
 import { SaveManager } from '../.test-build/game/SaveManager.js';
 import { offerWeeklyDraft } from '../.test-build/ui/JourneyUI.js';
 import { darklingSystem } from '../.test-build/game/DarklingSystem.js';
+import { aiSystem } from '../.test-build/game/AISystem.js';
+import { monsterRewards } from '../.test-build/game/Rules.js';
 
 function fresh(mode = 'standard', count = 2) {
   const g = new GameState(); g.gameMode = mode;
@@ -241,4 +243,89 @@ test('the endless spire allows another guardian fight and applies the next floor
   game.world.defeatedBosses.push(boss.id); game.world.spireFloor++;
   assert.equal(encounterChance(boss, game.world), 100);
   assert.ok(getNodeEncounterPreview(boss, p).featuredMonster.maxHp > first.maxHp);
+});
+
+test('promoted Tier-2 and Tier-3 classes execute distinct skills, upgrade passives, and survive save/load', () => {
+  const game = fresh();
+  const p = game.activePlayer;
+  p.level = 5;
+  assert.equal(p.promote('paladin'), true);
+  assert.equal(p.classKey, 'paladin');
+  const paladinSkill = p.skillName;
+
+  const snap = SaveManager.serializeGameState(game);
+  const restored = new GameState();
+  SaveManager.applySaveData(restored, snap, false);
+  assert.equal(restored.activePlayer.skillName, paladinSkill);
+
+  p.level = 10;
+  assert.equal(p.promote('crusader'), true);
+  assert.equal(p.classKey, 'crusader');
+
+  const crusaderCombatant = { ...actor('Crusader'), hp: 200, maxHp: 500, classKey: 'crusader', playerRef: p };
+  const enemy = actor('Fiend');
+  const battle = new BattleEngine(crusaderCombatant, enemy, 'grass');
+  const res = battle.resolveRound('skill', 'defend');
+  assert.ok(res.damageToDefender > 0);
+  assert.ok(crusaderCombatant.hp > 200, 'Crusader skill heals the caster');
+  assert.ok((crusaderCombatant.barrierHp || 0) > 0, 'Crusader skill grants a holy barrier');
+});
+
+test('AI players auto-promote at Level 5 and Level 10 and use pot_hp when injured', () => {
+  const game = fresh();
+  const ai = game.players[1];
+  ai.isAI = true;
+  ai.level = 5;
+  const tier2Msg = aiSystem.autoPromoteIfEligible(ai);
+  assert.ok(tier2Msg && ai.isPromoted && ai.promotionTier === 2);
+
+  ai.level = 10;
+  const tier3Msg = aiSystem.autoPromoteIfEligible(ai);
+  assert.ok(tier3Msg && ai.promotionTier === 3);
+
+  ai.hp = Math.floor(ai.maxHp * 0.25);
+  const preRoll = aiSystem.choosePreRollAction(ai, game.players, game.allNodes);
+  assert.equal(preRoll.type, 'item');
+  assert.equal(preRoll.itemId, 'pot_hp');
+});
+
+test('Darkling calamities are limited to once per turn and summon invaders cleans town ownership', () => {
+  const game = fresh();
+  const darkling = game.players[0];
+  const rival = game.players[1];
+  const town = game.allNodes.find(n => n.type === 'town');
+  town.townData.isOccupiedByMonster = false;
+  town.townData.ownerId = rival.id;
+  town.townData.monsterHp = 0;
+  rival.townDeeds = [town.id];
+  rival.townsControlled = 1;
+
+  darklingSystem.acceptPact(darkling, game.allNodes, 'destroyer');
+  const firstMsg = darklingSystem.castSummonInvaders(darkling, game.allNodes, game.players);
+  assert.equal(town.townData.isOccupiedByMonster, true);
+  assert.equal(town.townData.ownerId, null);
+  assert.equal(town.townData.monsterHp, town.townData.monsterMaxHp);
+  assert.deepEqual(rival.townDeeds, []);
+  assert.equal(rival.townsControlled, 0);
+  assert.equal(darklingSystem.calamityUsedThisTurn, true);
+
+  const goldBefore = rival.gold;
+  const secondMsg = darklingSystem.castGlobalPlague(darkling, game.players);
+  assert.ok(firstMsg.length > 0 && secondMsg.includes('เพียงเทิร์นละ 1 ครั้ง'));
+  assert.equal(rival.gold, goldBefore, 'second calamity in the same turn must be blocked');
+});
+
+test('dragon_heart grants +30 Max HP and Burn/Freeze immunity, and midas_touch boosts monster gold by 30%', () => {
+  const game = fresh();
+  const p = game.activePlayer;
+  const baseMaxHp = p.maxHp;
+  p.freezeTurns = 2;
+  p.grantRelic('dragon_heart');
+  assert.equal(p.maxHp, baseMaxHp + 30);
+  assert.equal(p.freezeTurns, 0);
+
+  const baseReward = monsterRewards(2, game.world, game.allNodes[0], false, p);
+  p.grantRelic('midas_touch');
+  const boostedReward = monsterRewards(2, game.world, game.allNodes[0], false, p);
+  assert.equal(boostedReward.gold, Math.round(baseReward.gold * 1.3));
 });

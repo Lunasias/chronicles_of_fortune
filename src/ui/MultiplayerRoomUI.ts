@@ -42,7 +42,7 @@ export class MultiplayerRoomUI {
     if (!el) {
       el = document.createElement('div');
       el.id = 'multiplayerRoomModal';
-      el.className = 'hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4';
+      el.className = 'hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4';
       document.body.appendChild(el);
     }
     this.modal = el;
@@ -142,7 +142,7 @@ export class MultiplayerRoomUI {
           </p>
 
           <!-- Player Initial Customization -->
-          <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex flex-col gap-2">
+          <div class="bg-slate-950 p-2.5 border border-slate-800 flex flex-col gap-2">
             <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">โปรไฟล์ของคุณ:</span>
             <div class="grid grid-cols-2 gap-2">
               <div class="flex flex-col gap-1">
@@ -253,7 +253,7 @@ export class MultiplayerRoomUI {
       } else {
         const isBot = this.botSlots[i];
         const defaultNames = ['Valeria', 'Lyra', 'Jaxine', 'Aria'];
-        const defaultClasses = ['warrior', 'mage', 'thief', 'cleric'];
+        const defaultClasses = ['warrior', 'magician', 'thief', 'cleric'];
         slots.push({
           index: i,
           isAI: isBot,
@@ -271,7 +271,7 @@ export class MultiplayerRoomUI {
             <span class="text-[10px] text-amber-400 uppercase tracking-widest block font-bold">ห้องออนไลน์ (P2P Room)</span>
             <div class="flex items-center gap-2 mt-0.5">
               <h3 class="text-base font-extrabold text-amber-300 tracking-wider">
-                รหัสห้อง: <span class="text-white select-all bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/60 font-mono">${room.code}</span>
+                รหัสห้อง: <span class="text-white select-all bg-amber-950/80 px-2 py-0.5 border border-amber-500/60 font-mono">${room.code}</span>
               </h3>
               <button id="btnCopyRoomCode" class="pixel-btn px-2 py-0.5 text-[10px] text-cyan-300 hover:text-white" title="คัดลอกรหัสห้อง">📋 คัดลอก</button>
               <button id="btnCopyInviteLink" class="pixel-btn px-2 py-0.5 text-[10px] text-amber-300 hover:text-white" title="คัดลอกลิงก์เชิญ">🔗 ลิงก์เชิญ</button>
@@ -283,7 +283,7 @@ export class MultiplayerRoomUI {
 
         <!-- Party size and mode controls (Host only) -->
         ${isHost ? `
-          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 p-2 rounded border border-slate-800 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 p-2 border border-slate-800 text-xs">
             <div class="flex items-center gap-1.5">
               <span class="text-[10px] text-slate-400 font-bold">จำนวนผู้เล่น:</span>
               ${[2, 3, 4].map(c => {
@@ -302,11 +302,12 @@ export class MultiplayerRoomUI {
                 <option value="blitz" ${this.gameMode === 'blitz' ? 'selected' : ''}>Blitz (จำกัด 20 วัน)</option>
                 <option value="coop_raid" ${this.gameMode === 'coop_raid' ? 'selected' : ''}>Co-op Demon Lord Raid</option>
                 <option value="roguelike_draft" ${this.gameMode === 'roguelike_draft' ? 'selected' : ''}>Roguelike Draft</option>
+                <option value="endless_spire" ${this.gameMode === 'endless_spire' ? 'selected' : ''}>Endless Spire</option>
               </select>
             </div>
           </div>
         ` : `
-          <div class="flex items-center justify-between text-xs px-2 py-1 bg-slate-950/60 rounded border border-slate-800 text-slate-300">
+          <div class="flex items-center justify-between text-xs px-2 py-1 bg-slate-950/60 border border-slate-800 text-slate-300">
             <span>โหมดเกม: <strong class="text-amber-300">${escapeHtml(room.gameMode || 'Standard')}</strong></span>
             <span>ความจุห้อง: <strong class="text-cyan-300">${partySize} คน</strong></span>
           </div>
@@ -317,7 +318,7 @@ export class MultiplayerRoomUI {
           <div class="flex justify-between items-center text-xs">
             <span class="text-slate-300 font-bold">ผู้เล่นในห้อง (${connectedPeers.length}/${partySize}):</span>
             <span class="text-[10px] text-emerald-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="w-1.5 h-1.5 bg-emerald-400 animate-pulse"></span>
               <span>${connected ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อมต่อ Host...'}</span>
             </span>
           </div>
@@ -330,14 +331,14 @@ export class MultiplayerRoomUI {
               const slotBgClass = isMe ? 'bg-amber-950/30 border-amber-500/70' : 'bg-slate-950/80 border-slate-800';
               const aiBtnClass = s.isAI ? 'text-amber-300' : 'text-slate-400';
               return `
-                <div class="p-2 rounded border ${slotBgClass} flex items-center justify-between gap-2">
+                <div class="p-2 border ${slotBgClass} flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2">
                     <span class="text-base">${isAssigned ? (s.peer?.isHost ? '👑' : '⚔️') : (s.isAI ? '🤖' : '⏳')}</span>
                     <div>
                       <div class="flex items-center gap-1.5">
                         <span class="text-xs font-bold text-white">${escapeHtml(s.name)}</span>
-                        ${isMe ? `<span class="text-[9px] bg-amber-500 text-slate-950 font-bold px-1 rounded">คุณ</span>` : ''}
-                        ${s.peer?.isHost ? `<span class="text-[9px] text-amber-400 border border-amber-600/60 px-1 rounded">HOST</span>` : ''}
+                        ${isMe ? `<span class="text-[9px] bg-amber-500 text-slate-950 font-bold px-1">คุณ</span>` : ''}
+                        ${s.peer?.isHost ? `<span class="text-[9px] text-amber-400 border border-amber-600/60 px-1">HOST</span>` : ''}
                       </div>
                       <span class="text-[10px] text-slate-400 flex items-center gap-1">
                         <span>${heroClass.avatar}</span>
@@ -371,7 +372,7 @@ export class MultiplayerRoomUI {
         <!-- Chat / Ping box -->
         <div class="flex flex-col gap-1">
           <span class="text-[10px] text-slate-400">แชทในห้อง:</span>
-          <div id="netRoomChatList" class="bg-slate-950 border border-slate-800 p-2 h-16 overflow-y-auto space-y-1 rounded text-slate-300">
+          <div id="netRoomChatList" class="bg-slate-950 border border-slate-800 p-2 h-16 overflow-y-auto space-y-1 text-slate-300">
             ${this.chatHistory.map(msg => `<div class="text-[11px] text-cyan-200">💬 [${escapeHtml(msg.name)}]: ${escapeHtml(msg.text)}</div>`).join('')}
             <div class="text-[10px] text-slate-500">ห้องเตรียมพร้อมแล้ว สามารถส่งข้อความคุยกับเพื่อนร่วมห้องได้</div>
           </div>

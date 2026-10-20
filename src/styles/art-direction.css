@@ -141,7 +141,7 @@ body[data-reduced-motion='true'] *, body[data-reduced-motion='true'] *::before, 
   #weeklyRankingsTable > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
   #weeklyRankingsTable > div > div:last-child { justify-content: space-between; }
   #battlePlayerRoleBadge, #battleEnemyRoleBadge { display: none; }
-  #battleScreen .command-card > span:last-child { font-size: 10px; }
+  #battleScreen .command-card > span:nth-child(3) { font-size: 10px; }
   #battleFormationDesc { display: none; }
   #characterInspectModal { padding: 10px; }
   #characterInspectModal #inspectAvatarCanvas { width: 48px; height: 48px; }
@@ -170,7 +170,7 @@ body[data-reduced-motion='true'] *, body[data-reduced-motion='true'] *::before, 
 /* Readable action hierarchy: a compact command dock, rather than a large empty log panel. */
 #battleScreen .command-card { min-height: 78px; padding: 8px; gap: 3px; }
 #battleScreen .command-card > span:nth-child(2) { font-size: 13px; line-height: 1.4; }
-#battleScreen .command-card > span:last-child { font-size: 11px; line-height: 1.35; }
+#battleScreen .command-card > span:nth-child(3) { font-size: 11px; line-height: 1.35; }
 #battleSkillDescription { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
 #battleNarration { font-size: 13px; line-height: 1.65; max-height: 64px; }
 #battlePlayerName, #battleEnemyName { font-size: 13px; }

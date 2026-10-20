@@ -56,7 +56,7 @@ export class IsekaiEventUI {
             if (titleEl) titleEl.innerText = `${player.gold}G`;
           } else {
             audio.hurt();
-            alert(res.message);
+            this.showTavernNotice(`⚠️ ${res.message}`);
           }
         });
       });
@@ -73,7 +73,7 @@ export class IsekaiEventUI {
           if (titleEl) titleEl.innerText = `${player.gold}G`;
         } else {
           audio.hurt();
-          alert(res.message);
+          this.showTavernNotice(`⚠️ ${res.message}`);
         }
       };
     }
@@ -245,14 +245,15 @@ export class IsekaiEventUI {
       }
     }
 
+    const closeGuild = () => {
+      audio.click();
+      modal.classList.add('hidden');
+      onLeave();
+    };
     const btnLeave = document.getElementById('btnCloseGuild');
-    if (btnLeave) {
-      btnLeave.onclick = () => {
-        audio.click();
-        modal.classList.add('hidden');
-        onLeave();
-      };
-    }
+    if (btnLeave) btnLeave.onclick = closeGuild;
+    const btnCloseTop = document.getElementById('btnCloseGuildTop');
+    if (btnCloseTop) btnCloseTop.onclick = closeGuild;
 
     modal.classList.remove('hidden');
 

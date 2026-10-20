@@ -9,11 +9,22 @@ export interface CalamityEvent {
   startedDay?: number; expiresDay?: number; realm?: RealmId;
 }
 export class WorldCalamitySystem {
+  public chaosMeter = 0;
+  public maxChaos = 100;
+  public corruptedNodes: number[] = [];
+  public calamityCount = 0;
   get activeCalamity(): CalamityEvent | null { return getWorld().calamity; }
   set activeCalamity(value: CalamityEvent | null) { getWorld().calamity = value; }
   get calamityHistory(): string[] { return getWorld().calamityHistory; }
   set calamityHistory(value: string[]) { getWorld().calamityHistory = value; }
-  reset(): void { getWorld().calamity = null; getWorld().calamityHistory = []; }
+  reset(): void {
+    getWorld().calamity = null;
+    getWorld().calamityHistory = [];
+    this.chaosMeter = 0;
+    this.maxChaos = 100;
+    this.corruptedNodes = [];
+    this.calamityCount = 0;
+  }
   isCalamityActive(): boolean { return !!this.activeCalamity; }
   clearActiveCalamity(): void { this.activeCalamity = null; }
   checkCalamityTriggers(day: number, week: number, nodes: BoardNode[], players: Player[]): CalamityEvent | null {

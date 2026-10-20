@@ -68,9 +68,11 @@ export class HUD {
 
     let objective = document.getElementById('matchObjectiveText');
     if (!objective) {
-      objective = document.createElement('div'); objective.id = 'matchObjectiveText';
-      objective.className = 'text-[9px] text-amber-300 leading-relaxed p-1';
-      document.getElementById('minimapBox')?.prepend(objective);
+      objective = document.createElement('div');
+      objective.id = 'matchObjectiveText';
+      objective.className = 'text-[9px] text-amber-300 leading-relaxed px-2 py-1 border-b border-slate-800/80';
+      const wrapper = document.getElementById('minimapCanvasWrapper') || document.getElementById('minimapBox');
+      wrapper?.prepend(objective);
     }
     objective.textContent = this.game.objective + (this.game.world.expeditions[p.id] ? ' • ชั้น ' + this.game.world.expeditions[p.id].depth + ' • คบเพลิง ' + this.game.world.expeditions[p.id].torch + '%' : '');
     // Player info
@@ -118,7 +120,7 @@ export class HUD {
     const weatherTextEl = document.getElementById('hudWeatherText');
     if (weatherIconEl) weatherIconEl.innerText = weatherEffect.icon;
     if (weatherTextEl) weatherTextEl.title = weatherEffect.desc + (activeNode.id >= 1000 ? ' • สภาพภายในดันเจี้ยน' : ' • พรุ่งนี้: ' + this.game.world.forecast[activeNode.realmId]);
-    if (weatherTextEl) weatherTextEl.innerText = `${activeNode.realmName ? activeNode.realmName.split(' ')[0] : 'SOLARIA'} • ${weatherEffect.icon}`;
+    if (weatherTextEl) weatherTextEl.innerText = `${activeNode.realmName ? activeNode.realmName.split(' ')[0] : 'SOLARIA'} • ${weatherEffect.title || 'แจ่มใส'}`;
 
     // Food Buff Badge
     const foodBadge = document.getElementById('hudFoodBuffBadge');

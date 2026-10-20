@@ -4,6 +4,7 @@ import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 import { audio } from '../engine/AudioSynthesizer';
 import { syncFeedPanelClass } from '../util/PanelFocus';
 import { drawSettlementScenery, refreshSettlementOnLoad } from '../engine/SettlementScenery';
+import { royalDecreeSystem } from '../game/RoyalDecreeSystem';
 
 export const SHOP_CATALOG: EquipmentItem[] = [
   // Multi-Spinners (Tiers 1-5)
@@ -34,30 +35,30 @@ export const SHOP_CATALOG: EquipmentItem[] = [
   // Weapons (Tiers 1–5: Progressive Scaled Costs)
   { id: 'wpn_broadsword', name: 'T1 ดาบกว้างเหล็กกล้า (Broadsword)', type: 'weapon', cost: 320, atk: 8, desc: 'คมดาบกล้าแกร่งเบื้องต้น (+8 ATK)', icon: '⚔️' },
   { id: 'wpn_mithril_edge', name: 'T2 คมดาบมิธริล (Mithril Edge)', type: 'weapon', cost: 1200, atk: 15, spd: 3, passive: 'gold_steal', desc: 'ดาบเบาและคมกริบ (+15 ATK, +3 SPD) • ขโมยเงิน 8% เมื่อโจมตี', icon: '🗡️' },
-  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 4200, atk: 26, mag: 6, passive: 'burn', desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+26 ATK, +6 MAG) • เผาศัตรูเพิ่ม 15% ดาเมจ', icon: '🔥⚔️' },
-  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 12500, atk: 42, def: 10, mag: 10, passive: 'vampiric', setName: 'holy_set', desc: 'ดาบเทวะศักดิ์สิทธิ์ (+42 ATK, +10 DEF, +10 MAG) • ดูดเลือด 20% [เซ็ตศักดิ์สิทธิ์]', icon: '🌟⚔️' },
-  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 32000, atk: 65, spd: 15, luk: 15, passive: 'curse_strike', desc: 'ดาบโบราณสะท้านภพ (+65 ATK, +15 SPD, +15 LUK) • ติดคำสาปมรณะแก่ศัตรู', icon: '👑⚔️' },
+  { id: 'wpn_flame_brand', name: 'T3 ดาบเพลิงลาวา (Flame Brand)', type: 'weapon', cost: 2200, atk: 26, mag: 6, passive: 'burn', desc: 'ดาบอาบเปลวเพลิงบริสุทธิ์ (+26 ATK, +6 MAG) • เผาศัตรูเพิ่ม 15% ดาเมจ', icon: '🔥⚔️' },
+  { id: 'wpn_excalibur', name: 'T4 เอ็กซ์คาลิเบอร์ (Excalibur)', type: 'weapon', cost: 5200, atk: 42, def: 10, mag: 10, passive: 'vampiric', setName: 'holy_set', desc: 'ดาบเทวะศักดิ์สิทธิ์ (+42 ATK, +10 DEF, +10 MAG) • ดูดเลือด 20% [เซ็ตศักดิ์สิทธิ์]', icon: '🌟⚔️' },
+  { id: 'wpn_ragnarok', name: 'T5 ดาบวันสิ้นพิภพ (Ragnarok Blade)', type: 'weapon', cost: 9800, atk: 65, spd: 15, luk: 15, passive: 'curse_strike', desc: 'ดาบโบราณสะท้านภพ (+65 ATK, +15 SPD, +15 LUK) • ติดคำสาปมรณะแก่ศัตรู', icon: '👑⚔️' },
 
   // Shields (Tiers 1–5: Progressive Scaled Costs)
   { id: 'shd_buckler', name: 'T1 โล่กลมไม้โอ๊ค (Round Buckler)', type: 'shield', cost: 260, def: 6, desc: 'โล่ป้องกันเบื้องต้น (+6 DEF)', icon: '🛡️' },
   { id: 'shd_knight', name: 'T2 โล่อัศวินเหล็กกล้า (Knight Shield)', type: 'shield', cost: 980, def: 14, atk: 3, desc: 'โล่ปะทะกระแทกศัตรู (+14 DEF, +3 ATK)', icon: '🛡️⚔️' },
-  { id: 'shd_dragon_scale', name: 'T3 โล่เกล็ดมังกร (Dragon Shield)', type: 'shield', cost: 3600, def: 24, mag: 6, desc: 'เกล็ดมังกรต้านเพลิงและเวทมนตร์ (+24 DEF, +6 MAG)', icon: '🐉🛡️' },
-  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 10800, def: 38, mag: 12, luk: 8, passive: 'hp_regen', setName: 'holy_set', desc: 'โล่เทวาพิทักษ์กาย (+38 DEF, +12 MAG, +8 LUK) • [เซ็ตศักดิ์สิทธิ์: รีเจน HP]', icon: '✨🛡️' },
-  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 28000, def: 55, mag: 18, spd: 8, passive: 'counter_boost', desc: 'โล่กระจกสะท้อนเวทมนตร์ (+55 DEF, +18 MAG, +8 SPD) • สวนกลับแรงขึ้น 30%', icon: '🪞🛡️' },
+  { id: 'shd_dragon_scale', name: 'T3 โล่เกล็ดมังกร (Dragon Shield)', type: 'shield', cost: 1800, def: 24, mag: 6, desc: 'เกล็ดมังกรต้านเพลิงและเวทมนตร์ (+24 DEF, +6 MAG)', icon: '🐉🛡️' },
+  { id: 'shd_aegis', name: 'T4 โล่เทพีอีจิส (Aegis Holy Guard)', type: 'shield', cost: 4200, def: 38, mag: 12, luk: 8, passive: 'hp_regen', setName: 'holy_set', desc: 'โล่เทวาพิทักษ์กาย (+38 DEF, +12 MAG, +8 LUK) • [เซ็ตศักดิ์สิทธิ์: รีเจน HP]', icon: '✨🛡️' },
+  { id: 'shd_divine_mirror', name: 'T5 โล่กระจกสะท้อนสวรรค์ (Mirror Shield)', type: 'shield', cost: 8500, def: 55, mag: 18, spd: 8, passive: 'counter_boost', desc: 'โล่กระจกสะท้อนเวทมนตร์ (+55 DEF, +18 MAG, +8 SPD) • สวนกลับแรงขึ้น 30%', icon: '🪞🛡️' },
 
   // Armor (Tiers 1–5: Progressive Scaled Costs)
   { id: 'arm_iron_cuirass', name: 'T1 เกราะอกเหล็กกล้า (Iron Cuirass)', type: 'armor', cost: 280, def: 8, desc: 'เกราะเหล็กเนื้อแน่น (+8 DEF)', icon: '🦺' },
   { id: 'arm_mithril_chain', name: 'T2 เสื้อโซ่ถักมิธริล (Mithril Mail)', type: 'armor', cost: 1100, def: 18, spd: 4, desc: 'โซ่ถักน้ำหนักเบาคล่องตัว (+18 DEF, +4 SPD)', icon: '⛓️' },
-  { id: 'arm_dragon_scale', name: 'T3 เกราะเกล็ดมังกรเพลิง (Dragon Armor)', type: 'armor', cost: 3900, def: 30, atk: 6, desc: 'เกราะเกล็ดหลอมลาวา (+30 DEF, +6 ATK)', icon: '🐲🦺' },
-  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 11500, def: 42, mag: 16, luk: 10, passive: 'mp_regen', setName: 'holy_set', desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+42 DEF, +16 MAG, +10 LUK) • [เซ็ตศักดิ์สิทธิ์]', icon: '👘✨' },
-  { id: 'arm_valkyrie_plate', name: 'T5 เกราะวัลคิรีไร้พ่าย (Valkyrie Plate)', type: 'armor', cost: 30000, def: 60, atk: 12, spd: 12, desc: 'เกราะทองคำขาวแห่งวัลคิรี (+60 DEF, +12 ATK, +12 SPD)', icon: '👑🦺' },
+  { id: 'arm_dragon_scale', name: 'T3 เกราะเกล็ดมังกรเพลิง (Dragon Armor)', type: 'armor', cost: 2000, def: 30, atk: 6, desc: 'เกราะเกล็ดหลอมลาวา (+30 DEF, +6 ATK)', icon: '🐲🦺' },
+  { id: 'arm_goddess_robe', name: 'T4 เสื้อคลุมเทพีมนตรา (Goddess Robe)', type: 'armor', cost: 4800, def: 42, mag: 16, luk: 10, passive: 'mp_regen', setName: 'holy_set', desc: 'ผ้าไหมสวรรค์ทอด้วยมานา (+42 DEF, +16 MAG, +10 LUK) • [เซ็ตศักดิ์สิทธิ์]', icon: '👘✨' },
+  { id: 'arm_valkyrie_plate', name: 'T5 เกราะวัลคิรีไร้พ่าย (Valkyrie Plate)', type: 'armor', cost: 9200, def: 60, atk: 12, spd: 12, desc: 'เกราะทองคำขาวแห่งวัลคิรี (+60 DEF, +12 ATK, +12 SPD)', icon: '👑🦺' },
 
   // Accessories (Tiers 1–5: Progressive Scaled Costs)
   { id: 'acc_fortune_band', name: 'T1 แหวนโชคลาภ (Fortune Band)', type: 'accessory', cost: 300, luk: 8, desc: 'แหวนเพิ่มดวงชะตา (+8 LUK)', icon: '💍' },
   { id: 'acc_swift_wing', name: 'T2 ตราปีกวายุ (Swift Wing Amulet)', type: 'accessory', cost: 1050, spd: 10, luk: 5, desc: 'จี้เร่งความเร็วการเดินทาง (+10 SPD, +5 LUK)', icon: '🪶' },
-  { id: 'acc_berserk_belt', name: 'T3 เข็มขัดเบอร์เซิร์กเกอร์ (Berserk Belt)', type: 'accessory', cost: 3800, atk: 12, def: 8, desc: 'ปลุกสัญชาตญาณนักรบ (+12 ATK, +8 DEF)', icon: '🥋' },
-  { id: 'acc_archmage_ring', name: 'T4 ตราประจำจอมเวท (Archmage Crest)', type: 'accessory', cost: 11000, mag: 22, spd: 10, desc: 'ตราสัญลักษณ์มหาจอมเวท (+22 MAG, +10 SPD)', icon: '🔮' },
-  { id: 'acc_heroine_crown', name: 'T5 มงกุฎราชินีผู้พิชิต (Sovereign Crown)', type: 'accessory', cost: 35000, atk: 15, def: 15, mag: 15, spd: 15, luk: 20, desc: 'มงกุฎเกียรติยศเพิ่มสเตตัสทุกค่า (+15 ALL, +20 LUK)', icon: '👑' },
+  { id: 'acc_berserk_belt', name: 'T3 เข็มขัดเบอร์เซิร์กเกอร์ (Berserk Belt)', type: 'accessory', cost: 1900, atk: 12, def: 8, desc: 'ปลุกสัญชาตญาณนักรบ (+12 ATK, +8 DEF)', icon: '🥋' },
+  { id: 'acc_archmage_ring', name: 'T4 ตราประจำจอมเวท (Archmage Crest)', type: 'accessory', cost: 4500, mag: 22, spd: 10, desc: 'ตราสัญลักษณ์มหาจอมเวท (+22 MAG, +10 SPD)', icon: '🔮' },
+  { id: 'acc_heroine_crown', name: 'T5 มงกุฎราชินีผู้พิชิต (Sovereign Crown)', type: 'accessory', cost: 10500, atk: 15, def: 15, mag: 15, spd: 15, luk: 20, desc: 'มงกุฎเกียรติยศเพิ่มสเตตัสทุกค่า (+15 ALL, +20 LUK)', icon: '👑' },
 
   // Field Magic Spells
   { id: 'spell_zap', name: 'สายฟ้าฟาด (Field Zap)', type: 'spell', cost: 220, desc: 'ฟาดสายฟ้าสร้างความเสียหาย 35 ดาเมจใส่คู่แข่ง', icon: '⚡' },
@@ -131,12 +132,61 @@ export class ShopUI {
       const speed = this.game.gameSpeed || 1;
       setTimeout(() => {
         const p = this.game.activePlayer;
-        if (p.gold >= 60 && !p.inventory.some(i => i.id === 'spin_2')) {
-          const spin = SHOP_CATALOG.find(i => i.id === 'spin_2');
-          if (spin && p.gold >= spin.cost) {
-            p.gold -= spin.cost;
-            p.inventory.push({ ...spin });
-            this.notify(`AI ${p.displayName} ซื้อ 2-Spinner!`, 'gold');
+        const isShady = royalDecreeSystem.activeDecree?.id === 'SHADY_PEDDLER';
+        const getCost = (item: EquipmentItem) => isShady ? Math.max(10, Math.floor(item.cost * 0.75)) : item.cost;
+
+        if (type === 'shop_weapon') {
+          const slots: Array<'weapon' | 'shield' | 'armor' | 'accessory'> = ['weapon', 'shield', 'armor', 'accessory'];
+          for (const slot of slots) {
+            const currentCost = p.equipment[slot]?.cost || 0;
+            const candidates = SHOP_CATALOG
+              .filter(i => i.type === slot && i.cost > currentCost && p.gold >= getCost(i))
+              .sort((a, b) => b.cost - a.cost);
+            if (candidates.length > 0) {
+              const best = candidates[0];
+              const price = getCost(best);
+              p.gold -= price;
+              if (p.equipment[slot]) {
+                p.gold += Math.floor(p.equipment[slot]!.cost * 0.6);
+              }
+              p.equipment[slot] = { ...best };
+              this.notify(`🤖 AI ${p.displayName} ซื้อและสวมใส่ ${best.name}!`, 'gold');
+            }
+          }
+          const forgeCost = 250 * (p.weaponUpgradeLevel + 1);
+          if (p.weaponUpgradeLevel < 9 && p.gold >= forgeCost + 100) {
+            p.gold -= forgeCost;
+            p.weaponUpgradeLevel++;
+            this.notify(`🔨 AI ${p.displayName} ตีบวกอาวุธเป็น +${p.weaponUpgradeLevel}!`, 'level');
+          }
+        } else if (type === 'shop_magic') {
+          if (p.fieldSpells.length < 4 && p.inventory.length < 12) {
+            const spells = SHOP_CATALOG.filter(i => i.type === 'spell' && !p.fieldSpells.includes(i.id) && p.gold >= getCost(i));
+            if (spells.length > 0) {
+              const picked = spells[spells.length - 1];
+              p.gold -= getCost(picked);
+              p.fieldSpells.push(picked.id);
+              p.inventory.push({ ...picked });
+              this.notify(`🔮 AI ${p.displayName} ซื้อเวท ${picked.name}!`, 'gold');
+            }
+          }
+        } else {
+          if (p.hp < p.maxHp * 0.75 && p.inventory.length < 12 && !p.inventory.some(i => i.id === 'pot_hp')) {
+            const pot = SHOP_CATALOG.find(i => i.id === 'pot_hp');
+            if (pot && p.gold >= getCost(pot)) {
+              p.gold -= getCost(pot);
+              p.inventory.push({ ...pot });
+              this.notify(`🧪 AI ${p.displayName} ซื้อ ${pot.name}!`, 'gold');
+            }
+          }
+          if (p.inventory.length < 12 && !p.inventory.some(i => i.type === 'spinner')) {
+            const spinId = isShady && p.gold >= 300 ? 'spin_3' : 'spin_2';
+            const spin = SHOP_CATALOG.find(i => i.id === spinId);
+            if (spin && p.gold >= getCost(spin)) {
+              p.gold -= getCost(spin);
+              p.inventory.push({ ...spin });
+              this.notify(`🎲 AI ${p.displayName} ซื้อ ${spin.name}!`, 'gold');
+            }
           }
         }
         setTimeout(() => this.handleLeave(), Math.max(100, Math.round(600 / speed)));
@@ -168,16 +218,18 @@ export class ShopUI {
     }
 
     if (mode === 'buy') {
+      const isShadyPeddler = royalDecreeSystem.activeDecree?.id === 'SHADY_PEDDLER';
       let filtered = SHOP_CATALOG;
       if (this.currentType === 'shop_weapon') {
-        filtered = SHOP_CATALOG.filter(i => i.type === 'weapon' || i.type === 'shield' || i.type === 'armor' || i.type === 'accessory');
+        filtered = SHOP_CATALOG.filter(i => i.type === 'weapon' || i.type === 'shield' || i.type === 'armor' || i.type === 'accessory' || (isShadyPeddler && i.id === 'spin_3'));
       } else if (this.currentType === 'shop_magic') {
-        filtered = SHOP_CATALOG.filter(i => i.type === 'spell');
+        filtered = SHOP_CATALOG.filter(i => i.type === 'spell' || (isShadyPeddler && i.id === 'spin_3'));
       } else {
-        filtered = SHOP_CATALOG.filter(i => i.type === 'spinner' || i.type === 'potion');
+        filtered = SHOP_CATALOG.filter(i => i.type === 'spinner' || i.type === 'potion' || (isShadyPeddler && (i.id === 'wpn_flame_brand' || i.id === 'shd_dragon_scale')));
       }
 
       filtered.forEach(item => {
+        const effectiveCost = isShadyPeddler ? Math.max(10, Math.floor(item.cost * 0.75)) : item.cost;
         const row = document.createElement('div');
         row.className = 'pixel-box p-2.5 bg-slate-900 border-slate-800 flex items-center justify-between';
         row.innerHTML = `
@@ -190,7 +242,7 @@ export class ShopUI {
           </div>
           <button class="pixel-btn pixel-btn-gold px-3 py-1 text-xs font-bold text-slate-950 flex items-center gap-1">
             <span>ซื้อ</span>
-            <span>${item.cost}G</span>
+            <span>${effectiveCost}G</span>
           </button>
         `;
 
@@ -198,15 +250,15 @@ export class ShopUI {
         const comparison = equipmentComparison(p, item);
         if (comparison) row.insertAdjacentHTML('beforeend', comparison);
         row.classList.add('shop-product-card');
-        buyButton.disabled = p.gold < item.cost || p.inventory.length >= 12;
-        buyButton.title = p.inventory.length >= 12 ? 'กระเป๋าเต็ม' : p.gold < item.cost ? 'ทองไม่เพียงพอ' : `ซื้อ ${item.name}`;
+        buyButton.disabled = p.gold < effectiveCost || p.inventory.length >= 12;
+        buyButton.title = p.inventory.length >= 12 ? 'กระเป๋าเต็ม' : p.gold < effectiveCost ? 'ทองไม่เพียงพอ' : `ซื้อ ${item.name}`;
         if (buyButton.disabled) {
           const reason = document.createElement('small'); reason.className = 'shop-unavailable';
           reason.textContent = buyButton.title; row.append(reason);
         }
 
         row.querySelector('button')!.onclick = () => {
-          if (p.gold < item.cost) {
+          if (p.gold < effectiveCost) {
             this.notify(`${p.displayName} มีเงินทองไม่พอซื้อ ${item.name}!`);
             return;
           }
@@ -214,7 +266,10 @@ export class ShopUI {
             this.notify(`กระเป๋าสัมภาระเต็มแล้ว! ไม่สามารถบรรจุไอเทมเพิ่มได้ (สูงสุด 12 ช่อง)`);
             return;
           }
-          p.gold -= item.cost;
+          p.gold -= effectiveCost;
+          if (item.type === 'spell' && !p.fieldSpells.includes(item.id)) {
+            p.fieldSpells.push(item.id);
+          }
           p.inventory.push({ ...item });
           audio.coin();
           this.notify(`🛒 ${p.displayName} ซื้อ ${item.name} สำเร็จ!`, 'gold');
@@ -363,6 +418,10 @@ export class ShopUI {
     this.game.addLog(text, type);
     const notice = document.getElementById('shopNotice');
     if (notice) notice.textContent = text;
+  }
+
+  public close() {
+    this.handleLeave();
   }
 
   private handleLeave() {

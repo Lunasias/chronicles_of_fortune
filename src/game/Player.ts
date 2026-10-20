@@ -340,6 +340,8 @@ export const TIER3_PROMOTIONS: Record<string, JobPromotionData[]> = {
   ]
 };
 
+export const CLASS_PROMOTIONS = JOB_PROMOTIONS;
+
 export interface FieldSpellData {
   id: string;
   name: string;
@@ -717,6 +719,19 @@ export class Player {
 
   // Passive Relics
   public relics: string[] = [];
+  public dragonHeartBonusApplied = false;
+
+  public grantRelic(relicId: string): boolean {
+    if (this.relics.includes(relicId)) return false;
+    this.relics.push(relicId);
+    if (relicId === 'dragon_heart' && !this.dragonHeartBonusApplied) {
+      this.dragonHeartBonusApplied = true;
+      this.maxHp += 30;
+      this.hp = Math.min(this.maxHp, this.hp + 30);
+      this.freezeTurns = 0;
+    }
+    return true;
+  }
 
   // Blacksmith Forging & Runes
   public weaponUpgradeLevel: number = 0; // +1 to +9
@@ -768,12 +783,13 @@ export class Player {
     }
 
     const base = HERO_CLASSES[classKey] || HERO_CLASSES['warrior'];
-    this.className = base.name;
+    const promoMatch = [...Object.values(JOB_PROMOTIONS), ...Object.values(TIER3_PROMOTIONS)].flat().find(p => p.tier2Key === classKey);
+    this.className = promoMatch ? promoMatch.name : base.name;
     const skins = HERO_SKINS[classKey] || HERO_SKINS['warrior'];
     const selectedSkin = skins[skinVariant] || skins[0];
-    this.color = selectedSkin ? selectedSkin.primaryColor : base.color;
-    this.avatar = base.avatar;
-    this.skillName = base.skillName;
+    this.color = promoMatch ? promoMatch.color : (selectedSkin ? selectedSkin.primaryColor : base.color);
+    this.avatar = promoMatch ? promoMatch.avatar : base.avatar;
+    this.skillName = promoMatch ? promoMatch.skillName : base.skillName;
 
     this.maxHp = base.baseHp;
     this.hp = base.baseHp;
@@ -924,10 +940,10 @@ export class Player {
 
   canPromote(): boolean {
     if (this.isDarkling) return false;
-    // Tier 1 -> Tier 2 at Level 10+
-    if (!this.isPromoted && this.level >= 10) return true;
-    // Tier 2 -> Tier 3 at Level 20+
-    if (this.isPromoted && this.promotionTier < 3 && this.level >= 20) return true;
+    // Tier 1 -> Tier 2 at Level 5+
+    if (!this.isPromoted && this.level >= 5) return true;
+    // Tier 2 -> Tier 3 at Level 10+
+    if (this.isPromoted && this.promotionTier < 3 && this.level >= 10) return true;
     return false;
   }
 
@@ -936,7 +952,7 @@ export class Player {
       const baseKey = this.originalClassKey || this.classKey;
       return JOB_PROMOTIONS[baseKey] || [];
     }
-    if (this.promotionTier === 2 && this.level >= 20) {
+    if (this.promotionTier === 2 && this.level >= 10) {
       return TIER3_PROMOTIONS[this.classKey] || [];
     }
     return [];
@@ -1043,6 +1059,15 @@ export class Player {
       this.hp = Math.max(1, this.hp - poisonDamage);
     }
 
+    if (this.relics.includes('dragon_heart')) {
+      if (!this.dragonHeartBonusApplied) {
+        this.dragonHeartBonusApplied = true;
+        this.maxHp += 30;
+        this.hp = Math.min(this.maxHp, this.hp + 30);
+      }
+      this.freezeTurns = 0;
+    }
+
     if (this.freezeTurns > 0) this.freezeTurns--;
     if (this.blindTurns > 0) this.blindTurns--;
     if (this.sleepTurns > 0) this.sleepTurns--;
@@ -1094,6 +1119,13 @@ export class Player {
     }
 
     let mpHealed = 0;
+    // Active Food Buff MP Regen
+    if (this.foodBuff && this.foodBuff.mpRegen) {
+      const beforeMp = this.mp;
+      this.mp = Math.min(this.maxMp, this.mp + this.foodBuff.mpRegen);
+      mpHealed += Math.max(0, this.mp - beforeMp);
+    }
+
     // Companion Mage Passive
     if (this.companion && this.companion.role === 'mage' && this.mp < this.maxMp) {
       const mana = 5;
@@ -1115,6 +1147,8 @@ export class Player {
       companionDeparted,
       poisonDamage: poisonDamage > 0 ? poisonDamage : undefined,
       curseTriggered: curseTriggered ? true : undefined,
+      cursedBoxExploded: cursedBoxExploded ? true : undefined,
+      cursedBoxDamage: cursedBoxDamage > 0 ? cursedBoxDamage : undefined,
       hpHealed: hpHealed > 0 ? hpHealed : undefined,
       mpHealed: mpHealed > 0 ? mpHealed : undefined
     };

@@ -49,7 +49,8 @@ export function regionalSceneryLayout(tiles:TerrainTile[],nodes:BoardNode[],proj
     const lush=['forest','waterfall_forest','fairy_grove','snow','sakura_shrine'].includes(tile.biome);
     if(r>(underground?.67:hub?.58: lush?.75:.62))continue;
     let slot:RegionalSlot;
-    if(underground)slot=tile.isEdge?'wall':r<.13?'stairs':r<.27?'cliff':r<.40?'rocks':r<.51?'nature_large':'undergrowth';
+    const variant=Math.floor(worldNoise(tile.gx,tile.gy,97)*4);
+    if(underground)slot=tile.isEdge?(['wall','cliff','landmark','rocks'] as const)[variant]:r<.12?'stairs':r<.24?'cliff':r<.34?'landmark':(['nature_large','nature_alternate','undergrowth','rocks'] as const)[variant];
     else if(tile.isCoast&&r<.30)slot='cliff';
     else if(hub&&r<.12)slot='home';
     else if(hub&&r<.17)slot='landmark';

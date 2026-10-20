@@ -5,7 +5,7 @@ import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelS
 import { aiSystem } from '../game/AISystem';
 import { audio } from '../engine/AudioSynthesizer';
 import { combatVFX, fitEffectText } from '../engine/CombatVFXEngine';
-import {pixelDisc, pixelEllipse, pixelRing, pixelVerticalRamp } from '../engine/PixelFx';
+import { pixelEllipse, pixelRing } from '../engine/PixelFx';
 import { BoardNode } from '../game/BoardMap';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { customIsometricMonsterRenderer } from '../engine/CustomIsometricMonsterRenderer';
@@ -453,6 +453,8 @@ export class BattleUI {
     }
     audio.voiceFight();
 
+    document.getElementById('turnNotification')?.classList.add('hidden');
+    document.getElementById('turnStartBanner')?.classList.add('hidden');
     document.getElementById('battleScreen')?.classList.remove('hidden');
     if (enemy.isBoss) this.showBossArrival(enemy);
     document.getElementById('battleScoutModal')?.classList.add('hidden');
@@ -914,17 +916,20 @@ export class BattleUI {
       }, this.getSpeedDelay(450));
     } else {
       // Defensive Sanctuary Assist (Heal + Barrier + Cleanse Debuffs)
-      const healAmount = Math.round(player.maxHp * 0.35);
-      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+      const defPlayer = b.defender.playerRef || player;
+      const healAmount = Math.round(b.defender.maxHp * 0.35);
+      b.defender.hp = Math.min(b.defender.maxHp, b.defender.hp + healAmount);
+      if (defPlayer) defPlayer.hp = Math.min(defPlayer.maxHp, b.defender.hp);
+      // synced b.defender.hp and defPlayer.hp above
       b.defender.barrierHp = (b.defender.barrierHp || 0) + Math.round(player.maxHp * 0.20);
       b.defender.burnTurns = 0;
       b.defender.freezeTurns = 0;
       b.defender.silenceTurns = 0;
       b.defender.blindTurns = 0;
-      player.cleanseAilments();
+      if (defPlayer) defPlayer.cleanseAilments();
 
       setTimeout(() => {
-        combatVFX.spawnFloatingCombatText(summonX, summonY - 60, `+${healAmount} HP (CLEANSED)`, 'heal');
+        combatVFX.spawnFloatingCombatText(summonX, summonY - 60, `+${healAmount} HP (ลบล้างสถานะ)`, 'heal');
         combatVFX.triggerImpactFlash('#38bdf8', 0.7);
         audio.relicChime();
         this.updateUI();
@@ -1007,18 +1012,23 @@ export class BattleUI {
         if (!isDefenderHuman) {
           // Both are AI
           if (this.skipAIBattles) {
-            while (b.attacker.hp > 0 && b.defender.hp > 0) {
+            let rounds = 0;
+            while (b.attacker.hp > 0 && b.defender.hp > 0 && rounds < 50) {
+              rounds++;
               const aiAtk = b.attacker.playerRef
                 ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
                 : (this.game.world.random() < 0.45 ? 'attack' : this.game.world.random() < 0.75 ? 'strike' : 'magic');
               const aiDef = b.defender.playerRef
                 ? aiSystem.chooseDefenderAction(b.defender.playerRef, b.attacker, this.game.aiDifficulty)
                 : 'defend';
-              b.resolveRound(aiAtk, aiDef);
+              const res = b.resolveRound(aiAtk, aiDef);
+              if (res.isGiveUp) break;
               if (b.attacker.hp > 0 && b.defender.hp > 0) {
                 b.swapTurns();
               }
             }
+            if (b.attacker.playerRef) b.attacker.playerRef.hp = b.attacker.hp;
+            if (b.defender.playerRef) b.defender.playerRef.hp = b.defender.hp;
             const winner = b.attacker.hp > 0 ? b.attacker : b.defender;
             const loser = b.attacker.hp > 0 ? b.defender : b.attacker;
             this.concludeBattle(winner, loser);
@@ -1154,9 +1164,9 @@ export class BattleUI {
     }
 
     if (defAction === 'counter') {
-      actionSub += ` ⚡ ${b.defender.name} prepares PARRY COUNTER!`;
+      actionSub += ` ⚡ ${b.defender.name} เตรียมตั้งท่าสวนกลับ!`;
     } else if (defAction === 'magic_guard') {
-      actionSub += ` 🛡️ Magic Barrier erected!`;
+      actionSub += ` 🛡️ กางม่านพลังป้องกันเวท!`;
     }
 
     this.cutscene.bannerText = actionTitle;
@@ -1383,17 +1393,17 @@ export class BattleUI {
       const atkFloatY = atkBaseY + targetAtkDY - 45;
 
       if (result.isMiss) {
-        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, '💨 MISS! (ตาบอด)', 'normal');
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, '💨 พลาดเป้า! (ตาบอด)', 'normal');
         audio.miss();
       } else if (result.isCounterSuccess) {
-        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ PARRY COUNTER!! -${result.damageToAttacker}`, 'counter');
+        combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ สวนกลับเต็มแรง!! -${result.damageToAttacker}`, 'counter');
       } else if (result.isStrikeSuccess || result.isCritical) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'crit');
       } else if (atkAction === 'magic') {
         if (result.isMagicBlocked) {
-          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🛡️ BARRIER BLOCKED! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🛡️ ป้องกันเวทสำเร็จ! -${result.damageToDefender}`, 'magic');
         } else {
-          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🔮 ARCANE BURST!! -${result.damageToDefender}`, 'magic');
+          combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `🔮 เวทมนตร์ถล่ม!! -${result.damageToDefender}`, 'magic');
         }
       } else if (result.damageToDefender > 0) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, `-${result.damageToDefender}`, 'normal');
@@ -1403,13 +1413,13 @@ export class BattleUI {
         combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY - 30, `💖 +${result.vampiricHeal} HP (ดูดเลือด)`, 'heal');
       }
       if (result.burnDamage && result.burnDamage > 0) {
-        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `🔥 BURN -${result.burnDamage}`, 'crit');
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `🔥 เผาไหม้ -${result.burnDamage}`, 'crit');
       }
       if (result.goldStolen && result.goldStolen > 0) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `💰 -${result.goldStolen}G (ขโมย)`, 'magic');
       }
       if (result.curseInflicted) {
-        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `💀 CURSED (มรณะ 4T)!`, 'crit');
+        combatVFX.spawnFloatingCombatText(defFloatX, defFloatY - 30, `💀 คำสาปมรณะ (4 เทิร์น)!`, 'crit');
       }
 
       this.updateUI();
@@ -1883,40 +1893,6 @@ export class BattleUI {
   }
 
   // =========================================================================
-  // =========================================================================
-  // THEMED DAIS & FLOOR COLOR PALETTES PER BIOME
-  // =========================================================================
-
-  private getBiomeFloorColors(biome: string): { center: string; mid: string; edge: string; rim: string } {
-    switch (biome) {
-      case 'castle':
-        return { center: '#334155', mid: '#1e293b', edge: '#0f172a', rim: '#f59e0b' };
-      case 'forest':
-      case 'grass':
-        return { center: '#1b3b2b', mid: '#13281e', edge: '#0a1610', rim: '#10b981' };
-      case 'fairy_grove':
-        return { center: '#3b1d3d', mid: '#281329', edge: '#160a17', rim: '#f472b6' };
-      case 'snow':
-        return { center: '#2d4460', mid: '#1a2a3d', edge: '#0c1622', rim: '#38bdf8' };
-      case 'volcano':
-        return { center: '#3b1c14', mid: '#28120c', edge: '#140805', rim: '#ea580c' };
-      case 'desert':
-        return { center: '#3d311d', mid: '#292012', edge: '#171209', rim: '#eab308' };
-      case 'cavern':
-      case 'crystal_cavern':
-        return { center: '#321c47', mid: '#20122e', edge: '#110919', rim: '#a855f7' };
-      case 'coral':
-        return { center: '#163847', mid: '#0f2631', edge: '#07141a', rim: '#06b6d4' };
-      case 'abyss':
-        return { center: '#2b103b', mid: '#1c0926', edge: '#0d0412', rim: '#c084fc' };
-      case 'celestial':
-        return { center: '#3b324a', mid: '#282133', edge: '#17121f', rim: '#fbbf24' };
-      default:
-        return { center: '#1f293d', mid: '#161f30', edge: '#0f172a', rim: '#475569' };
-    }
-  }
-
-  // =========================================================================
   // DYNAMIC LOCATION COMBAT ARENA BACKDROP ROUTER
   // =========================================================================
   private drawDynamicLocationBackdrop(
@@ -1933,993 +1909,9 @@ export class BattleUI {
     drawBattleScenery(ctx, w, h, biome, prefersReducedMotion() ? 0 : time, ecosystemSystem.timeOfDay, isBoss || type === 'boss', type === 'town', node?.id);
   }
 
-  // 1. CASTLE & ROYAL PALACE INTERIOR (ปราสาทและพระราชวังหลวง)
-  private drawCastlePalaceBackdrop(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number,
-    node: BoardNode | null
-  ) {
-    // Royal Deep Midnight Navy to Gothic Slate
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060a17'], [0.4, '#0f172a'], [0.8, '#1e293b'], [1.0, '#030712']]);
 
-    // Grand Gothic Arches in Upper Hall
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 6;
-    for (let i = 0; i < 4; i++) {
-      const ax = (i + 0.5) * (w / 4);
-      ctx.beginPath();
-      ctx.arc(ax, h * 0.28, w * 0.12, Math.PI, 0);
-      ctx.stroke();
-    }
 
-    // Grand Stained Glass Window in Center
-    const winCX = w * 0.5;
-    const winCY = h * 0.22;
-    const winR = Math.min(w * 0.14, 80);
-    const winPulse = 0.85 + Math.sin(time * 0.003) * 0.15;
 
-    // Glowing Rose Window Backlight
-    const winGlow = ctx.createRadialGradient(winCX, winCY, 10, winCX, winCY, winR * 1.5);
-    winGlow.addColorStop(0, `rgba(251, 191, 36, ${0.4 * winPulse})`);
-    winGlow.addColorStop(0.5, `rgba(56, 189, 248, ${0.25 * winPulse})`);
-    winGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
-    ctx.fillStyle = winGlow;
-    ctx.beginPath();
-    pixelDisc(ctx, winCX, winCY, winR * 1.5, ctx.fillStyle);
-    ctx.fill();
-
-    // Rose Window Frame
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    pixelRing(ctx, winCX, winCY, winR, winR, ctx.strokeStyle, 1);
-    ctx.stroke();
-    // Rose Petal Traceries
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 1.5;
-    for (let a = 0; a < 8; a++) {
-      const ang = (a / 8) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(winCX, winCY);
-      ctx.lineTo(winCX + Math.cos(ang) * winR, winCY + Math.sin(ang) * winR);
-      ctx.stroke();
-    }
-
-    // Carved Marble Pillars with Royal Banners
-    const pillarCount = 5;
-    for (let i = 0; i < pillarCount; i++) {
-      const px = (i + 0.5) * (w / pillarCount);
-      // Pillar Shaft
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(px - 18, 0, 36, h * 0.55);
-      // Fluting Lines
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(px - 8, 0);
-      ctx.lineTo(px - 8, h * 0.55);
-      ctx.moveTo(px + 8, 0);
-      ctx.lineTo(px + 8, h * 0.55);
-      ctx.stroke();
-
-      // Royal Tapestry Banners on alternate pillars
-      if (i === 1 || i === 3) {
-        const by = h * 0.16;
-        ctx.fillStyle = '#881337'; // Royal Crimson
-        ctx.beginPath();
-        ctx.moveTo(px - 14, by);
-        ctx.lineTo(px + 14, by);
-        ctx.lineTo(px + 14, by + 65);
-        ctx.lineTo(px, by + 80);
-        ctx.lineTo(px - 14, by + 65);
-        ctx.closePath();
-        ctx.fill();
-
-        // Golden Emblem Trim
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        pixelDisc(ctx, px, by + 35, 6, ctx.fillStyle);
-        ctx.fill();
-      }
-
-      // Torches with Golden Sconces
-      if (i === 0 || i === 4 || i === 2) {
-        this.drawWallTorch(ctx, px, h * 0.32, time, i);
-      }
-    }
-  }
-
-  // 2. ENCHANTED FOREST (ป่าโบราณเห็ดเรืองแสง)
-  private drawEnchantedForestBackdrop(
-    ctx: CanvasRenderingContext2D,
-    w: number,
-    h: number,
-    time: number,
-    isDeep: boolean
-  ) {
-    // Mystical Emerald Twilight Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#021810'], [0.4, '#062d1d'], [0.75, '#0b3d27'], [1.0, '#020d07']]);
-
-    // Sunbeams / Moonbeams Filtering Through Canopy
-    ctx.save();
-    ctx.globalAlpha = 0.08 + Math.sin(time * 0.002) * 0.03;
-    const beamGrad = ctx.createLinearGradient(0, 0, w, h * 0.8);
-    beamGrad.addColorStop(0, '#6ee7b7');
-    beamGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = beamGrad;
-    for (let b = 0; b < 5; b++) {
-      const bx = b * (w / 4) - 50;
-      ctx.beginPath();
-      ctx.moveTo(bx, 0);
-      ctx.lineTo(bx + 90, 0);
-      ctx.lineTo(bx + 240, h * 0.6);
-      ctx.lineTo(bx + 110, h * 0.6);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // Silhouetted Ancient Trees with Twisted Roots
-    const treeCount = 6;
-    for (let i = 0; i < treeCount; i++) {
-      const tx = (i + 0.3) * (w / (treeCount - 1)) + Math.sin(i * 3) * 20;
-      const trunkW = 28 + (i % 3) * 10;
-      ctx.fillStyle = '#03170e';
-      ctx.beginPath();
-      ctx.moveTo(tx - trunkW * 0.4, 0);
-      ctx.lineTo(tx + trunkW * 0.4, 0);
-      ctx.lineTo(tx + trunkW * 0.7, h * 0.55);
-      ctx.lineTo(tx - trunkW * 0.7, h * 0.55);
-      ctx.closePath();
-      ctx.fill();
-
-      // Hanging Vine Strands
-      ctx.strokeStyle = '#064e3b';
-      ctx.lineWidth = 2;
-      for (let v = 0; v < 3; v++) {
-        const vx = tx - trunkW * 0.3 + v * (trunkW * 0.3);
-        const vLen = 40 + ((i + v) * 17) % 55;
-        ctx.beginPath();
-        ctx.moveTo(vx, h * 0.15);
-        ctx.quadraticCurveTo(vx + Math.sin(time * 0.003 + v) * 8, h * 0.15 + vLen * 0.5, vx + 4, h * 0.15 + vLen);
-        ctx.stroke();
-      }
-    }
-
-    // Giant Bioluminescent Mushroom Flora in Midground
-    for (let m = 0; m < 5; m++) {
-      const mx = (m + 0.5) * (w / 5) + Math.cos(m * 2) * 35;
-      const my = h * 0.42 + (m % 2) * 25;
-      const mR = 24 + (m % 3) * 8;
-      const mColor = m % 2 === 0 ? '#10b981' : '#06b6d4';
-      const mPulse = 0.8 + Math.sin(time * 0.005 + m * 1.5) * 0.2;
-
-      // Stem
-      ctx.fillStyle = '#062d1d';
-      ctx.fillRect(mx - 4, my, 8, h * 0.55 - my);
-
-      // Glow Aura
-      const mGlow = ctx.createRadialGradient(mx, my, 4, mx, my, mR * 1.4);
-      mGlow.addColorStop(0, mColor === '#10b981' ? `rgba(16, 185, 129, ${0.4 * mPulse})` : `rgba(6, 182, 212, ${0.4 * mPulse})`);
-      mGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = mGlow;
-      ctx.beginPath();
-      pixelDisc(ctx, mx, my, mR * 1.4, ctx.fillStyle);
-      ctx.fill();
-
-      // Cap
-      ctx.fillStyle = mColor;
-      ctx.beginPath();
-      ctx.ellipse(mx, my, mR, mR * 0.55, 0, Math.PI, 0);
-      ctx.fill();
-
-      // Cap Dots
-      ctx.fillStyle = '#ecfdf5';
-      ctx.beginPath();
-      pixelDisc(ctx, mx - mR * 0.4, my - mR * 0.2, 2.5, ctx.fillStyle);
-      pixelDisc(ctx, mx + mR * 0.35, my - mR * 0.25, 2.2, ctx.fillStyle);
-      pixelDisc(ctx, mx, my - mR * 0.35, 3, ctx.fillStyle);
-      ctx.fill();
-    }
-
-    // Drifting Fairy Fireflies / Spores
-    for (let s = 0; s < 18; s++) {
-      const fx = ((time * 0.03 * (s % 3 + 1) + s * 73) % (w + 40)) - 20;
-      const fy = h * 0.2 + ((time * 0.015 + s * 47) % (h * 0.4));
-      const fPulse = 0.5 + Math.sin(time * 0.007 + s) * 0.5;
-      ctx.fillStyle = s % 2 === 0 ? `rgba(110, 231, 183, ${0.8 * fPulse})` : `rgba(125, 211, 252, ${0.8 * fPulse})`;
-      ctx.beginPath();
-      pixelDisc(ctx, fx, fy, 2, ctx.fillStyle);
-      ctx.fill();
-    }
-  }
-
-  // 3. FAIRY BLOSSOM GLADE (ป่าภูตพฤกษาซากุระมนตรา)
-  private drawFairyBlossomBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Dreamy Twilight Sakura Pink to Lavender Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1e0b24'], [0.35, '#3b123f'], [0.7, '#240f28'], [1.0, '#0b040d']]);
-
-    // Glowing Sacred Moon
-    const moonX = w * 0.75;
-    const moonY = h * 0.2;
-    const moonGrad = ctx.createRadialGradient(moonX, moonY, 8, moonX, moonY, 70);
-    moonGrad.addColorStop(0, 'rgba(253, 230, 138, 0.9)');
-    moonGrad.addColorStop(0.3, 'rgba(244, 114, 182, 0.4)');
-    moonGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = moonGrad;
-    ctx.beginPath();
-    pixelDisc(ctx, moonX, moonY, 70, ctx.fillStyle);
-    ctx.fill();
-    ctx.fillStyle = '#fef3c7';
-    ctx.beginPath();
-    pixelDisc(ctx, moonX, moonY, 26, ctx.fillStyle);
-    ctx.fill();
-
-    // Silhouetted Ancient Sakura Branches
-    ctx.strokeStyle = '#18071c';
-    ctx.lineWidth = 14;
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.1);
-    ctx.quadraticCurveTo(w * 0.2, h * 0.18, w * 0.45, h * 0.08);
-    ctx.stroke();
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(w * 0.2, h * 0.17);
-    ctx.lineTo(w * 0.28, h * 0.32);
-    ctx.stroke();
-
-    // Sakura Blossom Foliage Clouds
-    for (let b = 0; b < 7; b++) {
-      const bx = b * (w / 6) + 30;
-      const by = h * 0.12 + Math.sin(b * 1.7) * 20;
-      const bGrad = ctx.createRadialGradient(bx, by, 10, bx, by, 50);
-      bGrad.addColorStop(0, 'rgba(244, 114, 182, 0.75)');
-      bGrad.addColorStop(0.6, 'rgba(219, 39, 119, 0.4)');
-      bGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = bGrad;
-      ctx.beginPath();
-      pixelDisc(ctx, bx, by, 48, ctx.fillStyle);
-      ctx.fill();
-    }
-
-    // Falling Sakura Petals & Magic Wisps
-    for (let p = 0; p < 24; p++) {
-      const px = ((time * 0.05 * (p % 3 + 1) + p * 60) % (w + 60)) - 30;
-      const py = ((time * 0.035 * (p % 2 + 1) + p * 45) % (h * 0.8));
-      const pSway = Math.sin(time * 0.005 + p) * 12;
-      ctx.save();
-      ctx.translate(px + pSway, py);
-      ctx.rotate(time * 0.004 + p);
-      ctx.fillStyle = p % 2 === 0 ? '#fbcfe8' : '#f472b6';
-      ctx.beginPath();
-      pixelEllipse(ctx, 0, 0, 5, 2.5, ctx.fillStyle);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  // 4. FROSTPEAK SNOW (ยอดเขาหิมะและแสงเหนือ)
-  private drawFrostpeakSnowBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Glacial Night to Deep Frost Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#020c1b'], [0.35, '#08213f'], [0.7, '#0e345c'], [1.0, '#030812']]);
-
-    // Waving Aurora Borealis Curtains
-    ctx.save();
-    for (let a = 0; a < 3; a++) {
-      ctx.beginPath();
-      ctx.moveTo(0, h * 0.08 + a * 20);
-      for (let x = 0; x <= w; x += 40) {
-        const wave = Math.sin((x * 0.008) + (time * 0.002) + a) * 35 + Math.cos((x * 0.004) + a) * 20;
-        ctx.lineTo(x, h * 0.12 + a * 25 + wave);
-      }
-      ctx.lineTo(w, 0);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      const aGrad = ctx.createLinearGradient(0, 0, 0, h * 0.35);
-      aGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      aGrad.addColorStop(0.4, a % 2 === 0 ? 'rgba(52, 211, 153, 0.22)' : 'rgba(56, 189, 248, 0.25)');
-      aGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = aGrad;
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // Silhouetted Jagged Glacial Spun Mountains
-    ctx.fillStyle = '#06162d';
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.55);
-    ctx.lineTo(w * 0.15, h * 0.25);
-    ctx.lineTo(w * 0.35, h * 0.45);
-    ctx.lineTo(w * 0.55, h * 0.18);
-    ctx.lineTo(w * 0.78, h * 0.42);
-    ctx.lineTo(w * 0.92, h * 0.28);
-    ctx.lineTo(w, h * 0.55);
-    ctx.closePath();
-    ctx.fill();
-
-    // Frost Pine Silhouettes
-    for (let p = 0; p < 8; p++) {
-      const px = (p + 0.4) * (w / 8);
-      const py = h * 0.45 + (p % 3) * 15;
-      ctx.fillStyle = '#030c18';
-      ctx.beginPath();
-      ctx.moveTo(px, py - 45);
-      ctx.lineTo(px + 18, py);
-      ctx.lineTo(px - 18, py);
-      ctx.closePath();
-      ctx.fill();
-      // Snow cap
-      ctx.fillStyle = '#e0f2fe';
-      ctx.beginPath();
-      ctx.moveTo(px, py - 45);
-      ctx.lineTo(px + 7, py - 28);
-      ctx.lineTo(px - 7, py - 28);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Falling Snow Particles
-    for (let s = 0; s < 30; s++) {
-      const sx = ((time * 0.02 * (s % 4 + 1) + s * 45) % (w + 20)) - 10;
-      const sy = ((time * 0.04 * (s % 3 + 1) + s * 35) % (h * 0.85));
-      ctx.fillStyle = 'rgba(240, 249, 255, 0.85)';
-      ctx.beginPath();
-      pixelDisc(ctx, sx, sy, 1.5 + (s % 2), ctx.fillStyle);
-      ctx.fill();
-    }
-  }
-
-  // 5. VOLCANIC CALDERA & MAGMA CORE (ภูเขาไฟและธารลาวา)
-  private drawVolcanicCalderaBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Dark Basalt to Scorching Orange Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#100503'], [0.35, '#260a04'], [0.7, '#451004'], [1.0, '#080201']]);
-
-    // Cascading Molten Lava Falls in Background
-    const lavaPulse = 0.85 + Math.sin(time * 0.007) * 0.15;
-    for (let l = 0; l < 3; l++) {
-      const lx = w * 0.25 + l * (w * 0.25);
-      const lGrad = ctx.createLinearGradient(lx, 0, lx, h * 0.55);
-      lGrad.addColorStop(0, '#ea580c');
-      lGrad.addColorStop(0.5, '#facc15');
-      lGrad.addColorStop(1, '#ea580c');
-      ctx.fillStyle = lGrad;
-      ctx.fillRect(lx - 12, 0, 24, h * 0.55);
-
-      // Lava Flow Glow Aura
-      const lGlow = ctx.createRadialGradient(lx, h * 0.4, 10, lx, h * 0.4, 80 * lavaPulse);
-      lGlow.addColorStop(0, 'rgba(249, 115, 22, 0.45)');
-      lGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = lGlow;
-      ctx.beginPath();
-      pixelDisc(ctx, lx, h * 0.4, 80 * lavaPulse, ctx.fillStyle);
-      ctx.fill();
-    }
-
-    // Basalt Rock Formations
-    ctx.fillStyle = '#0f0503';
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.52);
-    ctx.lineTo(w * 0.2, h * 0.32);
-    ctx.lineTo(w * 0.38, h * 0.48);
-    ctx.lineTo(w * 0.62, h * 0.26);
-    ctx.lineTo(w * 0.85, h * 0.50);
-    ctx.lineTo(w, h * 0.38);
-    ctx.lineTo(w, h * 0.55);
-    ctx.closePath();
-    ctx.fill();
-
-    // Rising Fiery Embers & Sparks
-    for (let e = 0; e < 25; e++) {
-      const ex = ((e * 47 + Math.sin(time * 0.004 + e) * 30) % w);
-      const ey = h * 0.65 - ((time * 0.06 * (e % 3 + 1) + e * 35) % (h * 0.65));
-      ctx.fillStyle = e % 2 === 0 ? '#fbbf24' : '#f97316';
-      ctx.fillRect(ex, ey, 2.5, 2.5);
-    }
-  }
-
-  // 6. DESERT DUNES & ANCIENT RUINS (ทะเลทรายและซากอารยธรรม)
-  private drawDesertDunesBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Starry Desert Night to Warm Sand Horizon
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#060b1e'], [0.4, '#171a33'], [0.7, '#382b1c'], [1.0, '#0f0c08']]);
-
-    // Stars in Desert Sky
-    for (let s = 0; s < 30; s++) {
-      const sx = (s * 39 + 17) % w;
-      const sy = (s * 27 + 5) % (h * 0.35);
-      const sTwinkle = 0.5 + Math.sin(time * 0.006 + s) * 0.5;
-      ctx.fillStyle = `rgba(254, 240, 138, ${sTwinkle})`;
-      ctx.fillRect(sx, sy, 1.5, 1.5);
-    }
-
-    // Distant Sand Dunes
-    ctx.fillStyle = '#453218';
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.42);
-    ctx.quadraticCurveTo(w * 0.25, h * 0.32, w * 0.5, h * 0.44);
-    ctx.quadraticCurveTo(w * 0.75, h * 0.35, w, h * 0.45);
-    ctx.lineTo(w, h * 0.55);
-    ctx.lineTo(0, h * 0.55);
-    ctx.closePath();
-    ctx.fill();
-
-    // Ancient Sandstone Obelisks & Ruins
-    for (let o = 0; o < 4; o++) {
-      const ox = (o + 0.5) * (w / 4) + (o === 1 ? -20 : 30);
-      ctx.fillStyle = '#291e10';
-      ctx.beginPath();
-      ctx.moveTo(ox - 10, h * 0.55);
-      ctx.lineTo(ox - 6, h * 0.25);
-      ctx.lineTo(ox, h * 0.22); // Pyramidal top
-      ctx.lineTo(ox + 6, h * 0.25);
-      ctx.lineTo(ox + 10, h * 0.55);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-
-  // 7. CRYSTAL CAVERN (ถ้ำคริสตัลอัญมณีประกาย)
-  private drawCrystalCavernBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Deep Subterranean Amethyst & Teal Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#090312'], [0.35, '#170929'], [0.7, '#24103d'], [1.0, '#05010a']]);
-
-    // Cavern Ceiling Stalactites
-    ctx.fillStyle = '#0c0517';
-    for (let s = 0; s < 9; s++) {
-      const sx = (s + 0.5) * (w / 9);
-      const sLen = 35 + ((s * 23) % 45);
-      ctx.beginPath();
-      ctx.moveTo(sx - 14, 0);
-      ctx.lineTo(sx + 14, 0);
-      ctx.lineTo(sx, sLen);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Giant Faceted Crystals (Amethyst & Emerald)
-    for (let c = 0; c < 6; c++) {
-      const cx = (c + 0.5) * (w / 6) + Math.sin(c) * 20;
-      const cy = h * 0.48;
-      const cColor = c % 2 === 0 ? '#a855f7' : '#06b6d4';
-      const cHeight = 65 + (c % 3) * 25;
-      const cWidth = 18 + (c % 2) * 8;
-      const cPulse = 0.8 + Math.sin(time * 0.005 + c) * 0.2;
-
-      // Glow
-      const cGlow = ctx.createRadialGradient(cx, cy - cHeight * 0.5, 5, cx, cy - cHeight * 0.5, 60 * cPulse);
-      cGlow.addColorStop(0, cColor === '#a855f7' ? `rgba(168, 85, 247, ${0.45 * cPulse})` : `rgba(6, 182, 212, ${0.45 * cPulse})`);
-      cGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = cGlow;
-      ctx.beginPath();
-      pixelDisc(ctx, cx, cy - cHeight * 0.5, 60 * cPulse, ctx.fillStyle);
-      ctx.fill();
-
-      // Faceted Crystal Body
-      ctx.fillStyle = cColor;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - cHeight);
-      ctx.lineTo(cx + cWidth, cy - cHeight * 0.7);
-      ctx.lineTo(cx + cWidth * 0.6, cy);
-      ctx.lineTo(cx - cWidth * 0.6, cy);
-      ctx.lineTo(cx - cWidth, cy - cHeight * 0.7);
-      ctx.closePath();
-      ctx.fill();
-
-      // Highlight Edge
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - cHeight);
-      ctx.lineTo(cx, cy);
-      ctx.stroke();
-    }
-
-    // Sparkling Crystal Dust Particles
-    for (let d = 0; d < 20; d++) {
-      const dx = ((time * 0.02 * (d % 3 + 1) + d * 55) % (w + 20)) - 10;
-      const dy = h * 0.25 + ((time * 0.01 + d * 33) % (h * 0.35));
-      const dTwinkle = 0.4 + Math.sin(time * 0.008 + d) * 0.6;
-      ctx.fillStyle = `rgba(232, 121, 249, ${dTwinkle})`;
-      ctx.fillRect(dx, dy, 2, 2);
-    }
-  }
-
-  // 8. CORAL COAST & OCEAN PIER (ชายฝั่งทะเลและเกาะปะการัง)
-  private drawCoralOceanBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Tropical Azure Sky to Sea Horizon
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#082f49'], [0.35, '#0e7490'], [0.65, '#06b6d4'], [1.0, '#021824']]);
-
-    // Distant Tropical Island Silhouette
-    ctx.fillStyle = '#083344';
-    ctx.beginPath();
-    ctx.moveTo(w * 0.1, h * 0.45);
-    ctx.quadraticCurveTo(w * 0.3, h * 0.32, w * 0.5, h * 0.45);
-    ctx.closePath();
-    ctx.fill();
-
-    // Rolling Animated Ocean Waves
-    for (let wave = 0; wave < 4; wave++) {
-      const wy = h * 0.38 + wave * 18;
-      ctx.beginPath();
-      ctx.moveTo(0, wy);
-      for (let x = 0; x <= w; x += 30) {
-        const yOff = Math.sin((x * 0.015) + (time * 0.004) + wave) * 7;
-        ctx.lineTo(x, wy + yOff);
-      }
-      ctx.lineTo(w, h * 0.55);
-      ctx.lineTo(0, h * 0.55);
-      ctx.closePath();
-      ctx.fillStyle = wave % 2 === 0 ? '#0891b2' : '#06b6d4';
-      ctx.fill();
-
-      // White Sea Foam Crests
-      ctx.strokeStyle = '#cffafe';
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-    }
-  }
-
-  // 9. ABYSSAL VOID GATE (มิติมืดและประตูสู่อเวจี)
-  private drawAbyssalVoidBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Cosmic Void Black to Darkling Magenta
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#030005'], [0.4, '#170321'], [0.75, '#2e0840'], [1.0, '#040008']]);
-
-    // Swirling Abyssal Vortex in Center
-    const vCX = w * 0.5;
-    const vCY = h * 0.25;
-    ctx.save();
-    ctx.translate(vCX, vCY);
-    ctx.rotate(time * 0.001);
-    for (let r = 0; r < 4; r++) {
-      ctx.rotate(Math.PI / 2);
-      const vGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 90);
-      vGrad.addColorStop(0, '#c084fc');
-      vGrad.addColorStop(0.5, '#7e22ce');
-      vGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = vGrad;
-      ctx.beginPath();
-      pixelEllipse(ctx, 30, 0, 60, 25, ctx.fillStyle);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // Floating Shattered Dark Monoliths
-    for (let m = 0; m < 5; m++) {
-      const mx = (m + 0.5) * (w / 5) + Math.cos(time * 0.002 + m) * 15;
-      const my = h * 0.32 + Math.sin(time * 0.003 + m) * 12;
-      ctx.fillStyle = '#0f0217';
-      ctx.fillRect(mx - 12, my - 25, 24, 50);
-      // Glowing Runic Glyphs
-      ctx.strokeStyle = '#e879f9';
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(mx - 8, my - 18, 16, 36);
-    }
-  }
-
-  // 10. CELESTIAL SANCTUM (เกาะลอยฟ้าวิหารสวรรค์)
-  private drawCelestialSanctumBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Divine Golden Dawn to Sky Azure Gradient
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1e1b4b'], [0.35, '#4338ca'], [0.7, '#6366f1'], [1.0, '#0f172a']]);
-
-    // Radiant Sunbeams / God-Rays
-    ctx.save();
-    ctx.globalAlpha = 0.12 + Math.sin(time * 0.003) * 0.04;
-    const rayGrad = ctx.createRadialGradient(w * 0.5, 0, 10, w * 0.5, 0, w * 0.7);
-    rayGrad.addColorStop(0, '#fde047');
-    rayGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = rayGrad;
-    ctx.beginPath();
-    ctx.arc(w * 0.5, 0, w * 0.7, 0, Math.PI);
-    ctx.fill();
-    ctx.restore();
-
-    // Floating Greek/Roman White Marble Colonnade
-    for (let c = 0; c < 5; c++) {
-      const cx = (c + 0.5) * (w / 5);
-      // Pillar
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(cx - 14, h * 0.1, 28, h * 0.45);
-      // Gold Capital & Base
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(cx - 18, h * 0.1, 36, 8);
-      ctx.fillRect(cx - 18, h * 0.52, 36, 8);
-    }
-  }
-
-  // 11. BOSS: DRAGON OVERLORD PRINCESS THRONE ROOM
-  private drawBossDragonThroneBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-    // Crimson Magma to Imperial Gold Throne
-    // Authored stops kept; the space between them is banded rather than interpolated.
-    pixelVerticalRamp(ctx, 0, 0, w, h, [[0, '#1c0505'], [0.35, '#3b0d0c'], [0.7, '#571310'], [1.0, '#0d0202']]);
-
-    // Grand Dragon Crest in Center
-    const crestCX = w * 0.5;
-    const crestCY = h * 0.22;
-    const crestPulse = 0.8 + Math.sin(time * 0.006) * 0.2;
-    const crestGlow = ctx.createRadialGradient(crestCX, crestCY, 10, crestCX, crestCY, 95 * crestPulse);
-    crestGlow.addColorStop(0, 'rgba(239, 68, 68, 0.5)');
-    crestGlow.addColorStop(0.6, 'rgba(245, 158, 11, 0.25)');
-    crestGlow.addColorStop(1, 'transparent');
-    ctx.fillStyle = crestGlow;
-    ctx.beginPath();
-    pixelDisc(ctx, crestCX, crestCY, 95 * crestPulse, ctx.fillStyle);
-    ctx.fill();
-
-    // Imperial Throne Silhouette
-    ctx.fillStyle = '#1e0707';
-    ctx.beginPath();
-    ctx.moveTo(crestCX - 35, h * 0.52);
-    ctx.lineTo(crestCX - 25, h * 0.18);
-    ctx.lineTo(crestCX, h * 0.14);
-    ctx.lineTo(crestCX + 25, h * 0.18);
-    ctx.lineTo(crestCX + 35, h * 0.52);
-    ctx.closePath();
-    ctx.fill();
-
-    // Massive Dragon Wings Silhouette on Throne
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // Flanking Great Pillars with Roaring Dragon Braziers
-    this.drawWallTorch(ctx, w * 0.15, h * 0.3, time, 0);
-    this.drawWallTorch(ctx, w * 0.85, h * 0.3, time, 1);
-  }
-
-  // HELPER: WALL TORCH SCONCE WITH ANIMATED FLAME & PARTICLES
-  private drawWallTorch(
-    ctx: CanvasRenderingContext2D,
-    px: number,
-    ty: number,
-    time: number,
-    seed: number
-  ) {
-    // Sconce bracket
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(px - 3, ty, 6, 16);
-    ctx.fillRect(px - 8, ty - 2, 16, 5);
-
-    // Flame aura
-    const flamePulse = 0.8 + Math.sin(time * 0.008 + seed * 2) * 0.2;
-    const flameGrad = ctx.createRadialGradient(px, ty - 8, 2, px, ty - 8, 40 * flamePulse);
-    flameGrad.addColorStop(0, 'rgba(251, 146, 60, 0.7)');
-    flameGrad.addColorStop(0.4, 'rgba(234, 88, 12, 0.3)');
-    flameGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = flameGrad;
-    ctx.beginPath();
-    pixelDisc(ctx, px, ty - 8, 40 * flamePulse, ctx.fillStyle);
-    ctx.fill();
-
-    // Core flame
-    ctx.fillStyle = '#fef08a';
-    ctx.beginPath();
-    pixelDisc(ctx, px, ty - 8, 3.5, ctx.fillStyle);
-    ctx.fill();
-
-    // Floating ember sparks
-    for (let s = 0; s < 3; s++) {
-      const sparkY = ty - 10 - ((time * 0.04 + s * 14) % 45);
-      const sparkX = px + Math.sin(time * 0.005 + s + seed) * 7;
-      ctx.fillStyle = 'rgba(253, 186, 116, 0.75)';
-      ctx.fillRect(sparkX, sparkY, 2, 2);
-    }
-  }
-
-  // =========================================================================
-  // HELPER: GRAND EXPANSIVE 2.5D ISOMETRIC COLOSSEUM ARENA FLOOR
-  // =========================================================================
-  private drawGrandIsometricColosseumFloor(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    w: number,
-    h: number,
-    drop: number,
-    time: number,
-    biome: string = 'grass'
-  ) {
-    ctx.save();
-    const hw = w / 2;
-    const hh = h / 2;
-
-    // 1. Massive Colosseum Shadow Base
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-    ctx.beginPath();
-    pixelEllipse(ctx, cx, cy + drop + 16, hw + 24, (hh + drop) * 0.46, ctx.fillStyle);
-    ctx.fill();
-
-    // 2. Foundation Cliff Wall - Left Shaded Face
-    const leftGrad = ctx.createLinearGradient(cx - hw, cy, cx, cy + hh + drop);
-    leftGrad.addColorStop(0, '#090d16');
-    leftGrad.addColorStop(1, '#05070d');
-    ctx.fillStyle = leftGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw, cy);
-    ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx, cy + hh + drop);
-    ctx.lineTo(cx - hw, cy + drop);
-    ctx.closePath();
-    ctx.fill();
-
-    // Left Foundation Masonry Courses (Horizontal brick seams)
-    ctx.strokeStyle = '#020408';
-    ctx.lineWidth = 1.5;
-    for (let l = 1; l <= 3; l++) {
-      const frac = l / 4;
-      ctx.beginPath();
-      ctx.moveTo(cx - hw, cy + drop * frac);
-      ctx.lineTo(cx, cy + hh + drop * frac);
-      ctx.stroke();
-    }
-
-    // 3. Foundation Cliff Wall - Right Lit Face
-    const rightGrad = ctx.createLinearGradient(cx, cy + hh, cx + hw, cy + drop);
-    rightGrad.addColorStop(0, '#111827');
-    rightGrad.addColorStop(1, '#0b1120');
-    ctx.fillStyle = rightGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + hh);
-    ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx + hw, cy + drop);
-    ctx.lineTo(cx, cy + hh + drop);
-    ctx.closePath();
-    ctx.fill();
-
-    // Right Foundation Masonry Courses
-    ctx.strokeStyle = '#030712';
-    ctx.lineWidth = 1.5;
-    for (let l = 1; l <= 3; l++) {
-      const frac = l / 4;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + hh + drop * frac);
-      ctx.lineTo(cx + hw, cy + drop * frac);
-      ctx.stroke();
-    }
-
-    // Bottom Base Trim (Chiseled Rock Edge)
-    ctx.strokeStyle = '#374151';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - hw, cy + drop);
-    ctx.lineTo(cx, cy + hh + drop);
-    ctx.lineTo(cx + hw, cy + drop);
-    ctx.stroke();
-
-    // 4. Main Grand Isometric Flagstone Floor Themed by Biome
-    const floorColors = this.getBiomeFloorColors(biome);
-    const floorGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, hw * 0.9);
-    floorGrad.addColorStop(0, floorColors.center);
-    floorGrad.addColorStop(0.5, floorColors.mid);
-    floorGrad.addColorStop(1, floorColors.edge);
-    ctx.fillStyle = floorGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - hh);
-    ctx.lineTo(cx + hw, cy);
-    ctx.lineTo(cx, cy + hh);
-    ctx.lineTo(cx - hw, cy);
-    ctx.closePath();
-    ctx.fill();
-
-    // Chiseled Flagstone Rim Border Themed
-    ctx.strokeStyle = floorColors.rim;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // 5. Authentic Isometric Flagstone Paving Grid
-    const gridSteps = 6;
-    ctx.strokeStyle = 'rgba(2, 6, 23, 0.45)';
-    ctx.lineWidth = 1.2;
-
-    // NW-to-SE lines
-    for (let i = 1; i < gridSteps; i++) {
-      const t = i / gridSteps;
-      const x1 = (cx - hw) + (cx - (cx - hw)) * t;
-      const y1 = cy + (cy - hh - cy) * t;
-      const x2 = cx + ((cx + hw) - cx) * t;
-      const y2 = (cy + hh) + (cy - (cy + hh)) * t;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-
-    // SW-to-NE lines
-    for (let i = 1; i < gridSteps; i++) {
-      const t = i / gridSteps;
-      const x1 = (cx - hw) + (cx - (cx - hw)) * t;
-      const y1 = cy + (cy + hh - cy) * t;
-      const x2 = cx + ((cx + hw) - cx) * t;
-      const y2 = (cy - hh) + (cy - (cy - hh)) * t;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-
-    // 6. Central Dueling Arena Ring & Golden Arcane Seal
-    const sealR = Math.min(w * 0.16, 95);
-    const sealPulse = 0.8 + Math.sin(time * 0.004) * 0.2;
-
-    // Outer faint rune ring
-    ctx.strokeStyle = `rgba(251, 191, 36, ${0.35 * sealPulse})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    pixelRing(ctx, cx, cy, sealR, sealR * 0.48, ctx.strokeStyle, 1);
-    ctx.stroke();
-
-    // Inner glowing ring
-    ctx.strokeStyle = `rgba(245, 158, 11, ${0.5 * sealPulse})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    pixelRing(ctx, cx, cy, sealR * 0.65, sealR * 0.65 * 0.48, ctx.strokeStyle, 1);
-    ctx.stroke();
-
-    // Central Dueling Cross / Star of Fortuna
-    ctx.strokeStyle = `rgba(253, 224, 71, ${0.4 * sealPulse})`;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(cx - sealR * 0.45, cy);
-    ctx.lineTo(cx + sealR * 0.45, cy);
-    ctx.moveTo(cx, cy - sealR * 0.22);
-    ctx.lineTo(cx, cy + sealR * 0.22);
-    ctx.stroke();
-
-    // 7. Flanking Stone Torch Braziers on the Arena Wings
-    this.drawStoneTorchPillar(ctx, cx - hw * 0.82, cy - hh * 0.08, time, 0);
-    this.drawStoneTorchPillar(ctx, cx + hw * 0.82, cy - hh * 0.08, time, 2.5);
-
-    ctx.restore();
-  }
-
-  // =========================================================================
-  // HELPER: ISOMETRIC CARVED STONE TORCH BRAZIER PILLAR
-  // =========================================================================
-  private drawStoneTorchPillar(
-    ctx: CanvasRenderingContext2D,
-    bx: number,
-    by: number,
-    time: number,
-    phase: number = 0
-  ) {
-    ctx.save();
-
-    // Pillar Shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.beginPath();
-    pixelEllipse(ctx, bx, by + 10, 18, 9, ctx.fillStyle);
-    ctx.fill();
-
-    // Isometric Stepped Stone Plinth (Base)
-    const baseW = 26;
-    const baseH = 12;
-    // Base Left Face
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.moveTo(bx - baseW / 2, by);
-    ctx.lineTo(bx, by + baseH / 2);
-    ctx.lineTo(bx, by + baseH / 2 + 8);
-    ctx.lineTo(bx - baseW / 2, by + 8);
-    ctx.closePath();
-    ctx.fill();
-
-    // Base Right Face
-    ctx.fillStyle = '#1e293b';
-    ctx.beginPath();
-    ctx.moveTo(bx, by + baseH / 2);
-    ctx.lineTo(bx + baseW / 2, by);
-    ctx.lineTo(bx + baseW / 2, by + 8);
-    ctx.lineTo(bx, by + baseH / 2 + 8);
-    ctx.closePath();
-    ctx.fill();
-
-    // Base Top Rhombus
-    ctx.fillStyle = '#334155';
-    ctx.beginPath();
-    ctx.moveTo(bx, by - baseH / 2);
-    ctx.lineTo(bx + baseW / 2, by);
-    ctx.lineTo(bx, by + baseH / 2);
-    ctx.lineTo(bx - baseW / 2, by);
-    ctx.closePath();
-    ctx.fill();
-
-    // Vertical Pillar Shaft
-    const pWidth = 14;
-    const pHeight = 36;
-    const py = by - pHeight;
-    // Left Shaded Side of shaft
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(bx - pWidth / 2, py, pWidth / 2, pHeight);
-    // Right Lit Side of shaft
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(bx, py, pWidth / 2, pHeight);
-
-    // Shaft Mortar seam
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(bx - pWidth / 2, py + pHeight * 0.5, pWidth, 1.5);
-
-    // Iron Brazier Basin / Sconce at top
-    const bowlY = py - 4;
-    ctx.fillStyle = '#090d16';
-    ctx.beginPath();
-    ctx.moveTo(bx - 12, bowlY);
-    ctx.lineTo(bx + 12, bowlY);
-    ctx.lineTo(bx + 8, bowlY + 8);
-    ctx.lineTo(bx - 8, bowlY + 8);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Glowing Charcoal Ember Bed
-    ctx.fillStyle = '#ea580c';
-    ctx.fillRect(bx - 8, bowlY - 1, 16, 3);
-
-    // Roaring Brazier Fire (Terraria-style multi-tone pixel flame)
-    const flameFlicker = Math.sin(time * 0.012 + phase) * 4 + Math.cos(time * 0.018 + phase * 2) * 2;
-    const flameH = 22 + flameFlicker;
-
-    // Ambient Flame Radial Glow
-    const glowGrad = ctx.createRadialGradient(bx, bowlY - 8, 2, bx, bowlY - 8, 48);
-    glowGrad.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
-    glowGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.20)');
-    glowGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    pixelDisc(ctx, bx, bowlY - 8, 48, ctx.fillStyle);
-    ctx.fill();
-
-    // Outer Crimson Fire Tongue
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.moveTo(bx - 7, bowlY);
-    ctx.quadraticCurveTo(bx - 6, bowlY - flameH * 0.6, bx, bowlY - flameH);
-    ctx.quadraticCurveTo(bx + 6, bowlY - flameH * 0.6, bx + 7, bowlY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Mid Orange Flame
-    ctx.fillStyle = '#f97316';
-    ctx.beginPath();
-    ctx.moveTo(bx - 5, bowlY);
-    ctx.quadraticCurveTo(bx - 4, bowlY - flameH * 0.5, bx, bowlY - flameH * 0.85);
-    ctx.quadraticCurveTo(bx + 4, bowlY - flameH * 0.5, bx + 5, bowlY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Core Bright Yellow Flame
-    ctx.fillStyle = '#fef08a';
-    ctx.beginPath();
-    ctx.moveTo(bx - 3, bowlY);
-    ctx.quadraticCurveTo(bx - 2, bowlY - flameH * 0.4, bx, bowlY - flameH * 0.65);
-    ctx.quadraticCurveTo(bx + 2, bowlY - flameH * 0.4, bx + 3, bowlY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Rising Embers / Sparks
-    for (let s = 0; s < 3; s++) {
-      const sparkY = bowlY - 12 - ((time * 0.05 + s * 16 + phase * 10) % 35);
-      const sparkX = bx + Math.sin(time * 0.007 + s + phase) * 8;
-      ctx.fillStyle = s % 2 === 0 ? '#fed7aa' : '#fb923c';
-      ctx.fillRect(sparkX, sparkY, 2, 2);
-    }
-
-    ctx.restore();
-  }
 
   // =========================================================================
   // HELPER: 2.5D ISOMETRIC CARVED STONE DUELING DAIS WITH RUNIC TRIM

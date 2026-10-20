@@ -104,7 +104,7 @@ export class WeeklyReportUI {
 
     const modal = document.getElementById('weeklyReportModal')!;
     this.paintKing();
-    document.getElementById('weeklyWeekTitle')!.innerText = `End of Week ${this.game.weekCounter} Royal Ceremony`;
+    document.getElementById('weeklyWeekTitle')!.innerText = `พิธีสรุปผลประจำสัปดาห์ที่ ${this.game.weekCounter}`;
 
     // Sort players by Net Worth
     const sorted = [...this.game.players].sort(
@@ -126,13 +126,13 @@ export class WeeklyReportUI {
 
       row.innerHTML = `
         <div class="flex items-center gap-2">
-          <span class="font-bold text-sm">${isFirst ? '👑 1st' : `${idx + 1}th`}</span>
+          <span class="font-bold text-sm">${isFirst ? '👑 อันดับ 1' : `อันดับ ${idx + 1}`}</span>
           <span class="font-bold" style="color: ${p.color}">${escapeHtml(p.displayName)} (${escapeHtml(p.className)})</span>
         </div>
         <div class="flex items-center gap-3 text-xs">
           <span>🪙 ${p.gold}G</span>
-          <span>🚩 ${p.townsControlled} Towns</span>
-          <strong class="text-emerald-400">💎 ${netWorth}G Net</strong>
+          <span>🚩 ${p.townsControlled} เมือง</span>
+          <strong class="text-emerald-400">💎 ${netWorth}G สุทธิ</strong>
         </div>
       `;
 

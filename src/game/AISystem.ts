@@ -199,15 +199,78 @@ export class AISystem {
     return bestId;
   }
 
+  // Pre-Roll Item or Field Spell Decision
+  choosePreRollAction(
+    aiPlayer: Player,
+    allPlayers: Player[] = [],
+    allNodes: BoardNode[] = []
+  ): { type: 'item' | 'spell' | 'none'; itemId?: string; spellKey?: string; targetId?: number } {
+    // 1. Heal if HP is low (< 50%) and has an HP potion
+    if (aiPlayer.hp < aiPlayer.maxHp * 0.5) {
+      const hpPot = aiPlayer.inventory.find(
+        i => i.id === 'pot_hp' || i.id === 'potion_hp' || i.id === 'pot_elixir' || i.type === 'potion'
+      );
+      if (hpPot) {
+        return { type: 'item', itemId: hpPot.id };
+      }
+    }
+
+    // 2. Use spinner item if available and not already active
+    if (aiPlayer.activeSpinnerMultiplier === 1) {
+      const spinner = aiPlayer.inventory.find(
+        i => i.id === 'item_spinner2' || i.id === 'item_spinner3' || i.type === 'spinner'
+      );
+      if (spinner) {
+        return { type: 'item', itemId: spinner.id };
+      }
+    }
+
+    // 3. Cast field spell if MP is sufficient
+    if (aiPlayer.fieldSpells && aiPlayer.fieldSpells.length > 0 && aiPlayer.mp >= 15) {
+      if (aiPlayer.hp < aiPlayer.maxHp * 0.45 && aiPlayer.fieldSpells.includes('holy_sanctuary') && aiPlayer.mp >= 30) {
+        return { type: 'spell', spellKey: 'holy_sanctuary' };
+      }
+      const opponents = allPlayers.filter(p => p.id !== aiPlayer.id);
+      const target = this.chooseFieldSpellTarget(aiPlayer, opponents);
+      if (target) {
+        const offensiveSpell = aiPlayer.fieldSpells.find(s => s !== 'holy_sanctuary' && s !== 'castle_warp');
+        if (offensiveSpell) {
+          return { type: 'spell', spellKey: offensiveSpell, targetId: target.id };
+        }
+      }
+    }
+
+    return { type: 'none' };
+  }
+
+  // Automatically promote AI player when reaching Level 5 (Tier 2) or Level 10 (Tier 3)
+  public autoPromoteIfEligible(aiPlayer: Player): string | null {
+    if (!aiPlayer.canPromote()) return null;
+    const available = aiPlayer.getAvailablePromotions();
+    if (available.length === 0) return null;
+    const choice = (aiPlayer.aiPersonality === 'hunter' || aiPlayer.aiPersonality === 'economist') && available.length > 1
+      ? available[1]
+      : available[0];
+    if (aiPlayer.promote(choice.tier2Key)) {
+      return choice.name;
+    }
+    return null;
+  }
+
   // Combat Attacker Decision with Psychological Mind-Reading
   chooseAttackerAction(
     ai: Player,
     opponent: { hp: number; maxHp: number; def: number; mag: number; playerRef?: Player },
-    difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical'
+    difficulty: 'casual' | 'tactical' | 'ruthless' = 'tactical',
+    skillUsed: boolean = false
   ): AttackerAction {
+    const isSilenced = ((ai as any).silenceTurns ?? 0) > 0;
+    const canUseMagic = !isSilenced && ai.mp >= 10;
+    const canUseSkill = !isSilenced && !skillUsed && !(ai as any).skillUsed && ai.mp >= 12;
+
     const roll = getWorld().random();
     if (difficulty === 'casual' && roll < 0.50) {
-      const actions: AttackerAction[] = ['attack', 'attack', 'strike', 'magic'];
+      const actions: AttackerAction[] = canUseMagic ? ['attack', 'attack', 'strike', 'magic'] : ['attack', 'attack', 'strike'];
       return actions[Math.floor(getWorld().random() * actions.length)];
     }
 
@@ -220,7 +283,7 @@ export class AISystem {
       const readRate = difficulty === 'ruthless' ? 0.90 : 0.70;
       if (frequentDef === 'counter') {
         // Punish counter with regular attack or magic!
-        if (ai.mp >= 14 && ai.mag > 10 && roll < 0.6) return 'magic';
+        if (canUseMagic && ai.mp >= 14 && ai.mag > 10 && roll < 0.6) return 'magic';
         return 'attack';
       }
       if (frequentDef === 'defend') {
@@ -236,30 +299,30 @@ export class AISystem {
 
     // PK Hunter is hyper-aggressive with Strike and Skills
     if (personality === 'hunter') {
-      if (ai.mp >= 12 && roll < 0.45) return 'skill';
+      if (canUseSkill && roll < 0.45) return 'skill';
       if (roll < 0.42) return 'strike';
-      if (ai.mp >= 14 && ai.mag > 10 && roll < 0.7) return 'magic';
+      if (canUseMagic && ai.mp >= 14 && ai.mag > 10 && roll < 0.7) return 'magic';
       return 'attack';
     }
 
     // Tactician analyzes defenses and weaknesses
     if (personality === 'tactician') {
       if (opponent.def > 18 && roll < 0.55) return 'strike';
-      if (ai.mp >= 14 && ai.mag > 12 && roll < 0.45) return 'magic';
-      if (ai.mp >= 12 && roll < 0.35) return 'skill';
+      if (canUseMagic && ai.mp >= 14 && ai.mag > 12 && roll < 0.45) return 'magic';
+      if (canUseSkill && roll < 0.35) return 'skill';
       return 'attack';
     }
 
     // Economist prefers low-risk attacks
     if (personality === 'economist') {
-      if (ai.mp >= 12 && roll < 0.25) return 'skill';
+      if (canUseSkill && roll < 0.25) return 'skill';
       if (roll < 0.20) return 'strike';
       return 'attack';
     }
 
     // Default Balanced AI
-    if (ai.mp >= 16 && ai.mag > 10 && roll < 0.35) return 'magic';
-    if (ai.mp >= 12 && roll < 0.3) return 'skill';
+    if (canUseMagic && ai.mp >= 16 && ai.mag > 10 && roll < 0.35) return 'magic';
+    if (canUseSkill && roll < 0.3) return 'skill';
     if (opponent.def > 12 && roll < 0.45) return 'strike';
     if (roll < 0.3) return 'strike';
     return 'attack';

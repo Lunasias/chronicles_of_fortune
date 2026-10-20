@@ -7,7 +7,16 @@ export function prepareCombatant(source: Combatant, node: BoardNode, world: Worl
   const key = `${world.day}:${node.id}:${world.weatherAt(node)}:${world.modifier?.id}:${world.spireFloor}:${world.focusPlayerId}:${enemy}`;
   if (source.environmentKey === key) return source;
   const c = { ...source, environmentKey: key };
-  if (source.playerRef) { c.freezeTurns = source.playerRef.freezeTurns; c.blindTurns = source.playerRef.blindTurns; }
+  if (source.playerRef) {
+    if (source.playerRef.relics.includes('dragon_heart')) {
+      source.playerRef.freezeTurns = 0;
+      c.freezeTurns = 0;
+      c.burnTurns = 0;
+    } else {
+      c.freezeTurns = source.playerRef.freezeTurns;
+    }
+    c.blindTurns = source.playerRef.blindTurns;
+  }
   const weather = world.weatherAt(node);
   const baseClass = source.playerRef?.originalClassKey ?? source.classKey ?? '';
   if (!c.element) c.element = ({ magician: 'fire', cleric: 'holy', spellblade: 'lightning', thief: 'dark', warrior: 'earth' } as const)[baseClass as 'magician'] ?? (node.biome === 'snow' ? 'ice' : node.biome === 'volcano' ? 'fire' : node.biome === 'abyss' ? 'dark' : node.biome === 'coral' || node.biome === 'waterfall_forest' ? 'water' : 'earth');

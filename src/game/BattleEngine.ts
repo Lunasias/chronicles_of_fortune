@@ -254,6 +254,16 @@ export class BattleEngine {
     if (!this.defender.gridPos) {
       this.defender.gridPos = this.getDefaultGridPos(this.defender);
     }
+    if (this.attacker.playerRef?.relics.includes('dragon_heart')) {
+      this.attacker.burnTurns = 0;
+      this.attacker.freezeTurns = 0;
+      this.attacker.playerRef.freezeTurns = 0;
+    }
+    if (this.defender.playerRef?.relics.includes('dragon_heart')) {
+      this.defender.burnTurns = 0;
+      this.defender.freezeTurns = 0;
+      this.defender.playerRef.freezeTurns = 0;
+    }
     this.initTacticalHazards();
   }
 
@@ -270,8 +280,8 @@ export class BattleEngine {
 
   public getDefaultGridPos(c: Combatant): CombatGridPosition {
     const cls = (c.classKey || c.playerRef?.classKey || '').toLowerCase();
-    if (cls === 'warrior' || cls === 'paladin' || cls === 'dark_knight' || cls === 'berserker' || c.isBoss) return 'front';
-    if (cls === 'magician' || cls === 'spellblade' || cls === 'ninja' || cls === 'cleric') return 'back';
+    if (cls === 'warrior' || cls === 'paladin' || cls === 'crusader' || cls === 'dark_knight' || cls === 'berserker' || cls === 'warlord' || c.isBoss) return 'front';
+    if (cls === 'magician' || cls === 'archmage' || cls === 'grand_arcanist' || cls === 'necromancer' || cls === 'lich_king' || cls === 'spellblade' || cls === 'rune_master' || cls === 'rune_sovereign' || cls === 'ninja' || cls === 'phantom_shinobi' || cls === 'cleric' || cls === 'high_priest' || cls === 'radiant_archon' || cls === 'saint' || cls === 'seraphic_saint') return 'back';
     return 'mid';
   }
 
@@ -322,6 +332,17 @@ export class BattleEngine {
     const d = this.defender;
     const aPos = a.gridPos || 'mid';
     const dPos = d.gridPos || 'mid';
+
+    if (a.playerRef?.relics.includes('dragon_heart')) {
+      a.freezeTurns = 0;
+      a.burnTurns = 0;
+      a.playerRef.freezeTurns = 0;
+    }
+    if (d.playerRef?.relics.includes('dragon_heart')) {
+      d.freezeTurns = 0;
+      d.burnTurns = 0;
+      d.playerRef.freezeTurns = 0;
+    }
 
     // 0. Freeze Check: Frozen unit cannot take any action this round!
     if (a.freezeTurns && a.freezeTurns > 0) {
@@ -621,9 +642,228 @@ export class BattleEngine {
       const defReduction = Math.max(0, (d.def || 5) * 0.85);
       const magDefReduction = Math.max(0, ((d.def || 5) * 0.4) + ((d.mag || 5) * 0.5));
 
-      const cls = (a.playerRef?.originalClassKey || a.classKey || '').toLowerCase();
+      const promoKey = (a.classKey || a.playerRef?.classKey || '').toLowerCase();
+      const baseCls = (a.playerRef?.originalClassKey || a.classKey || '').toLowerCase();
 
-      if (cls === 'magician') {
+      // Tier 2 & Tier 3 Promoted Class Ultimate Skills
+      if (promoKey === 'paladin') {
+        let raw = (a.atk * 1.9 + a.def * 1.0 + a.mag * 1.3 + 14) - defReduction * 0.7;
+        if (defAction === 'defend') raw = Math.round(raw * 0.55);
+        else if (defAction === 'magic_guard') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(10, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const healAmt = Math.round(25 + a.def * 0.8);
+        a.hp = Math.min(a.maxHp, a.hp + healAmt);
+        a.barrierHp = (a.barrierHp || 0) + 20;
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🛡️✨ หัตถ์ศักดิ์สิทธิ์คุ้มครองพิภพ (Divine Aegis)! ${a.name} กางบาเรียศักดิ์สิทธิ์ฟาดแสงพิพากษา ${damageToDefender} ดาเมจ และฟื้นฟูเลือด ${healAmt} HP!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'crusader') {
+        let raw = (a.atk * 2.2 + a.def * 1.3 + a.mag * 1.5 + 20) - defReduction * 0.6;
+        if (defAction === 'defend') raw = Math.round(raw * 0.55);
+        else if (defAction === 'magic_guard') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(14, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const healAmt = Math.round(a.maxHp * 0.40);
+        a.hp = Math.min(a.maxHp, a.hp + healAmt);
+        a.barrierHp = (a.barrierHp || 0) + 35;
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑🛡️ มหาปราการเทวาพิทักษ์จักรวาล (Aegis of the Heavens)! ${a.name} ปลดปล่อยแสงเทวทูต ${damageToDefender} ดาเมจ พร้อมฟื้นฟู ${healAmt} HP และสร้างเกราะศักดิ์สิทธิ์!${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'berserker') {
+        const hpCost = Math.max(1, Math.floor(a.hp * 0.15));
+        a.hp = Math.max(1, a.hp - hpCost);
+        let raw = (a.atk * 2.5 + 16) - defReduction * 0.75;
+        if (defAction === 'defend') raw = Math.round(raw * 0.50);
+        else if (defAction === 'counter') raw = Math.round(raw * 1.25);
+        let dmg = Math.round(Math.max(12, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🪓🩸 คลั่งโลหิตผ่าสวรรค์ (Blood Frenzy)! ${a.name} สละเลือด ${hpCost} HP ฟาดฟันบ้าคลั่งสร้างความเสียหาย ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 คริติคอลคลั่งโลหิต!' : ''}`;
+      } else if (promoKey === 'warlord') {
+        const hpCost = Math.max(1, Math.floor(a.hp * 0.25));
+        a.hp = Math.max(1, a.hp - hpCost);
+        let raw = (a.atk * 3.2 + 22) - defReduction * 0.15;
+        if (defAction === 'defend') raw = Math.round(raw * 0.65);
+        else if (defAction === 'counter') raw = Math.round(raw * 1.3);
+        let dmg = Math.round(Math.max(18, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑🩸 มหาดาบผ่าพิภพโลหิตเดือด (World Breaker)! ${a.name} สละเลือด ${hpCost} HP ผ่าทะลวงเกราะสร้างความเสียหายมหาศาล ${damageToDefender} ดาเมจ!${isCrit ? ' 💥 มหาคริติคอลราชัน!' : ''}`;
+      } else if (promoKey === 'archmage') {
+        let raw = (a.mag * 2.8 + 20) - magDefReduction * 0.6;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.70);
+        let dmg = Math.round(Math.max(14, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        d.def = Math.max(1, Math.floor((d.def || 5) * 0.85));
+        d.burnTurns = Math.max(d.burnTurns || 0, 2);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🔮🌟 มหาอุกกาบาตสิ้นพิภพ (Apocalypse Meteor)! ${a.name} เรียกฝนดาวตกถล่ม ${d.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ และหลอมละลายเกราะป้องกัน!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ!)' : ''}${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'grand_arcanist') {
+        let raw = (a.mag * 3.5 + 26) - magDefReduction * 0.5;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.70);
+        let dmg = Math.round(Math.max(18, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const mpDrain = Math.min(d.mp || 0, 25);
+        d.mp = Math.max(0, (d.mp || 0) - mpDrain);
+        if (d.playerRef) d.playerRef.mp = d.mp;
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑🌌 ซูเปอร์โนวาดับดารา (Supernova Cataclysm)! ${a.name} ระเบิดมหาดวงดาวสร้างความเสียหาย ${damageToDefender} ดาเมจ และสลาย MP ศัตรู ${mpDrain} หน่วย!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ!)' : ''}${isCrit ? ' 💥 มหาคริติคอลจักรวาล!' : ''}`;
+      } else if (promoKey === 'necromancer') {
+        let raw = Math.max(14, Math.floor(d.hp * 0.30) + Math.floor(a.mag * 1.7) - magDefReduction * 0.6);
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.70);
+        let dmg = Math.round(Math.max(12, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        const drainedHp = Math.round(damageToDefender * 0.55);
+        a.hp = Math.min(a.maxHp, a.hp + drainedHp);
+        if (d.playerRef) d.playerRef.curseTurns = Math.max(d.playerRef.curseTurns, 3);
+        narration = `💀🕯️ กองทัพวิญญาณกระดูกคืนชีพ (Army of the Damned)! ${a.name} สูบวิญญาณสร้างความเสียหาย ${damageToDefender} ดาเมจ และดูดกลืนชีวิต +${drainedHp} HP!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ!)' : ''}${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'lich_king') {
+        let raw = Math.max(20, Math.floor(d.maxHp * 0.35) + Math.floor(a.mag * 2.0) - magDefReduction * 0.5);
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.70);
+        let dmg = Math.round(Math.max(16, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        const drainedHp = Math.round(damageToDefender * 0.65);
+        a.hp = Math.min(a.maxHp, a.hp + drainedHp);
+        a.barrierHp = (a.barrierHp || 0) + Math.round(damageToDefender * 0.40);
+        if (d.playerRef) d.playerRef.curseTurns = Math.max(d.playerRef.curseTurns, 4);
+        narration = `👑💀 มหาคำสาปกลืนวิญญาณนิรันดร์ (Soul Drain Apocalypse)! ${a.name} สูบพลังชีวิต ${damageToDefender} ดาเมจ ฟื้นฟู +${drainedHp} HP พร้อมสร้างเกราะวิญญาณ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ!)' : ''}${isCrit ? ' 💥 มหาคริติคอลราชันลิช!' : ''}`;
+      } else if (promoKey === 'ninja') {
+        let raw = (a.atk * 1.9 + (a.spd || 5) * 1.3 + 12) - defReduction * 0.75;
+        if (defAction === 'defend') raw = Math.round(raw * 0.50);
+        if (!isCrit && getWorld().random() < 0.25) isCrit = true;
+        let dmg = Math.round(Math.max(10, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        if (d.playerRef) d.playerRef.poisonTurns = Math.max(d.playerRef.poisonTurns, 3);
+        narration = `🥷🌀 ดาวกระจายสังหารไร้เงา (Shadow Shuriken)! ${a.name} ปาดาวกระจายอาบพิษ 6 ดอก สร้างความเสียหาย ${damageToDefender} ดาเมจ และทำให้ติดพิษ!${defAction === 'defend' ? ' (ป้องกันลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอลเงาสังหาร!' : ''}`;
+      } else if (promoKey === 'phantom_shinobi') {
+        let raw = (a.atk * 2.2 + (a.spd || 5) * 1.6 + 18) - defReduction * 0.6;
+        if (defAction === 'defend') raw = Math.round(raw * 0.55);
+        let dmg = Math.round(Math.max(14, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        a.barrierHp = (a.barrierHp || 0) + 25;
+        const stolen = d.playerRef ? Math.min(120, Math.floor(d.playerRef.gold * 0.30)) : 80;
+        if (d.playerRef && a.playerRef) {
+          d.playerRef.gold -= stolen;
+          a.playerRef.gold += stolen;
+        }
+        narration = `👑🌀 หมื่นเงาพายุจักรพรรดิ (Infinite Phantom Gale)! ${a.name} พุ่งฟัน 8 ครั้งซ้อน สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกทอง ${stolen}G!${isCrit ? ' 💥 คริติคอลชิโนบิ!' : ''}`;
+      } else if (promoKey === 'assassin') {
+        let raw = (a.atk * 2.2 + (a.luk || 5) * 1.2 + 14) - defReduction * 0.6;
+        if (defAction === 'defend') raw = Math.round(raw * 0.50);
+        if (!isCrit && getWorld().random() < 0.40) isCrit = true;
+        let dmg = Math.round(Math.max(12, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.8);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        const stolen = d.playerRef ? Math.min(90, Math.floor(d.playerRef.gold * 0.20)) : 65;
+        if (d.playerRef && a.playerRef) {
+          d.playerRef.gold -= stolen;
+          a.playerRef.gold += stolen;
+        }
+        narration = `🗡️☠️ มรณภาพในพริบตา (Death Mark)! ${a.name} แทงจุดตายสร้างความเสียหาย ${damageToDefender} ดาเมจ และปล้นทอง ${stolen}G!${isCrit ? ' 💥 คริติคอลจุดตาย!' : ''}`;
+      } else if (promoKey === 'shadow_reaper') {
+        let raw = (a.atk * 2.6 + (a.luk || 5) * 1.5 + 20) - defReduction * 0.5;
+        if (defAction === 'defend') raw = Math.round(raw * 0.55);
+        isCrit = true;
+        let dmg = Math.round(Math.max(16, raw) * 1.75);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        const stealRatio = d.hp <= 0 ? 0.50 : 0.25;
+        const stolen = d.playerRef ? Math.min(200, Math.floor(d.playerRef.gold * stealRatio)) : 100;
+        if (d.playerRef && a.playerRef) {
+          d.playerRef.gold -= stolen;
+          a.playerRef.gold += stolen;
+        }
+        narration = `👑☠️ เคียวเกี่ยววิญญาณมรณะ (Soul Harvester)! ${a.name} ฟาดเคียวจุดตายสร้างความเสียหายคริติคอล ${damageToDefender} ดาเมจ และชิงทอง ${stolen}G!`;
+      } else if (promoKey === 'high_priest') {
+        let raw = (a.mag * 2.4 + 18) - magDefReduction * 0.7;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(10, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const healAmt = Math.round(35 + a.mag * 0.9);
+        a.hp = Math.min(a.maxHp, a.hp + healAmt);
+        a.burnTurns = 0; a.freezeTurns = 0; a.silenceTurns = 0; a.blindTurns = 0;
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `⛪✨ แสงทิพย์ชำระบาปสากล (Universal Radiance)! ${a.name} ปลดปล่อยลำแสงศักดิ์สิทธิ์ ${damageToDefender} ดาเมจ พร้อมฟื้นฟูเลือด ${healAmt} HP และชำระล้างสถานะผิดปกติ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'radiant_archon') {
+        let raw = (a.mag * 2.9 + 24) - magDefReduction * 0.6;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(16, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        a.hp = a.maxHp;
+        a.mp = Math.min(a.maxMp, a.mp + 20);
+        a.burnTurns = 0; a.freezeTurns = 0; a.silenceTurns = 0; a.blindTurns = 0;
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑✨ พิพากษาแสงสวรรค์เก้าชั้นฟ้า (Nine Heavens Judgement)! ${a.name} ฟื้นฟูพลังชีวิตเต็ม 100% และยิงลำแสงสุริยันพิฆาต ${damageToDefender} ดาเมจ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอลสวรรค์!' : ''}`;
+      } else if (promoKey === 'saint') {
+        let raw = (a.mag * 2.0 + (a.luk || 5) * 1.2 + 15) - magDefReduction * 0.7;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(10, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const healHp = Math.round(a.maxHp * 0.50);
+        const healMp = Math.round(a.maxMp * 0.25);
+        a.hp = Math.min(a.maxHp, a.hp + healHp);
+        a.mp = Math.min(a.maxMp, a.mp + healMp);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `🕊️💖 พรสวรรค์ปกปักชะตากรรม (Miracle Grace)! ${a.name} ร่ายพรปาฏิหาริย์ฟื้นฟู +${healHp} HP / +${healMp} MP และโจมตีศักดิ์สิทธิ์ ${damageToDefender} ดาเมจ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอล!' : ''}`;
+      } else if (promoKey === 'seraphic_saint') {
+        let raw = (a.mag * 2.4 + (a.luk || 5) * 1.5 + 20) - magDefReduction * 0.6;
+        if (defAction === 'magic_guard') raw = Math.round(raw * 0.35);
+        else if (defAction === 'defend') raw = Math.round(raw * 0.65);
+        let dmg = Math.round(Math.max(14, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        const healHp = Math.round(a.maxHp * 0.65);
+        a.hp = Math.min(a.maxHp, a.hp + healHp);
+        a.barrierHp = (a.barrierHp || 0) + 30;
+        a.burnTurns = 0; a.freezeTurns = 0; a.silenceTurns = 0; a.blindTurns = 0;
+        if (a.playerRef) a.playerRef.cleanseAilments();
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑💖 ปาฏิหาริย์ดวงดาราแห่งการฟื้นคืน (Miracle Resurrection)! ${a.name} ฟื้นฟู +${healHp} HP กางเกราะอมตะ และพิพากษาด้วยแสงดารา ${damageToDefender} ดาเมจ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอลเซราฟ!' : ''}`;
+      } else if (promoKey === 'rune_master') {
+        let raw = (a.atk * 1.9 + a.mag * 1.9 + 16) - (defReduction * 0.45 + magDefReduction * 0.45);
+        if (defAction === 'defend' || defAction === 'magic_guard') raw = Math.round(raw * 0.55);
+        let dmg = Math.round(Math.max(12, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        d.isShocked = true;
+        d.burnTurns = Math.max(d.burnTurns || 0, 1);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `⚔️🔮 ระบำดาบสิบมนตรา (Ten-Rune Blade Dance)! ${a.name} ร่ายดาบรูน 10 เล่มพุ่งฟันกวาดล้าง สร้างความเสียหาย ${damageToDefender} ดาเมจ!${defAction === 'defend' || defAction === 'magic_guard' ? ' (ป้องกันลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอลรูน!' : ''}`;
+      } else if (promoKey === 'rune_sovereign') {
+        let raw = (a.atk * 2.3 + a.mag * 2.3 + 22) - (defReduction * 0.35 + magDefReduction * 0.35);
+        if (defAction === 'defend' || defAction === 'magic_guard') raw = Math.round(raw * 0.55);
+        let dmg = Math.round(Math.max(16, raw));
+        if (isCrit) dmg = Math.round(dmg * 1.5);
+        d.isShocked = true;
+        d.burnTurns = Math.max(d.burnTurns || 0, 2);
+        damageToDefender = dmg;
+        d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
+        narration = `👑⚔️ มหาเพลงดาบจักรวาลอักขระ (Omni-Rune Cataclysm)! ${a.name} ผ่ามิติด้วยอักขระรูนจักรวาล สร้างความเสียหาย ${damageToDefender} ดาเมจ!${defAction === 'defend' || defAction === 'magic_guard' ? ' (ป้องกันลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 มหาคริติคอลอักขระ!' : ''}`;
+      } else if (baseCls === 'magician') {
         const hpCost = Math.max(1, Math.floor(a.hp * 0.15));
         a.hp = Math.max(1, a.hp - hpCost);
         let rawExplosion = Math.max(15, Math.floor(d.hp * 0.25) + Math.floor(a.mag * 1.6) - magDefReduction * 0.7);
@@ -637,7 +877,7 @@ export class BattleEngine {
         damageToDefender = explosionDmg;
         d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
         narration = `💥 มหาเวทเอ็กซ์โพลชั่น (EXPLOSION)! ${a.name} สละเลือด ${hpCost} HP ร่ายมหาเวทระเบิด สร้างความเสียหาย ${damageToDefender} ดาเมจ!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจมหาศาล!)' : ''}${isCrit ? ' 💥 มหาคริติคอล!' : ''}`;
-      } else if (cls === 'cleric') {
+      } else if (baseCls === 'cleric') {
         let rawHoly = (a.mag * 2.2 + 15) - magDefReduction * 0.8;
         if (defAction === 'magic_guard') {
           rawHoly = Math.round(rawHoly * 0.3);
@@ -651,7 +891,7 @@ export class BattleEngine {
         damageToDefender = holyDmg;
         d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
         narration = `✝️ ทัณฑ์กางเขนศักดิ์สิทธิ์ (Holy Cross Judgment)! เสกกางเขนยักษ์ปักลงมาจากฟากฟ้า สร้างความเสียหายศักดิ์สิทธิ์ ${damageToDefender} ดาเมจ และฟื้นฟูเลือด ${healAmt} HP!${defAction === 'magic_guard' ? ' (โล่เวทลดทอนดาเมจ)' : ''}${isCrit ? ' 💥 คริติคอลศักดิ์สิทธิ์!' : ''}`;
-      } else if (cls === 'warrior') {
+      } else if (baseCls === 'warrior') {
         let rawCol = (a.atk * 2.4 + 12) - defReduction;
         if (defAction === 'defend') {
           rawCol = Math.round(rawCol * 0.45);
@@ -663,7 +903,7 @@ export class BattleEngine {
         damageToDefender = colBladeDmg;
         d.hp = Math.round(Math.max(0, d.hp - damageToDefender));
         narration = `🗡️ ดาบยักษ์ผ่าปฐพี (Colossal Blade Groundbreak)! ${a.name} เสกดาบยักษ์ฟันสับ ${d.name} สร้างความเสียหาย ${damageToDefender} ดาเมจ!${defAction === 'defend' ? ' (ศัตรูตั้งการ์ดแน่นหนา!)' : ''}${isCrit ? ' 💥 คริติคอลสะเทือนฟ้าดิน!' : ''}`;
-      } else if (cls === 'thief') {
+      } else if (baseCls === 'thief') {
         let rawClone = (a.atk * 1.7 + (a.spd || 5) * 1.1 + 10) - (defReduction * 0.85);
         if (defAction === 'defend') {
           rawClone = Math.round(rawClone * 0.5);
@@ -678,7 +918,7 @@ export class BattleEngine {
           a.playerRef.gold += stolen;
         }
         narration = `👥 ห้าร่างเงาลวงสังหาร (5-Shadow Clone Illusion)! ร่างแยกเงา 5 ร่างพุ่งรุมฟัน สร้างความเสียหาย ${damageToDefender} ดาเมจ และฉกเงิน ${stolen}G!${defAction === 'defend' ? ' (ป้องกันลดทอนการฟัน)' : ''}${isCrit ? ' 💥 คริติคอลเงาสังหาร!' : ''}`;
-      } else if (cls === 'spellblade' || cls.includes('spell') || cls.includes('ดาบเวท')) {
+      } else if (baseCls === 'spellblade' || baseCls.includes('spell') || baseCls.includes('ดาบเวท')) {
         let rawSlicer = (a.atk * 1.6 + a.mag * 1.6 + 12) - (defReduction * 0.5 + magDefReduction * 0.5);
         if (defAction === 'defend' || defAction === 'magic_guard') {
           rawSlicer = Math.round(rawSlicer * 0.55);
@@ -1032,52 +1272,86 @@ export class BattleEngine {
     }
 
     // =========================================================================
-    // 3. ADVANCED CLASS MASTERY PERKS
+    // 3. ADVANCED CLASS MASTERY PERKS (Tier 2 & Tier 3)
     // =========================================================================
     const dCls = (d.classKey || d.playerRef?.classKey || '').toLowerCase();
     const aCls = (a.classKey || a.playerRef?.classKey || '').toLowerCase();
 
-    // Paladin: Holy Aegis heal-on-block
-    if ((dCls === 'paladin' || dCls.includes('paladin')) && result.defenderAction === 'defend') {
-      const heal = 12;
+    // Paladin / Crusader: Holy Aegis heal-on-block
+    if ((dCls === 'paladin' || dCls === 'crusader' || dCls.includes('paladin') || dCls.includes('crusader')) && result.defenderAction === 'defend') {
+      const isTier3 = dCls === 'crusader' || dCls.includes('crusader');
+      const heal = isTier3 ? 20 : 12;
       d.hp = Math.min(d.maxHp, d.hp + heal);
-      result.narration += ` 🛡️✨ [พาลาดิน: พรศักดิ์สิทธิ์ฟื้นฟู +${heal} HP]`;
+      result.narration += ` 🛡️✨ [${isTier3 ? 'แกรนด์ครูเซเดอร์' : 'พาลาดิน'}: พรศักดิ์สิทธิ์ฟื้นฟู +${heal} HP]`;
     }
-    // Berserker: Blood Frenzy damage bonus when HP is below 50%
-    if ((aCls === 'berserker' || aCls.includes('berserk')) && a.hp < a.maxHp * 0.5 && result.damageToDefender > 0) {
-      const berserkBonus = Math.round(result.damageToDefender * 0.35);
+    // Berserker / Warlord: Blood Frenzy damage bonus when HP is below 50%
+    if ((aCls === 'berserker' || aCls === 'warlord' || aCls.includes('berserk') || aCls.includes('warlord')) && a.hp < a.maxHp * 0.5 && result.damageToDefender > 0) {
+      const isTier3 = aCls === 'warlord' || aCls.includes('warlord');
+      const berserkBonus = Math.round(result.damageToDefender * (isTier3 ? 0.45 : 0.35));
       result.damageToDefender += berserkBonus;
       d.hp = Math.max(0, d.hp - berserkBonus);
-      result.narration += ` 🪓🩸 [เบอร์เซิร์กเกอร์: คลั่งโลหิต +${berserkBonus}]`;
+      result.narration += ` 🪓🩸 [${isTier3 ? 'วอร์ลอร์ด' : 'เบอร์เซิร์กเกอร์'}: คลั่งโลหิต +${berserkBonus}]`;
     }
-    // Archmage: Spell penetration bonus
-    if ((aCls === 'archmage' || aCls.includes('archmage')) && result.attackerAction === 'magic' && result.damageToDefender > 0) {
-      const archBonus = Math.round(result.damageToDefender * 0.30);
+    // Archmage / Grand Arcanist: Spell penetration bonus
+    if ((aCls === 'archmage' || aCls === 'grand_arcanist' || aCls.includes('archmage') || aCls.includes('arcanist')) && result.attackerAction === 'magic' && result.damageToDefender > 0) {
+      const isTier3 = aCls === 'grand_arcanist' || aCls.includes('arcanist');
+      const archBonus = Math.round(result.damageToDefender * (isTier3 ? 0.40 : 0.30));
       result.damageToDefender += archBonus;
       d.hp = Math.max(0, d.hp - archBonus);
-      result.narration += ` 🔮🌟 [มหาจอมเวท: ทะลวงมิติ +${archBonus}]`;
+      result.narration += ` 🔮🌟 [${isTier3 ? 'ปรมาจารย์มหาเวท' : 'มหาจอมเวท'}: ทะลวงมิติ +${archBonus}]`;
     }
-    // Assassin: Critical Strike mastery bonus
-    if ((aCls === 'assassin' || aCls.includes('assassin')) && result.isCritical && result.damageToDefender > 0) {
-      const assassinBonus = Math.round(result.damageToDefender * 0.50);
+    // Necromancer / Lich King: Soul Siphon life drain on damage dealt
+    if ((aCls === 'necromancer' || aCls === 'lich_king' || aCls.includes('necro') || aCls.includes('lich')) && result.damageToDefender > 0) {
+      const isTier3 = aCls === 'lich_king' || aCls.includes('lich');
+      const siphon = Math.max(4, Math.round(result.damageToDefender * (isTier3 ? 0.25 : 0.18)));
+      a.hp = Math.min(a.maxHp, a.hp + siphon);
+      result.narration += ` 💀🕯️ [${isTier3 ? 'ราชันลิช' : 'เนโครแมนเซอร์'}: สูบวิญญาณ +${siphon} HP]`;
+    }
+    // Assassin / Shadow Reaper: Critical Strike mastery bonus
+    if ((aCls === 'assassin' || aCls === 'shadow_reaper' || aCls.includes('assassin') || aCls.includes('reaper')) && result.isCritical && result.damageToDefender > 0) {
+      const isTier3 = aCls === 'shadow_reaper' || aCls.includes('reaper');
+      const assassinBonus = Math.round(result.damageToDefender * (isTier3 ? 0.65 : 0.50));
       result.damageToDefender += assassinBonus;
       d.hp = Math.max(0, d.hp - assassinBonus);
-      result.narration += ` 🗡️☠️ [นักฆ่า: เล็งจุดตายสังหาร +${assassinBonus}]`;
+      result.narration += ` 🗡️☠️ [${isTier3 ? 'เพชฌฆาตเงา' : 'นักฆ่า'}: เล็งจุดตายสังหาร +${assassinBonus}]`;
     }
-    // Ninja: Shadow Clone evasion chance
-    if ((dCls === 'ninja' || dCls.includes('ninja')) && (result.attackerAction === 'attack' || result.attackerAction === 'strike') && !result.isCounterSuccess) {
-      if (getWorld().random() < 0.22) {
+    // Ninja / Phantom Shinobi: Shadow Clone evasion chance
+    if ((dCls === 'ninja' || dCls === 'phantom_shinobi' || dCls.includes('ninja') || dCls.includes('shinobi')) && (result.attackerAction === 'attack' || result.attackerAction === 'strike') && !result.isCounterSuccess) {
+      const isTier3 = dCls === 'phantom_shinobi' || dCls.includes('shinobi');
+      if (getWorld().random() < (isTier3 ? 0.28 : 0.22)) {
         result.isDodged = true;
         d.hp = Math.min(d.maxHp, d.hp + result.damageToDefender);
         result.damageToDefender = 0;
-        result.narration = `🥷 [นินจา: สลับท่อนไม้ร่างเงาหลบการโจมตีอย่างไร้รอยขีดข่วน!] (0 ดาเมจ)`;
+        result.narration = `🥷 [${isTier3 ? 'ชิโนบิเงาอนันต์' : 'นินจา'}: สลับท่อนไม้ร่างเงาหลบการโจมตีอย่างไร้รอยขีดข่วน!] (0 ดาเมจ)`;
       }
     }
-    // High Priest: Divine Resurrection once per battle
-    if ((dCls === 'high_priest' || dCls.includes('priest')) && d.hp <= 0 && !d.hasResurrected) {
+    // High Priest / Radiant Archon: Divine Resurrection once per battle
+    if ((dCls === 'high_priest' || dCls === 'radiant_archon' || dCls.includes('priest') || dCls.includes('archon')) && d.hp <= 0 && !d.hasResurrected) {
+      const isTier3 = dCls === 'radiant_archon' || dCls.includes('archon');
       d.hasResurrected = true;
-      d.hp = Math.round(d.maxHp * 0.35);
-      result.narration += ` ⛪✨ [มหาสมณะ: แสงทิพย์ชุบชีวิต 35% HP!]`;
+      d.hp = Math.round(d.maxHp * (isTier3 ? 0.50 : 0.35));
+      result.narration += ` ⛪✨ [${isTier3 ? 'อัครเทวทูตสุริยัน' : 'มหาสมณะ'}: แสงทิพย์ชุบชีวิต ${isTier3 ? '50%' : '35%'} HP!]`;
+    }
+    // Saint / Seraphic Saint: Miracle Grace passive regeneration & ward
+    if ((dCls === 'saint' || dCls === 'seraphic_saint' || dCls.includes('saint')) && d.hp > 0 && d.hp < d.maxHp) {
+      const isTier3 = dCls === 'seraphic_saint' || dCls.includes('seraphic');
+      const graceHeal = isTier3 ? 15 : 10;
+      d.hp = Math.min(d.maxHp, d.hp + graceHeal);
+      result.narration += ` 🕊️💖 [${isTier3 ? 'เซราฟศักดิ์สิทธิ์' : 'นักบุญหญิง'}: พรปาฏิหาริย์ฟื้นฟู +${graceHeal} HP]`;
+    }
+    if ((aCls === 'saint' || aCls === 'seraphic_saint' || aCls.includes('saint')) && a.hp > 0 && a.hp < a.maxHp) {
+      const isTier3 = aCls === 'seraphic_saint' || aCls.includes('seraphic');
+      const graceHeal = isTier3 ? 15 : 10;
+      a.hp = Math.min(a.maxHp, a.hp + graceHeal);
+      result.narration += ` 🕊️💖 [${isTier3 ? 'เซราฟศักดิ์สิทธิ์' : 'นักบุญหญิง'}: พรปาฏิหาริย์ฟื้นฟู +${graceHeal} HP]`;
+    }
+    // Rune Master / Rune Sovereign: Arcane Blade Resonance bonus damage
+    if ((aCls === 'rune_master' || aCls === 'rune_sovereign' || aCls.includes('rune')) && (result.attackerAction === 'attack' || result.attackerAction === 'strike' || result.attackerAction === 'skill') && result.damageToDefender > 0) {
+      const isTier3 = aCls === 'rune_sovereign' || aCls.includes('sovereign');
+      const runeBonus = Math.max(4, Math.round((a.mag || 5) * (isTier3 ? 0.45 : 0.30)));
+      result.damageToDefender += runeBonus;
+      d.hp = Math.max(0, d.hp - runeBonus);
+      result.narration += ` ⚔️🔮 [${isTier3 ? 'จอมราชันอักขระ' : 'ปรมาจารย์รูน'}: อักขระดาบมนตรา +${runeBonus}]`;
     }
 
     // =========================================================================
@@ -1102,6 +1376,19 @@ export class BattleEngine {
     if (result.damageToDefender > 0 && result.attackerAction === 'strike' && getWorld().random() < 0.30) {
       d.blindTurns = 2;
       result.narration += ` 👁️ [สะเก็ดประกายแสง ติดสถานะตาบอด 2 เทิร์น!]`;
+    }
+
+    // Dragon Heart Relic: Immunity to Burn and Freeze
+    if (d.playerRef?.relics.includes('dragon_heart')) {
+      d.burnTurns = 0;
+      d.freezeTurns = 0;
+      d.playerRef.freezeTurns = 0;
+      if (result.statusInflicted === 'freeze') result.statusInflicted = undefined;
+    }
+    if (a.playerRef?.relics.includes('dragon_heart')) {
+      a.burnTurns = 0;
+      a.freezeTurns = 0;
+      a.playerRef.freezeTurns = 0;
     }
 
     // Burn DoT ticking at end of round

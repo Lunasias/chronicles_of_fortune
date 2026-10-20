@@ -50,7 +50,8 @@ export class HomeUI {
       btnBuy.onclick = () => {
         if (player.gold < cost) {
           audio.hurt();
-          alert('ทองไม่พอสำหรับซื้อที่ดิน! (ต้องการ 300G)');
+          this.game.addLog(`❌ ทองไม่พอสำหรับซื้อที่ดิน! (ต้องการ ${cost}G)`, 'info');
+          costEl.innerText = `${cost}G (ทองไม่พอ!)`;
           return;
         }
 

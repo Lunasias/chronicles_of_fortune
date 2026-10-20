@@ -122,6 +122,7 @@ export class TownUI {
 
     const investCost = 200 * (townNode.townData?.level || 1);
     investCostText.innerText = `ลงทุน ${investCost}G (อัปเกรด)`;
+    this.refreshTownStatusUI();
 
     // Render 2.5D Isometric Town Plaza Diorama
     const canvas = document.getElementById('townDioramaCanvas') as HTMLCanvasElement;
@@ -168,6 +169,7 @@ export class TownUI {
     }
     audio.levelUp();
     this.game.addLog(`🛏️ ${p.displayName} พักผ่อนที่โรงแรม! ฟื้นฟู HP และ MP เต็มเปี่ยม พร้อมลบล้างสถานะผิดปกติ!`);
+    this.refreshTownStatusUI();
   }
 
   private handleInvest() {
@@ -202,6 +204,7 @@ export class TownUI {
       p.gold += tax; p.matchStats.goldEarnedTotal += tax;
       audio.coinClink();
       this.game.addLog(`🪙 เก็บภาษีฉุกเฉินได้ ${tax}G จากเมือง ${this.currentTown.name}!`, 'gold');
+      this.refreshTownStatusUI();
     } else {
       this.game.addLog(`ท่านไม่ได้เป็นเจ้าของดินแดนนี้!`);
     }
@@ -228,6 +231,35 @@ export class TownUI {
     if (res.success) {
       this.open(this.currentTown, this.onTownLeaveCallback!, this.onInitiateRobCallback!);
     }
+  }
+
+  public close() {
+    this.handleLeave();
+  }
+
+  private refreshTownStatusUI() {
+    if (!this.currentTown) return;
+    const p = this.game.activePlayer;
+    const taxYield = this.currentTown.townData?.taxYield || 0;
+    const collectedToday = this.game.world.memory(p.id).flags['collected_' + this.currentTown.id] === this.game.dayCounter;
+    let taxEl = document.getElementById('townTaxDisplay');
+    if (!taxEl) {
+      const ownerContainer = document.getElementById('townOwnerText')?.parentElement?.parentElement;
+      if (ownerContainer) {
+        taxEl = document.createElement('div');
+        taxEl.id = 'townTaxDisplay';
+        taxEl.className = 'text-xs text-amber-300 font-bold mt-1';
+        ownerContainer.appendChild(taxEl);
+      }
+    }
+    if (taxEl) {
+      taxEl.innerText = `ภาษีเมือง: ${taxYield}G/สัปดาห์ • เงินสดของคุณ: ${p.gold}G${collectedToday ? ' (เก็บภาษีฉุกเฉินแล้ววันนี้)' : ''}`;
+    }
+    const btnCollect = document.getElementById('btnTownCollect') as HTMLButtonElement | null;
+    if (btnCollect) {
+      btnCollect.disabled = collectedToday;
+    }
+    (window as any).__gameApp?.hud?.update();
   }
 
   private handleLeave() {

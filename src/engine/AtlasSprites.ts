@@ -23,7 +23,7 @@ export function isolateAtlasCell(data: Uint8ClampedArray, width: number, height:
   }
 }
 
-export function atlasSprite(image: HTMLImageElement, col: number, row: number, columns: number, rows: number, size: number): HTMLCanvasElement {
+export function atlasSprite(image: HTMLImageElement, col: number, row: number, columns: number, rows: number, size: number, enrich: boolean = true): HTMLCanvasElement {
   const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
@@ -32,7 +32,7 @@ export function atlasSprite(image: HTMLImageElement, col: number, row: number, c
   ctx.drawImage(image, x, y, right - x, bottom - y, 0, 0, size, size);
   const pixels = ctx.getImageData(0, 0, size, size);
   isolateAtlasCell(pixels.data, size, size);
-  enrichEnvironmentPixels(pixels.data);
+  if (enrich) enrichEnvironmentPixels(pixels.data);
   ctx.putImageData(pixels, 0, 0);
   return canvas;
 }

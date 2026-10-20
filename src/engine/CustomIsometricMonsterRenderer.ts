@@ -315,7 +315,7 @@ export class CustomIsometricMonsterRenderer {
       }
     }
 
-    if (mobImg && mobImg.complete && mobImg.naturalWidth > 0) {
+    if (newFrame || (mobImg && mobImg.complete && mobImg.naturalWidth > 0)) {
       if (this.cache.size >= 256) this.cache.delete(this.cache.keys().next().value!);
       this.cache.set(cacheKey, canvas);
     }

@@ -65,7 +65,7 @@ export class CompanionSpriteRenderer {
     const cached = this.cache.get(key);
     if (cached) return cached;
     const col = role === 'king' ? 3 : role === 'innkeeper' ? 4 : 5;
-    const sprite = atlasSprite(this.atlas, col, 4, 6, 5, 64);
+    const sprite = atlasSprite(this.atlas, col, 4, 6, 5, 64, false);
     this.cache.set(key, sprite);
     return sprite;
   }
@@ -86,7 +86,7 @@ export class CompanionSpriteRenderer {
 
     const index = allCompanionKeys().indexOf(resolved);
     if (this.atlasReady && this.atlas && index >= 0) {
-      const canvas = atlasSprite(this.atlas, index % 6, Math.floor(index / 6), 6, 5, 64);
+      const canvas = atlasSprite(this.atlas, index % 6, Math.floor(index / 6), 6, 5, 64, false);
       this.cache.set(resolved, canvas);
       return canvas;
     }

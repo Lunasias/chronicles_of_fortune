@@ -3,10 +3,11 @@ import { aiSystem } from './AISystem';
 import { royalDecreeSystem, RoyalDecree } from './RoyalDecreeSystem';
 import type { CombatMoveHistory } from './AISystem';
 import { GameState } from './GameState';
-import { Player, FoodBuff, GuildQuest, CompanionData } from './Player';
+import { Player, FoodBuff, GuildQuest, CompanionData, JOB_PROMOTIONS, TIER3_PROMOTIONS } from './Player';
 import { TownData, HomeData } from './BoardMap';
 import { EquipmentItem, PrankState } from '../engine/PixelSpriteGenerator';
 import { dungeonSystem } from './DungeonSystem';
+import { worldCalamitySystem } from './WorldCalamitySystem';
 
 export interface SaveMetadata {
   saveVersion?: number;
@@ -50,6 +51,7 @@ export interface SerializedPlayer {
   gridZ: number;
   facing: string;
   activeSpinnerMultiplier: number;
+  hasFlexibleMovement?: boolean;
   equipment: {
     weapon: EquipmentItem | null;
     shield: EquipmentItem | null;
@@ -106,6 +108,13 @@ export interface SerializedPlayer {
 
 export interface SaveGameData {
   world: WorldState;
+  gameMode?: GameState['gameMode'];
+  calamityState?: {
+    chaosMeter: number;
+    maxChaos: number;
+    corruptedNodes: number[];
+    calamityCount: number;
+  };
   allowDarkling: boolean;
   blitzDayLimit: number;
   coopRaidDayLimit: number;
@@ -266,6 +275,7 @@ export class SaveManager {
         gridY: here ? here.gy : p.gridY,
         gridZ: here ? here.gz : p.gridZ,
         facing: p.facing, activeSpinnerMultiplier: p.activeSpinnerMultiplier,
+        hasFlexibleMovement: p.hasFlexibleMovement,
         equipment: JSON.parse(JSON.stringify(p.equipment)),
         inventory: JSON.parse(JSON.stringify(p.inventory)),
         fieldSpells: [...p.fieldSpells],
@@ -314,6 +324,13 @@ export class SaveManager {
 
     return {
       world: JSON.parse(JSON.stringify(game.world)),
+      gameMode: game.gameMode,
+      calamityState: {
+        chaosMeter: worldCalamitySystem.chaosMeter,
+        maxChaos: worldCalamitySystem.maxChaos,
+        corruptedNodes: [...worldCalamitySystem.corruptedNodes],
+        calamityCount: worldCalamitySystem.calamityCount
+      },
       allowDarkling: game.allowDarkling, blitzDayLimit: game.blitzDayLimit, coopRaidDayLimit: game.coopRaidDayLimit,
       aiState: JSON.parse(JSON.stringify({ grudgeMatrix: aiSystem.grudgeMatrix, moveHistory: aiSystem.moveHistory })),
       decree: JSON.parse(JSON.stringify({ activeDecree: royalDecreeSystem.activeDecree, bountyClaimed: royalDecreeSystem.bountyClaimed, activeWantedBounty: royalDecreeSystem.activeWantedBounty })),
@@ -352,6 +369,13 @@ export class SaveManager {
 
       if (!data.world || data.world.rulesVersion !== 2) return { success: false, error: 'ไม่พบสถานะโลกของกติกาใหม่' };
       game.world = WorldState.restore(data.world); bindWorld(game.world);
+      if (data.gameMode) game.gameMode = data.gameMode;
+      if (data.calamityState) {
+        worldCalamitySystem.chaosMeter = numOr(data.calamityState.chaosMeter, 0);
+        worldCalamitySystem.maxChaos = numOr(data.calamityState.maxChaos, 100);
+        worldCalamitySystem.corruptedNodes = Array.isArray(data.calamityState.corruptedNodes) ? [...data.calamityState.corruptedNodes] : [];
+        worldCalamitySystem.calamityCount = numOr(data.calamityState.calamityCount, 0);
+      }
       game.allowDarkling = data.allowDarkling;
       game.blitzDayLimit = data.blitzDayLimit; game.coopRaidDayLimit = data.coopRaidDayLimit;
       aiSystem.grudgeMatrix = data.aiState?.grudgeMatrix ?? {}; aiSystem.moveHistory = data.aiState?.moveHistory ?? {};
@@ -386,6 +410,7 @@ export class SaveManager {
         p.gridZ = here ? here.gz : numOr(sp.gridZ, 0);
         p.facing = (sp.facing as any) || 'SE';
         p.activeSpinnerMultiplier = Math.max(1, numOr(sp.activeSpinnerMultiplier, 1));
+        p.hasFlexibleMovement = Boolean(sp.hasFlexibleMovement);
         p.equipment = { ...DEFAULT_EQUIPMENT, ...(sp.equipment || {}) };
         p.inventory = Array.isArray(sp.inventory) ? sp.inventory : [];
         p.fieldSpells = Array.isArray(sp.fieldSpells) ? sp.fieldSpells : [];
@@ -406,11 +431,17 @@ export class SaveManager {
         p.color = sp.color || p.color;
         p.className = sp.className || p.className;
         p.avatar = sp.avatar || p.avatar;
+        p.skillName = sp.skillName || p.skillName;
         p.homeNodeId = nodesById.has(numOr(sp.homeNodeId, -1)) ? numOr(sp.homeNodeId, -1) : null;
         p.companion = sp.companion ?? null;
         p.originalClassKey = sp.originalClassKey || sp.classKey || 'warrior';
         p.isPromoted = Boolean(sp.isPromoted);
         p.promotionTier = Math.max(1, Math.min(3, numOr(sp.promotionTier, p.isPromoted ? 2 : 1)));
+        if (p.isPromoted && !sp.skillName) {
+          const allPromos = [...Object.values(JOB_PROMOTIONS), ...Object.values(TIER3_PROMOTIONS)].flat();
+          const matchedPromo = allPromos.find(pr => pr.tier2Key === p.classKey);
+          if (matchedPromo) p.skillName = matchedPromo.skillName;
+        }
         p.aiPersonality = (sp.aiPersonality as any) || 'balanced';
         p.matchStats = {
           monstersKilled: numOr(sp.matchStats?.monstersKilled, 0),
@@ -422,6 +453,7 @@ export class SaveManager {
         };
         p.burstGauge = Math.max(0, Math.min(100, numOr(sp.burstGauge, 0)));
         p.relics = Array.isArray(sp.relics) ? [...sp.relics] : [];
+        p.dragonHeartBonusApplied = p.relics.includes('dragon_heart');
         p.weaponUpgradeLevel = Math.max(0, Math.min(9, numOr(sp.weaponUpgradeLevel, 0)));
         p.weaponRune = sp.weaponRune || null;
         p.polymorphTurns = Math.max(0, numOr(sp.polymorphTurns, 0));
