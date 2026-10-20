@@ -60,6 +60,9 @@ body #bottomBar button { flex-shrink: 0; min-height: 44px; white-space: nowrap; 
 body #btnRollDice { position: sticky; left: 0; z-index: 2; min-width: 140px; }
 body #turnStartBanner { top: var(--hud-clearance) !important; width: max-content; max-width: calc(100% - 32px); }
 body #floatingEventToast { bottom: calc(var(--dock-clearance) + 54px); max-width: min(500px, calc(100% - 32px)); }
+/* World events remain in the chronicle during combat; only the combat log
+   and arena turn banner may occupy the battle layout. */
+body:has(#battleScreen:not(.hidden)) :is(#floatingEventToast, #turnStartBanner, #orientationHintToast, #gamepadToast) { display: none; }
 body #movementNavigator { bottom: calc(var(--dock-clearance) + 48px); }
 body #topHUD #minimapCanvasWrapper { min-height: 0; height: auto; width: 142px; overflow: hidden; }
 body #topHUD #minimapCanvas { display: block; width: 100%; height: auto; aspect-ratio: 1; }

@@ -198,6 +198,15 @@ export class GameState {
     const toastText = document.getElementById('floatingToastText');
     const toastIcon = document.getElementById('floatingToastIcon');
     if (!toast || !toastText || !toastIcon) return;
+    // Simulation/world events can arrive while the player chooses a command.
+    // Keep them in the chronicle without covering the combat controls.
+    const battleScreen = document.getElementById('battleScreen');
+    if (this.activeBattle || (battleScreen && !battleScreen.classList.contains('hidden'))) {
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+      return;
+    }
 
     let icon = '💬';
     if (type === 'gold') icon = '🪙';

@@ -1,4 +1,4 @@
-import { prepareCombatant } from '../game/CombatRules';
+import { prepareCombatant, createPlayerCombatant } from '../game/CombatRules';
 import { GameState } from '../game/GameState';
 import { BattleEngine, AttackerAction, DefenderAction, Combatant, CombatGridPosition } from '../game/BattleEngine';
 import { pixelSprites, CharacterAnimState, IsoDirection } from '../engine/PixelSpriteGenerator';
@@ -199,7 +199,7 @@ export class BattleUI {
 
   private typewriterTimer: number | null = null;
 
-  public displayNarrationWithSpeechBlip(text: string) {
+  public displayNarration(text: string) {
     const el = document.getElementById('battleNarration');
     if (!el) return;
     if (this.typewriterTimer !== null) {
@@ -213,9 +213,6 @@ export class BattleUI {
       if (idx < text.length) {
         const char = text[idx];
         el.innerText += char;
-        if (char !== ' ' && char !== '\n' && idx % 2 === 0) {
-          audio.speechBlip(char, 520);
-        }
         idx++;
       } else {
         if (this.typewriterTimer !== null) {
@@ -399,23 +396,7 @@ export class BattleUI {
   ) {
     combatVFX.reset();
     const p = this.game.activePlayer;
-    const playerCombatant: Combatant = {
-      name: p.displayName,
-      hp: p.hp,
-      maxHp: p.maxHp,
-      mp: p.mp,
-      maxMp: p.maxMp,
-      atk: p.getTotalStat('atk'),
-      def: p.getTotalStat('def'),
-      mag: p.getTotalStat('mag'),
-      spd: p.getTotalStat('spd'),
-      luk: p.getTotalStat('luk'),
-      isPvP: enemy.isPvP || false,
-      playerRef: p,
-      classKey: p.classKey,
-      skillName: p.skillName,
-      avatar: p.avatar
-    };
+    const playerCombatant = createPlayerCombatant(p, enemy.isPvP || false);
 
     const currentNode = this.game.allNodes.find(n => n.id === p.nodeId);
     const biome = currentNode?.biome || 'grass';
@@ -451,7 +432,6 @@ export class BattleUI {
     } else {
       audio.playBgm('battle');
     }
-    audio.voiceFight();
 
     document.getElementById('turnNotification')?.classList.add('hidden');
     document.getElementById('turnStartBanner')?.classList.add('hidden');
@@ -1236,15 +1216,8 @@ export class BattleUI {
       combatVFX.triggerSpeedLines('rgba(59, 130, 246, 0.65)', 18);
     }
 
-    if (atkAction === 'skill') {
-      audio.skillCast();
-    } else if (atkAction === 'strike' || isCounterStrikeClash) {
-      audio.strikeHit();
-    } else if (atkAction === 'magic') {
-      audio.magicCast();
-    } else {
-      audio.attackHit();
-    }
+    // The approach gets a quiet swish; contact is sounded once at resolution.
+    if (atkAction === 'attack' || atkAction === 'strike') audio.swing();
 
     // Phase 2: Impact & Combat Resolution (after dash completes at 280ms)
     setTimeout(() => {
@@ -1256,7 +1229,7 @@ export class BattleUI {
       if (b.defender.playerRef) aiSystem.recordMove(b.defender.playerRef.id, defAction);
 
       const result = b.resolveRound(atkAction, defAction);
-      this.displayNarrationWithSpeechBlip(result.narration);
+      this.displayNarration(result.narration);
 
       if (result.isShatter) {
         combatVFX.triggerScreenShake(26);
@@ -1277,11 +1250,7 @@ export class BattleUI {
       this.cutscene.targetZoom = 1.14;
       this.attackerAnim = atkAction === 'strike' ? 'strike' : atkAction === 'magic' ? 'magic' : 'attack';
 
-      if (result.isGiveUp) {
-        audio.voiceSurrender();
-      } else if (result.isStrikeSuccess || result.isCritical) {
-        audio.voiceCritical();
-      }
+      if (result.isGiveUp) audio.giveUpDefeat();
 
       if (result.isCounterSuccess) {
         // Counter parry successful!
@@ -1300,7 +1269,7 @@ export class BattleUI {
           atkBaseY
         );
         this.startCutscenePhase('impact', motion.impact, targetAtkDX - (isPAtk ? 35 : -35), targetAtkDY, targetDefDX, targetDefDY);
-      } else {
+      } else if (!result.isGiveUp) {
         if (result.damageToDefender > 0) {
           this.defenderAnim = 'hurt';
           targetDefDX += isPAtk ? 30 : -30;
@@ -1323,10 +1292,14 @@ export class BattleUI {
         const hitX = defBaseX + targetDefDX;
         const hitY = defBaseY + targetDefDY;
 
-        if (result.isMiss) {
+        if (result.isMiss || result.isDodged) {
+          audio.miss();
           combatVFX.choreography.emit('evade', hitX, hitY - 50);
         } else if (atkAction === 'skill' || atkAction === 'burst') {
-          audio.skillCast();
+          if (result.isShatter) audio.elementalShatter();
+          else if (result.isChainShock) audio.chainLightning();
+          else if (atkAction === 'burst') audio.limitBreak();
+          else audio.skillCast();
           combatVFX.triggerSkillCutscene(
             b.attacker.skillName || 'DARK CLEAVE',
             atkBaseX + targetAtkDX + (isPAtk ? 25 : -25),
@@ -1336,7 +1309,7 @@ export class BattleUI {
             b.attacker.classKey || 'warrior',
             b.attacker.playerRef?.isDarkling || false
           );
-        } else if (result.isStrikeSuccess) {
+        } else if (result.isStrikeSuccess || (result.isCritical && atkAction !== 'magic')) {
           audio.strikeHit();
           combatVFX.spawnStrikeHit(hitX, hitY - 36);
         } else if (atkAction === 'magic') {
@@ -1367,9 +1340,6 @@ export class BattleUI {
         }
 
         // The owner signature is the entire visual action; status results stay in the log.
-        if (result.damageToDefender > 0) {
-          audio.hurt();
-        }
       }
 
       // Physical contacts get a single readable impact; signature skills retain their own artwork.
@@ -1394,7 +1364,6 @@ export class BattleUI {
 
       if (result.isMiss) {
         combatVFX.spawnFloatingCombatText(defFloatX, defFloatY, '💨 พลาดเป้า! (ตาบอด)', 'normal');
-        audio.miss();
       } else if (result.isCounterSuccess) {
         combatVFX.spawnFloatingCombatText(atkFloatX, atkFloatY, `⚡ สวนกลับเต็มแรง!! -${result.damageToAttacker}`, 'counter');
       } else if (result.isStrikeSuccess || result.isCritical) {

@@ -1,6 +1,6 @@
 import { getWorld } from './WorldState';
+import { defaultCombatPosition, physicalDamage, strikeDamage, magicDamage } from './CombatDamage';
 import { Player, HERO_CLASSES, JOB_PROMOTIONS, TIER3_PROMOTIONS } from './Player';
-import { audio } from '../engine/AudioSynthesizer';
 
 export type AttackerAction = 'attack' | 'strike' | 'magic' | 'skill' | 'burst';
 export type DefenderAction = 'defend' | 'counter' | 'magic_guard' | 'give_up';
@@ -279,10 +279,7 @@ export class BattleEngine {
   }
 
   public getDefaultGridPos(c: Combatant): CombatGridPosition {
-    const cls = (c.classKey || c.playerRef?.classKey || '').toLowerCase();
-    if (cls === 'warrior' || cls === 'paladin' || cls === 'crusader' || cls === 'dark_knight' || cls === 'berserker' || cls === 'warlord' || c.isBoss) return 'front';
-    if (cls === 'magician' || cls === 'archmage' || cls === 'grand_arcanist' || cls === 'necromancer' || cls === 'lich_king' || cls === 'spellblade' || cls === 'rune_master' || cls === 'rune_sovereign' || cls === 'ninja' || cls === 'phantom_shinobi' || cls === 'cleric' || cls === 'high_priest' || cls === 'radiant_archon' || cls === 'saint' || cls === 'seraphic_saint') return 'back';
-    return 'mid';
+    return defaultCombatPosition(c);
   }
 
   public setCombatantGridPosition(isAttacker: boolean, pos: CombatGridPosition) {
@@ -347,7 +344,6 @@ export class BattleEngine {
     // 0. Freeze Check: Frozen unit cannot take any action this round!
     if (a.freezeTurns && a.freezeTurns > 0) {
       a.freezeTurns--;
-      audio.miss();
       narration = `❄️ ${a.name} ติดสถานะแช่แข็ง (Freeze)! ร่างกายขยับไม่ได้ จึงไม่สามารถออกแอ็กชันในรอบนี้ได้!`;
       return {
         attackerAction: atkAction,
@@ -366,7 +362,6 @@ export class BattleEngine {
     // 0.1 Silence Check: Silenced unit cannot cast magic or skills!
     if (a.silenceTurns && a.silenceTurns > 0 && (atkAction === 'magic' || atkAction === 'skill')) {
       a.silenceTurns--;
-      audio.miss();
       narration = `🤐 ${a.name} ติดสถานะใบ้ (Silence)! ไม่สามารถร่ายเวทมนตร์หรือสกิลได้ การร่ายเวทล้มเหลว! (0 ดาเมจ)`;
       return {
         attackerAction: atkAction,
@@ -388,7 +383,6 @@ export class BattleEngine {
       if (a.blindTurns && a.blindTurns > 0) a.blindTurns--;
       if (a.playerRef && a.playerRef.blindTurns > 0) a.playerRef.blindTurns--;
       if (getWorld().random() < 0.50) {
-        audio.miss();
         narration = `👁️ ${a.name} ติดสถานะตาบอด (Blind)! การโจมตีฟันวืดพลาดเป้าอย่างสิ้นเชิง! (0 ดาเมจ)`;
         return {
           attackerAction: atkAction,
@@ -468,7 +462,6 @@ export class BattleEngine {
     if (atkAction === 'strike' && defAction === 'counter') {
       // Counter Punishes Strike!
       isCounterSuccess = true;
-      audio.counterParry();
       const rawCounter = Math.round(d.atk * 2.8 - a.def * 0.4);
       damageToAttacker = Math.round(Math.max(25, rawCounter + Math.floor(getWorld().random() * 8)));
 
@@ -511,15 +504,8 @@ export class BattleEngine {
     // 3. Resolve Strike vs Defend / Magic Guard
     if (atkAction === 'strike') {
       isStrikeSuccess = true;
-      audio.strikeHit();
       // Strike ignores defense!
-      let rawStrike = Math.round(a.atk * 2.6 + Math.floor(getWorld().random() * 12));
-      if (aPos === 'front') rawStrike = Math.round(rawStrike * 1.15);
-      if (dPos === 'front') rawStrike = Math.round(rawStrike * 1.10);
-      else if (dPos === 'mid') rawStrike = Math.round(rawStrike * 0.90);
-      else if (dPos === 'back') rawStrike = Math.round(rawStrike * 0.85);
-
-      damageToDefender = Math.round(Math.max(20, rawStrike));
+      damageToDefender = strikeDamage(a, d, Math.floor(getWorld().random() * 12));
 
       // LUK Critical Strike
       let isCrit = false;
@@ -559,7 +545,6 @@ export class BattleEngine {
     // 4. Resolve Magic vs Magic Guard
     if (atkAction === 'magic' && defAction === 'magic_guard') {
       isMagicBlocked = true;
-      audio.magicGuardBlock();
       // Magic guard nullifies spell and reflects minor mana
       narration = `✨ ปัดเวทสำเร็จ! บาเรียมนตราของ ${d.name} (MAG ${d.mag || 5}) สะท้อนเวทมนตร์ของ ${a.name} ออกไปจนหมดสิ้น! (0 ดาเมจ)`;
       return {
@@ -577,24 +562,9 @@ export class BattleEngine {
 
     // 5. Resolve Magic vs Defend / Counter
     if (atkAction === 'magic') {
-      audio.magicCast();
       // Magic penetrates physical armor, but is mitigated by Defender's MAG
-      const magMitigation = (d.mag || 5) * 0.85;
-      let rawSpell = a.mag * 2.6 + 12 - magMitigation + getWorld().random() * 6;
-      if (a.element && a.element === d.weaknessElement) rawSpell *= 1.25;
-      if (a.element && a.element === d.resistanceElement) rawSpell *= 0.8;
-
-      // MAG High-Tier Mastery: Elemental burn if MAG >= 20
-      let elementalBonus = 0;
-      if (a.mag >= 20) {
-        elementalBonus = Math.floor(a.mag * 0.35);
-        rawSpell += elementalBonus;
-      }
-
-      if (aPos === 'back') rawSpell = Math.round(rawSpell * 1.20);
-      if (dPos === 'back') rawSpell = Math.round(rawSpell * 1.20);
-
-      let spellDmg = Math.round(Math.max(12, rawSpell));
+      let spellDmg = magicDamage(a, d, getWorld().random() * 6);
+      const elementalBonus = a.mag >= 20 ? Math.floor(a.mag * .35) : 0;
 
       // LUK Critical Hit for Magic
       let isCrit = false;
@@ -630,7 +600,6 @@ export class BattleEngine {
 
     // 6. Resolve Skill (Differentiated Class Ultimate Abilities)
     if (atkAction === 'skill') {
-      audio.magicCast();
 
       // LUK Critical Hit for Skill
       let isCrit = false;
@@ -960,7 +929,6 @@ export class BattleEngine {
 
     // 6.5 Resolve EX Burst Limit Break
     if (atkAction === 'burst') {
-      audio.limitBreak();
       const rawBurst = Math.round(a.atk * 3.4 + a.mag * 2.2 + 25);
       let burstDmg = rawBurst;
       if (defAction === 'defend') {
@@ -1012,13 +980,7 @@ export class BattleEngine {
       }
     }
 
-    audio.attackHit();
-    const rawAtk = Math.round(a.atk * 2.1 - (d.def || 5) * 0.75);
-    let finalDmg = Math.round(Math.max(6, rawAtk + Math.floor(getWorld().random() * 5 - 2)));
-    if (aPos === 'front') finalDmg = Math.round(finalDmg * 1.15);
-    if (dPos === 'front') finalDmg = Math.round(finalDmg * 1.10);
-    else if (dPos === 'mid') finalDmg = Math.round(finalDmg * 0.90);
-    else if (dPos === 'back') finalDmg = Math.round(finalDmg * 0.85);
+    let finalDmg = physicalDamage(a, d, Math.floor(getWorld().random() * 5 - 2));
 
     // LUK Critical Hit for Attack
     let isCrit = false;
@@ -1198,7 +1160,6 @@ export class BattleEngine {
       result.damageToDefender += shatterBonus;
       d.hp = Math.max(0, d.hp - shatterBonus);
       d.freezeTurns = 0;
-      audio.elementalShatter();
       result.narration += ` ❄️💥 [SHATTER! บดขยี้แช่แข็งแตกกระจาย +${shatterBonus} ดาเมจคริติคอล!]`;
     }
 
@@ -1209,7 +1170,6 @@ export class BattleEngine {
       result.damageToDefender += shockBonus;
       d.hp = Math.max(0, d.hp - shockBonus);
       d.isShocked = false;
-      audio.chainLightning();
       result.narration += ` ⚡ [CHAIN SHOCK! สายฟ้าแล่นผ่านร่างเปียกชื้น +${shockBonus} ดาเมจ!]`;
     }
 
@@ -1243,7 +1203,6 @@ export class BattleEngine {
           result.damageToDefender += trapDmg;
           d.hp = Math.max(0, d.hp - trapDmg);
           result.hazardTriggered = 'spike_trap';
-          audio.hazardTrigger();
           result.narration += ` 📌 [ชนกับดักหนามเหล็ก +${trapDmg} ดาเมจ!]`;
         } else if (hz === 'poison_pool') {
           const pDmg = 14;
@@ -1251,7 +1210,6 @@ export class BattleEngine {
           d.hp = Math.max(0, d.hp - pDmg);
           if (d.playerRef) d.playerRef.poisonTurns = 3;
           result.hazardTriggered = 'poison_pool';
-          audio.hazardTrigger();
           result.narration += ` 🧪 [ตกลงในบ่อพิษ +${pDmg} ดาเมจ!]`;
         }
       }

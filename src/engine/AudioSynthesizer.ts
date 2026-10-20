@@ -36,7 +36,18 @@ export function biomeAudio(biome: string): { music: BgmTrack; ambience: Ambience
   return { music: 'overworld', ambience: 'forest' };
 }
 type LoopChannel = 'music' | 'ambience';
-interface LoopVoice { name: string; source: AudioBufferSourceNode; gain: GainNode; }
+interface LoopVoice { name: string; channel: LoopChannel; source: AudioBufferSourceNode; gain: GainNode; }
+type EffectGroup = 'ui' | 'motion' | 'combat' | 'reward' | 'weather';
+interface EffectVoice { source: AudioBufferSourceNode; gain: GainNode; name: string; }
+export function effectPolicy(name: string) {
+  if (/^(victory|defeat|giveUpDefeat|levelUp|fanfare|chestOpen|jackpot|classPromote|relicChime|burstReady|tradeRoute)/.test(name)) {
+    return { group: 'reward' as EffectGroup, cooldown: 240, maxAge: 800, priority: /victory|defeat|jackpot|classPromote/.test(name) ? 3 : 2, gain: .44 };
+  }
+  if (name === 'thunderClap') return { group: 'weather' as EffectGroup, cooldown: 4500, maxAge: 350, priority: 1, gain: .3 };
+  if (/^(click|menu|speechBlip|turnStart)/.test(name)) return { group: 'ui' as EffectGroup, cooldown: 100, maxAge: 160, priority: 1, gain: name === 'speechBlip' ? .08 : .3 };
+  if (/^(step|diceRoll|chestTick|coin)/.test(name)) return { group: 'motion' as EffectGroup, cooldown: name === 'step' ? 105 : 70, maxAge: 180, priority: 1, gain: .4 };
+  return { group: 'combat' as EffectGroup, cooldown: 45, maxAge: 220, priority: /strikeHit|counterParry|limitBreak/.test(name) ? 3 : /hurt|voice|swing/.test(name) ? 1 : 2, gain: .55 };
+}
 
 export class AudioSynthesizer {
   private ctx: AudioContext | null = null;
@@ -50,8 +61,12 @@ export class AudioSynthesizer {
   private worldAmbience: AmbienceTrack = 'forest';
   private loops: Partial<Record<LoopChannel, LoopVoice>> = {};
   private generation = { music: 0, ambience: 0 };
+  private retiring = new Set<LoopVoice>();
   private buffers = new Map<string, Promise<AudioBuffer | null>>();
   private voices = new Set<AudioBufferSourceNode>();
+  private effects: Partial<Record<EffectGroup, EffectVoice>> = {};
+  private effectGeneration = { ui: 0, motion: 0, combat: 0, reward: 0, weather: 0 };
+  private groupPlayed = new Map<EffectGroup, { at: number; priority: number }>();
   private lastPlayed = new Map<string, number>();
   private failures = new Set<string>();
   private errors = 0;
@@ -65,15 +80,15 @@ export class AudioSynthesizer {
       window.addEventListener('pointerdown', () => { void this.unlock(); }, { capture: true });
       window.addEventListener('keydown', () => { void this.unlock(); }, { capture: true });
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden) void this.ctx?.suspend().catch(() => {});
+        if (document.hidden) { this.clearSceneEffects(false); void this.ctx?.suspend().catch(() => {}); }
         else if (this.unlocked && this.enabled) void this.unlock();
       });
-      window.addEventListener('pagehide', () => { void this.ctx?.suspend().catch(() => {}); });
+      window.addEventListener('pagehide', () => { this.clearSceneEffects(false); void this.ctx?.suspend().catch(() => {}); });
       window.addEventListener('pageshow', () => { if (this.unlocked && this.enabled) void this.unlock(); });
     }
   }
   get enabled() { return this.settings.enabled; }
-  set enabled(value: boolean) { this.settings.enabled = Boolean(value); this.changed(); }
+  set enabled(value: boolean) { this.settings.enabled = Boolean(value); if (!this.settings.enabled) this.clearSceneEffects(false); this.changed(); }
   get bgmEnabled() { return this.settings.musicEnabled; }
   set bgmEnabled(value: boolean) { this.settings.musicEnabled = Boolean(value); this.changed(); }
   get sfxVolume() { return this.settings.sfx; }
@@ -81,7 +96,7 @@ export class AudioSynthesizer {
   getSettings(): AudioSettings { return { ...this.settings }; }
   setMasterVolume(value: number) { this.settings.master = volume(value); this.changed(); }
   setBgmVolume(value: number) { this.settings.music = volume(value); this.changed(); }
-  setSfxVolume(value: number) { this.settings.sfx = volume(value); this.changed(); }
+  setSfxVolume(value: number) { this.settings.sfx = volume(value); if (!this.settings.sfx) this.clearSceneEffects(false); this.changed(); }
   setAmbienceVolume(value: number) { this.settings.ambience = volume(value); this.changed(); }
   toggleBgm(): boolean { this.bgmEnabled = !this.bgmEnabled; return this.bgmEnabled; }
   resetSettings() { this.settings = { ...DEFAULT_AUDIO_SETTINGS }; this.changed(); }
@@ -101,10 +116,11 @@ export class AudioSynthesizer {
   private applyGains() {
     if (!this.master || !this.buses) return;
     this.ramp(this.master.gain, this.enabled ? this.settings.master : 0);
-    this.ramp(this.buses.music.gain, this.bgmEnabled ? this.settings.music : 0);
+    this.ramp(this.buses.music.gain, this.musicLevel());
     this.ramp(this.buses.sfx.gain, this.settings.sfx);
     this.ramp(this.buses.ambience.gain, this.settings.ambience);
   }
+  private musicLevel() { return this.bgmEnabled ? this.settings.music * (this.effects.reward ? .45 : this.effects.combat ? .72 : 1) : 0; }
   async unlock(): Promise<void> {
     if (typeof window === 'undefined' || (typeof document !== 'undefined' && document.hidden)) return;
     try {
@@ -152,13 +168,15 @@ export class AudioSynthesizer {
   }
   private fadeOut(voice: LoopVoice) {
     if (!this.ctx) return;
-    this.ramp(voice.gain.gain, 0, .6);
-    voice.source.stop(this.ctx.currentTime + .65);
+    this.retiring.add(voice);
+    this.ramp(voice.gain.gain, 0, .055);
+    voice.source.stop(this.ctx.currentTime + .065);
   }
   private async loop(channel: LoopChannel, name: string) {
     const key = name === 'none' ? 'none' : `${channel === 'music' ? 'music' : 'ambience'}-${name}`;
-    if (this.loops[channel]?.name === key) return;
     const token = ++this.generation[channel];
+    // Invalidate a pending different track even when returning to the active one.
+    if (this.loops[channel]?.name === key) return;
     if (key === 'none') {
       const old = this.loops[channel]; delete this.loops[channel];
       if (old) this.fadeOut(old);
@@ -170,10 +188,16 @@ export class AudioSynthesizer {
     source.buffer = buffer; source.loop = true;
     gain.gain.value = 0; source.connect(gain); gain.connect(this.buses[channel]);
     const old = this.loops[channel];
-    this.loops[channel] = { name: key, source, gain };
-    source.onended = () => { source.disconnect(); gain.disconnect(); };
-    source.start(); this.ramp(gain.gain, 1, .6);
+    this.loops[channel] = { name: key, channel, source, gain };
+    const voice = this.loops[channel]!;
+    source.onended = () => { this.retiring.delete(voice); source.disconnect(); gain.disconnect(); };
+    // Fade through silence: unrelated melodies never play over one another.
+    for (const retiring of this.retiring) if (retiring.channel === channel) { retiring.source.stop(); this.retiring.delete(retiring); }
     if (old) this.fadeOut(old);
+    const start = this.ctx.currentTime + (old ? .075 : 0);
+    source.start(start);
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(1, start + .25);
   }
   private syncLoops() {
     if (!this.ctx || !this.unlocked || !this.enabled) return;
@@ -181,6 +205,7 @@ export class AudioSynthesizer {
     void this.loop('ambience', this.ambienceTrack);
   }
   playBgm(track: BgmTrack) {
+    if (this.currentTrack !== track) this.clearSceneEffects(!['battle', 'boss', 'darkling'].includes(track));
     this.currentTrack = track;
     // Leave rain/forest ambience behind when entering combat or an interior.
     this.ambienceTrack = ['battle', 'boss', 'darkling', 'casino', 'title', 'town'].includes(track) ? 'none' : this.worldAmbience;
@@ -193,7 +218,7 @@ export class AudioSynthesizer {
     this.worldMusic = scene.music; this.worldAmbience = scene.ambience;
     this.restoreWorldBgm();
   }
-  restoreWorldBgm() { this.currentTrack = this.worldMusic; this.ambienceTrack = this.worldAmbience; this.syncLoops(); }
+  restoreWorldBgm() { this.playBgm(this.worldMusic); this.ambienceTrack = this.worldAmbience; this.syncLoops(); }
   setEnvironment(biome: string, weather = 'clear') {
     const scene = biomeAudio(biome || 'forest');
     this.worldMusic = scene.music;
@@ -201,27 +226,57 @@ export class AudioSynthesizer {
     if (!['battle', 'boss', 'darkling', 'casino', 'town', 'title'].includes(this.currentTrack)) this.restoreWorldBgm();
   }
   private async effect(name: string, rate = 1, strength = 1) {
-    if (!this.enabled || !this.settings.sfx) return;
+    if (!this.enabled || !this.settings.sfx || !this.unlocked) return;
+    const policy = effectPolicy(name);
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-    const cooldown = name === 'step' ? 90 : name === 'speechBlip' ? 45 : name === 'thunderClap' ? 1500 : 35;
-    if (now - (this.lastPlayed.get(name) ?? -Infinity) < cooldown) return;
+    const previous = this.groupPlayed.get(policy.group);
+    if (now - (this.lastPlayed.get(name) ?? -Infinity) < policy.cooldown) return;
+    if (previous && now - previous.at < policy.cooldown && previous.priority >= policy.priority) return;
     this.lastPlayed.set(name, now);
-    // Gesture handlers unlock the context. Never create one from game logic in a background tab.
-    if (!this.unlocked) return;
+    this.groupPlayed.set(policy.group, { at: now, priority: policy.priority });
+    const token = ++this.effectGeneration[policy.group];
     const buffer = await this.load(`sfx-${name}`);
-    if (!buffer || !this.ctx || !this.buses || !this.enabled || this.ctx.state !== 'running' || this.voices.size >= 16) return;
+    const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - now;
+    if (!buffer || !this.ctx || !this.buses || !this.enabled || !this.settings.sfx || this.ctx.state !== 'running' || token !== this.effectGeneration[policy.group] || elapsed > policy.maxAge) return;
+    const old = this.effects[policy.group];
+    if (old) this.stopEffect(old);
+    if (this.voices.size >= 5) return;
     const source = this.ctx.createBufferSource(), gain = this.ctx.createGain();
     source.buffer = buffer; source.playbackRate.value = rate;
-    gain.gain.value = volume(strength, 1) * .65;
+    gain.gain.value = volume(strength, 1) * policy.gain;
     source.connect(gain); gain.connect(this.buses.sfx);
     this.voices.add(source);
-    source.onended = () => { this.voices.delete(source); source.disconnect(); gain.disconnect(); };
+    this.effects[policy.group] = { source, gain, name };
+    this.ramp(this.buses.music.gain, this.musicLevel(), .08);
+    source.onended = () => {
+      this.voices.delete(source);
+      if (this.effects[policy.group]?.source === source) delete this.effects[policy.group];
+      source.disconnect(); gain.disconnect();
+      if (this.buses) this.ramp(this.buses.music.gain, this.musicLevel(), .2);
+    };
     source.start();
+  }
+  private stopEffect(voice: EffectVoice) {
+    if (!this.ctx) return;
+    // Release the voice slot immediately while its last 12 ms fades out.
+    this.voices.delete(voice.source);
+    this.ramp(voice.gain.gain, 0, .012);
+    voice.source.stop(this.ctx.currentTime + .015);
+  }
+  private clearSceneEffects(keepReward: boolean) {
+    for (const group of Object.keys(this.effectGeneration) as EffectGroup[]) {
+      if (keepReward && group === 'reward') continue;
+      this.effectGeneration[group]++;
+      const voice = this.effects[group];
+      delete this.effects[group];
+      if (voice) this.stopEffect(voice);
+    }
   }
   getDiagnostics() {
     return { context: this.ctx?.state ?? 'locked', track: this.currentTrack, ambience: this.ambienceTrack,
       activeMusic: this.loops.music?.name ?? 'none', activeAmbience: this.loops.ambience?.name ?? 'none',
-      voices: this.voices.size, cachedAssets: this.buffers.size, failedAssets: [...this.failures], errors: this.errors };
+      voices: this.voices.size, effectGroups: Object.fromEntries(Object.entries(this.effects).map(([group, voice]) => [group, voice.name])), retiringLoops: this.retiring.size,
+      cachedAssets: this.buffers.size, failedAssets: [...this.failures], errors: this.errors };
   }
   // Compatibility entry points now play authored foley, instrument and reward samples.
   playTone(freq: number, _type: OscillatorType = 'sine', _duration = .1, gain = .12) { void this.effect('speechBlip', Math.max(.5, Math.min(2, freq / 480)), gain / .15); }
@@ -272,6 +327,7 @@ export class AudioSynthesizer {
   menuOpen() { void this.effect('menuOpen'); }
   menuClose() { void this.effect('menuClose'); }
   chestTick() { void this.effect('chestTick', .95 + Math.random() * .1, .45); }
+  swing() { void this.effect('swing', .96 + Math.random() * .08, .45); }
 }
 
 export const audio = new AudioSynthesizer();

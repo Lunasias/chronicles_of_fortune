@@ -22,7 +22,7 @@ test('every generated sound has a valid stereo PCM payload, recorded hash and un
   const manifest = JSON.parse(fs.readFileSync('public/audio/v2/manifest.json', 'utf8'));
   assert.equal(manifest.assets.filter(a => a.kind === 'music').length, 10);
   assert.equal(manifest.assets.filter(a => a.kind === 'ambience').length, 6);
-  assert.equal(manifest.assets.filter(a => a.kind === 'sfx').length, 47);
+  assert.equal(manifest.assets.filter(a => a.kind === 'sfx').length, 48);
   const ids = new Set(manifest.assets.map(a => a.id));
   const mixerSource = fs.readFileSync('src/engine/AudioSynthesizer.ts', 'utf8');
   for (const [,name] of mixerSource.matchAll(/this\.effect\('([^']+)'/g)) assert.ok(ids.has(`sfx-${name}`), `missing effect ${name}`);
@@ -34,7 +34,8 @@ test('every generated sound has a valid stereo PCM payload, recorded hash and un
     assert.equal(crypto.createHash('sha256').update(wav).digest('hex'), asset.sha256, asset.id);
     let peak = 0, sum = 0;
     for (let i = 44; i < wav.length; i += 2) { const x = wav.readInt16LE(i) / 32768; peak = Math.max(peak, Math.abs(x)); sum += x*x; }
-    assert.ok(peak < .85 && peak > .2, asset.id);
+    assert.ok(peak < .85 && peak > .025, asset.id);
+    if (/sfx-(click|menu|step|chestTick|speechBlip)/.test(asset.id)) assert.ok(peak <= .31, `${asset.id} should leave headroom for combat`);
     assert.ok(Math.sqrt(sum / ((wav.length - 44) / 2)) > .005, `${asset.id} is silent`);
     if (asset.loop) for (let c = 0; c < 2; c++) assert.equal(wav.readInt16LE(44+c*2), wav.readInt16LE(wav.length-4+c*2), `${asset.id} loop clicks`);
   }
@@ -56,7 +57,7 @@ function fakeAudio() {
     state = 'running'; currentTime = 0; destination = node();
     createGain() {return node();}
     createDynamicsCompressor() {return { ...node(), threshold:param(), knee:param(), ratio:param(), attack:param(), release:param() };}
-    createBufferSource() {const s={...node(),playbackRate:param(),start(){this.started=true;},stop(){this.stopped=true;this.onended?.();}};sources.push(s);return s;}
+    createBufferSource() {const s={...node(),playbackRate:param(),start(at=0){this.started=true;this.startedAt=at;},stop(at=0){this.stopped=true;this.stoppedAt=at;this.onended?.();}};sources.push(s);return s;}
     async decodeAudioData() {return {duration:.25};}
     async resume() {this.state='running';} async suspend() {this.state='suspended';}
   }
@@ -105,12 +106,59 @@ test('effects obey mute, effect volume and polyphony limits; failures stay nonfa
   const {mixer,sources}=fakeAudio(); await mixer.unlock();
   mixer.setSfxVolume(0); mixer.coin(); await flush(); assert.equal(sources.length,0);
   mixer.setSfxVolume(.6);
-  for(const method of ['coin','attackHit','strikeHit','counterParry','magicGuardBlock','magicCast','levelUp','fanfare','darklingRoar','hurt','skillCast','magicHit','defendBlock','miss','victory','defeat','chestOpen','relicChime']) mixer[method]();
-  await flush(); assert.equal(mixer.getDiagnostics().voices,16);
-  mixer.enabled=false; mixer.thunderClap(); await flush(); assert.equal(mixer.getDiagnostics().voices,16);
+  for(const method of ['click','step','attackHit','victory','thunderClap']) mixer[method]();
+  await flush(); assert.equal(mixer.getDiagnostics().voices,5);
+  mixer.enabled=false; mixer.thunderClap(); await flush(); assert.equal(mixer.getDiagnostics().voices,0);
   mixer.enabled=true;
   globalThis.fetch=async()=>({ok:false,status:404});
   mixer.playBgm('abyss'); await flush();
   assert.ok(mixer.getDiagnostics().failedAssets.includes('music-abyss'));
   assert.equal(mixer.getCurrentTrack(),'abyss');
+});
+
+test('one combat contact wins over duplicate hits, hurt and announcement cues', async () => {
+  const {mixer}=fakeAudio(); await mixer.unlock();
+  mixer.attackHit(); mixer.hurt(); mixer.voiceCritical(); mixer.strikeHit();
+  await flush();
+  assert.equal(mixer.getDiagnostics().voices,1);
+  assert.equal(mixer.getDiagnostics().effectGroups.combat,'strikeHit');
+});
+
+test('returning to the active scene cancels a pending track; transitions do not overlap melodies', async () => {
+  const {mixer,deferred,sources}=fakeAudio(); await mixer.unlock();
+  mixer.playBgm('overworld'); await flush();
+  let finish;
+  deferred.set('/audio/v2/music-boss.wav',new Promise(resolve=>{finish=resolve;}));
+  mixer.playBgm('boss'); mixer.playBgm('overworld'); finish(); await flush();
+  assert.equal(mixer.getDiagnostics().activeMusic,'music-overworld');
+  const previous=sources.find(s=>s.loop);
+  mixer.playBgm('battle'); await flush();
+  const next=sources.filter(s=>s.loop).at(-1);
+  assert.ok(previous.stoppedAt<next.startedAt,'new melody starts only after the old one stops');
+});
+
+test('effects waiting on a download are discarded when their scene has ended', async () => {
+  const {mixer,deferred,sources}=fakeAudio(); await mixer.unlock();
+  let finish;
+  deferred.set('/audio/v2/sfx-attackHit.wav',new Promise(resolve=>{finish=resolve;}));
+  mixer.attackHit(); mixer.playBgm('town'); finish(); await flush();
+  assert.equal(sources.filter(s=>!s.loop).length,0);
+});
+
+test('late contact audio is discarded instead of playing after the impact', async () => {
+  const {mixer,deferred,sources}=fakeAudio(); await mixer.unlock();
+  let finish;
+  deferred.set('/audio/v2/sfx-attackHit.wav',new Promise(resolve=>{finish=resolve;}));
+  mixer.attackHit(); await new Promise(resolve=>setTimeout(resolve,250)); finish(); await flush();
+  assert.equal(sources.length,0);
+});
+
+test('reward ducking releases to the configured music level and respects music mute', async () => {
+  const {mixer,sources}=fakeAudio(); await mixer.unlock();
+  mixer.relicChime(); await flush();
+  assert.equal(mixer.buses.music.gain.value,mixer.bgmVolume*.45);
+  sources.at(-1).stop();
+  assert.equal(mixer.buses.music.gain.value,mixer.bgmVolume);
+  mixer.bgmEnabled=false;
+  assert.equal(mixer.buses.music.gain.value,0);
 });

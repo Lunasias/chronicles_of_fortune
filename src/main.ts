@@ -3624,7 +3624,7 @@ class DokaponApp {
   public startVisualReview() {
     const query = new URLSearchParams(window.location.search);
     const scene = query.get('art-scene');
-    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice', 'chest'].includes(scene)) return;
+    if (!import.meta.env.DEV || !scene || !['world', 'dungeon', 'battle', 'boss', 'pvp', 'report', 'victory', 'town', 'shop_weapon', 'shop_item', 'shop_magic', 'inspect', 'inventory', 'fantasy_guild', 'event', 'draft', 'expedition_choice', 'chest', 'scout'].includes(scene)) return;
     const requestedClass = query.get('job') || 'warrior';
     const classKey = Object.hasOwn(HERO_CLASSES, requestedClass) ? requestedClass : JOB_VISUALS[requestedClass]?.base || 'warrior';
     this.visualReviewActive = true;
@@ -3640,6 +3640,12 @@ class DokaponApp {
     if (['pvp', 'report', 'victory'].includes(scene)) party.push({ name: 'Lyra', classKey: 'magician', isAI: false });
     if (scene === 'draft') this.game.gameMode = 'roguelike_draft';
     this.game.initGame(party);
+    if (query.get('gear') === 'equipped') {
+      const hero = this.game.activePlayer;
+      Object.assign(hero, { level: 4, atk: 12, def: 19, mag: 22, spd: 10, luk: 10, hp: 146, maxHp: 146, mp: 91, maxMp: 91 });
+      hero.equipment.weapon = { id: 'review-blade', name: 'T5 ดาบวันสิ้นพิภพ', type: 'weapon', cost: 850, atk: 65, mag: 8, spd: 15, luk: 15, icon: '⚔️', desc: 'อุปกรณ์สำหรับตรวจสอบค่าสถานะ' };
+      hero.equipment.shield = { id: 'review-shield', name: 'โล่ศักดิ์สิทธิ์', type: 'shield', cost: 800, def: 24, icon: '🛡️', desc: 'อุปกรณ์สำหรับตรวจสอบค่าสถานะ' };
+    }
     if (scene === 'inventory') this.game.activePlayer.inventory.push(...SHOP_CATALOG.filter(item => item.type === 'weapon' || item.type === 'armor').slice(0, 3).map(item => ({ ...item })));
     if (JOB_VISUALS[requestedClass]) {
       const hero = this.game.activePlayer;
@@ -3653,6 +3659,22 @@ class DokaponApp {
     const node = this.game.allNodes.find(n => n.id === Number(query.get('node') ?? NaN)) || this.game.allNodes.find(n => n.biome === requestedBiome) || this.game.allNodes[0];
     this.game.activePlayer.nodeId = node.id;
     document.getElementById('titleScreen')?.classList.add('hidden');
+    if (scene === 'scout') {
+      const target = this.game.allNodes.find(n => n.type === 'town' && n.townData?.isOccupiedByMonster && n.biome === requestedBiome)
+        || this.game.allNodes.find(n => n.type === 'town' && n.townData?.isOccupiedByMonster) || node;
+      const hero = this.game.activePlayer;
+      Object.assign(hero, { nodeId: target.id, gridX: target.gx, gridY: target.gy, gridZ: target.gz });
+      const weather = query.get('weather');
+      if (weather === 'sunny' || weather === 'snow' || weather === 'rain') this.game.world.weather[target.realmId] = weather;
+      document.getElementById('topHUD')?.classList.remove('hidden');
+      document.getElementById('bottomBar')?.classList.remove('hidden');
+      this.renderer.centerCameraOn(target.gx, target.gy, target.gz);
+      this.hud.update();
+      const monster = getNodeEncounterPreview(target, hero).featuredMonster;
+      if (monster) this.inspectUI.openMonsterScouting(monster, target, hero,
+        () => this.battleUI.startBattle(monster, () => {}), () => this.inspectUI.openInspect(hero));
+      return;
+    }
     if (scene === 'chest') {
       document.getElementById('topHUD')?.classList.remove('hidden');
       document.getElementById('bottomBar')?.classList.remove('hidden');

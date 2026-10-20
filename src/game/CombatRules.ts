@@ -1,6 +1,17 @@
 import type { Combatant } from './BattleEngine';
 import type { BoardNode } from './BoardMap';
 import { WorldState } from './WorldState';
+import type { Player } from './Player';
+
+/** One equipment/buff snapshot for scouting, initiative and the actual fight. */
+export function createPlayerCombatant(player: Player, isPvP = false): Combatant {
+  return {
+    name: player.displayName, hp: player.hp, maxHp: player.maxHp, mp: player.mp, maxMp: player.maxMp,
+    atk: player.getTotalStat('atk'), def: player.getTotalStat('def'), mag: player.getTotalStat('mag'),
+    spd: player.getTotalStat('spd'), luk: player.getTotalStat('luk'),
+    isPvP, playerRef: player, classKey: player.classKey, skillName: player.skillName, avatar: player.avatar,
+  };
+}
 
 /** The same transformation is used by scouting and battle creation. No hero gear feedback. */
 export function prepareCombatant(source: Combatant, node: BoardNode, world: WorldState, enemy = false): Combatant {

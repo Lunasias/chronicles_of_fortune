@@ -1,6 +1,6 @@
 import { getWorld } from './WorldState';
 import { encounterChance, monsterRewards } from './Rules';
-import { prepareCombatant } from './CombatRules';
+import { prepareCombatant, createPlayerCombatant } from './CombatRules';
 import type { Combatant } from './BattleEngine';
 import { dungeonSystem } from './DungeonSystem';
 import { BoardNode } from './BoardMap';
@@ -763,7 +763,7 @@ export function getNodeEncounterPreview(node: BoardNode, player?: Player | null)
 
   // Replace the hand-written threat label with one derived from the scaled fight, so a
   // "HIGH" warning cannot sit next to numbers that are actually trivial.
-  const preparedPlayer = prepareCombatant({ name: player.displayName, hp: player.hp, maxHp: player.maxHp, mp: player.mp, maxMp: player.maxMp, atk: player.getTotalStat('atk'), def: player.getTotalStat('def'), mag: player.getTotalStat('mag'), spd: player.getTotalStat('spd'), luk: player.getTotalStat('luk') }, node, getWorld());
+  const preparedPlayer = prepareCombatant(createPlayerCombatant(player), node, getWorld());
   const combatView = Object.create(player) as Player;
   combatView.getTotalStat = stat => preparedPlayer[stat];
   const threat = judgeThreat(featuredMonster, combatView);

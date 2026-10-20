@@ -24,21 +24,32 @@ function add(out, at, duration, signal, volume = 1, pan = 0, loop = false) {
   }
 }
 function instrument(kind, frequency, duration) {
+  // A damped delay-line string replaces the former oscillator-only pluck.
+  const string = new Float32Array(Math.max(2, Math.round(RATE / frequency)));
+  if (kind === 'lute') for (let i = 0; i < string.length; i++) string[i] = random() * 2 - 1;
+  let cursor = 0, breath = 0;
   return (t, p) => {
     const phase = tau * frequency * t;
     const attack = Math.min(1, t / .012);
     const release = Math.min(1, (duration - t) / .09);
-    if (kind === 'lute') return attack * Math.exp(-t * 7) * (Math.sin(phase) + .32 * Math.sin(phase * 2) + .15 * Math.sin(phase * 3));
+    if (kind === 'lute') {
+      const sample = string[cursor];
+      string[cursor] = .498 * (sample + string[(cursor + 1) % string.length]);
+      cursor = (cursor + 1) % string.length;
+      return sample * Math.min(1, t / .003) * release;
+    }
     if (kind === 'bell') return attack * Math.exp(-t * 4) * (Math.sin(phase) + .28 * Math.sin(phase * 2.76) * Math.exp(-t * 8));
     if (kind === 'bass') return attack * release * (Math.sin(phase) + .15 * Math.sin(phase * 2));
     if (kind === 'strings') return attack * release * Math.sin(Math.PI * p) * (Math.sin(phase + .012 * Math.sin(tau * 4 * t)) + .18 * Math.sin(phase * 3));
-    return attack * release * (Math.sin(phase + .025 * Math.sin(tau * 5 * t)) + .12 * Math.sin(phase * 2));
+    breath += .12 * ((random() * 2 - 1) - breath);
+    return Math.min(1,t/.045) * release * (Math.sin(phase + .12 * Math.sin(tau * 4.8 * t)) + .06 * Math.sin(phase * 2) + .09 * breath);
   };
 }
 function write(name, out, kind, loop = false, metadata = {}) {
   let peak = 0;
   for (const channel of out) for (const x of channel) peak = Math.max(peak, Math.abs(x));
-  const gain = .78 / Math.max(peak, .001);
+  const targetPeak = /sfx-(click|menu|step|chestTick|speechBlip)/.test(name) ? .3 : kind === 'sfx' ? .62 : .7;
+  const gain = targetPeak / Math.max(peak, .001);
   const frames = out[0].length;
   // Bring the first/last samples to the same midpoint, avoiding a loop-boundary click.
   for (const channel of out) {
@@ -83,17 +94,23 @@ const scores = {
 for (const [name, [bpm, key, lead, chords, melody]] of Object.entries(scores)) {
   const beat = 60 / bpm, duration = beat * 32, out = buffer(duration);
   const minor = ['battle', 'boss', 'darkling', 'abyss', 'sunfire'].includes(name);
+  const progression = minor ? [0, 8, 5, 7] : [0, 9, 5, 7];
+  const scale = minor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
+  const inScale = offset => Math.floor(offset/12)*12 + scale.reduce((a,b)=>Math.abs(b-offset%12)<Math.abs(a-offset%12)?b:a);
   for (let bar = 0; bar < 8; bar++) {
-    const root = key + chords[bar % 4], at = bar * beat * 4;
-    for (const [n, offset] of [0, minor ? 3 : 4, 7].entries()) {
-      add(out, at, beat * 4.6, instrument('strings', hz(root + offset), beat * 4.6), .10, n * .55 - .55, true);
+    const chord = progression[bar % 4];
+    const root = key + chord, at = bar * beat * 4;
+    const third = (minor ? chord !== 8 : chord === 9) ? 3 : 4;
+    for (const [n, offset] of [0, third, 7].entries()) {
+      add(out, at, beat * 3.9, instrument('strings', hz(root + offset), beat * 3.9), .065, n * .55 - .55, true);
     }
     for (let step = 0; step < 8; step++) {
-      const when = at + step * beat / 2;
-      const note = key + 12 + melody[(step + (bar % 2) * 2) % 8] + (bar >= 4 && step === 6 ? 12 : 0);
-      if (step !== 7 || bar % 2 === 0) add(out, when, beat * 1.1, instrument(lead, hz(note), beat * 1.1), .26, .18, true);
-      add(out, when, beat * .8, instrument('lute', hz(root + [0, 7, 12, minor ? 15 : 16][step % 4]), beat * .8), .12, -.35, true);
-      if (step % 2 === 0) add(out, when, beat * .85, instrument('bass', hz(root - 12), beat * .85), .3, 0, true);
+      const when = at + step * beat / 2 + random() * .006;
+      const note = key + 12 + inScale(melody[(step + (bar % 2) * 2) % 8]);
+      const length = beat * (step === 6 ? 1.7 : .9);
+      if (step !== 3 && step !== 7) add(out, when, length, instrument(lead, hz(note), length), .23 * (.85 + random() * .15), .18, true);
+      add(out, when, beat * .8, instrument('lute', hz(root + [0, 7, 12, 12+third][step % 4]), beat * .8), .12, -.35, true);
+      if (step % 2 === 0) add(out, when, beat * .85, instrument('bass', hz(root - 12), beat * .85), .16, 0, true);
       if (['battle', 'boss', 'casino', 'sunfire', 'overworld'].includes(name)) {
         if (step % 4 === 0) add(out, when, .22, t => Math.sin(tau * (50 * t + 1.6 * (1 - Math.exp(-t * 30)))) * Math.exp(-t * 22), .35, 0, true);
         if (step % 4 === 2) add(out, when, .13, t => (random() * 2 - 1) * Math.exp(-t * 35), .12, -.15, true);
@@ -103,7 +120,7 @@ for (const [name, [bpm, key, lead, chords, melody]] of Object.entries(scores)) {
   // Quiet rhythmic echo, with the tail wrapped into the start of the loop.
   const dry = out.map(c => c.slice());
   const delay = Math.round(beat * .75 * RATE);
-  for (let i = 0; i < out[0].length; i++) for (let c = 0; c < 2; c++) out[c][(i + delay) % out[c].length] += dry[1 - c][i] * .17;
+  for (let i = 0; i < out[0].length; i++) for (let c = 0; c < 2; c++) out[c][(i + delay) % out[c].length] += dry[1 - c][i] * .1;
   write(`music-${name}`, out, 'music', true, { bpm, bars: 8 });
 }
 for (const name of ['forest', 'wind', 'rain', 'cave', 'fire', 'water']) {
@@ -114,11 +131,11 @@ for (const name of ['forest', 'wind', 'rain', 'cave', 'fire', 'water']) {
     let x = smooth * (1 + .35 * Math.sin(tau * t / 8));
     if (name === 'rain') x += noise * .12;
     if (name === 'fire') x += (random() > .998 ? noise * .7 : 0);
-    if (name === 'cave') x += .03 * Math.sin(tau * 55 * t) + .015 * Math.sin(tau * 83 * t);
-    if (name === 'water') x += .055 * Math.sin(tau * 180 * t + 3 * Math.sin(tau * .5 * t));
+    if (name === 'cave') x = smooth * (.6 + .4 * Math.sin(tau*t/8)**2);
+    if (name === 'water') x = smooth * (1 + .6 * Math.sin(tau*.5*t)) + noise * .025;
     out[0][i] = x; out[1][i] = x * .85 + smooth * .15;
   }
-  if (name === 'forest') for (let i = 0; i < 8; i++) add(out, i + .2, .18, (t,p) => Math.sin(tau * (1500 * t + 160 * t * t)) * Math.sin(Math.PI * p) ** 2, .09, random() * 1.5 - .75);
+  if (name === 'forest') for (let i = 0; i < 5; i++) { const pitch=1400+random()*900; add(out, random()*7.6, .12+random()*.08, (t,p) => Math.sin(tau * (pitch*t + 400*t*t)) * Math.sin(Math.PI*p)**2, .05, random()*1.5-.75); }
   write(`ambience-${name}`, out, 'ambience', true);
 }
 const effects = {
@@ -137,27 +154,31 @@ const effects = {
   speechBlip: ['wood', 480, .035], coinClink: ['bell', 1318, .28], burstReady: ['chime', 1047, .85],
   tradeRouteFanfare: ['up', 494, 1.1], thunderClap: ['thunder', 50, 2.4], turnStart: ['chime', 523, .5],
   menuOpen: ['wood', 720, .12], menuClose: ['wood', 400, .1], chestTick: ['wood', 900, .05],
+  swing: ['swoosh', 420, .16],
 };
 for (const [name, [kind, f, duration]] of Object.entries(effects)) {
   const out = buffer(duration);
+  let low = 0, body = 0;
   if (['up', 'down', 'chime'].includes(kind)) {
     const notes = kind === 'down' ? [7, 3, 0, -5] : [0, 4, 7, 12];
     notes.forEach((n,i) => { const length = duration * .6; add(out, i * duration * .12, length, instrument(kind === 'chime' ? 'bell' : 'flute', f * 2 ** (n/12), length), .4, i * .3 - .45); });
   } else add(out, 0, duration, (t,p) => {
-    const env = Math.sin(Math.PI * Math.min(1, p * 10)) * Math.exp(-p * 4);
+    const noise = random()*2-1;
+    low += .12 * (noise-low); body += .025 * (noise-body);
     const decay = Math.min(1,t/.004) * (1-p) ** 2;
     const sine = Math.sin(tau * f * t);
-    if (kind === 'wood') return (sine + .35 * Math.sin(tau*f*1.48*t)) * Math.exp(-t*75) * Math.min(1,t/.002);
-    if (kind === 'bell' || kind === 'metal') return (sine + .45*Math.sin(tau*f*2.76*t) + .2*Math.sin(tau*f*4.1*t)) * decay * Math.exp(-p*3);
-    if (kind === 'rise') return Math.sin(tau*(f*t + f*t*t*2)) * Math.sin(Math.PI*p) * .6 + (random()*2-1)*.08*decay;
-    if (kind === 'impact') return (Math.sin(tau*(f*t+2*(1-Math.exp(-t*25)))) + (random()*2-1)*.6) * decay * Math.exp(-p*7);
+    if (kind === 'wood') return (low * 2.6 + sine*.18*Math.exp(-t*120) + body) * Math.exp(-t*65) * Math.min(1,t/.002);
+    if (kind === 'bell') return (sine + .25*Math.sin(tau*f*2.76*t)) * decay * Math.exp(-p*4);
+    if (kind === 'metal') return (low*2*Math.exp(-t*45) + sine*.3*Math.exp(-t*18) + .16*Math.sin(tau*f*1.47*t)*Math.exp(-t*24) + .1*Math.sin(tau*f*2.09*t)*Math.exp(-t*30))*decay;
+    if (kind === 'rise') return (low*1.6 + .12*Math.sin(tau*f*t)+.06*Math.sin(tau*f*1.5*t)) * Math.sin(Math.PI*p)**2;
+    if (kind === 'impact') return (body*5*Math.exp(-t*24) + low*1.8*Math.exp(-t*70) + Math.sin(tau*(70*t+.18*(1-Math.exp(-t*40))))*.28*Math.exp(-t*40))*decay;
     if (kind === 'horn') return (sine+.3*Math.sin(tau*f*2*t)+.12*Math.sin(tau*f*3*t)) * Math.sin(Math.PI*p);
     if (kind === 'growl') return (Math.sin(tau*f*t + 6*Math.sin(tau*27*t))*.7 + (random()*2-1)*.4)*decay;
     if (kind === 'electric') return Math.sin(tau*f*t + 8*Math.sin(tau*70*t)) * decay;
     if (kind === 'wobble') return Math.sin(tau*f*t + 3*Math.sin(tau*12*t)) * Math.sin(Math.PI*p);
-    if (kind === 'rattle') return (random()*2-1) * decay * (.2+.8*Math.sin(tau*22*t)**8);
-    if (kind === 'thunder') return ((random()*2-1)*.3 + Math.sin(tau*45*t)*.4) * decay;
-    return (random()*2-1) * Math.sin(Math.PI*p) ** 2 * (kind === 'splash' ? .5 : .3);
+    if (kind === 'rattle') return (low*2 + body) * decay * (.15+.85*Math.sin(tau*22*t)**8);
+    if (kind === 'thunder') return (body*4 + low*.4*Math.exp(-t*9)) * decay;
+    return (low*2 + body) * Math.sin(Math.PI*p) ** 2 * (kind === 'splash' ? .5 : .3);
   });
   write(`sfx-${name}`, out, 'sfx');
 }

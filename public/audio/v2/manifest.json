@@ -12,8 +12,8 @@
       "duration": 22.857142857142858,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.21898370512448473,
-      "sha256": "eff190ad3a0a986b4427a8f96348d0d3c88d3222821669dd86578bd0f959cb4b",
+      "rms": 0.1716854825812619,
+      "sha256": "211fd0637747b192f010f710e5934722438511832cbc2d6f0014717ca6a33cf3",
       "bpm": 84,
       "bars": 8
     },
@@ -25,8 +25,8 @@
       "duration": 18.46154195011338,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.16618727115008608,
-      "sha256": "5a78113fd5b8ce19812679c43d2643862aea07aff3ee50b05628203e17194653",
+      "rms": 0.13325759437106918,
+      "sha256": "08a9673c375cb2cda92ab051a60a4ea505146322ea41443b80eb0bac7bf134b2",
       "bpm": 104,
       "bars": 8
     },
@@ -38,8 +38,8 @@
       "duration": 13.333333333333334,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2134402854985446,
-      "sha256": "60e79c4b38cb97cf34cafbb9e22feb6f4d4d01a0831c5a17436c838c77520013",
+      "rms": 0.193307574976951,
+      "sha256": "f20ef8dd7f2cfcfa0fdf6689bdb5639b58f7214a7e7c91feacfa04cd5c9273e8",
       "bpm": 144,
       "bars": 8
     },
@@ -51,8 +51,8 @@
       "duration": 16,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.22312197924625407,
-      "sha256": "06680d0911767f1f883ab1d10d1ad81ed57115c7d912c5731bc72b8dc9672e47",
+      "rms": 0.18670858112992497,
+      "sha256": "ee6def3a12393fc36df82e43edb6a093bddc709d40f468ae042d953d2265ae67",
       "bpm": 120,
       "bars": 8
     },
@@ -64,8 +64,8 @@
       "duration": 21.818185941043083,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2496799117437048,
-      "sha256": "ce666144ab917df76411290e8b40e0b984299a224b0099e7cee9e2c0c700af94",
+      "rms": 0.21640797553742025,
+      "sha256": "be7d41cc82d2cf77205c3e04b51c62573d828630313dd1b8e341c9761c07e79c",
       "bpm": 88,
       "bars": 8
     },
@@ -77,8 +77,8 @@
       "duration": 15,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17271995516845484,
-      "sha256": "2bc17fc455ea82fec2db09a4944de6fecc7dd2bc18df0e2b9e0b4822d4a8b3cf",
+      "rms": 0.1438476789944423,
+      "sha256": "63f0de83a6b2335b68e7e3009c6d21934ec5ca8c1c11d4484adc1aa62185114f",
       "bpm": 128,
       "bars": 8
     },
@@ -90,8 +90,8 @@
       "duration": 21.818185941043083,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.19463591249214268,
-      "sha256": "0d161f63363927e47aa62c730a88d76b903dffed31656d04164695888d0f6613",
+      "rms": 0.158361009746471,
+      "sha256": "f73b470480d41be1bb6c2cb1429c246754ed9b18c469dfe5e565288008a656e9",
       "bpm": 88,
       "bars": 8
     },
@@ -103,8 +103,8 @@
       "duration": 26.666666666666668,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.22390102626275368,
-      "sha256": "1f9d10ae89761b6ef58306fac77f0d94e2a04113a675e8cc3ede0edf4dbc5053",
+      "rms": 0.16960240667858575,
+      "sha256": "37196b92206a6d4f09d058ef2649e9f6944e9e4462525ce41df147a2663637d7",
       "bpm": 72,
       "bars": 8
     },
@@ -116,8 +116,8 @@
       "duration": 16.55174603174603,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.19459824691378558,
-      "sha256": "bfa657750f6a8ba4f477760eda690ff40b082e8eab0d717a001581ad7703f7db",
+      "rms": 0.13148370618221375,
+      "sha256": "a46f498591a4c04fe7c17ef32c7d0f7c5f781bb202e88734c5b73652c9c75b63",
       "bpm": 116,
       "bars": 8
     },
@@ -129,8 +129,8 @@
       "duration": 20,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.20489226546138764,
-      "sha256": "c9c668c4950525b43266a4805294ac56191c5eb2b8e2f0e2a480af5e7b01351c",
+      "rms": 0.17391997761389838,
+      "sha256": "34c9d877c6b0411b9db95c4c3ae67fe258fcf4d173ee7cd345400b1af7cd3305",
       "bpm": 96,
       "bars": 8
     },
@@ -142,8 +142,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.15801698728405178,
-      "sha256": "854554c6ab1861c40c5d1ee8064c35da2fa153dee1414d39652ba1ad6186f9b0"
+      "rms": 0.1524510613089189,
+      "sha256": "7039f965c87034ebe0debd5493edc881d146b80562d9a06f9d58e0f5a19b971d"
     },
     {
       "id": "ambience-wind",
@@ -153,8 +153,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.14121876907240286,
-      "sha256": "3aa505ac977d6769bc594d439801b5aa7d38eb112847ca04dd26b65974000678"
+      "rms": 0.14876462093189982,
+      "sha256": "aac657a34b010b1e9f036ea4b78239c868edb4b8bf3138df3b1b6e49a58d8e1c"
     },
     {
       "id": "ambience-rain",
@@ -164,8 +164,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17805334545966095,
-      "sha256": "c29138d8cd070e190cbbbfd4c00d6a80b2427b78d593e6b7891d621c1513ab6f"
+      "rms": 0.16181898628028624,
+      "sha256": "4d89ef17c6eed57bdc8d80f325d5305ebc2e1d32ebd37471fd196d56f09ffaf5"
     },
     {
       "id": "ambience-cave",
@@ -175,8 +175,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1563922241806083,
-      "sha256": "2e47c31edda1365c591ef5abe1fb685e819392b2290044681c97b1d1fb343769"
+      "rms": 0.15131298448287356,
+      "sha256": "494f47aedc65f2f7f7b3350dbd963afb5014eb4444bc2e6567ed5eb3c512f2f1"
     },
     {
       "id": "ambience-fire",
@@ -186,8 +186,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.07136304313870016,
-      "sha256": "651cfd07fe8f8a1055f97f1ee3989d2bd581f880a566146d4bc8ca08037c5d72"
+      "rms": 0.06507766275002756,
+      "sha256": "d7f4293f9dc55e5ce6d5cb6dbaa44173f4215163bcdb2b676845e5806928a903"
     },
     {
       "id": "ambience-water",
@@ -197,8 +197,8 @@
       "duration": 8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.15333802756467674,
-      "sha256": "8fec09069b7bf09cb54c0ba6a50b3735bc991aaf168f8dc6330badca63977986"
+      "rms": 0.12250422543052021,
+      "sha256": "693daaeaa8007f3c6de63c022c6859ae23be60f336fff3c28f8e5f57fef3ea38"
     },
     {
       "id": "sfx-click",
@@ -208,8 +208,8 @@
       "duration": 0.07002267573696146,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.10513030126259432,
-      "sha256": "6792ee12d441a5e2fa24b00fac1f76dc5f7ad6e13d59cbd5c0828baf6283315d"
+      "rms": 0.030784070032092097,
+      "sha256": "0aaad238d631a5b9da48f0a867c461d1e463aa64e731fd9d8556c52133eb7d33"
     },
     {
       "id": "sfx-diceRoll",
@@ -219,8 +219,8 @@
       "duration": 0.18,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11441370805937275,
-      "sha256": "2ddcc04ccddde9ce6dc9a7832f8dba8bc422449b43a6f504fa22a40be12634aa"
+      "rms": 0.04897373502704237,
+      "sha256": "941466d56eda5cb7ac7842e5ce0ffa4e3f2f5eb05920e45c217a479d6b42f4e1"
     },
     {
       "id": "sfx-step",
@@ -230,8 +230,8 @@
       "duration": 0.09002267573696145,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.09713751300819523,
-      "sha256": "b917c439865d183eb771a9168f9fcaa35e121d947ff03ab4dfa77299150fd891"
+      "rms": 0.026431796277077417,
+      "sha256": "e39013bbf0d3820db9d03db4bb3f2f44718425c148c60d289bdbae61a64e75d1"
     },
     {
       "id": "sfx-coin",
@@ -241,8 +241,8 @@
       "duration": 0.42,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11754732939948162,
-      "sha256": "73027ec5410586103128bccbdf5d12e9b0f7dee32bd1afbd781525b95c93931c"
+      "rms": 0.1025076958882668,
+      "sha256": "8e7dbd8dc9990471ebdfacad319f8e7881247f070029c419f0b8ae10ede2b306"
     },
     {
       "id": "sfx-attackHit",
@@ -252,8 +252,8 @@
       "duration": 0.26,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.08336043581256168,
-      "sha256": "1cf4653a6d48ea8559e633d29f4e88c4f6e09bb011d036c1b94a88a1c4ce56d5"
+      "rms": 0.06270688409519487,
+      "sha256": "6ff0821d59e34b6b467d2c27542e4ee6046969966a58bc9b3bef0d049f56d3cc"
     },
     {
       "id": "sfx-strikeHit",
@@ -263,8 +263,8 @@
       "duration": 0.48,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.09330028418354311,
-      "sha256": "1daf5b6b42b876c43bc58ed5a2d93694710bf9645103d9dd7720e4a5bbfcde82"
+      "rms": 0.03959351618280125,
+      "sha256": "3e269461b90fc48c8956c3b1ade539d497b85c82e1f7d04d7a4149bbabb1c879"
     },
     {
       "id": "sfx-counterParry",
@@ -274,8 +274,8 @@
       "duration": 0.5,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11933783703558326,
-      "sha256": "28707af15fa8ed81f575dbd5b086aecd9e95b0dfe7568bfc98f4d50c94c9f02b"
+      "rms": 0.03916938340412183,
+      "sha256": "fd403d895a2a7d25b67433807bea37160798e7bfa188a4ec2a4129d7bf314886"
     },
     {
       "id": "sfx-magicGuardBlock",
@@ -285,8 +285,8 @@
       "duration": 0.5500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17516607294565223,
-      "sha256": "f1b89f3ca0b749d1cffa87d0117e4c1e0c5f5c1ee41ec3bcb3fde92202b21e51"
+      "rms": 0.13923457080295334,
+      "sha256": "a1de5957a09ca307945bc5e89e6934762cc733c653bf250035f1f01abebc8d20"
     },
     {
       "id": "sfx-magicCast",
@@ -296,8 +296,8 @@
       "duration": 0.6500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.37907286181354716,
-      "sha256": "b2a9b65cc7089e8a58fd58934f54aeec075406621ceb63b0d0ce176bd72c7cb6"
+      "rms": 0.10329010711352507,
+      "sha256": "e5dcfcd840f24eec998382ae7691217970dfe3d66cde9d0aabc034044ce96b48"
     },
     {
       "id": "sfx-levelUp",
@@ -307,8 +307,8 @@
       "duration": 0.8500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.21560224790328655,
-      "sha256": "f4469bc76367dc04521e5d30067b0a9a069b5429431d7688159bb2ec467ea0b7"
+      "rms": 0.18026948480243135,
+      "sha256": "4032bc3b6ec656e1a9db41ca312fb26cc07b768a9ff54a222ee2100115f73735"
     },
     {
       "id": "sfx-fanfare",
@@ -318,8 +318,8 @@
       "duration": 1.2,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.21458675620396978,
-      "sha256": "da5a35aa1ac41ef757147d3d89a1f68c1e36e357f6637cb7b1a273ed8768d82a"
+      "rms": 0.16970101969520382,
+      "sha256": "32f633355045805eaf1cd1a8f6972211da7680e9d481e270dc5ef3296e5524bc"
     },
     {
       "id": "sfx-darklingRoar",
@@ -329,8 +329,8 @@
       "duration": 0.9,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17600461925901925,
-      "sha256": "ef66fc556d28fe637cc5a7106bff1a4a66d8db879a56b2a94106383cbfeee211"
+      "rms": 0.13962043047648734,
+      "sha256": "c90a732adfb79a95ae8adf78bf765e8bbaec7d96fb25b489f80a240c898b139e"
     },
     {
       "id": "sfx-hurt",
@@ -340,8 +340,8 @@
       "duration": 0.25002267573696146,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.08633257060080383,
-      "sha256": "08f1cf6015714c84b3d81960a12daf2c0a1e70e9f7dfae49f714db3ab92e7698"
+      "rms": 0.07277119863437022,
+      "sha256": "c3e879404b511efb5530b6595a24660fcf536d65c335f3dbb86a1f3e747ea84f"
     },
     {
       "id": "sfx-skillCast",
@@ -351,8 +351,8 @@
       "duration": 0.8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.3788107753416242,
-      "sha256": "ecd9bdeedab405cea3d83428b9d6f76e710d45e842fcb90d8a685f0040629c82"
+      "rms": 0.10823417616417923,
+      "sha256": "8a758a145d6d7bcb67ba4e75d0f653677a90febb6d525af71622539ab73c57bc"
     },
     {
       "id": "sfx-magicHit",
@@ -362,8 +362,8 @@
       "duration": 0.4500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17978558929576038,
-      "sha256": "04f7cdb7f2ca96e326a394a2ffb9926a1441ad4297f5ab841d4e40633e6adba2"
+      "rms": 0.14290649405560435,
+      "sha256": "1e7f9e302985e34dacafacbcd41bb34309a3808504606e226f3cacda2cbdf991"
     },
     {
       "id": "sfx-defendBlock",
@@ -373,8 +373,8 @@
       "duration": 0.28,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1107856307144152,
-      "sha256": "58518549fd376a7244f376e951dadf9cd7bcad58f704773c140f33f052a5635a"
+      "rms": 0.047832112991605086,
+      "sha256": "45a6fdbdeab5ee86ab667180c8db1a6d30ebc8404af29a35de6159ef3fa10c5a"
     },
     {
       "id": "sfx-miss",
@@ -384,8 +384,8 @@
       "duration": 0.22,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.27875971779595166,
-      "sha256": "9f9a8a1492d69a875cf056a6c6fdc66dfd3c63c319f609c42b5e1a0dc76b3b8f"
+      "rms": 0.11191275512982547,
+      "sha256": "931b8c753643e8695cd9db8b5f0e640c6a7c91267ae79060c2c84b383818f6db"
     },
     {
       "id": "sfx-giveUpDefeat",
@@ -395,8 +395,8 @@
       "duration": 0.9,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.20816460368102904,
-      "sha256": "8ed6642f21b24267886911e5d598daf8862963b92d29de7c95b420ce32f236ec"
+      "rms": 0.16319883982493635,
+      "sha256": "1dbbb87edad33be670284e4aca2c4977b1ce82e0b4b1b663277012033ed1120a"
     },
     {
       "id": "sfx-victory",
@@ -406,8 +406,8 @@
       "duration": 1.8,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2062561952077682,
-      "sha256": "fc478d63de7c0dc34b78c08f890e3f107130bbdcd2d37d8789c73b84c0bedfce"
+      "rms": 0.16290578533169695,
+      "sha256": "35a3cdbbd85ff8d082c1e4de247fad9bbafb524f23672a41d7dc7c092de7a77e"
     },
     {
       "id": "sfx-defeat",
@@ -417,8 +417,8 @@
       "duration": 1.5,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2170737966527089,
-      "sha256": "b7a8ed6a99095159fd2958484cdb398850e5bd9c0b55f9c20c2f1da6f6056231"
+      "rms": 0.16923591109737712,
+      "sha256": "a7f6a4fe4ee0b1dad3fe4d67cbb5673941eb520f14a8628ed9eb61cb36a03b36"
     },
     {
       "id": "sfx-chestOpen",
@@ -428,8 +428,8 @@
       "duration": 0.9500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.15720251095447793,
-      "sha256": "81b5154e7c9a906c0b3cc54daf88df81a58014fa83eca79aa7db0f37d138150c"
+      "rms": 0.12495584204073756,
+      "sha256": "acb56c000e1023691e0cd51de76fc3c35cf0880d263eda987815ef2c70d86b0a"
     },
     {
       "id": "sfx-fieldSpellCast",
@@ -439,8 +439,8 @@
       "duration": 0.8500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.37876336292580365,
-      "sha256": "0ececbfccef7d4520b79698d8c43216d8d264a86dc91fb9deb03abaec7dd9161"
+      "rms": 0.10389281558036857,
+      "sha256": "7c893caef75ff1e5092f808081600b3775e6ede585bcdc7e6cb02f7b02d740b3"
     },
     {
       "id": "sfx-levelUpFanfare",
@@ -450,8 +450,8 @@
       "duration": 1.4,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2389546315777232,
-      "sha256": "d91da141d3d49c346ea4aad934545423e6fb8ec3aac817b45ad8c84986174ad3"
+      "rms": 0.18342332211984078,
+      "sha256": "a8481ab7d936f8732014c678d6d32599b357c38c1806b5bc3ca15ca706d6fed2"
     },
     {
       "id": "sfx-jackpotFanfare",
@@ -461,8 +461,8 @@
       "duration": 1.7,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2092000948515684,
-      "sha256": "d3df08a3f257bd933e53e83dae71d2d33d70f1b2de42cdf67bca5180cc53b6ab"
+      "rms": 0.16832745491753792,
+      "sha256": "4e95048687ab49a552a5b3d20c9bbcb7021883ac892f9f9214d8b3af31361d90"
     },
     {
       "id": "sfx-classPromoteJingle",
@@ -472,8 +472,8 @@
       "duration": 1.6,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.21180808165616713,
-      "sha256": "b66db151691ab88c2c62e5370c23338cdc11269c6d25918a707a3100aa488f9f"
+      "rms": 0.16750938169093443,
+      "sha256": "97fb32c7c3179ed69f73b408761871e2f04b611d4caf2687c5d690ec6cdbe36a"
     },
     {
       "id": "sfx-voiceFight",
@@ -483,8 +483,8 @@
       "duration": 0.5500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.3620916395393218,
-      "sha256": "665e79e2be64a481cde7bfc456d691303b3cbf6a59f5ee24224220dfc7cefea1"
+      "rms": 0.2878164314286909,
+      "sha256": "96930723ec549ded0db1125efe26d4fd9f1a50dca91ed4131ed97433082277c4"
     },
     {
       "id": "sfx-voiceCritical",
@@ -494,8 +494,8 @@
       "duration": 0.6500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.362018375499039,
-      "sha256": "5a50a0b61dec0044a5fbc5718a759f966dbb220b21b2e28afe9fe690f5362c1d"
+      "rms": 0.2877581959094911,
+      "sha256": "6ab7b6bc43a5878179f036df9126e67fc6a204cef52eed252026b136e0b5549e"
     },
     {
       "id": "sfx-voiceSurrender",
@@ -505,8 +505,8 @@
       "duration": 0.6500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2026577369520206,
-      "sha256": "6229a5e2cbcef644ca3d2b0c0b3e35f84ee453264005be5418813477a6370e3a"
+      "rms": 0.16944340630376947,
+      "sha256": "17de26f77f9a8927b398cf22a98625660eba2791ef5f18cbdd41f969824c773f"
     },
     {
       "id": "sfx-voiceBankrupt",
@@ -516,8 +516,8 @@
       "duration": 0.9,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.21678613948315736,
-      "sha256": "c60819bba7c960959b43feb78df36e062c3d13f0a98eae62510c3439d1f1d79a"
+      "rms": 0.17107757390112754,
+      "sha256": "c15959db04eaa95fee7fe99ee4e1a750c949e1a1e1f614cc746d606b6b28e705"
     },
     {
       "id": "sfx-limitBreak",
@@ -527,8 +527,8 @@
       "duration": 1.2,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.37862600523511636,
-      "sha256": "fa625dce5157213713296dd63a0dd0a2e7197536611d9f390c866070444fc54a"
+      "rms": 0.12116242541182638,
+      "sha256": "a4444b5af7f43c75173d514566f555346963d8e430006bc40c81e9355e20e010"
     },
     {
       "id": "sfx-polymorphOink",
@@ -538,8 +538,8 @@
       "duration": 0.5,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.38999658271414406,
-      "sha256": "dedb613cf5b689918aaab2293c4d06c9bf8136c4ff2f08b5a8d08ae4756d56cb"
+      "rms": 0.3099972836958551,
+      "sha256": "02d52e0f0223883ad327da8faea94ea8d2ec29db4cebfdcd17e67cf60ff52ad4"
     },
     {
       "id": "sfx-anvilStrike",
@@ -549,8 +549,8 @@
       "duration": 0.6500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.12121087042217069,
-      "sha256": "89f4e56f329ee0df849d059298a787abd20862dd1793944f5c54eb5783de66ad"
+      "rms": 0.03493342820990042,
+      "sha256": "e21ac8cea575ba6796d3bf692c492a872d3af0543e3d458c98457b1f2da600ed"
     },
     {
       "id": "sfx-reelSplash",
@@ -560,8 +560,8 @@
       "duration": 0.6500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.27563520356501175,
-      "sha256": "45a02573d58cace9782e0219a55222ae50c2f24f04ab4d3e7d3c2d5f1b9824cb"
+      "rms": 0.11425529952987927,
+      "sha256": "489b9f38283d215513767024dc6dfa01a285b17f12b982fc1f783dc699e8d243"
     },
     {
       "id": "sfx-relicChime",
@@ -571,8 +571,8 @@
       "duration": 1.1,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.17641864993692533,
-      "sha256": "810d026b8cbd15dabf096136b90d1fd9792790a063227c61fc60d5d1a4831ffc"
+      "rms": 0.1402302089242229,
+      "sha256": "547f886b38f2b8588b032c54e743decdb57a0aa25eccf49c4bd797f413501c72"
     },
     {
       "id": "sfx-curseExplosion",
@@ -582,8 +582,8 @@
       "duration": 0.7500226757369615,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1736239433937853,
-      "sha256": "4d16d03399920e015e886104530d29276c9a2012d66eb1b5582c44895a77e0ef"
+      "rms": 0.1422813804523348,
+      "sha256": "7e3aa539dc36238636b4035da790a1e796bd6dcdbf3c037b85bb3067f0d2f092"
     },
     {
       "id": "sfx-elementalShatter",
@@ -593,8 +593,8 @@
       "duration": 0.5,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11992244058367234,
-      "sha256": "16de082ba3592a9cecdd795b7069e8c8650f8fcdf9160c65bb0f4b3eb06cf835"
+      "rms": 0.03467400708421373,
+      "sha256": "c9a8585da5f7756bfe909899a9993e080f072e5c127da978af8bdb6a932c2c90"
     },
     {
       "id": "sfx-chainLightning",
@@ -604,8 +604,8 @@
       "duration": 0.4,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.23892657204171378,
-      "sha256": "d076508a919cf733c744ce838f22a92bbe8029f8a8ab557e520c61b3e893a906"
+      "rms": 0.18991599316136215,
+      "sha256": "7366f8ed6de3f21db71304857f6e2098ec70d5451b2cba13bb03b2e38c8ff3a7"
     },
     {
       "id": "sfx-hazardTrigger",
@@ -615,8 +615,8 @@
       "duration": 0.34997732426303857,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11351093322431642,
-      "sha256": "4999669ee6a27c5b6370e34a81818f0fce46bc967b9de19af0e792ef7b81a9a5"
+      "rms": 0.06436189096322613,
+      "sha256": "f0a475e218ee0e25fbe857124d84c44992de3e421e685e71d937357ed2e96a04"
     },
     {
       "id": "sfx-speechBlip",
@@ -626,8 +626,8 @@
       "duration": 0.03501133786848073,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.15331229239107544,
-      "sha256": "265594304a78f7ac39112435a52b704f9367e2de83d118345e0a76d51565bce0"
+      "rms": 0.04803867772052131,
+      "sha256": "bde3db8a65e4fdc090f37d2c1eaa894c86f912d16fc01dd174f4128bae4d7a5f"
     },
     {
       "id": "sfx-coinClink",
@@ -637,8 +637,8 @@
       "duration": 0.28,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11738288929777682,
-      "sha256": "ff3b1f4a5f824bcb4f36ecc7950aa3bfe10ec75af9695b0d5d0016835c932b99"
+      "rms": 0.09831960803189468,
+      "sha256": "e95ed91fbecc95ce58a91374372eeba5d558570b750f0236fcc5aebb3c7fb86e"
     },
     {
       "id": "sfx-burstReady",
@@ -648,8 +648,8 @@
       "duration": 0.8500226757369614,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1864845456631794,
-      "sha256": "63a781b593b04524cc037a5594ebbef7f419140e7eb31ab65b87bb1fdebbc3d6"
+      "rms": 0.14823130552714261,
+      "sha256": "711d114db8d9f5fbbf5ad5d4edfd3bd2c28633b9221b5234ee54aeb0faca1a53"
     },
     {
       "id": "sfx-tradeRouteFanfare",
@@ -659,8 +659,8 @@
       "duration": 1.1,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.2221029180148981,
-      "sha256": "e6131ed3be8eda9d1efd66e2eeb9d9abbc84035b9f9adea219834cbfe42b8399"
+      "rms": 0.1744410917199752,
+      "sha256": "4adcf753da32f32514ef6bc10c44ecf626753b4939ead4206639f275d0c9f37b"
     },
     {
       "id": "sfx-thunderClap",
@@ -670,8 +670,8 @@
       "duration": 2.4,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1676669439084609,
-      "sha256": "2aa52956df5ae92e1317d1ac8bb471c41a858dd5b4201be2842edccc01e0fd67"
+      "rms": 0.07915655045108567,
+      "sha256": "5864fa6a5df5be9c4c5342586f5df05318c12499b9ec8d629108d19c02d304e1"
     },
     {
       "id": "sfx-turnStart",
@@ -681,8 +681,8 @@
       "duration": 0.5,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.1959071905123509,
-      "sha256": "c375b52bd09d918fd2de9cf227eeee811637b7bba6824153ff2f5fb853ba371d"
+      "rms": 0.1557211001508441,
+      "sha256": "ef1746040d5534e8904efbe84c5058e447c01dd8be57556f6db7dfeed3afa445"
     },
     {
       "id": "sfx-menuOpen",
@@ -692,8 +692,8 @@
       "duration": 0.12,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.07674592529498413,
-      "sha256": "0fc2e45766714bac972ddec0cdb2d31fb4e9d0ff32db390d640e138c0ec3ce6e"
+      "rms": 0.02619344365520616,
+      "sha256": "25b68f1361c603d27e05fa06e43717f0d106b805c6f82ef5f12e4efb19e09cb8"
     },
     {
       "id": "sfx-menuClose",
@@ -703,8 +703,8 @@
       "duration": 0.1,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.09871014861558096,
-      "sha256": "59698c249e8b4675a3a2021ee75afde0111565dc14a8ec68e393232068d0ac1a"
+      "rms": 0.03211438587827191,
+      "sha256": "87b7251f892792dff5799cddcac568bbe51a0dd550b6d1e1f6c1884bc5cc1100"
     },
     {
       "id": "sfx-chestTick",
@@ -714,8 +714,19 @@
       "duration": 0.05002267573696145,
       "sampleRate": 22050,
       "channels": 2,
-      "rms": 0.11421665699512064,
-      "sha256": "2de30589e26ed922a9f131b643bb0d028c911ca99b4095b41f9f6eaad1572a51"
+      "rms": 0.03131572390250419,
+      "sha256": "0ef5c05333ce961bd5cee25cde3d48c528269d8593b1e6d756165ec3086b9aec"
+    },
+    {
+      "id": "sfx-swing",
+      "file": "sfx-swing.wav",
+      "kind": "sfx",
+      "loop": false,
+      "duration": 0.16,
+      "sampleRate": 22050,
+      "channels": 2,
+      "rms": 0.13643507152438078,
+      "sha256": "d3fc370a0e3b036c3af71241bccf69fc51d15d5f4b5d47e77692d82631e53f93"
     }
   ]
 }

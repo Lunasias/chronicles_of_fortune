@@ -6,6 +6,8 @@ import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { companionSprites } from '../engine/CompanionSpriteRenderer';
 import { getNodeEncounterPreview, MonsterProfile } from '../game/MonsterDatabase';
 import { escapeHtml } from '../util/Html';
+import { createPlayerCombatant, prepareCombatant } from '../game/CombatRules';
+import { previewCombatDamage } from '../game/CombatDamage';
 
 export class InspectUI {
   private game: GameState;
@@ -461,13 +463,16 @@ export class InspectUI {
     const dMag = defender.getTotalStat('mag');
     const dSpd = defender.getTotalStat('spd');
 
-    // Matchup damage estimations using total equipped stats
-    const estAtkPPhys = Math.max(8, aAtk - Math.floor(dDef * 0.6));
-    const estAtkPStrike = Math.max(18, Math.floor(aAtk * 2.0 - dDef * 0.3));
-    const estAtkPMagic = Math.max(10, Math.floor(aMag * 1.8 - dMag * 0.6));
-
-    const estDefPPhys = Math.max(8, dAtk - Math.floor(aDef * 0.6));
-    const estDefPCounter = Math.max(20, Math.floor(dAtk * 2.2));
+    const node = this.game.allNodes.find(n => n.id === defender.nodeId);
+    const aBase = createPlayerCombatant(attacker, true), dBase = createPlayerCombatant(defender, true);
+    const a = node ? prepareCombatant(aBase, node, this.game.world) : aBase;
+    const d = node ? prepareCombatant(dBase, node, this.game.world, true) : dBase;
+    const forecast = previewCombatDamage(a, d);
+    const estAtkPPhys = forecast.physical;
+    const estAtkPStrike = forecast.strike;
+    const estAtkPMagic = attacker.mp >= 10 ? forecast.magic : 'MP ไม่พอ';
+    const estDefPPhys = previewCombatDamage(d, a).physical;
+    const estDefPCounter = Math.max(25, Math.round(d.atk * 2.8 - a.def * .4 + 3));
 
     // Tactical match intelligence advice
     let adviceText = '';
@@ -593,7 +598,7 @@ export class InspectUI {
         <!-- Damage Estimations Bar -->
         <div class="bg-slate-950/90 border border-slate-800 p-3 mb-3">
           <div class="text-[10px] font-bold text-amber-300 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <span>📊</span> ประมาณการผลการต่อสู้ (Combat Projection)
+            <span>📊</span> ดาเมจพื้นฐาน รวมสภาพสนามและแถวเริ่มต้น ก่อนตั้งรับ/คริติคอล/สกิลเสริม
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-slate-300">
             <div class="bg-slate-900 p-2 border border-slate-800">
@@ -650,8 +655,9 @@ export class InspectUI {
 
     let statComparisonHtml = '';
     if (m) {
-      const atkAdvantage = activePlayer.atk >= m.def;
-      const spdAdvantage = activePlayer.spd >= m.spd;
+      const combat = prepareCombatant(createPlayerCombatant(activePlayer), node, this.game.world);
+      const atkAdvantage = combat.atk >= m.def;
+      const spdAdvantage = combat.spd >= m.spd;
 
       statComparisonHtml = `
         <div class="bg-slate-950/95 border border-amber-500/40 p-2 mt-1.5 space-y-1">
@@ -758,10 +764,17 @@ export class InspectUI {
     audio.click();
     this.hideMoveDestinationPreview();
 
-    const estAtkPPhys = Math.max(8, player.atk - Math.floor(monster.def * 0.6));
-    const estAtkPStrike = Math.max(18, Math.floor(player.atk * 2.2));
-    const estAtkPMagic = Math.max(10, Math.floor(player.mag * 1.8 - monster.mag * 0.5));
-    const estMonsterPhys = Math.max(6, monster.atk - Math.floor(player.def * 0.6));
+    const totals = createPlayerCombatant(player);
+    const combat = prepareCombatant(totals, node, this.game.world);
+    const enemy = prepareCombatant(monster, node, this.game.world, true);
+    const forecast = previewCombatDamage(combat, enemy);
+    const estAtkPPhys = forecast.physical;
+    const estAtkPStrike = forecast.strike;
+    const estAtkPMagic = player.mp >= 10 ? forecast.magic : 'MP ไม่พอ';
+    const estMonsterPhys = previewCombatDamage(enemy, combat).physical;
+    const fieldChanges = (['atk', 'def', 'mag', 'spd'] as const)
+      .filter(stat => combat[stat] !== totals[stat])
+      .map(stat => `${stat.toUpperCase()} ${totals[stat]} → ${combat[stat]}`).join(' · ');
 
     this.monsterScoutModal.innerHTML = `
       <div class="pixel-box-gold max-w-lg w-full p-4 relative flex flex-col max-h-[92vh] overflow-y-auto bg-slate-950/95 border-2 border-rose-500/80">
@@ -782,29 +795,32 @@ export class InspectUI {
             </div>
             <div>HP: ${player.hp}/${player.maxHp} | MP: ${player.mp}/${player.maxMp}</div>
             <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 mt-1">
-              <div><strong class="text-amber-400 block">${player.atk}</strong><span>ATK</span></div>
-              <div><strong class="text-blue-400 block">${player.def}</strong><span>DEF</span></div>
-              <div><strong class="text-purple-400 block">${player.mag}</strong><span>MAG</span></div>
-              <div><strong class="text-yellow-400 block">${player.spd}</strong><span>SPD</span></div>
+              <div><strong data-scout-stat="atk" class="text-amber-400 block">${totals.atk}</strong><span>ATK</span></div>
+              <div><strong data-scout-stat="def" class="text-blue-400 block">${totals.def}</strong><span>DEF</span></div>
+              <div><strong data-scout-stat="mag" class="text-purple-400 block">${totals.mag}</strong><span>MAG</span></div>
+              <div><strong data-scout-stat="spd" class="text-yellow-400 block">${totals.spd}</strong><span>SPD</span></div>
             </div>
+            <div class="text-[9px] text-cyan-200 mt-1">รวมอุปกรณ์และบัฟแล้ว</div>
+            ${fieldChanges ? `<div id="scoutFieldChanges" class="text-[9px] text-amber-200 mt-1">ผลสภาพสนาม: ${fieldChanges}</div>` : ''}
           </div>
 
           <div class="pixel-box p-2.5 bg-slate-900/95 border-rose-500/70 text-[10px]">
             <div class="flex justify-between font-bold text-rose-300 pixel-head pb-1 mb-1">
               <span>${monster.icon} ${monster.name}</span><span>LV.${monster.level}</span>
             </div>
-            <div>HP: ${monster.hp}/${monster.maxHp} | MP: ${monster.mp}/${monster.maxMp}</div>
+            <div>HP: ${enemy.hp}/${enemy.maxHp} | MP: ${enemy.mp}/${enemy.maxMp}</div>
             <div class="grid grid-cols-4 gap-1 text-center bg-slate-950 p-1 mt-1">
-              <div><strong class="text-amber-400 block">${monster.atk}</strong><span>ATK</span></div>
-              <div><strong class="text-blue-400 block">${monster.def}</strong><span>DEF</span></div>
-              <div><strong class="text-purple-400 block">${monster.mag}</strong><span>MAG</span></div>
-              <div><strong class="text-yellow-400 block">${monster.spd}</strong><span>SPD</span></div>
+              <div><strong class="text-amber-400 block">${enemy.atk}</strong><span>ATK</span></div>
+              <div><strong class="text-blue-400 block">${enemy.def}</strong><span>DEF</span></div>
+              <div><strong class="text-purple-400 block">${enemy.mag}</strong><span>MAG</span></div>
+              <div><strong class="text-yellow-400 block">${enemy.spd}</strong><span>SPD</span></div>
             </div>
           </div>
         </div>
 
         <div class="bg-slate-950 p-2 border border-slate-800 text-[10px] space-y-1 mb-3">
-          <div class="font-bold text-amber-300">📊 คาดการณ์ดาเมจ: กายภาพ ~${estAtkPPhys} | ชาร์จฟัน ~${estAtkPStrike} | เวทมนตร์ ~${estAtkPMagic}</div>
+          <div class="font-bold text-amber-300">📊 ดาเมจพื้นฐานโดยประมาณ: กายภาพ ~${estAtkPPhys} | ชาร์จฟัน ~${estAtkPStrike} | เวทมนตร์ ~${estAtkPMagic}</div>
+          <div class="text-slate-400">รวมสภาพสนามและแถวเริ่มต้น ก่อนการตั้งรับ คริติคอล รูน และสกิลเสริม</div>
           <div class="text-slate-300">ท่าพิเศษ: <strong class="text-rose-300">${monster.skillName}</strong> (${monster.skillDesc})</div>
           <div class="text-amber-300">🎯 จุดอ่อน: ${monster.weakness || 'ชาร์จฟันทะลวง'} | ดาเมจสวนกลับ: ~${estMonsterPhys} HP</div>
         </div>
