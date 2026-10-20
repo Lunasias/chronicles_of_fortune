@@ -77,11 +77,11 @@ export interface ActiveMPSession {
   lastActiveTime: number;
 }
 
-export function getOrCreateClientSessionId(): string {
+export function getOrCreateClientSessionId(fresh = false): string {
   if (typeof sessionStorage === 'undefined') return 'headless_session';
   try {
     let id = sessionStorage.getItem('cf_client_session_id');
-    if (!id) {
+    if (!id || fresh) {
       id = 'cs_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
       sessionStorage.setItem('cf_client_session_id', id);
     }
@@ -106,6 +106,31 @@ export class NetworkRoomManager {
   private localPlayerIndex: number = 0;
   private reconnectTimer: any = null;
   private transportGeneration = 0;
+  private onlineMessage = '';
+  private admissionTimer: ReturnType<typeof setTimeout> | null = null;
+
+  public getOnlineMessage(): string { return this.onlineMessage; }
+
+  public canRetryConnection(): boolean {
+    return this.currentRoom?.isHost
+      ? !this.peer || this.peer.destroyed || this.peer.disconnected
+      : !this.hostConnection?.open;
+  }
+
+  private setOnlineMessage(message: string): void {
+    this.onlineMessage = message;
+    this.notifyStateChange();
+  }
+
+  private waitForAdmission(): void {
+    if (this.admissionTimer) clearTimeout(this.admissionTimer);
+    const generation = this.transportGeneration;
+    this.admissionTimer = setTimeout(() => {
+      this.admissionTimer = null;
+      if (generation !== this.transportGeneration || !this.currentRoom) return;
+      this.setOnlineMessage('ยังเชื่อมต่อ Host ไม่สำเร็จ ตรวจรหัสห้องและให้ Host เปิดเกมค้างไว้ แล้วกดลองเชื่อมต่อใหม่ หากอยู่คนละเครือข่ายให้ลองเปลี่ยนเครือข่าย');
+    }, 12000);
+  }
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -114,7 +139,7 @@ export class NetworkRoomManager {
       });
       window.addEventListener('online', () => {
         console.log('[NetworkRoomManager] Browser came back online! Re-establishing room connection...');
-        if (this.currentRoom && !this.currentRoom.isHost) {
+        if (this.currentRoom) {
           this.reconnectWebRTC();
         }
       });
@@ -276,7 +301,9 @@ export class NetworkRoomManager {
     this.leaveRoom(true);
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
     const myPeerId = 'guest_' + Math.random().toString(36).substring(2, 8);
-    const clientSessionId = getOrCreateClientSessionId();
+    // A duplicated tab inherits sessionStorage. A new join needs a new identity;
+    // only explicit rejoin may reclaim a reserved seat.
+    const clientSessionId = getOrCreateClientSessionId(true);
     this.localPlayerIndex = 1;
 
     const selfPeer: ConnectedPeer = {
@@ -299,6 +326,7 @@ export class NetworkRoomManager {
     };
 
     this.setupBroadcastChannel(channelName);
+    this.waitForAdmission();
     this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, false);
 
     // Broadcast JOIN packet over local broadcast channel
@@ -355,6 +383,7 @@ export class NetworkRoomManager {
     };
 
     this.setupBroadcastChannel(channelName);
+    this.waitForAdmission();
     this.initGuestWebRTC(cleanCode, myPeerId, selfPeer, true, session.myPeerId);
 
     // Broadcast REJOIN packet
@@ -415,6 +444,9 @@ export class NetworkRoomManager {
    */
   public leaveRoom(preserveSession: boolean = false) {
     this.transportGeneration++;
+    if (this.admissionTimer) clearTimeout(this.admissionTimer);
+    this.admissionTimer = null;
+    this.onlineMessage = '';
     if (!preserveSession) {
       this.clearSession();
     }
@@ -572,12 +604,18 @@ export class NetworkRoomManager {
   }
 
   private async initHostWebRTC(roomCode: string, hostPlayerName: string) {
-    if (typeof window === 'undefined' || typeof (window as any).RTCPeerConnection === 'undefined') return;
+    if (typeof window === 'undefined') return;
+    if (typeof (window as any).RTCPeerConnection === 'undefined') {
+      this.setOnlineMessage('เบราว์เซอร์นี้ใช้การเชื่อมต่อข้ามเครื่องไม่ได้ กรุณาเปิดเกมผ่าน HTTPS หรือ localhost ในเบราว์เซอร์ที่รองรับ WebRTC (ยังเล่นข้ามแท็บที่ URL เดียวกันได้)');
+      return;
+    }
+    this.setOnlineMessage('กำลังเปิดห้องออนไลน์...');
 
     const generation = this.transportGeneration;
     try {
       const mod = await import('peerjs');
       if (generation !== this.transportGeneration || this.currentRoom?.code !== roomCode) return;
+      if (this.peer && !this.peer.destroyed) return;
       const PeerClass = (mod as any).Peer || (mod as any).default?.Peer || (mod as any).default;
       if (!PeerClass) return;
 
@@ -593,6 +631,8 @@ export class NetworkRoomManager {
       });
 
       this.peer.on('open', (id: string) => {
+        if (generation !== this.transportGeneration) return;
+        this.setOnlineMessage('ห้องออนไลน์พร้อมรับผู้เล่น');
         console.log('[NetworkRoomManager] Host WebRTC Peer open:', id);
       });
 
@@ -626,15 +666,29 @@ export class NetworkRoomManager {
       });
 
       this.peer.on('error', (err: any) => {
+        if (generation !== this.transportGeneration) return;
+        this.setOnlineMessage(err?.type === 'unavailable-id'
+          ? 'รหัสห้องนี้ถูกใช้อยู่ กรุณาออกจากห้องแล้วสร้างห้องใหม่'
+          : 'เปิดห้องออนไลน์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วกดลองเชื่อมต่อใหม่ (ยังเล่นข้ามแท็บที่ URL เดียวกันได้)');
         console.warn('[NetworkRoomManager] Host Peer error:', err);
       });
+      this.peer.on('disconnected', () => {
+        if (generation !== this.transportGeneration) return;
+        this.setOnlineMessage('การเชื่อมต่อเซิร์ฟเวอร์ห้องหลุด กดลองเชื่อมต่อใหม่เพื่อให้เพื่อนเข้าห้องได้');
+      });
     } catch (err) {
+      if (generation === this.transportGeneration) this.setOnlineMessage('โหลดระบบเชื่อมต่อออนไลน์ไม่สำเร็จ กรุณาลองเชื่อมต่อใหม่');
       console.warn('[NetworkRoomManager] Could not init WebRTC Host:', err);
     }
   }
 
   private async initGuestWebRTC(roomCode: string, myPeerId: string, selfPeer: ConnectedPeer, isRejoining: boolean = false, previousPeerId?: string) {
-    if (typeof window === 'undefined' || typeof (window as any).RTCPeerConnection === 'undefined') return;
+    if (typeof window === 'undefined') return;
+    if (typeof (window as any).RTCPeerConnection === 'undefined') {
+      this.setOnlineMessage('เบราว์เซอร์นี้ใช้การเชื่อมต่อข้ามเครื่องไม่ได้ กรุณาเปิดเกมผ่าน HTTPS หรือ localhost ในเบราว์เซอร์ที่รองรับ WebRTC (ยังเล่นข้ามแท็บที่ URL เดียวกันได้)');
+      return;
+    }
+    this.setOnlineMessage('กำลังเชื่อมต่อห้องออนไลน์...');
 
     const generation = this.transportGeneration;
     try {
@@ -706,6 +760,7 @@ export class NetworkRoomManager {
           if (this.hostConnection !== conn) return;
           console.log('[NetworkRoomManager] WebRTC connection to host closed');
           this.hostConnection = null;
+          this.setOnlineMessage('การเชื่อมต่อ Host หลุด กำลังเชื่อมต่อใหม่...');
           this.scheduleAutoReconnect();
         });
       });
@@ -713,10 +768,14 @@ export class NetworkRoomManager {
       this.peer.on('error', (err: any) => {
         if (this.peer !== activePeer) return;
         console.warn('[NetworkRoomManager] Guest Peer error:', err);
+        this.setOnlineMessage(err?.type === 'peer-unavailable'
+          ? 'ยังไม่พบ Host ตรวจรหัสห้องและให้ Host เปิดเกมค้างไว้ กำลังลองใหม่...'
+          : 'เชื่อมต่อออนไลน์ไม่สำเร็จ กำลังลองใหม่ หากยังไม่ได้ให้ลองเปลี่ยนเครือข่าย');
         this.hostConnection = null;
         this.scheduleAutoReconnect();
       });
     } catch (err) {
+      if (generation === this.transportGeneration) this.setOnlineMessage('โหลดระบบเชื่อมต่อออนไลน์ไม่สำเร็จ กรุณาลองเชื่อมต่อใหม่');
       console.warn('[NetworkRoomManager] Could not init WebRTC Guest:', err);
     }
   }
@@ -748,7 +807,15 @@ export class NetworkRoomManager {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    if (this.currentRoom && !this.currentRoom.isHost) {
+    if (this.currentRoom?.isHost) {
+      if (this.peer?.disconnected && !this.peer.destroyed) {
+        this.setOnlineMessage('กำลังเชื่อมต่อเซิร์ฟเวอร์ห้องใหม่...');
+        this.peer.reconnect();
+      } else if (!this.peer || this.peer.destroyed) {
+        this.initHostWebRTC(this.currentRoom.code, this.currentRoom.connectedPeers[0]?.name || 'Host');
+      }
+    } else if (this.currentRoom) {
+      this.waitForAdmission();
       const me = this.currentRoom.connectedPeers.find(p => p.id === this.currentRoom!.myPeerId) || {
         id: this.currentRoom.myPeerId,
         clientSessionId: getOrCreateClientSessionId(),
@@ -837,6 +904,9 @@ export class NetworkRoomManager {
       if (['JOIN_ROOM', 'REJOIN_ROOM'].includes(packet.type)) return;
       if (packet.type === 'PEER_CONNECTED' || packet.type === 'PEER_RECONNECTED') {
         if (packet.senderId !== 'host' || !Array.isArray(packet.payload?.peers)) return;
+        if (this.admissionTimer) clearTimeout(this.admissionTimer);
+        this.admissionTimer = null;
+        this.onlineMessage = source === 'webrtc' ? 'เชื่อมต่อห้องออนไลน์แล้ว' : this.onlineMessage;
         room.connectedPeers = packet.payload.peers;
         room.partySize = packet.payload.partySize ?? room.partySize;
         room.gameMode = packet.payload.gameMode ?? room.gameMode;

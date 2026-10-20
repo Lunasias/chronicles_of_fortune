@@ -2,7 +2,7 @@ import './_browser-stubs.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NetworkRoomManager } from '../.test-build/engine/NetworkRoomManager.js';
-import { canAcceptTurnPacket, applyNetworkState } from '../.test-build/engine/MultiplayerSync.js';
+import { canAcceptTurnPacket, applyNetworkState, RemoteMovementPlayback } from '../.test-build/engine/MultiplayerSync.js';
 import { GameState } from '../.test-build/game/GameState.js';
 import { SaveManager } from '../.test-build/game/SaveManager.js';
 
@@ -138,6 +138,92 @@ test('invalid room codes do not destroy the existing room', t => {
   const code = host.getRoomCode();
   assert.equal(host.joinRoom('bad-code'), false);
   assert.equal(host.getRoomCode(), code);
+});
+
+test('new joins from duplicated tabs get separate session identities and seats', async t => {
+  const { host, guests: [guest] } = await roomWithGuests(t);
+  const original = structuredClone(host.getRoomInfo().connectedPeers[1]);
+  sessionStorage.setItem('cf_client_session_id', original.clientSessionId);
+  const duplicate = new NetworkRoomManager();
+  t.after(() => duplicate.leaveRoom());
+  duplicate.joinRoom(host.getRoomCode(), 'Duplicate');
+  await flush();
+  assert.equal(host.getRoomInfo().connectedPeers.length, 3);
+  assert.equal(guest.getLocalPlayerIndex(), 1);
+  assert.equal(duplicate.getLocalPlayerIndex(), 2);
+  assert.notEqual(host.getRoomInfo().connectedPeers[2].clientSessionId, original.clientSessionId);
+  assert.equal(host.getRoomInfo().connectedPeers[1].id, original.id);
+});
+
+test('host can reconnect its signaling peer after losing the broker', t => {
+  const host = manager(); host.createRoom();
+  let reconnected = 0;
+  host.peer = { disconnected: true, destroyed: false, reconnect() { reconnected++; }, destroy() {} };
+  t.after(() => host.leaveRoom());
+  host.reconnectWebRTC();
+  assert.equal(reconnected, 1);
+  assert.match(host.getOnlineMessage(), /กำลังเชื่อมต่อ/);
+});
+
+test('missing hosts report a connection timeout and leaving clears admission timers', t => {
+  const originalSet = globalThis.setTimeout, originalClear = globalThis.clearTimeout;
+  const pending = new Map(); let serial = 0;
+  globalThis.setTimeout = callback => { pending.set(++serial, callback); return serial; };
+  globalThis.clearTimeout = id => pending.delete(id);
+  const guest = manager();
+  t.after(() => { guest.leaveRoom(); globalThis.setTimeout = originalSet; globalThis.clearTimeout = originalClear; });
+  guest.joinRoom('CF-0000');
+  assert.equal(pending.size, 1);
+  const timeout = [...pending.values()][0]; pending.clear(); timeout();
+  assert.match(guest.getOnlineMessage(), /ยังเชื่อมต่อ Host ไม่สำเร็จ/);
+  guest.reconnectWebRTC();
+  assert.equal(pending.size, 1);
+  guest.leaveRoom();
+  assert.equal(pending.size, 0);
+  assert.equal(guest.getOnlineMessage(), '');
+});
+
+test('remote walking follows each step without applying poison, economy or random events; snapshots cancel playback', t => {
+  const game = new GameState();
+  game.initGame([{ name: 'Remote', classKey: 'warrior', isAI: false }]);
+  game.remainingMoves = 2; game.phase = 'CHOOSING_PATH';
+  const player = game.activePlayer;
+  player.poisonTurns = 3;
+  const start = game.allNodes.find(n => n.id === player.nodeId);
+  const next = game.allNodes.find(n => n.id === start.neighbors[0]);
+  const last = game.allNodes.find(n => n.id === next.neighbors.find(id => id !== start.id));
+  const path = [start.id, next.id, last.id];
+  const original = { hp: player.hp, gold: player.gold, rng: game.world.rng };
+  const previous = { raf: globalThis.requestAnimationFrame, cancel: globalThis.cancelAnimationFrame, now: Date.now };
+  let now = 1000, serial = 0;
+  const frames = new Map();
+  Date.now = () => now;
+  globalThis.requestAnimationFrame = callback => { frames.set(++serial, callback); return serial; };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
+  t.after(() => { Date.now = previous.now; globalThis.requestAnimationFrame = previous.raf; globalThis.cancelAnimationFrame = previous.cancel; });
+  const renderer = { centerCameraOn(x, y, z) { this.target = [x, y, z]; } };
+  const playback = new RemoteMovementPlayback();
+  playback.play(game, path, () => renderer.centerCameraOn(player.gridX, player.gridY, player.gridZ));
+  assert.equal(game.phase, 'MOVING');
+  for (let i = 0; i < 20 && frames.size; i++) {
+    now += 100;
+    const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback(now));
+    assert.deepEqual(renderer.target, [player.gridX, player.gridY, player.gridZ]);
+  }
+  assert.equal(game.phase, 'TILE_EVENT');
+  assert.equal(player.nodeId, last.id);
+  assert.deepEqual(renderer.target, [last.gx, last.gy, last.gz]);
+  assert.deepEqual({ hp: player.hp, gold: player.gold, rng: game.world.rng }, original);
+  assert.equal(game.remainingMoves, 0);
+  assert.equal(player.walkFrame, 0);
+  playback.play(game, [last.id, next.id], () => {});
+  const stale = [...frames.values()];
+  playback.cancel();
+  player.gridX = 999; now += 1000;
+  stale.forEach(callback => callback(now));
+  assert.equal(player.gridX, 999);
+  assert.equal(frames.size, 0);
+  assert.equal(player.walkFrame, 0);
 });
 
 test('human and AI handoffs replicate state to host and guests without losing movement phase', () => {

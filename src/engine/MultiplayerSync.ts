@@ -2,6 +2,67 @@ import type { GameState } from '../game/GameState';
 import { SaveManager } from '../game/SaveManager';
 import type { NetworkPacket, RoomInfo } from './NetworkRoomManager';
 
+/** Visual playback only: remote turns must never execute tile rules or consume RNG. */
+export class RemoteMovementPlayback {
+  private frame: number | null = null;
+  private generation = 0;
+  private movingPlayer: GameState['activePlayer'] | null = null;
+
+  cancel(): void {
+    this.generation++;
+    if (this.frame !== null) cancelAnimationFrame(this.frame);
+    this.frame = null;
+    if (this.movingPlayer) this.movingPlayer.walkFrame = 0;
+    this.movingPlayer = null;
+  }
+
+  play(game: GameState, path: number[], onStep: () => void): void {
+    this.cancel();
+    const generation = this.generation;
+    const player = game.activePlayer;
+    const nodes = path.slice(1).map(id => game.allNodes.find(node => node.id === id));
+    if (!nodes.length || nodes.some(node => !node)) return;
+    this.movingPlayer = player;
+    game.phase = 'MOVING';
+    game.highlightedNodes = [];
+    game.activePreviewPath = [...path];
+    let index = 0;
+    const startStep = () => {
+      const target = nodes[index]!;
+      const start = { x: player.gridX, y: player.gridY, z: player.gridZ };
+      const dx = target.gx - start.x, dy = target.gy - start.y;
+      player.facing = game.calculateIsoDirection(dx, dy, player.facing);
+      const duration = Math.max(60, Math.round((150 + Math.hypot(dx, dy) * 30) / game.gameSpeed));
+      const started = Date.now();
+      const animate = () => {
+        if (generation !== this.generation || game.activePlayer !== player) return;
+        const elapsed = Date.now() - started;
+        const progress = Math.min(1, elapsed / duration);
+        player.gridX = start.x + dx * progress;
+        player.gridY = start.y + dy * progress;
+        player.gridZ = start.z + (target.gz - start.z) * progress;
+        player.walkFrame = progress < 1 ? (Math.floor(elapsed / Math.max(10, Math.round(30 / game.gameSpeed))) % 8) + 1 : 0;
+        if (progress === 1) {
+          player.prevNodeId = player.nodeId;
+          player.nodeId = target.id;
+        }
+        onStep();
+        if (progress < 1) this.frame = requestAnimationFrame(animate);
+        else if (++index < nodes.length) startStep();
+        else {
+          this.frame = null;
+          this.movingPlayer = null;
+          game.activePreviewPath = [];
+          game.remainingMoves = 0;
+          game.phase = 'TILE_EVENT';
+        }
+      };
+      animate();
+    };
+    startStep();
+  }
+}
+
 /** The active human simulates their turn; only the host simulates AI turns. */
 export function canAcceptTurnPacket(game: GameState, room: RoomInfo | null, packet: NetworkPacket): boolean {
   if (!room || packet.roomCode !== room.code || packet.payload?.playerIdx !== game.activePlayerIdx) return false;

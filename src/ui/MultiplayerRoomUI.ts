@@ -225,7 +225,8 @@ export class MultiplayerRoomUI {
     this.gameMode = room.gameMode || 'standard';
     const canStart = isHost && room.status === 'lobby' && Array.from({ length: partySize }, (_, i) => connectedPeers[i] ? !connectedPeers[i].isDisconnected : !!this.botSlots[i]).every(Boolean);
     const myPeerId = room.myPeerId;
-    const connected = connectedPeers.some(p => p.isHost);
+    const connected = connectedPeers.some(p => p.isHost && !p.isDisconnected);
+    const onlineMessage = networkRoomManager.getOnlineMessage();
     const me = connectedPeers.find(p => p.id === myPeerId);
     if (me) { this.localName = me.name; this.localClass = me.classKey; this.localSkin = me.skinVariant; }
 
@@ -314,12 +315,16 @@ export class MultiplayerRoomUI {
         `}
 
         <!-- Slots Roster -->
+        ${onlineMessage ? `<div class="text-[11px] text-slate-300" role="status">
+          <p>${escapeHtml(onlineMessage)}</p>
+          ${networkRoomManager.canRetryConnection() ? '<button id="btnRetryRoomConnection" class="pixel-btn px-2 py-1 text-xs">ลองเชื่อมต่อใหม่</button>' : ''}
+        </div>` : ''}
         <div class="flex flex-col gap-1.5">
           <div class="flex justify-between items-center text-xs">
             <span class="text-slate-300 font-bold">ผู้เล่นในห้อง (${connectedPeers.length}/${partySize}):</span>
             <span class="text-[10px] text-emerald-400 flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-emerald-400 animate-pulse"></span>
-              <span>${connected ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อมต่อ Host...'}</span>
+              <span>${connected ? (isHost ? 'คุณเป็น Host' : 'เข้าร่วมห้องแล้ว') : 'กำลังเชื่อมต่อ Host...'}</span>
             </span>
           </div>
 
@@ -393,6 +398,8 @@ export class MultiplayerRoomUI {
         </div>
       </div>
     `;
+
+    document.getElementById('btnRetryRoomConnection')?.addEventListener('click', () => networkRoomManager.reconnectWebRTC());
 
     if (room.status === 'playing') {
       this.modal.querySelectorAll<HTMLButtonElement | HTMLSelectElement>('.btn-lobby-party-size, #selectLobbyGameMode, .btn-toggle-slot-ai, .lobby-change-class').forEach(el => el.disabled = true);

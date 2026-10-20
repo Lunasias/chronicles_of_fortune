@@ -14,7 +14,7 @@ import { JOB_VISUALS } from './engine/JobVisuals';
 import { GameState } from './game/GameState';
 import { isLegalMovementPath } from './game/Movement';
 import { IsometricRenderer } from './engine/IsometricRenderer';
-import { canAcceptTurnPacket, applyNetworkState } from './engine/MultiplayerSync';
+import { canAcceptTurnPacket, applyNetworkState, RemoteMovementPlayback } from './engine/MultiplayerSync';
 import { canShowMovementNavigation } from './engine/NavigationArrows';
 import { HUD } from './ui/HUD';
 import { MovementUI } from './ui/MovementUI';
@@ -63,6 +63,7 @@ class DokaponApp {
   private visualReviewSampleAt = 0;
   private canvas: HTMLCanvasElement;
   private renderer: IsometricRenderer;
+  private remoteMovement = new RemoteMovementPlayback();
   private game: GameState;
   private hud: HUD;
   private movementUI: MovementUI;
@@ -188,6 +189,8 @@ class DokaponApp {
   }
 
   private startMultiplayerGame(opts: MultiplayerStartOptions) {
+    this.remoteMovement.cancel();
+    this.renderer.camera.targetZoom = this.renderer.getDefaultZoom();
     if (opts.saveData) {
       const me = networkRoomManager.getRoomInfo()?.connectedPeers.find(p => p.id === networkRoomManager.getMyPeerId());
       if (me?.playerIndex !== undefined) networkRoomManager.setLocalPlayerIndex(me.playerIndex);
@@ -256,15 +259,19 @@ class DokaponApp {
         )) return;
         const node = this.game.allNodes.find(n => n.id === path[path.length - 1]);
         if (!node) return;
-        // Spectators never run tile events, random encounters, movement damage or AI.
-        Object.assign(this.game.activePlayer, { nodeId: node.id, gridX: node.gx, gridY: node.gy, gridZ: node.gz });
-        this.game.phase = 'TILE_EVENT'; this.game.remainingMoves = 0; this.game.highlightedNodes = [];
-        this.hud.update();
+        this.remoteMovement.play(this.game, path, () => {
+          const p = this.game.activePlayer;
+          this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
+          this.hud.update();
+        });
       } else if (pkt.type === 'SYNC_STATE') {
         if (!this.isTurnPacket(pkt) || !pkt.payload?.state) return;
         const previousPlayer = this.game.activePlayerIdx;
         const result = applyNetworkState(this.game, pkt.payload);
         if (!result.success) return;
+        this.remoteMovement.cancel();
+        const p = this.game.activePlayer;
+        this.renderer.centerCameraOn(p.gridX, p.gridY, p.gridZ);
         if (result.bossState) { this.bossCurrentHp = result.bossState.currentHp; this.bossMaxHp = result.bossState.maxHp; }
         networkRoomManager.saveSessionSnapshot(pkt.payload.state); this.hud.update();
         if (previousPlayer !== this.game.activePlayerIdx || this.game.phase === 'BOARD_TURN') {
@@ -311,6 +318,7 @@ class DokaponApp {
           const mySessionId = getOrCreateClientSessionId();
           const isTarget = pkt.payload.clientSessionId === mySessionId || pkt.payload.peerId === networkRoomManager.getMyPeerId();
           if (isTarget || pkt.payload.restartTurn) {
+            this.remoteMovement.cancel();
             if (pkt.payload.restartTurn) document.getElementById('journeyDecision')?.classList.add('hidden');
             if (isTarget && typeof pkt.payload.playerIndex === 'number') {
               networkRoomManager.setLocalPlayerIndex(pkt.payload.playerIndex);
@@ -345,6 +353,7 @@ class DokaponApp {
     });
 
     networkRoomManager.onStateChange(() => {
+      if (!networkRoomManager.isInRoom()) this.remoteMovement.cancel();
       this.updateMultiplayerHudBadge();
     });
   }
