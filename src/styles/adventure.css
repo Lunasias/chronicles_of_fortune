@@ -1,0 +1,89 @@
+/* The journal and destination planner share the game's ink, brass and jade. */
+#adventureGuideModal { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: #061018cf; }
+#adventureGuideModal[hidden], #adventureCoach[hidden] { display: none; }
+.adventure-guide-dialog { width: min(760px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; min-height: 0; padding: 24px; color: #f0e5cb; background: #12262e; border: 2px solid #bba16c; border-image: url('/assets/generated/fortune-ui-frame-v1.webp') 192 / 22px stretch; box-shadow: 0 12px 48px #0009; }
+.adventure-guide-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 14px; }
+.adventure-guide-header h2 { font-size: 24px; line-height: 1.5; margin: 2px 0 0; color: #f3d59b; }
+.adventure-eyebrow { display: block; font-size: 10px; line-height: 1.8; letter-spacing: 1.5px; color: #adbcac; }
+.adventure-guide-header button { min-height: 44px; padding: 6px 12px; white-space: nowrap; }
+.adventure-guide-tabs { display: flex; gap: 8px; padding-bottom: 16px; flex-shrink: 0; }
+.adventure-guide-tabs button { flex: 1; min-height: 44px; font-size: 13px; }
+.adventure-guide-tabs button[aria-pressed='true'] { color: #14262a; background: #d1b477; border-color: #f0d5a0; }
+.adventure-guide-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 8px; font-size: 14px; line-height: 1.8; }
+.adventure-guide-content > section { margin: 0 0 20px; }
+.adventure-guide-content h3 { color: #f0d49a; font-weight: 600; font-size: 17px; margin: 0 0 6px; }
+.adventure-guide-content h4 { color: #c6e3d1; font-weight: 600; font-size: 15px; margin: 0 0 5px; }
+.adventure-guide-content p { margin: 0; color: #c3d1d0; }
+.adventure-guide-intro { padding-bottom: 14px; border-bottom: 1px solid #334b50; }
+.focus-node-btn { cursor: pointer; text-align: left; }
+.adventure-objective, .adventure-next-step { padding: 16px; background: #0c1f29; border-left: 3px solid #a4c7a9; }
+.adventure-objective progress { display: block; width: 100%; height: 12px; margin-top: 14px; accent-color: #b5d3ad; }
+.adventure-progress-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 12px; color: #e0c695; }
+.adventure-standings { list-style: none; padding: 0; margin: 8px 0 0; }
+.adventure-standings li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; border-bottom: 1px solid #334b50; padding: 10px; }
+.adventure-standings li[data-active='true'] { background: #234239; }
+.adventure-standings strong { overflow-wrap: anywhere; }
+.adventure-standings small { display: block; color: #a9c0bd; font-size: 12px; }
+.adventure-rank { color: #dfbf7e; font-size: 18px; }
+.adventure-muted { font-size: 12px; color: #a8b9bb; }
+.adventure-service-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.adventure-service-list button { min-height: 68px; padding: 10px; text-align: left; }
+.adventure-service-list button span { display: block; color: #a9c5c2; font-size: 12px; font-weight: 400; }
+.adventure-combat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.adventure-combat-grid article { padding: 14px; background: #0c2029; border: 1px solid #405657; }
+.adventure-control-list { display: grid; grid-template-columns: 120px 1fr; margin: 0 0 20px; gap: 0 12px; }
+.adventure-control-list dt, .adventure-control-list dd { padding: 10px 0; margin: 0; border-bottom: 1px solid #334b50; }
+.adventure-control-list dt { color: #ecd29d; font-weight: 600; }
+.adventure-control-list dd { color: #c3d1d0; }
+#adventureCoach { position: fixed; z-index: 29; left: max(12px, env(safe-area-inset-left)); bottom: calc(var(--dock-clearance, 88px) + 12px); width: min(440px, calc(100vw - 24px)); display: flex; align-items: center; gap: 10px; padding: 12px; background: #142b32f5; color: #eed8aa; border: 1px solid #9f916b; box-shadow: 0 3px 12px #0005; font-size: 12px; }
+#adventureCoach > div { flex: 1; min-width: 0; }
+#adventureCoach p { margin: 3px 0 0; color: #bdcfcc; font-size: 11px; line-height: 1.6; }
+#adventureCoach .pixel-btn { min-height: 44px; padding: 6px 10px; font-size: 12px; }
+.adventure-coach-close { min-height: 44px; min-width: 32px; color: #bbc7c3; }
+body.adventure-guide-open :is(#floatingEventToast, #turnStartBanner, #orientationHintToast) { display: none; }
+
+body #movementNavigator { width: min(650px, calc(100vw - 24px)); max-height: min(530px, calc(100dvh - var(--hud-clearance, 100px) - var(--dock-clearance, 88px) - 28px)); overflow-y: auto; overscroll-behavior: contain; }
+.movement-filters { display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0; }
+.movement-filters button { min-height: 36px; padding: 4px 10px; font-size: 11px; }
+.movement-filters button[aria-pressed='true'] { color: #15292e; background: #c4ae77; border-color: #efd398; }
+.movement-options { margin: 8px 0; }
+.movement-options summary { cursor: pointer; padding: 6px 0; color: #c5d6ce; }
+.movement-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; }
+.movement-list-toolbar label { display: flex; gap: 8px; align-items: center; }
+.movement-list-toolbar select { min-height: 36px; padding: 4px 8px; font-size: 11px; }
+.movement-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 190px; overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 4px; }
+.movement-card { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 64px; padding: 9px 10px; border: 1px solid #617b7c; background: #172f39; color: #f0e2c4; text-align: left; font-size: 12px; line-height: 1.5; }
+.movement-card strong { overflow-wrap: anywhere; }
+.movement-card[aria-pressed='true'], .movement-card[aria-current='true'] { border-color: #ecd096; box-shadow: inset 3px 0 #d7bd84; background: #29423f; }
+.movement-card-meta { display: block; color: #b3c9ca; font-size: 10px; }
+.movement-advice { padding: 8px 10px; border-left: 3px solid #91bca3; background: #0e222c; font-size: 12px; margin-top: 6px; line-height: 1.6; }
+.movement-advice[data-risk='danger'] { border-color: #e49b8f; }
+.movement-recommendation { color: #c5ddbe; font-size: 11px; padding: 4px 0; }
+.movement-health { color: #e6bc8e; font-size: 11px; margin: 4px 0; }
+.movement-empty { padding: 12px; color: #b7c9c8; font-size: 12px; line-height: 1.6; }
+body #movementNavigator .movement-actions { position: sticky; bottom: -12px; z-index: 2; padding: 9px 0 8px; background: #142936; }
+.movement-list button:focus-visible, .movement-filters button:focus-visible { outline: 2px solid #a8dfc1; outline-offset: 1px; }
+
+@media (max-width: 600px) {
+  .adventure-guide-dialog { padding: 18px 14px 14px; max-height: calc(100dvh - 24px); border-image-width: 14px; }
+  #adventureGuideModal { padding: 12px; }
+  .adventure-guide-header { gap: 8px; }
+  .adventure-guide-header h2 { font-size: 20px; }
+  .adventure-eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .adventure-guide-content { font-size: 13px; padding-right: 3px; }
+  .adventure-combat-grid, .adventure-service-list { grid-template-columns: minmax(0, 1fr); }
+  .adventure-control-list { grid-template-columns: 88px 1fr; }
+  .movement-list { grid-template-columns: minmax(0, 1fr); max-height: 145px; }
+  .movement-filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .movement-filters button { flex-shrink: 0; min-height: 40px; }
+  body #movementNavigator { bottom: var(--dock-clearance); padding: 9px 10px 4px; }
+  #adventureCoach { padding: 8px 10px; gap: 6px; }
+}
+@media (max-height: 500px) and (min-width: 601px) {
+  body #movementNavigator { right: 10px; left: auto; transform: none; width: min(480px, calc(100vw - 24px)); bottom: var(--dock-clearance); max-height: calc(100dvh - var(--hud-clearance, 75px) - var(--dock-clearance, 70px) - 12px); }
+  .movement-list { max-height: 105px; }
+  .adventure-guide-header h2 { font-size: 20px; }
+  .adventure-guide-header { padding-bottom: 8px; }
+  .adventure-guide-tabs { padding-bottom: 8px; }
+  #adventureCoach { right: 12px; left: auto; bottom: var(--dock-clearance); }
+}

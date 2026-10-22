@@ -21,6 +21,7 @@ export function installInterface(): void {
   measureHUD();
   const menu = document.querySelector<HTMLDetailsElement>('#hudSystemMenu');
   const labels: Record<string, string> = {
+    btnAdventureGuide: 'สมุดนักผจญภัย',
     btnToggleCrisisTracker: 'ภารกิจ', btnToggleLogHistory: 'บันทึกเหตุการณ์',
     btnSaveGame: 'บันทึกเกม', btnToggleBgm: 'เสียงเพลง',
     btnMobileDisplayToggle: 'การแสดงผล', btnSettings: 'ตั้งค่า',

@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-22",
+  "source": "public/assets/art-v2/world-rebuild-v1",
+  "sheets": 18,
+  "sourceDimensions": [1536, 1024],
+  "nominalGrid": [6, 4],
+  "alphaThreshold": 80,
+  "findings": {
+    "opaqueOuterEdgePixelsAtAlpha100": 0,
+    "sheetsWith24SeparateLargeComponents": 15,
+    "largeComponentMinimumPixels": 1000,
+    "cause": "Generated objects cross nominal 256px cell boundaries. Fixed-cell extraction truncates otherwise complete objects.",
+    "recovery": "Segment the full source sheet once, assign separated objects to their source slots, and fit complete bounds into a padded runtime canvas."
+  },
+  "joinedObjects": [
+    {
+      "theme": "abyss",
+      "slots": ["capital", "tavern"],
+      "bounds": [8, 511, 260, 1019],
+      "componentPixels": 74213,
+      "slotOwnershipPercent": [52, 47]
+    },
+    {
+      "theme": "dungeon_volcano",
+      "slots": ["landmark", "isekai_event"],
+      "bounds": [789, 520, 1010, 1008],
+      "componentPixels": 64185,
+      "slotOwnershipPercent": [51, 49]
+    },
+    {
+      "theme": "volcano",
+      "slots": ["capital", "bridge"],
+      "bounds": [8, 755, 509, 1009],
+      "componentPixels": 85432,
+      "slotOwnershipPercent": [53, 47]
+    }
+  ],
+  "replacementRecommendation": "Generate standalone replacements for the six joined subjects. Preserve original source sheets and use versioned replacement paths."
+}

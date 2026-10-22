@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chronicles of Fortune - ตำนานแห่งโชคชะตา</title>
   <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <meta name="theme-color" content="#090d16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Fortuna">
+  <link rel="preload" as="image" href="/assets/generated/world-loading-v1.webp" fetchpriority="high">
   <!-- Tailwind CSS is compiled at build time and imported from src/main.ts -->
   <!-- Google Pixel Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -709,8 +712,52 @@
       background: var(--px-well);
     }
   </style>
+  <style>
+    /* This cover is styled in HTML so a slow module download never shows a blank canvas. */
+    #artworkLoading { position: fixed; inset: 0; z-index: 200; display: flex; align-items: flex-end; justify-content: center; overflow: auto; padding: 32px 24px max(36px, env(safe-area-inset-bottom)); background: #10251f url('/assets/art-v2/kingdom-title.png') center / cover no-repeat; color: #fff1d4; font-family: 'Kanit', sans-serif; text-align: center; }
+    #artworkLoading[hidden] { display: none; }
+    #artworkLoading .fortune-loading-scene { position: absolute; inset: 0; background: linear-gradient(180deg, #09191500 40%, #091915b3 100%), url('/assets/generated/world-loading-v1.webp') center / cover no-repeat; }
+    #artworkLoading .fortune-loading-caption { position: absolute; top: max(28px, env(safe-area-inset-top)); left: max(28px, env(safe-area-inset-left)); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-shadow: 0 2px 3px #091915; }
+    #artworkLoading .fortune-loading-caption span:first-child { font: 20px 'Silkscreen', monospace; color: #f4d18a; letter-spacing: 5px; }
+    #artworkLoading .fortune-loading-caption span:last-child { color: #e7efcf; font-size: 12px; letter-spacing: 2px; }
+    #artworkLoading .fortune-loading-card { position: relative; width: min(500px, 100%); padding: 26px 32px 24px; background: #101f22ed; border: 1px solid #c4a26a; box-shadow: inset 0 0 0 4px #162d30, inset 0 0 0 5px #76978966, 0 8px 30px #03110e77; }
+    #artworkLoading .fortune-loading-eyebrow { color: #e3c185; font: 10px 'Silkscreen', monospace; letter-spacing: 2px; }
+    #artworkLoading h2 { margin: 12px 0 6px; font-size: clamp(20px, 3vw, 27px); line-height: 1.5; }
+    #artworkLoading p { margin: 0 0 18px; color: #c1d6cb; font-size: 13px; line-height: 1.7; }
+    #artworkLoading progress { display: block; width: 100%; height: 10px; accent-color: #ddbd78; border: 1px solid #6d8175; background: #071611; }
+    #artworkLoading progress::-webkit-progress-bar { background: #071611; }
+    #artworkLoading progress::-webkit-progress-value { background: linear-gradient(90deg, #72ad92, #e3c27c); }
+    #artworkLoading progress::-moz-progress-bar { background: #c7bb80; }
+    #artworkLoading small { display: block; margin-top: 12px; color: #9fb7aa; font-size: 11px; line-height: 1.6; }
+    #artworkLoading button { display: block; margin: 18px auto 0; padding: 10px 20px; }
+    #artworkLoading button[hidden] { display: none; }
+    @media (max-width: 600px) {
+      #artworkLoading { padding: 16px 16px max(24px, env(safe-area-inset-bottom)); }
+      #artworkLoading .fortune-loading-scene { background-position: 43% center; }
+      #artworkLoading .fortune-loading-caption { top: max(22px, env(safe-area-inset-top)); left: max(22px, env(safe-area-inset-left)); }
+      #artworkLoading .fortune-loading-card { padding: 22px 18px 20px; }
+      #artworkLoading .fortune-loading-eyebrow { font-size: 8px; letter-spacing: 1px; }
+    }
+    @media (max-height: 440px) and (orientation: landscape) {
+      #artworkLoading { align-items: center; justify-content: flex-end; padding: 16px 28px; }
+      #artworkLoading .fortune-loading-card { width: min(430px, 60%); padding: 16px 24px; }
+      #artworkLoading small { display: none; }
+    }
+  </style>
 </head>
 <body class="w-screen h-screen relative bg-slate-950 flex flex-col items-center justify-center select-none overflow-hidden">
+  <div id="artworkLoading" role="status" aria-live="polite">
+    <div class="fortune-loading-scene" aria-hidden="true"></div>
+    <div class="fortune-loading-caption" aria-hidden="true"><span>FORTUNA</span><span>อาณาจักรเหนือหมู่เมฆ</span></div>
+    <div class="fortune-loading-card">
+      <span class="fortune-loading-eyebrow">CHRONICLES OF FORTUNE</span>
+      <h2>กำลังเตรียมโลกแห่งโชคชะตา</h2>
+      <p>กำลังเปิดแผนที่และเตรียมเหล่านักผจญภัย</p>
+      <progress max="1" aria-label="ความคืบหน้าการโหลดภาพ"></progress>
+      <small>เส้นทางใหม่ · สมบัติล้ำค่า · ตำนานของคุณ</small>
+      <button class="pixel-btn" hidden>ลองโหลดอีกครั้ง</button>
+    </div>
+  </div>
 
   <!-- MAIN 2.5D ISOMETRIC VIEWPORT (z-0) -->
   <div id="canvasWrapper" class="relative w-full h-full flex items-center justify-center overflow-hidden z-0">
@@ -902,6 +949,7 @@
         <details id="hudSystemMenu" class="system-menu">
           <summary aria-label="เปิดเมนูระบบ" title="เมนูระบบ">☰ <span>เมนู</span></summary>
           <div class="system-menu-content">
+        <button id="btnAdventureGuide" class="pixel-btn" type="button" title="สมุดนักผจญภัย (?)">📖 สมุดนักผจญภัย</button>
         <!-- Crisis Tracker Toggle Button -->
         <button id="btnToggleCrisisTracker" class="pixel-btn px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-red-300 hover:text-white flex items-center gap-1 font-bold touch-manipulation" title="ดูภารกิจและวิกฤตเมือง (Crisis & Objectives)">
           <span>👑</span>
@@ -2168,7 +2216,7 @@
         <span>หอเกียรติยศ</span>
       </button>
       <button id="btnHowToPlay" class="pixel-btn py-2 text-xs text-slate-200 hover:text-white">
-        กฎกติกา
+        คู่มือและวิธีเล่น
       </button>
     </div>
 

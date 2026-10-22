@@ -1,0 +1,283 @@
+{
+  "date": "2026-10-22",
+  "base": "http://localhost:5173",
+  "checks": [
+    {
+      "name": "Title help opens before any campaign exists",
+      "passed": true
+    },
+    {
+      "name": "New game creates the dedicated autosave",
+      "passed": true
+    },
+    {
+      "name": "Keyboard help opens despite hidden nested dialogs",
+      "passed": true
+    },
+    {
+      "name": "Guide traps backward keyboard focus",
+      "passed": true
+    },
+    {
+      "name": "Guide traps forward keyboard focus",
+      "passed": true
+    },
+    {
+      "name": "Space in a guide activates its control without rolling dice",
+      "passed": true
+    },
+    {
+      "name": "Escape closes the guide and restores focus",
+      "passed": true
+    },
+    {
+      "name": "Manual slot1 is written through Settings",
+      "passed": true
+    },
+    {
+      "name": "Export produces a usable Unicode save code",
+      "passed": true,
+      "detail": {
+        "codeCharacters": 25196
+      }
+    },
+    {
+      "name": "Save import restores Unicode player names into the selected slot",
+      "passed": true
+    },
+    {
+      "name": "Autosaving after import preserves the manual slot",
+      "passed": true
+    },
+    {
+      "name": "Continue selects the newest compatible save",
+      "passed": true,
+      "detail": {
+        "latest": 0
+      }
+    },
+    {
+      "name": "Continue returns to the saved campaign",
+      "passed": true
+    },
+    {
+      "name": "Rolled destinations start unconfirmed",
+      "passed": true
+    },
+    {
+      "name": "Selecting a destination previews without starting movement",
+      "passed": true
+    },
+    {
+      "name": "Enter on the focused destination card does not also confirm movement",
+      "passed": true
+    },
+    {
+      "name": "Explicit confirmation walks the selected legal route and reaches its named destination",
+      "passed": true,
+      "detail": {
+        "selectedName": "Solaria Meadows · Trail 2"
+      }
+    },
+    {
+      "name": "Service filter has reachable choices (desktop)",
+      "passed": true
+    },
+    {
+      "name": "Keyboard cycling stays inside the active filter (desktop)",
+      "passed": true,
+      "detail": {
+        "ids": [
+          "137",
+          "130"
+        ],
+        "selected": "130"
+      }
+    },
+    {
+      "name": "Movement confirmation remains reachable (desktop)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 625.34375,
+          "y": 502,
+          "width": 176.46875,
+          "height": 44
+        },
+        "viewport": [
+          1280,
+          720
+        ],
+        "documentWidth": 1280
+      }
+    },
+    {
+      "name": "Journal fits the viewport (desktop)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 260,
+          "y": 36,
+          "width": 760,
+          "height": 648
+        },
+        "viewport": [
+          1280,
+          720
+        ],
+        "documentWidth": 1280
+      }
+    },
+    {
+      "name": "Journal closes without confirming a route (desktop)",
+      "passed": true
+    },
+    {
+      "name": "Service filter has reachable choices (phone)",
+      "passed": true
+    },
+    {
+      "name": "Keyboard cycling stays inside the active filter (phone)",
+      "passed": true,
+      "detail": {
+        "ids": [
+          "137",
+          "130"
+        ],
+        "selected": "130"
+      }
+    },
+    {
+      "name": "Movement confirmation remains reachable (phone)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 239.0625,
+          "y": 714.34375,
+          "width": 126.921875,
+          "height": 44
+        },
+        "viewport": [
+          390,
+          844
+        ],
+        "documentWidth": 390
+      }
+    },
+    {
+      "name": "Journal fits the viewport (phone)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 12,
+          "y": 42.203125,
+          "width": 366,
+          "height": 759.59375
+        },
+        "viewport": [
+          390,
+          844
+        ],
+        "documentWidth": 390
+      }
+    },
+    {
+      "name": "Journal closes without confirming a route (phone)",
+      "passed": true
+    },
+    {
+      "name": "Service filter has reachable choices (landscape)",
+      "passed": true
+    },
+    {
+      "name": "Keyboard cycling stays inside the active filter (landscape)",
+      "passed": true,
+      "detail": {
+        "ids": [
+          "137",
+          "130"
+        ],
+        "selected": "130"
+      }
+    },
+    {
+      "name": "Movement confirmation remains reachable (landscape)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 584,
+          "y": 266,
+          "width": 130,
+          "height": 44
+        },
+        "viewport": [
+          844,
+          390
+        ],
+        "documentWidth": 844
+      }
+    },
+    {
+      "name": "Journal fits the viewport (landscape)",
+      "passed": true,
+      "detail": {
+        "visible": true,
+        "rect": {
+          "x": 42,
+          "y": 19.5,
+          "width": 760,
+          "height": 351
+        },
+        "viewport": [
+          844,
+          390
+        ],
+        "documentWidth": 844
+      }
+    },
+    {
+      "name": "Journal closes without confirming a route (landscape)",
+      "passed": true
+    },
+    {
+      "name": "No browser runtime or asset errors",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "guide-title-desktop",
+    "guide-combat-desktop",
+    "guide-controls-desktop",
+    "save-settings-desktop",
+    "route-decision-desktop",
+    "route-arrival-desktop",
+    "route-filter-desktop",
+    "guide-journey-desktop",
+    "route-filter-phone",
+    "guide-journey-phone",
+    "route-filter-landscape",
+    "guide-journey-landscape"
+  ],
+  "dialogs": [
+    {
+      "type": "alert",
+      "message": "คัดลอกรหัสเซฟ [ช่อง 1] สำเร็จ! สามารถนำไปสำรองหรือนำเข้าบนอุปกรณ์อื่นได้"
+    },
+    {
+      "type": "prompt",
+      "message": "วางรหัสบันทึก (Save Code) เพื่อนำเข้าสู่ช่อง 2:"
+    },
+    {
+      "type": "alert",
+      "message": "นำเข้าข้อมูลเซฟลงในช่อง 2 และโหลดความคืบหน้าสำเร็จ!"
+    }
+  ],
+  "passed": true
+}

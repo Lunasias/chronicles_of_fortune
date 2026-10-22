@@ -4,6 +4,8 @@ The [presentation update](docs/art-review/presentation-v1/README.md) adds seven 
 
 The [2026-10-18 world rebuild](docs/art-review/world-rebuild-v1/README.md) supersedes the historical 312-node layout and generic foreground dressing below: 760 surface nodes, 108 dungeon nodes, 432 generated regional sprites and twenty new ground materials are now the production baseline.
 
+The [2026-10-22 map completion](docs/art-review/map-completion-v1/README.md) recovers full regional objects across source-sheet cell boundaries, adds 24 standalone generated replacements, and introduces an illustrated loading scene and brass/jade UI frame. Regional scenery uses proportionally fitted 128px canvases with transparent gutters and explicit root/foundation anchors; source replacements are 256px transparent PNGs.
+
 ## North star
 An inviting, hand-crafted floating kingdom: jade forests, slate roofs, honey-lit windows,
 cool violet shadows and confident, readable adventurer silhouettes. A tactical board that

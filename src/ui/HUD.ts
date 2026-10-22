@@ -1,5 +1,6 @@
-import { GameState } from '../game/GameState';
-import { Player } from '../game/Player';
+import type { GameState } from '../game/GameState';
+import type { Player } from '../game/Player';
+import type { BoardNode } from '../game/BoardMap';
 import { pixelSprites } from '../engine/PixelSpriteGenerator';
 import { ecosystemSystem } from '../game/EcosystemSystem';
 import { escapeHtml } from '../util/Html';
@@ -13,6 +14,19 @@ export class HUD {
   private minimapCtx: CanvasRenderingContext2D;
   private avatarCanvas: HTMLCanvasElement;
   private avatarCtx: CanvasRenderingContext2D;
+  private avatarKey = '';
+  private rosterButtons = new Map<number, { button: HTMLButtonElement; icon: HTMLSpanElement; name: HTMLSpanElement }>();
+  private rosterContainer: HTMLElement | null = null;
+  private questContainer: HTMLElement | null = null;
+  private questMarkup = '';
+  private minimapBase: HTMLCanvasElement;
+  private minimapBaseCtx: CanvasRenderingContext2D;
+  private minimapSource: BoardNode[] | null = null;
+  private minimapSourceCount = 0;
+  private minimapGroup: number | null = null;
+  private minimapGeometry = '';
+  private minimapMarkerKey: string | null = null;
+  private minimapProject: ((gx: number, gy: number) => { x: number; y: number }) | null = null;
   public onInspectPlayerCallback?: (player: Player) => void;
   public onFocusNodeCallback?: (node: any) => void;
 
@@ -22,6 +36,8 @@ export class HUD {
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
     this.avatarCanvas = document.getElementById('hudAvatarCanvas') as HTMLCanvasElement;
     this.avatarCtx = this.avatarCanvas.getContext('2d')!;
+    this.minimapBase = document.createElement('canvas');
+    this.minimapBaseCtx = this.minimapBase.getContext('2d')!;
 
     // Quest Tracker Minimize Toggle
     let isQuestMinimized = false;
@@ -54,6 +70,7 @@ export class HUD {
     }
 
     window.addEventListener('hero-assets-loaded', () => {
+      this.avatarKey = '';
       this.renderAvatar();
     });
 
@@ -146,27 +163,7 @@ export class HUD {
     }
 
     // Update Roster Inspect Buttons
-    const rosterContainer = document.getElementById('hudRosterButtonsContainer');
-    if (rosterContainer) {
-      rosterContainer.innerHTML = '';
-      this.game.players.forEach(pl => {
-        const isCurrent = pl.id === p.id;
-        const btn = document.createElement('button');
-        btn.className = `pixel-btn px-2 py-1 text-[10px] font-bold flex items-center gap-1 ${ isCurrent ? 'pixel-btn-gold text-slate-950 ring-1 ring-amber-300' : 'text-slate-200 hover:text-white' }`;
-        btn.title = `คลิกเพื่อส่องสเตตัสของ ${pl.displayName} (${isCurrent ? 'คุณ' : 'คู่ต่อสู้'})`;
-        btn.innerHTML = `
-          <span>${pl.avatar}</span>
-          <span class="truncate max-w-[65px]">${escapeHtml(pl.displayName)}</span>
-        `;
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          if (this.onInspectPlayerCallback) {
-            this.onInspectPlayerCallback(pl);
-          }
-        });
-        rosterContainer.appendChild(btn);
-      });
-    }
+    this.updateRoster();
 
     // Render Avatar
     this.renderAvatar();
@@ -178,12 +175,56 @@ export class HUD {
     this.updateQuestTracker();
   }
 
+  private updateRoster() {
+    const container = document.getElementById('hudRosterButtonsContainer');
+    if (!container) return;
+    if (this.rosterContainer !== container) { this.rosterButtons.clear(); this.rosterContainer = container; }
+    const ids = new Set(this.game.players.map(player => player.id));
+    for (const [id, entry] of this.rosterButtons) if (!ids.has(id)) { entry.button.remove(); this.rosterButtons.delete(id); }
+    this.game.players.forEach((player, index) => {
+      let entry = this.rosterButtons.get(player.id);
+      if (!entry) {
+        const button = document.createElement('button'), icon = document.createElement('span'), name = document.createElement('span');
+        button.type = 'button'; name.className = 'truncate max-w-[65px]'; button.append(icon, name);
+        const id = player.id;
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          // Multiplayer synchronization replaces Player instances; inspect the live one.
+          const current = this.game.players.find(candidate => candidate.id === id);
+          if (current) this.onInspectPlayerCallback?.(current);
+        });
+        entry = { button, icon, name }; this.rosterButtons.set(id, entry);
+      }
+      const current = player.id === this.game.activePlayer.id;
+      const className = `pixel-btn px-2 py-1 text-[10px] font-bold flex items-center gap-1 ${current ? 'pixel-btn-gold text-slate-950 ring-1 ring-amber-300' : 'text-slate-200 hover:text-white'}`;
+      if (entry.button.className !== className) entry.button.className = className;
+      const title = `คลิกเพื่อส่องสเตตัสของ ${player.displayName} (${current ? 'คุณ' : 'คู่ต่อสู้'})`;
+      if (entry.button.title !== title) entry.button.title = title;
+      entry.button.setAttribute('aria-pressed', String(current));
+      if (entry.icon.textContent !== player.avatar) entry.icon.textContent = player.avatar;
+      if (entry.name.textContent !== player.displayName) entry.name.textContent = player.displayName;
+      // Leave already ordered buttons attached so keyboard focus survives updates.
+      if (container.children[index] !== entry.button) container.insertBefore(entry.button, container.children[index] ?? null);
+    });
+  }
+
   private updateQuestTracker() {
     const trackerModal = document.getElementById('questTrackerHUD');
     if (!trackerModal) return;
 
     const listEl = document.getElementById('questTrackerList');
     if (!listEl) return;
+    if (this.questContainer !== listEl) {
+      this.questContainer = listEl; this.questMarkup = '';
+      listEl.addEventListener('click', event => {
+        const target = (event.target as HTMLElement).closest<HTMLElement>('.focus-node-btn');
+        if (!target || !listEl.contains(target)) return;
+        event.stopPropagation();
+        const nodeId = Number(target.dataset.nodeId);
+        const node = this.game.allNodes.find(candidate => candidate.id === nodeId);
+        if (node) this.onFocusNodeCallback?.(node);
+      });
+    }
 
     const p = this.game.activePlayer;
     const occupiedTowns = this.game.allNodes.filter(n => n.townData?.isOccupiedByMonster);
@@ -210,8 +251,8 @@ export class HUD {
             <div class="flex items-center gap-1.5 overflow-hidden">
               <span class="text-sm animate-pulse">🆘</span>
               <div class="overflow-hidden">
-                <div class="text-[10px] font-bold text-red-300 truncate">${t.name}</div>
-                <div class="text-[8px] text-amber-300 truncate">บอส: ${t.townData?.monsterName || 'มอนสเตอร์'} (${t.townData?.monsterHp} HP)</div>
+                <div class="text-[10px] font-bold text-red-300 truncate">${escapeHtml(t.name)}</div>
+                <div class="text-[8px] text-amber-300 truncate">บอส: ${escapeHtml(t.townData?.monsterName || 'มอนสเตอร์')} (${t.townData?.monsterHp} HP)</div>
               </div>
             </div>
             <button class="focus-node-btn pixel-btn pixel-btn-gold px-1.5 py-0.5 text-[9px] font-bold text-slate-950 shrink-0" data-node-id="${t.id}" title="เลื่อนกล้องไปยังเมืองนี้">
@@ -229,8 +270,8 @@ export class HUD {
           <div class="flex items-center gap-1.5 overflow-hidden">
             <span class="text-sm">👑</span>
             <div class="overflow-hidden">
-              <div class="text-[10px] font-bold text-amber-200 truncate">${b.name}</div>
-              <div class="text-[8px] text-slate-300 truncate">${b.subRegionName || 'บอสประจำภูมิภาค'}</div>
+              <div class="text-[10px] font-bold text-amber-200 truncate">${escapeHtml(b.name)}</div>
+              <div class="text-[8px] text-slate-300 truncate">${escapeHtml(b.subRegionName || 'บอสประจำภูมิภาค')}</div>
             </div>
           </div>
           <button class="focus-node-btn pixel-btn pixel-btn-blue px-1.5 py-0.5 text-[9px] font-bold text-white shrink-0" data-node-id="${b.id}" title="เลื่อนกล้องไปยังรังบอส">
@@ -247,7 +288,7 @@ export class HUD {
           <div class="flex items-center gap-1.5 overflow-hidden">
             <span class="text-sm">📜</span>
             <div class="overflow-hidden">
-              <div class="text-[10px] font-bold text-indigo-200 truncate">[${p.activeGuildQuest.rank}] ${p.activeGuildQuest.title}</div>
+              <div class="text-[10px] font-bold text-indigo-200 truncate">[${escapeHtml(p.activeGuildQuest.rank)}] ${escapeHtml(p.activeGuildQuest.title)}</div>
               <div class="text-[8px] text-slate-300">ความคืบหน้า: ${p.activeGuildQuest.currentProgress}/${p.activeGuildQuest.targetCount}</div>
             </div>
           </div>
@@ -260,24 +301,15 @@ export class HUD {
       html = `<div class="text-slate-400 text-[9px] italic text-center py-2">ดินแดนสงบสุข ไม่มีวิกฤตเร่งด่วนในขณะนี้</div>`;
     }
 
-    listEl.innerHTML = html;
-
-    // Attach click-to-focus camera
-    listEl.querySelectorAll('.focus-node-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const nodeId = parseInt((e.currentTarget as HTMLElement).getAttribute('data-node-id') || '0', 10);
-        const targetNode = this.game.allNodes.find(n => n.id === nodeId);
-        if (targetNode && this.onFocusNodeCallback) {
-          this.onFocusNodeCallback(targetNode);
-        }
-      });
-    });
+    if (this.questMarkup !== html) { listEl.innerHTML = html; this.questMarkup = html; }
   }
 
   private renderAvatar() {
     const p = this.game.activePlayer;
     if (!p) return;
+    const key = JSON.stringify([p.id, p.classKey, p.equipment, p.isDarkling, p.prank, p.skinVariant]);
+    if (key === this.avatarKey) return;
+    this.avatarKey = key;
     this.avatarCtx.clearRect(0, 0, 48, 48);
     this.avatarCtx.imageSmoothingEnabled = false;
 
@@ -294,18 +326,43 @@ export class HUD {
     this.avatarCtx.drawImage(sprite, 48, 32, 48, 48, 0, 0, 48, 48);
   }
 
-  private renderMinimap() {
-    const ctx = this.minimapCtx;
+  /** Cheap per-frame marker update; the board and projection stay cached. */
+  public updateMapMarkers() { this.renderMinimap(false); }
+
+  private renderMinimap(checkGeometry = true) {
     const w = this.minimapCanvas.width;
     const h = this.minimapCanvas.height;
-
-    ctx.fillStyle = '#0a0f1d';
-    ctx.fillRect(0, 0, w, h);
-
     const group = dungeonSceneGroup(this.game.activePlayer?.nodeId ?? 0);
-    const nodes = this.game.allNodes.filter(n => dungeonSceneGroup(n.id) === group);
-    const project = mapProjection(nodes,w,h,8);
-    const byId = new Map(nodes.map(n=>[n.id,n]));
+    const sourceChanged = this.minimapSource !== this.game.allNodes || this.minimapSourceCount !== this.game.allNodes.length;
+    const viewChanged = this.minimapGroup !== group || this.minimapBase.width !== w || this.minimapBase.height !== h;
+    if (checkGeometry || sourceChanged || viewChanged || !this.minimapProject) {
+      const nodes = this.game.allNodes.filter(n => dungeonSceneGroup(n.id) === group);
+      const geometry = `${group}:${w}:${h}|` + nodes.map(node => `${node.id}:${node.gx}:${node.gy}:${node.type}:${node.neighbors.join(',')}`).join('|');
+      this.minimapSource = this.game.allNodes; this.minimapSourceCount = this.game.allNodes.length; this.minimapGroup = group;
+      if (geometry !== this.minimapGeometry || !this.minimapProject) {
+        this.minimapGeometry = geometry; this.minimapMarkerKey = null;
+        this.minimapProject = mapProjection(nodes, w, h, 8);
+        this.drawMinimapBoard(nodes, w, h);
+      }
+    }
+    const project = this.minimapProject!;
+    const markers = this.game.players.filter(player => dungeonSceneGroup(player.nodeId) === group).map(player => {
+      const point = project(player.gridX, player.gridY);
+      return { id: player.id, ...point, color: player.isDarkling ? '#f43f5e' : player.color };
+    });
+    const markerKey = markers.map(marker => `${marker.id}:${marker.x}:${marker.y}:${marker.color}`).join('|');
+    if (markerKey === this.minimapMarkerKey) return;
+    this.minimapMarkerKey = markerKey;
+    const ctx = this.minimapCtx;
+    ctx.drawImage(this.minimapBase, 0, 0);
+    for (const marker of markers) pixelDisc(ctx, marker.x, marker.y, 4, marker.color);
+  }
+
+  private drawMinimapBoard(nodes: BoardNode[], w: number, h: number) {
+    this.minimapBase.width = w; this.minimapBase.height = h;
+    const ctx = this.minimapBaseCtx, project = this.minimapProject!;
+    ctx.fillStyle = '#0a0f1d'; ctx.fillRect(0, 0, w, h);
+    const byId = new Map(nodes.map(node => [node.id, node]));
 
     // Draw lines
     ctx.strokeStyle = '#334155';
@@ -341,14 +398,5 @@ export class HUD {
       ctx.fillRect(p.x - 1, p.y - 1, 3, 3);
     });
 
-    // Draw players
-    this.game.players.forEach(pl => {
-      if (dungeonSceneGroup(pl.nodeId) !== group) return;
-      ctx.fillStyle = pl.isDarkling ? '#f43f5e' : pl.color;
-      ctx.beginPath();
-      const p = project(pl.gridX,pl.gridY);
-      pixelDisc(ctx, p.x, p.y, 4, ctx.fillStyle);
-      ctx.fill();
-    });
   }
 }

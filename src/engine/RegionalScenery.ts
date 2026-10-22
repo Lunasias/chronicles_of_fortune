@@ -3,6 +3,8 @@ import { backdropKey, type BackdropKey } from './GeneratedBackdrops';
 import { roadField, worldNoise } from './WorldEcology';
 import type { BoardNode } from '../game/BoardMap';
 import type { TerrainTile } from './IsometricTerrainEngine';
+import completionArt from './map-completion-art.json';
+import { regionalSpriteFit, splitRegionalAtlas, type RegionalSpritePixels } from './RegionalSpriteExtraction';
 
 export const REGIONAL_SLOTS = ['nature_large','nature_alternate','undergrowth','rocks','town','shop_item','shop_weapon','shop_magic','church','dark_gate','vault','boss','tavern','guild','fishing','isekai_event','mystery_chest','home','capital','bridge','cliff','landmark','wall','stairs'] as const;
 export type RegionalSlot = typeof REGIONAL_SLOTS[number];
@@ -10,20 +12,55 @@ export interface RegionalScenery { x:number; y:number; depth:number; theme:Backd
 
 class RegionalArt {
   private images = new Map<BackdropKey,HTMLImageElement>();
+  private replacementImages = new Map<string,HTMLImageElement>();
+  private preparedThemes = new Set<BackdropKey>();
   private cache = new Map<string,HTMLCanvasElement>();
+  private sprite(source: CanvasImageSource, width: number, height: number, maxScale = Infinity): HTMLCanvasElement {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 128;
+    const ctx = canvas.getContext('2d')!; ctx.imageSmoothingEnabled = false;
+    const fit = regionalSpriteFit(width, height, 128, 4, maxScale);
+    ctx.drawImage(source, fit.x, fit.y, fit.width, fit.height);
+    const data = ctx.getImageData(0, 0, 128, 128).data;
+    let foot = fit.footY;
+    outer: for (let y = 127; y >= 0; y--) for (let x = 0; x < 128; x++) if (data[(y * 128 + x) * 4 + 3] >= 100) { foot = y; break outer; }
+    canvas.dataset.footY = String(foot);
+    return canvas;
+  }
+  private pixelsSprite(region: RegionalSpritePixels, maxScale = Infinity): HTMLCanvasElement {
+    const source = document.createElement('canvas'); source.width = region.width; source.height = region.height;
+    const ctx = source.getContext('2d')!, pixels = ctx.createImageData(region.width, region.height);
+    pixels.data.set(region.pixels); ctx.putImageData(pixels, 0, 0);
+    return this.sprite(source, region.width, region.height, maxScale);
+  }
+  private prepare(theme: BackdropKey, image: HTMLImageElement) {
+    if (this.preparedThemes.has(theme)) return;
+    const source = document.createElement('canvas'); source.width = image.naturalWidth; source.height = image.naturalHeight;
+    const ctx = source.getContext('2d')!; ctx.drawImage(image, 0, 0);
+    const regions = splitRegionalAtlas(ctx.getImageData(0, 0, source.width, source.height).data, source.width, source.height);
+    const maxScale = 128 / Math.min(source.width / 6, source.height / 4);
+    regions.forEach((region, index) => { if (region) this.cache.set(`${theme}:${REGIONAL_SLOTS[index]}`, this.pixelsSprite(region, maxScale)); });
+    this.preparedThemes.add(theme);
+  }
   get(theme:BackdropKey,slot:RegionalSlot):HTMLCanvasElement|null {
+    const key=`${theme}:${slot}`;
+    const replacement=(completionArt as Record<string,string>)[key];
+    if(replacement){
+      const cached=this.cache.get(`replacement:${key}`);if(cached)return cached;
+      let image=this.replacementImages.get(key);
+      if(!image){image=createArtworkImage();this.replacementImages.set(key,image);image.src=replacement;}
+      if(!image.complete||!image.naturalWidth)return null;
+      // A one-object file has no cell boundary to clip its crown, branches or roots.
+      const source=document.createElement('canvas');source.width=image.naturalWidth;source.height=image.naturalHeight;
+      const ctx=source.getContext('2d')!;ctx.drawImage(image,0,0);
+      const region=splitRegionalAtlas(ctx.getImageData(0,0,source.width,source.height).data,source.width,source.height,1,1)[0];
+      if(!region)return null;
+      const sprite=this.pixelsSprite(region);this.cache.set(`replacement:${key}`,sprite);return sprite;
+    }
     let image=this.images.get(theme);
     if(!image){image=createArtworkImage();this.images.set(theme,image);image.src=`/assets/art-v2/world-rebuild-v1/${theme}.png`;}
     if(!image.complete||!image.naturalWidth)return null;
-    const key=`${theme}:${slot}`;const cached=this.cache.get(key);if(cached)return cached;
-    const index=REGIONAL_SLOTS.indexOf(slot),canvas=document.createElement('canvas');canvas.width=canvas.height=128;
-    const ctx=canvas.getContext('2d')!;ctx.imageSmoothingEnabled=false;
-    const left=Math.round(index%6*image.naturalWidth/6),top=Math.round(Math.floor(index/6)*image.naturalHeight/4);
-    const right=Math.round((index%6+1)*image.naturalWidth/6),bottom=Math.round((Math.floor(index/6)+1)*image.naturalHeight/4);
-    ctx.drawImage(image,left,top,right-left,bottom-top,0,0,128,128);
-    const pixels=ctx.getImageData(0,0,128,128).data;let foot=112;
-    outer:for(let y=127;y>=0;y--)for(let x=0;x<128;x++)if(pixels[(y*128+x)*4+3]>=100){foot=y;break outer;}
-    canvas.dataset.footY=String(foot);this.cache.set(key,canvas);return canvas;
+    this.prepare(theme,image);
+    return this.cache.get(key)||null;
   }
 }
 export const regionalArt=new RegionalArt();

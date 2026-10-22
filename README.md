@@ -4,6 +4,13 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring origin
 
 Single-player board campaign against up to 3 AI rivals, local hot-seat play, and online P2P rooms for 2–4 players with optional AI slots.
 
+The October 22 update adds a destination planner with service/treasure/risk filters,
+combat estimates and explicit travel confirmation; a campaign journal with goals,
+standings and nearby services; stable, cached HUD rendering; validated save imports
+and recovery copies; and complete map sprites with illustrated loading and jade/brass
+UI artwork. Open **สมุดนักผจญภัย** in the system menu, press **?**, or choose the
+title-screen guide. [Changes and verification](docs/adventure-upgrade-v1/README.md).
+
 ### Choosing where to walk
 
 Every turn can start in either direction, including back along the road you used last

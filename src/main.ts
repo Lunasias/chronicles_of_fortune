@@ -54,6 +54,9 @@ import { triggerHaptic } from './util/haptics';
 import { companionKeyForDefeatedMonster, createCompanion, getCompanionProfile } from './game/CompanionDatabase';
 import { GamepadController } from './engine/GamepadController';
 import { mobileDisplayManager } from './ui/MobileDisplayManager';
+import { completeArtworkBoot } from './engine/ArtworkLoading';
+import { AdventureGuide } from './ui/AdventureGuide';
+import './styles/adventure.css';
 
 class DokaponApp {
   private visualReviewActive = false;
@@ -66,6 +69,7 @@ class DokaponApp {
   private game: GameState;
   private hud: HUD;
   private movementUI: MovementUI;
+  private adventureGuide: AdventureGuide;
   private selectedMoveNodeId: number | null = null;
   private battleUI: BattleUI;
   private gamepadController!: GamepadController;
@@ -107,8 +111,13 @@ class DokaponApp {
     this.movementUI = new MovementUI(
       direction => this.cycleHighlightedNode(direction),
       () => this.confirmMoveDestination(),
-      () => this.centerOnHero()
+      () => this.centerOnHero(),
+      id => this.previewMoveDestination(id)
     );
+    this.adventureGuide = new AdventureGuide(this.game, node => {
+      this.renderer.centerCameraOn(node.gx, node.gy, node.gz);
+      this.renderer.hoveredNodeId = node.id;
+    });
     this.battleUI = new BattleUI(this.game);
     this.townUI = new TownUI(this.game);
     this.shopUI = new ShopUI(this.game);
@@ -676,17 +685,21 @@ class DokaponApp {
   private initGamepadController() {
     this.gamepadController = new GamepadController({
       onPan: (dx, dy) => {
-        if (!this.game.activeBattle) {
+        if (!this.game.activeBattle && !this.adventureGuide.isOpen) {
           this.renderer.panCamera(dx, dy);
         }
       },
       onZoom: (delta) => {
-        if (!this.game.activeBattle) {
+        if (!this.game.activeBattle && !this.adventureGuide.isOpen) {
           this.stepCameraZoom(delta > 0 ? 1 : -1);
           this.renderer.clampCameraBounds();
         }
       },
       onConfirm: () => {
+        if (this.adventureGuide.isOpen) {
+          if (document.activeElement instanceof HTMLButtonElement) document.activeElement.click();
+          return;
+        }
         if (this.game.activeBattle) {
           const isAtk = this.game.activeBattle.isPlayerAttacking;
           if (isAtk) {
@@ -718,6 +731,7 @@ class DokaponApp {
         }
       },
       onCancel: () => {
+        if (this.adventureGuide.isOpen) { this.adventureGuide.close(); return; }
         if (this.game.activeBattle) {
           const isAtk = this.game.activeBattle.isPlayerAttacking;
           if (isAtk) {
@@ -750,6 +764,7 @@ class DokaponApp {
         }
       },
       onSecondary: () => {
+        if (this.adventureGuide.isOpen) return;
         if (this.game.activeBattle) {
           const isAtk = this.game.activeBattle.isPlayerAttacking;
           if (isAtk) {
@@ -762,6 +777,7 @@ class DokaponApp {
         }
       },
       onSpecial: () => {
+        if (this.adventureGuide.isOpen) return;
         if (this.game.activeBattle) {
           const burstBtn = document.getElementById('btnCmdBurst');
           if (burstBtn && !burstBtn.classList.contains('hidden') && !burstBtn.hasAttribute('disabled')) {
@@ -780,15 +796,17 @@ class DokaponApp {
         }
       },
       onSelect: () => {
+        if (this.adventureGuide.isOpen) return;
         document.getElementById('btnInspectHero')?.click();
       },
       onStart: () => {
+        if (this.adventureGuide.isOpen) return;
         document.getElementById('btnSettings')?.click();
       },
-      onDpadLeft: () => this.cycleHighlightedNode(-1),
-      onDpadRight: () => this.cycleHighlightedNode(1),
-      onDpadUp: () => this.cycleHighlightedNode(-1),
-      onDpadDown: () => this.cycleHighlightedNode(1)
+      onDpadLeft: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(-1) : this.cycleHighlightedNode(-1),
+      onDpadRight: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(1) : this.cycleHighlightedNode(1),
+      onDpadUp: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(-1) : this.cycleHighlightedNode(-1),
+      onDpadDown: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(1) : this.cycleHighlightedNode(1)
     });
   }
 
@@ -823,17 +841,18 @@ class DokaponApp {
 
   private cycleHighlightedNode(direction: number) {
     if (!this.canShowMovementNavigation()) return;
-    if (this.game.highlightedNodes.length === 0) return;
-    const curIdx = this.game.highlightedNodes.indexOf(this.selectedMoveNodeId ?? -1);
-    let nextIdx = curIdx < 0 ? (direction < 0 ? this.game.highlightedNodes.length - 1 : 0) : curIdx + direction;
-    if (nextIdx < 0) nextIdx = this.game.highlightedNodes.length - 1;
-    if (nextIdx >= this.game.highlightedNodes.length) nextIdx = 0;
-    const targetId = this.game.highlightedNodes[nextIdx];
+    const targetId = this.movementUI.nextDestination(direction);
+    if (targetId !== null) this.previewMoveDestination(targetId);
+  }
+
+  private previewMoveDestination(targetId: number) {
+    if (!this.canShowMovementNavigation() || !this.game.highlightedNodes.includes(targetId)) return;
+    const path = this.game.findPathToTarget(targetId);
+    if (!path) return;
     const targetNode = this.game.allNodes.find(n => n.id === targetId);
     if (targetNode) {
       this.renderer.hoveredNodeId = targetId;
       this.selectedMoveNodeId = targetId;
-      const path = this.game.findPathToTarget(targetId);
       const next = path && this.game.allNodes.find(n => n.id === path[1]);
       if (next) {
         const p = this.game.activePlayer;
@@ -982,7 +1001,8 @@ class DokaponApp {
     // Title Screen Load Game
     document.getElementById('btnTitleLoadGame')?.addEventListener('click', () => {
       audio.click();
-      this.loadGameProgress();
+      const slot = Number(document.getElementById('btnTitleLoadGame')?.dataset.saveSlot);
+      if (Number.isInteger(slot) && slot >= 0 && slot <= 3) this.loadGameProgress(slot);
     });
 
     // Party size buttons
@@ -1306,9 +1326,14 @@ class DokaponApp {
     // Keyboard shortcut 'M' toggles full Bird's-Eye Atlas, Space rolls dice
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (e.defaultPrevented || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (this.game.phase === 'TITLE') return;
       // Enter/Space retain native button activation; direction keys work after clicking the dock.
       if (target?.closest('button, summary') && (e.key === 'Enter' || e.key === ' ')) return;
+      const blockingDialog = Array.from(document.querySelectorAll('[role="dialog"], #diceRollModal')).some(panel => !panel.closest('.hidden, [hidden]'));
+      const mapModal = document.getElementById('worldMapModal');
+      const mapIsOpen = !!mapModal && !mapModal.classList.contains('hidden');
+      if (blockingDialog && !(mapIsOpen && e.key.toLowerCase() === 'm')) return;
 
       if (this.canShowMovementNavigation()) {
         const key = e.key.toLowerCase();
@@ -1324,7 +1349,7 @@ class DokaponApp {
 
       if (e.key === ' ' || e.code === 'Space') {
         const rollBtn = document.getElementById('btnRollDice');
-        if (rollBtn && !rollBtn.classList.contains('pointer-events-none') && !rollBtn.classList.contains('hidden')) {
+        if (!e.repeat && this.game.phase === 'BOARD_TURN' && this.isMyTurn() && !this.game.activePlayer.isAI && rollBtn && !rollBtn.hasAttribute('disabled') && !rollBtn.closest('.hidden, [hidden]') && !rollBtn.classList.contains('pointer-events-none')) {
           e.preventDefault();
           rollBtn.click();
         }
@@ -1460,7 +1485,7 @@ class DokaponApp {
     });
     document.getElementById('btnHowToPlay')?.addEventListener('click', () => {
       audio.click();
-      document.getElementById('settingsModal')?.classList.remove('hidden');
+      this.adventureGuide.open();
     });
     document.getElementById('btnCloseSettings')?.addEventListener('click', () => {
       document.getElementById('settingsModal')?.classList.add('hidden');
@@ -1512,6 +1537,7 @@ class DokaponApp {
       if (code && code.trim()) {
         const res = SaveManager.importSaveData(this.game, code.trim(), slot);
         if (res.success) {
+          if (res.bossState) { this.bossCurrentHp = res.bossState.currentHp; this.bossMaxHp = res.bossState.maxHp; }
           audio.fanfare();
           alert(`นำเข้าข้อมูลเซฟลงในช่อง ${slot === 0 ? 'Auto-Save' : slot} และโหลดความคืบหน้าสำเร็จ!`);
           document.getElementById('titleScreen')?.classList.add('hidden');
@@ -2498,11 +2524,11 @@ class DokaponApp {
         // Announce King Rico's Royal Decree for the new week!
         this.openRoyalDecreeModal(() => {
           // Auto-Save at the start of each new week!
-          SaveManager.autoSave(this.game, {
+          const saved = !this.visualReviewActive && SaveManager.autoSave(this.game, {
             currentHp: this.bossCurrentHp,
             maxHp: this.bossMaxHp
           });
-          this.game.addLog(`💾 บันทึกอัตโนมัติ (Auto-Save สัปดาห์ที่ ${this.game.weekCounter}) เรียบร้อย!`, 'info');
+          if (!this.visualReviewActive) this.game.addLog(saved ? `💾 บันทึกอัตโนมัติ (สัปดาห์ที่ ${this.game.weekCounter}) เรียบร้อย` : 'บันทึกอัตโนมัติไม่สำเร็จ กรุณาตรวจพื้นที่เก็บข้อมูลและสำรองรหัสเซฟ', 'info');
           this.updateTitleSaveStatus();
 
           this.game.startTurn();
@@ -2628,7 +2654,8 @@ class DokaponApp {
 
   private getSelectedSaveSlot(): number {
     const sel = document.getElementById('selectSaveSlot') as HTMLSelectElement | null;
-    return sel ? parseInt(sel.value, 10) || 1 : 1;
+    const slot = Number(sel?.value ?? 1);
+    return Number.isInteger(slot) && slot >= 0 && slot <= 3 ? slot : 1;
   }
 
   private updateTitleSaveStatus() {
@@ -2637,8 +2664,10 @@ class DokaponApp {
     const metaEl = document.getElementById('titleLoadGameMeta');
     if (!btnLoad) return;
 
-    const slot1Meta = SaveManager.getSaveMetadata(1);
-    const activeEntry = slot1Meta ? { slot: 1, meta: slot1Meta } : metas.find(s => s.meta !== null);
+    const activeEntry = metas.filter(entry => entry.meta?.saveVersion === 2)
+      .sort((a, b) => (b.meta?.savedAt ?? 0) - (a.meta?.savedAt ?? 0))[0];
+    btnLoad.dataset.saveSlot = activeEntry ? String(activeEntry.slot) : '';
+    btnLoad.disabled = !activeEntry;
 
     if (activeEntry && activeEntry.meta) {
       btnLoad.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -2657,27 +2686,28 @@ class DokaponApp {
   private saveGameProgress(showToast = true) {
     if (this.visualReviewActive) return;
     if (this.game.players.length === 0 || this.game.phase === 'TITLE') return;
-    const slot = this.getSelectedSaveSlot();
-    const success = SaveManager.save(this.game, {
+    const slot = showToast ? this.getSelectedSaveSlot() : 0;
+    const result = SaveManager.saveWithResult(this.game, {
       currentHp: this.bossCurrentHp,
       maxHp: this.bossMaxHp
     }, slot);
     const statusEl = document.getElementById('settingsSaveStatusText');
-    if (success) {
+    if (result.success) {
       if (showToast) {
         audio.coin();
         this.game.addLog(`💾 บันทึกความคืบหน้าช่อง ${slot} สำเร็จ! (วันที่ ${this.game.dayCounter}, สัปดาห์ที่ ${this.game.weekCounter})`, 'level');
       }
       if (statusEl) {
-        statusEl.innerText = `✅ [ช่อง ${slot}] บันทึกสำเร็จล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+        statusEl.innerText = result.warning || `✅ [${slot === 0 ? 'อัตโนมัติ' : `ช่อง ${slot}`}] บันทึกสำเร็จล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
         statusEl.style.color = '#34d399';
       }
       this.updateTitleSaveStatus();
     } else {
       if (statusEl) {
-        statusEl.innerText = `❌ เกิดข้อผิดพลาดในการบันทึกช่อง ${slot}`;
+        statusEl.innerText = result.error || `เกิดข้อผิดพลาดในการบันทึกช่อง ${slot}`;
         statusEl.style.color = '#f87171';
       }
+      if (showToast) this.game.addLog(result.error || 'บันทึกไม่สำเร็จ กรุณาส่งออกรหัสเซฟเพื่อสำรองข้อมูล', 'info');
     }
   }
 
@@ -2704,6 +2734,7 @@ class DokaponApp {
         this.bossMaxHp = res.bossState.maxHp;
       }
       audio.fanfare();
+      if (res.recoveredFromBackup) this.game.addLog('กู้คืนความคืบหน้าจากสำเนาบันทึกก่อนหน้าเรียบร้อยแล้ว', 'info');
       document.getElementById('titleScreen')?.classList.add('hidden');
       document.getElementById('settingsModal')?.classList.add('hidden');
       document.getElementById('topHUD')?.classList.remove('hidden');
@@ -3761,8 +3792,10 @@ class DokaponApp {
       }
     }
     this.gamepadController?.update();
+    this.adventureGuide.update(time, !this.visualReviewActive && this.game.phase !== 'TITLE' && this.isMyTurn());
     if (this.game.phase !== 'CHOOSING_PATH') this.selectedMoveNodeId = null;
-    this.movementUI.update(this.game, this.selectedMoveNodeId, this.canShowMovementNavigation());
+    const showMovement = this.canShowMovementNavigation();
+    this.movementUI.update(this.game, this.selectedMoveNodeId, showMovement);
 
     if (this.game.phase !== 'TITLE') {
       if (this.game.activeBattle) {
@@ -3770,13 +3803,14 @@ class DokaponApp {
         // Render Battle Arena when active (bypasses heavy overworld rendering)
         this.battleUI.renderArena(time);
       } else {
+        this.hud.updateMapMarkers();
         // Render 2.5D Isometric World Viewport
         this.renderer.render(
           this.game.allNodes,
           this.game.players,
           this.game.activePlayer,
-          this.canShowMovementNavigation() ? this.game.highlightedNodes : [],
-          this.canShowMovementNavigation() ? this.renderer.previewPathNodeIds : [],
+          showMovement ? this.game.highlightedNodes : [],
+          showMovement ? this.renderer.previewPathNodeIds : [],
           time
         );
       }
@@ -3796,6 +3830,7 @@ function startApp() {
   app.startVisualReview();
   if (!document.getElementById('titleScreen')?.classList.contains('hidden')) audio.playBgm('title');
   app.loop(0);
+  completeArtworkBoot();
 
   // Register PWA Service Worker
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

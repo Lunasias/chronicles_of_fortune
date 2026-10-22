@@ -1,0 +1,5618 @@
+[
+  {
+    "theme": "grass",
+    "slot": "nature_large",
+    "pixels": 8474,
+    "bounds": [
+      6,
+      10,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "nature_alternate",
+    "pixels": 5382,
+    "bounds": [
+      28,
+      5,
+      100,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "undergrowth",
+    "pixels": 4655,
+    "bounds": [
+      12,
+      50,
+      117,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "rocks",
+    "pixels": 4808,
+    "bounds": [
+      11,
+      49,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "town",
+    "pixels": 7412,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "shop_item",
+    "pixels": 7358,
+    "bounds": [
+      12,
+      22,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "shop_weapon",
+    "pixels": 8394,
+    "bounds": [
+      5,
+      7,
+      122,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "shop_magic",
+    "pixels": 7935,
+    "bounds": [
+      9,
+      11,
+      119,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "church",
+    "pixels": 7439,
+    "bounds": [
+      8,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "dark_gate",
+    "pixels": 9280,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "vault",
+    "pixels": 8750,
+    "bounds": [
+      5,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "boss",
+    "pixels": 7620,
+    "bounds": [
+      11,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "tavern",
+    "pixels": 8143,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "guild",
+    "pixels": 8862,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "fishing",
+    "pixels": 6632,
+    "bounds": [
+      5,
+      21,
+      122,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "isekai_event",
+    "pixels": 8119,
+    "bounds": [
+      9,
+      10,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "mystery_chest",
+    "pixels": 5078,
+    "bounds": [
+      8,
+      53,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "home",
+    "pixels": 7329,
+    "bounds": [
+      8,
+      5,
+      119,
+      111
+    ],
+    "footY": 111,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "capital",
+    "pixels": 8836,
+    "bounds": [
+      6,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "bridge",
+    "pixels": 5685,
+    "bounds": [
+      5,
+      38,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "cliff",
+    "pixels": 8504,
+    "bounds": [
+      14,
+      6,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "landmark",
+    "pixels": 6212,
+    "bounds": [
+      15,
+      5,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "wall",
+    "pixels": 6750,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "grass",
+    "slot": "stairs",
+    "pixels": 8063,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "nature_large",
+    "pixels": 9304,
+    "bounds": [
+      8,
+      6,
+      120,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "nature_alternate",
+    "pixels": 8241,
+    "bounds": [
+      8,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "undergrowth",
+    "pixels": 4163,
+    "bounds": [
+      13,
+      55,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "rocks",
+    "pixels": 5729,
+    "bounds": [
+      10,
+      35,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "town",
+    "pixels": 8312,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "shop_item",
+    "pixels": 7129,
+    "bounds": [
+      11,
+      22,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "shop_weapon",
+    "pixels": 8381,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "shop_magic",
+    "pixels": 7684,
+    "bounds": [
+      12,
+      6,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "church",
+    "pixels": 7255,
+    "bounds": [
+      11,
+      7,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "dark_gate",
+    "pixels": 9109,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "vault",
+    "pixels": 8390,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "boss",
+    "pixels": 6912,
+    "bounds": [
+      10,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "tavern",
+    "pixels": 9082,
+    "bounds": [
+      6,
+      14,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "guild",
+    "pixels": 9069,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "fishing",
+    "pixels": 6502,
+    "bounds": [
+      7,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "isekai_event",
+    "pixels": 7893,
+    "bounds": [
+      9,
+      7,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "mystery_chest",
+    "pixels": 5802,
+    "bounds": [
+      10,
+      44,
+      119,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "home",
+    "pixels": 7285,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "capital",
+    "pixels": 9103,
+    "bounds": [
+      10,
+      7,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "bridge",
+    "pixels": 6384,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "cliff",
+    "pixels": 8608,
+    "bounds": [
+      13,
+      5,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "landmark",
+    "pixels": 10015,
+    "bounds": [
+      9,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "wall",
+    "pixels": 7685,
+    "bounds": [
+      5,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "forest",
+    "slot": "stairs",
+    "pixels": 6716,
+    "bounds": [
+      9,
+      7,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "nature_large",
+    "pixels": 8813,
+    "bounds": [
+      5,
+      7,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "nature_alternate",
+    "pixels": 7078,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "undergrowth",
+    "pixels": 5480,
+    "bounds": [
+      11,
+      36,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "rocks",
+    "pixels": 5583,
+    "bounds": [
+      11,
+      35,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "town",
+    "pixels": 8613,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "shop_item",
+    "pixels": 6898,
+    "bounds": [
+      11,
+      35,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "shop_weapon",
+    "pixels": 8687,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "shop_magic",
+    "pixels": 8939,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "church",
+    "pixels": 7412,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "dark_gate",
+    "pixels": 10100,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "vault",
+    "pixels": 9184,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "boss",
+    "pixels": 7601,
+    "bounds": [
+      12,
+      5,
+      116,
+      119
+    ],
+    "footY": 119,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "tavern",
+    "pixels": 8522,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "guild",
+    "pixels": 9628,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "fishing",
+    "pixels": 7549,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "isekai_event",
+    "pixels": 8979,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "mystery_chest",
+    "pixels": 4567,
+    "bounds": [
+      14,
+      57,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "home",
+    "pixels": 7999,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "capital",
+    "pixels": 9401,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "bridge",
+    "pixels": 5939,
+    "bounds": [
+      5,
+      30,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "cliff",
+    "pixels": 9302,
+    "bounds": [
+      13,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "landmark",
+    "pixels": 9431,
+    "bounds": [
+      10,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "wall",
+    "pixels": 8130,
+    "bounds": [
+      5,
+      8,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "waterfall_forest",
+    "slot": "stairs",
+    "pixels": 8325,
+    "bounds": [
+      5,
+      9,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "nature_large",
+    "pixels": 5941,
+    "bounds": [
+      19,
+      6,
+      109,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "nature_alternate",
+    "pixels": 5886,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "undergrowth",
+    "pixels": 4938,
+    "bounds": [
+      12,
+      48,
+      115,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "rocks",
+    "pixels": 5397,
+    "bounds": [
+      9,
+      41,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "town",
+    "pixels": 8090,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "shop_item",
+    "pixels": 7532,
+    "bounds": [
+      9,
+      27,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "shop_weapon",
+    "pixels": 9297,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "shop_magic",
+    "pixels": 9158,
+    "bounds": [
+      7,
+      6,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "church",
+    "pixels": 6788,
+    "bounds": [
+      10,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "dark_gate",
+    "pixels": 9474,
+    "bounds": [
+      7,
+      5,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "vault",
+    "pixels": 9141,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "boss",
+    "pixels": 7459,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "tavern",
+    "pixels": 9105,
+    "bounds": [
+      6,
+      14,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "guild",
+    "pixels": 8870,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "fishing",
+    "pixels": 7962,
+    "bounds": [
+      6,
+      20,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "isekai_event",
+    "pixels": 8724,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "mystery_chest",
+    "pixels": 5455,
+    "bounds": [
+      13,
+      46,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "home",
+    "pixels": 7318,
+    "bounds": [
+      6,
+      25,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "capital",
+    "pixels": 7539,
+    "bounds": [
+      11,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "bridge",
+    "pixels": 7240,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "cliff",
+    "pixels": 8079,
+    "bounds": [
+      14,
+      6,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "landmark",
+    "pixels": 9310,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "wall",
+    "pixels": 8432,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "snow",
+    "slot": "stairs",
+    "pixels": 8582,
+    "bounds": [
+      9,
+      6,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "nature_large",
+    "pixels": 5862,
+    "bounds": [
+      16,
+      6,
+      111,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "nature_alternate",
+    "pixels": 6525,
+    "bounds": [
+      9,
+      8,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "undergrowth",
+    "pixels": 4270,
+    "bounds": [
+      14,
+      50,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "rocks",
+    "pixels": 4477,
+    "bounds": [
+      9,
+      59,
+      119,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "town",
+    "pixels": 7924,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "shop_item",
+    "pixels": 7881,
+    "bounds": [
+      7,
+      17,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "shop_weapon",
+    "pixels": 8110,
+    "bounds": [
+      9,
+      19,
+      119,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "shop_magic",
+    "pixels": 8211,
+    "bounds": [
+      5,
+      21,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "church",
+    "pixels": 7889,
+    "bounds": [
+      9,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "dark_gate",
+    "pixels": 8778,
+    "bounds": [
+      5,
+      19,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "vault",
+    "pixels": 9073,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "boss",
+    "pixels": 6450,
+    "bounds": [
+      14,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "tavern",
+    "pixels": 8465,
+    "bounds": [
+      5,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "guild",
+    "pixels": 7892,
+    "bounds": [
+      5,
+      15,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "fishing",
+    "pixels": 7054,
+    "bounds": [
+      5,
+      19,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "isekai_event",
+    "pixels": 8462,
+    "bounds": [
+      6,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "mystery_chest",
+    "pixels": 5663,
+    "bounds": [
+      10,
+      45,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "home",
+    "pixels": 8324,
+    "bounds": [
+      7,
+      16,
+      121,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "capital",
+    "pixels": 8222,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "bridge",
+    "pixels": 6018,
+    "bounds": [
+      5,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "cliff",
+    "pixels": 8452,
+    "bounds": [
+      17,
+      5,
+      110,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "landmark",
+    "pixels": 9357,
+    "bounds": [
+      10,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "wall",
+    "pixels": 6460,
+    "bounds": [
+      10,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "desert",
+    "slot": "stairs",
+    "pixels": 6968,
+    "bounds": [
+      9,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "nature_large",
+    "pixels": 5159,
+    "bounds": [
+      15,
+      5,
+      112,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "nature_alternate",
+    "pixels": 5906,
+    "bounds": [
+      13,
+      7,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "undergrowth",
+    "pixels": 3841,
+    "bounds": [
+      13,
+      56,
+      114,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "rocks",
+    "pixels": 4291,
+    "bounds": [
+      14,
+      47,
+      115,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "town",
+    "pixels": 7504,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "shop_item",
+    "pixels": 7229,
+    "bounds": [
+      13,
+      11,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "shop_weapon",
+    "pixels": 8120,
+    "bounds": [
+      9,
+      6,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "shop_magic",
+    "pixels": 7840,
+    "bounds": [
+      10,
+      10,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "church",
+    "pixels": 7849,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "dark_gate",
+    "pixels": 8920,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "vault",
+    "pixels": 8182,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "boss",
+    "pixels": 7592,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "tavern",
+    "pixels": 8054,
+    "bounds": [
+      9,
+      14,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "guild",
+    "pixels": 8896,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "fishing",
+    "pixels": 6180,
+    "bounds": [
+      5,
+      22,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "isekai_event",
+    "pixels": 8240,
+    "bounds": [
+      11,
+      7,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "mystery_chest",
+    "pixels": 5415,
+    "bounds": [
+      5,
+      50,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "home",
+    "pixels": 6808,
+    "bounds": [
+      12,
+      14,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "capital",
+    "pixels": 7596,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "bridge",
+    "pixels": 5284,
+    "bounds": [
+      5,
+      39,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "cliff",
+    "pixels": 10389,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "landmark",
+    "pixels": 6782,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "wall",
+    "pixels": 7155,
+    "bounds": [
+      11,
+      9,
+      115,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "volcano",
+    "slot": "stairs",
+    "pixels": 8449,
+    "bounds": [
+      6,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "nature_large",
+    "pixels": 8602,
+    "bounds": [
+      6,
+      5,
+      122,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "nature_alternate",
+    "pixels": 6479,
+    "bounds": [
+      16,
+      15,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "undergrowth",
+    "pixels": 4352,
+    "bounds": [
+      12,
+      49,
+      116,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "rocks",
+    "pixels": 5443,
+    "bounds": [
+      9,
+      45,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "town",
+    "pixels": 7637,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "shop_item",
+    "pixels": 7584,
+    "bounds": [
+      11,
+      17,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "shop_weapon",
+    "pixels": 8947,
+    "bounds": [
+      6,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "shop_magic",
+    "pixels": 9057,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "church",
+    "pixels": 7214,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "dark_gate",
+    "pixels": 9345,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "vault",
+    "pixels": 9174,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "boss",
+    "pixels": 7874,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "tavern",
+    "pixels": 8610,
+    "bounds": [
+      5,
+      12,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "guild",
+    "pixels": 8504,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "fishing",
+    "pixels": 7317,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "isekai_event",
+    "pixels": 9366,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "mystery_chest",
+    "pixels": 5386,
+    "bounds": [
+      13,
+      44,
+      115,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "home",
+    "pixels": 7624,
+    "bounds": [
+      7,
+      21,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "capital",
+    "pixels": 8515,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "bridge",
+    "pixels": 6031,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "cliff",
+    "pixels": 9733,
+    "bounds": [
+      8,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "landmark",
+    "pixels": 9528,
+    "bounds": [
+      8,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "wall",
+    "pixels": 7127,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "cavern",
+    "slot": "stairs",
+    "pixels": 7922,
+    "bounds": [
+      7,
+      10,
+      120,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "nature_large",
+    "pixels": 7526,
+    "bounds": [
+      12,
+      5,
+      116,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "nature_alternate",
+    "pixels": 6903,
+    "bounds": [
+      16,
+      5,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "undergrowth",
+    "pixels": 4631,
+    "bounds": [
+      14,
+      39,
+      114,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "rocks",
+    "pixels": 5688,
+    "bounds": [
+      11,
+      38,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "town",
+    "pixels": 7629,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "shop_item",
+    "pixels": 6852,
+    "bounds": [
+      12,
+      26,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "shop_weapon",
+    "pixels": 7960,
+    "bounds": [
+      8,
+      22,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "shop_magic",
+    "pixels": 7994,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "church",
+    "pixels": 7963,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "dark_gate",
+    "pixels": 9437,
+    "bounds": [
+      8,
+      6,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "vault",
+    "pixels": 8789,
+    "bounds": [
+      5,
+      12,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "boss",
+    "pixels": 7021,
+    "bounds": [
+      15,
+      5,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "tavern",
+    "pixels": 8534,
+    "bounds": [
+      8,
+      19,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "guild",
+    "pixels": 8768,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "fishing",
+    "pixels": 6952,
+    "bounds": [
+      5,
+      33,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "isekai_event",
+    "pixels": 7787,
+    "bounds": [
+      10,
+      14,
+      119,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "mystery_chest",
+    "pixels": 5642,
+    "bounds": [
+      7,
+      48,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "home",
+    "pixels": 7820,
+    "bounds": [
+      9,
+      15,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "capital",
+    "pixels": 8007,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "bridge",
+    "pixels": 6953,
+    "bounds": [
+      6,
+      23,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "cliff",
+    "pixels": 9444,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "landmark",
+    "pixels": 8261,
+    "bounds": [
+      16,
+      5,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "wall",
+    "pixels": 7918,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "coral",
+    "slot": "stairs",
+    "pixels": 7314,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "nature_large",
+    "pixels": 5533,
+    "bounds": [
+      14,
+      6,
+      113,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "nature_alternate",
+    "pixels": 5225,
+    "bounds": [
+      18,
+      5,
+      110,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "undergrowth",
+    "pixels": 3662,
+    "bounds": [
+      13,
+      60,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "rocks",
+    "pixels": 4868,
+    "bounds": [
+      8,
+      48,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "town",
+    "pixels": 7241,
+    "bounds": [
+      8,
+      6,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "shop_item",
+    "pixels": 7500,
+    "bounds": [
+      10,
+      20,
+      118,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "shop_weapon",
+    "pixels": 8104,
+    "bounds": [
+      5,
+      13,
+      122,
+      120
+    ],
+    "footY": 119,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "shop_magic",
+    "pixels": 6621,
+    "bounds": [
+      15,
+      5,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "church",
+    "pixels": 7346,
+    "bounds": [
+      11,
+      6,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "dark_gate",
+    "pixels": 10538,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "vault",
+    "pixels": 9132,
+    "bounds": [
+      5,
+      8,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "boss",
+    "pixels": 6935,
+    "bounds": [
+      16,
+      5,
+      111,
+      119
+    ],
+    "footY": 119,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "tavern",
+    "pixels": 9020,
+    "bounds": [
+      7,
+      6,
+      120,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "guild",
+    "pixels": 8882,
+    "bounds": [
+      6,
+      10,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "fishing",
+    "pixels": 5779,
+    "bounds": [
+      5,
+      32,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "isekai_event",
+    "pixels": 8124,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "mystery_chest",
+    "pixels": 5434,
+    "bounds": [
+      6,
+      48,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "home",
+    "pixels": 7119,
+    "bounds": [
+      5,
+      8,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "capital",
+    "pixels": 6904,
+    "bounds": [
+      8,
+      6,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "bridge",
+    "pixels": 6243,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "cliff",
+    "pixels": 6983,
+    "bounds": [
+      15,
+      5,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "landmark",
+    "pixels": 7991,
+    "bounds": [
+      14,
+      6,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "wall",
+    "pixels": 7478,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "abyss",
+    "slot": "stairs",
+    "pixels": 7175,
+    "bounds": [
+      9,
+      7,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "nature_large",
+    "pixels": 8924,
+    "bounds": [
+      7,
+      6,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "nature_alternate",
+    "pixels": 7470,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "undergrowth",
+    "pixels": 4336,
+    "bounds": [
+      11,
+      53,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "rocks",
+    "pixels": 5126,
+    "bounds": [
+      7,
+      47,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "town",
+    "pixels": 7854,
+    "bounds": [
+      5,
+      8,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "shop_item",
+    "pixels": 7352,
+    "bounds": [
+      10,
+      14,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "shop_weapon",
+    "pixels": 9246,
+    "bounds": [
+      7,
+      7,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "shop_magic",
+    "pixels": 8462,
+    "bounds": [
+      9,
+      10,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "church",
+    "pixels": 7611,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "dark_gate",
+    "pixels": 8968,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "vault",
+    "pixels": 8349,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "boss",
+    "pixels": 5654,
+    "bounds": [
+      19,
+      5,
+      108,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "tavern",
+    "pixels": 8537,
+    "bounds": [
+      6,
+      11,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "guild",
+    "pixels": 9350,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "fishing",
+    "pixels": 7947,
+    "bounds": [
+      5,
+      22,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "isekai_event",
+    "pixels": 8002,
+    "bounds": [
+      9,
+      9,
+      119,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "mystery_chest",
+    "pixels": 5404,
+    "bounds": [
+      6,
+      45,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "home",
+    "pixels": 8089,
+    "bounds": [
+      10,
+      16,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "capital",
+    "pixels": 7827,
+    "bounds": [
+      10,
+      6,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "bridge",
+    "pixels": 7479,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "cliff",
+    "pixels": 10837,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "landmark",
+    "pixels": 9830,
+    "bounds": [
+      6,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "wall",
+    "pixels": 6810,
+    "bounds": [
+      11,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "castle",
+    "slot": "stairs",
+    "pixels": 8378,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "nature_large",
+    "pixels": 8767,
+    "bounds": [
+      6,
+      8,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "nature_alternate",
+    "pixels": 7955,
+    "bounds": [
+      12,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "undergrowth",
+    "pixels": 4897,
+    "bounds": [
+      12,
+      45,
+      115,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "rocks",
+    "pixels": 5318,
+    "bounds": [
+      10,
+      43,
+      118,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "town",
+    "pixels": 7322,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "shop_item",
+    "pixels": 7226,
+    "bounds": [
+      11,
+      22,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "shop_weapon",
+    "pixels": 8146,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "shop_magic",
+    "pixels": 8828,
+    "bounds": [
+      7,
+      16,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "church",
+    "pixels": 7134,
+    "bounds": [
+      9,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "dark_gate",
+    "pixels": 9040,
+    "bounds": [
+      5,
+      21,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "vault",
+    "pixels": 7605,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "boss",
+    "pixels": 8454,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "tavern",
+    "pixels": 8948,
+    "bounds": [
+      5,
+      19,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "guild",
+    "pixels": 7942,
+    "bounds": [
+      5,
+      12,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "fishing",
+    "pixels": 6826,
+    "bounds": [
+      5,
+      26,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "isekai_event",
+    "pixels": 8386,
+    "bounds": [
+      6,
+      9,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "mystery_chest",
+    "pixels": 4738,
+    "bounds": [
+      9,
+      57,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "home",
+    "pixels": 8757,
+    "bounds": [
+      7,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "capital",
+    "pixels": 8261,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "bridge",
+    "pixels": 5815,
+    "bounds": [
+      5,
+      29,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "cliff",
+    "pixels": 10329,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "landmark",
+    "pixels": 10814,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "wall",
+    "pixels": 6845,
+    "bounds": [
+      5,
+      30,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "fairy_grove",
+    "slot": "stairs",
+    "pixels": 7531,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "nature_large",
+    "pixels": 5698,
+    "bounds": [
+      20,
+      6,
+      108,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "nature_alternate",
+    "pixels": 7802,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "undergrowth",
+    "pixels": 4756,
+    "bounds": [
+      10,
+      46,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "rocks",
+    "pixels": 5587,
+    "bounds": [
+      11,
+      32,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "town",
+    "pixels": 8538,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "shop_item",
+    "pixels": 8729,
+    "bounds": [
+      8,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "shop_weapon",
+    "pixels": 9197,
+    "bounds": [
+      6,
+      6,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "shop_magic",
+    "pixels": 9049,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "church",
+    "pixels": 7401,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "dark_gate",
+    "pixels": 9524,
+    "bounds": [
+      6,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "vault",
+    "pixels": 8820,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "boss",
+    "pixels": 9245,
+    "bounds": [
+      8,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "tavern",
+    "pixels": 8451,
+    "bounds": [
+      5,
+      20,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "guild",
+    "pixels": 9561,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "fishing",
+    "pixels": 7684,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "isekai_event",
+    "pixels": 8667,
+    "bounds": [
+      5,
+      8,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "mystery_chest",
+    "pixels": 5696,
+    "bounds": [
+      11,
+      46,
+      116,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "home",
+    "pixels": 7958,
+    "bounds": [
+      6,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "capital",
+    "pixels": 9426,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "bridge",
+    "pixels": 6828,
+    "bounds": [
+      5,
+      16,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "cliff",
+    "pixels": 9507,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "landmark",
+    "pixels": 9547,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "wall",
+    "pixels": 8336,
+    "bounds": [
+      5,
+      18,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "crystal_cavern",
+    "slot": "stairs",
+    "pixels": 7500,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "nature_large",
+    "pixels": 7829,
+    "bounds": [
+      5,
+      14,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "nature_alternate",
+    "pixels": 6793,
+    "bounds": [
+      17,
+      9,
+      112,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "undergrowth",
+    "pixels": 5635,
+    "bounds": [
+      10,
+      33,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "rocks",
+    "pixels": 5378,
+    "bounds": [
+      9,
+      42,
+      118,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "town",
+    "pixels": 7969,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "shop_item",
+    "pixels": 7390,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "shop_weapon",
+    "pixels": 8022,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "shop_magic",
+    "pixels": 8543,
+    "bounds": [
+      9,
+      6,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "church",
+    "pixels": 7305,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "dark_gate",
+    "pixels": 9580,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "vault",
+    "pixels": 8720,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "boss",
+    "pixels": 6878,
+    "bounds": [
+      15,
+      7,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "tavern",
+    "pixels": 8624,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "guild",
+    "pixels": 8432,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "fishing",
+    "pixels": 6981,
+    "bounds": [
+      9,
+      7,
+      118,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "isekai_event",
+    "pixels": 7332,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "mystery_chest",
+    "pixels": 5572,
+    "bounds": [
+      17,
+      44,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "home",
+    "pixels": 8040,
+    "bounds": [
+      11,
+      8,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "capital",
+    "pixels": 8153,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "bridge",
+    "pixels": 5048,
+    "bounds": [
+      5,
+      39,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "cliff",
+    "pixels": 9039,
+    "bounds": [
+      14,
+      5,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "landmark",
+    "pixels": 8627,
+    "bounds": [
+      12,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "wall",
+    "pixels": 6868,
+    "bounds": [
+      11,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "celestial",
+    "slot": "stairs",
+    "pixels": 7233,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "nature_large",
+    "pixels": 8163,
+    "bounds": [
+      5,
+      8,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "nature_alternate",
+    "pixels": 7286,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "undergrowth",
+    "pixels": 3691,
+    "bounds": [
+      19,
+      57,
+      108,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "rocks",
+    "pixels": 4121,
+    "bounds": [
+      14,
+      55,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "town",
+    "pixels": 7732,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "shop_item",
+    "pixels": 6864,
+    "bounds": [
+      9,
+      10,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "shop_weapon",
+    "pixels": 8738,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "shop_magic",
+    "pixels": 8812,
+    "bounds": [
+      7,
+      7,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "church",
+    "pixels": 6808,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "dark_gate",
+    "pixels": 8341,
+    "bounds": [
+      7,
+      19,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "vault",
+    "pixels": 9513,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "boss",
+    "pixels": 6593,
+    "bounds": [
+      15,
+      5,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "tavern",
+    "pixels": 7687,
+    "bounds": [
+      10,
+      10,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "guild",
+    "pixels": 8763,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "fishing",
+    "pixels": 6146,
+    "bounds": [
+      5,
+      24,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "isekai_event",
+    "pixels": 8855,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "mystery_chest",
+    "pixels": 4382,
+    "bounds": [
+      13,
+      60,
+      114,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "home",
+    "pixels": 8023,
+    "bounds": [
+      7,
+      14,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "capital",
+    "pixels": 8781,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "bridge",
+    "pixels": 6422,
+    "bounds": [
+      13,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "cliff",
+    "pixels": 8229,
+    "bounds": [
+      14,
+      5,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "landmark",
+    "pixels": 8777,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "wall",
+    "pixels": 7481,
+    "bounds": [
+      6,
+      15,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "steampunk",
+    "slot": "stairs",
+    "pixels": 7456,
+    "bounds": [
+      10,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "nature_large",
+    "pixels": 7624,
+    "bounds": [
+      5,
+      14,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "nature_alternate",
+    "pixels": 8491,
+    "bounds": [
+      7,
+      6,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "undergrowth",
+    "pixels": 5371,
+    "bounds": [
+      6,
+      56,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "rocks",
+    "pixels": 6146,
+    "bounds": [
+      10,
+      35,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "town",
+    "pixels": 9180,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "shop_item",
+    "pixels": 8956,
+    "bounds": [
+      6,
+      8,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "shop_weapon",
+    "pixels": 9118,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "shop_magic",
+    "pixels": 9362,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "church",
+    "pixels": 9199,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "dark_gate",
+    "pixels": 10244,
+    "bounds": [
+      5,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "vault",
+    "pixels": 10190,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "boss",
+    "pixels": 7751,
+    "bounds": [
+      11,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "tavern",
+    "pixels": 9184,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "guild",
+    "pixels": 9226,
+    "bounds": [
+      6,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "fishing",
+    "pixels": 6574,
+    "bounds": [
+      5,
+      28,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "isekai_event",
+    "pixels": 9083,
+    "bounds": [
+      5,
+      9,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "mystery_chest",
+    "pixels": 4646,
+    "bounds": [
+      13,
+      50,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "home",
+    "pixels": 8783,
+    "bounds": [
+      5,
+      12,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "capital",
+    "pixels": 9066,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "bridge",
+    "pixels": 6450,
+    "bounds": [
+      5,
+      26,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "cliff",
+    "pixels": 9609,
+    "bounds": [
+      9,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "landmark",
+    "pixels": 10546,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "wall",
+    "pixels": 6980,
+    "bounds": [
+      5,
+      15,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "sakura_shrine",
+    "slot": "stairs",
+    "pixels": 7830,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "nature_large",
+    "pixels": 6877,
+    "bounds": [
+      7,
+      5,
+      121,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "nature_alternate",
+    "pixels": 6669,
+    "bounds": [
+      16,
+      5,
+      111,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "undergrowth",
+    "pixels": 3388,
+    "bounds": [
+      18,
+      61,
+      110,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "rocks",
+    "pixels": 5953,
+    "bounds": [
+      5,
+      34,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "town",
+    "pixels": 7728,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "shop_item",
+    "pixels": 8279,
+    "bounds": [
+      13,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "shop_weapon",
+    "pixels": 8798,
+    "bounds": [
+      10,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "shop_magic",
+    "pixels": 8343,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "church",
+    "pixels": 6638,
+    "bounds": [
+      14,
+      5,
+      114,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "dark_gate",
+    "pixels": 8896,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "vault",
+    "pixels": 9326,
+    "bounds": [
+      10,
+      5,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "boss",
+    "pixels": 7751,
+    "bounds": [
+      11,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "tavern",
+    "pixels": 9610,
+    "bounds": [
+      7,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "guild",
+    "pixels": 9673,
+    "bounds": [
+      6,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "fishing",
+    "pixels": 9578,
+    "bounds": [
+      8,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "isekai_event",
+    "pixels": 7496,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "mystery_chest",
+    "pixels": 5183,
+    "bounds": [
+      13,
+      48,
+      113,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "home",
+    "pixels": 9305,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "capital",
+    "pixels": 8415,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "bridge",
+    "pixels": 6630,
+    "bounds": [
+      5,
+      17,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "cliff",
+    "pixels": 8550,
+    "bounds": [
+      11,
+      10,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "landmark",
+    "pixels": 10295,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "wall",
+    "pixels": 7330,
+    "bounds": [
+      10,
+      9,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_catacombs",
+    "slot": "stairs",
+    "pixels": 8195,
+    "bounds": [
+      5,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "nature_large",
+    "pixels": 6437,
+    "bounds": [
+      12,
+      6,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "nature_alternate",
+    "pixels": 4606,
+    "bounds": [
+      23,
+      22,
+      105,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "undergrowth",
+    "pixels": 3971,
+    "bounds": [
+      18,
+      52,
+      110,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "rocks",
+    "pixels": 3916,
+    "bounds": [
+      17,
+      60,
+      111,
+      122
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "town",
+    "pixels": 7164,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "shop_item",
+    "pixels": 7518,
+    "bounds": [
+      9,
+      7,
+      118,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "shop_weapon",
+    "pixels": 8083,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "shop_magic",
+    "pixels": 8941,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "church",
+    "pixels": 7055,
+    "bounds": [
+      15,
+      5,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "dark_gate",
+    "pixels": 10002,
+    "bounds": [
+      5,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "vault",
+    "pixels": 9177,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "boss",
+    "pixels": 6629,
+    "bounds": [
+      16,
+      6,
+      112,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "tavern",
+    "pixels": 8658,
+    "bounds": [
+      6,
+      10,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "guild",
+    "pixels": 8527,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "fishing",
+    "pixels": 6150,
+    "bounds": [
+      5,
+      32,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "isekai_event",
+    "pixels": 7416,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "mystery_chest",
+    "pixels": 5151,
+    "bounds": [
+      11,
+      49,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "home",
+    "pixels": 7363,
+    "bounds": [
+      11,
+      6,
+      116,
+      110
+    ],
+    "footY": 110,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "capital",
+    "pixels": 8540,
+    "bounds": [
+      5,
+      7,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "bridge",
+    "pixels": 6929,
+    "bounds": [
+      5,
+      22,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "cliff",
+    "pixels": 8696,
+    "bounds": [
+      25,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "landmark",
+    "pixels": 8177,
+    "bounds": [
+      9,
+      5,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "wall",
+    "pixels": 8121,
+    "bounds": [
+      6,
+      6,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_volcano",
+    "slot": "stairs",
+    "pixels": 7914,
+    "bounds": [
+      6,
+      8,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "nature_large",
+    "pixels": 5313,
+    "bounds": [
+      15,
+      6,
+      113,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "nature_alternate",
+    "pixels": 5810,
+    "bounds": [
+      14,
+      6,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "undergrowth",
+    "pixels": 3690,
+    "bounds": [
+      12,
+      57,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "rocks",
+    "pixels": 5508,
+    "bounds": [
+      8,
+      45,
+      120,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "town",
+    "pixels": 7791,
+    "bounds": [
+      5,
+      19,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "shop_item",
+    "pixels": 8574,
+    "bounds": [
+      9,
+      5,
+      117,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "shop_weapon",
+    "pixels": 8567,
+    "bounds": [
+      8,
+      5,
+      119,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "shop_magic",
+    "pixels": 7424,
+    "bounds": [
+      12,
+      5,
+      116,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "church",
+    "pixels": 6902,
+    "bounds": [
+      11,
+      5,
+      117,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "dark_gate",
+    "pixels": 8649,
+    "bounds": [
+      5,
+      12,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "vault",
+    "pixels": 9519,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "boss",
+    "pixels": 7691,
+    "bounds": [
+      13,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "tavern",
+    "pixels": 9680,
+    "bounds": [
+      7,
+      5,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "guild",
+    "pixels": 9362,
+    "bounds": [
+      7,
+      12,
+      120,
+      121
+    ],
+    "footY": 121,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "fishing",
+    "pixels": 6853,
+    "bounds": [
+      5,
+      28,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "isekai_event",
+    "pixels": 8039,
+    "bounds": [
+      12,
+      5,
+      115,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "mystery_chest",
+    "pixels": 4777,
+    "bounds": [
+      19,
+      54,
+      107,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "home",
+    "pixels": 7741,
+    "bounds": [
+      7,
+      13,
+      121,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "capital",
+    "pixels": 8617,
+    "bounds": [
+      6,
+      5,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "bridge",
+    "pixels": 6610,
+    "bounds": [
+      5,
+      10,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "cliff",
+    "pixels": 9509,
+    "bounds": [
+      5,
+      11,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "landmark",
+    "pixels": 5486,
+    "bounds": [
+      14,
+      6,
+      113,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "wall",
+    "pixels": 8652,
+    "bounds": [
+      5,
+      14,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  },
+  {
+    "theme": "dungeon_ice",
+    "slot": "stairs",
+    "pixels": 7839,
+    "bounds": [
+      5,
+      13,
+      122,
+      122
+    ],
+    "footY": 122,
+    "clipped": false
+  }
+]

@@ -313,15 +313,56 @@ body #battleScreen > div:first-child > div:first-of-type > .pixel-box { backgrou
 body :is(#titleScreen > .text-center, #titleButtonsBlock) { background: #102e58; border-color: #edbd67; }
 body #titleScreen h2 { color: #ffce67; }
 body #titleScreen::before { background: linear-gradient(90deg, #08172200 25%, #08172222 58%, #08172299 100%); }
-#artworkLoading { position: fixed; inset: 0; z-index: 100; background: #0d2850; display: grid; place-items: center; color: #fff1d4; padding: 24px; text-align: center; pointer-events: auto; }
+/* This cover is styled in HTML so a slow module download never shows a blank canvas. */
+#artworkLoading { position: fixed; inset: 0; z-index: 200; display: flex; align-items: flex-end; justify-content: center; overflow: auto; padding: 32px 24px max(36px, env(safe-area-inset-bottom)); background: #10251f url('/assets/art-v2/kingdom-title.png') center / cover no-repeat; color: #fff1d4; font-family: 'Kanit', sans-serif; text-align: center; }
 #artworkLoading[hidden] { display: none; }
-#artworkLoading > div { width: min(420px, 100%); padding: 32px 24px; background: #153866; border: 2px solid #e8bb66; box-shadow: inset 0 0 0 4px #0b2244; }
-#artworkLoading span { color: #ffd370; font: 10px 'Silkscreen', sans-serif; letter-spacing: 1px; }
-#artworkLoading h2 { font-size: 22px; margin: 18px 0 8px; }
-#artworkLoading p { color: #b9d5ef; font-size: 13px; margin-bottom: 24px; }
-#artworkLoading progress { width: 100%; height: 12px; accent-color: #ffd061; }
-#artworkLoading button { margin-top: 20px; padding: 10px 20px; }
+#artworkLoading .fortune-loading-scene { position: absolute; inset: 0; background: linear-gradient(180deg, #09191500 40%, #091915b3 100%), url('/assets/generated/world-loading-v1.webp') center / cover no-repeat; }
+#artworkLoading .fortune-loading-caption { position: absolute; top: max(28px, env(safe-area-inset-top)); left: max(28px, env(safe-area-inset-left)); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-shadow: 0 2px 3px #091915; }
+#artworkLoading .fortune-loading-caption span:first-child { font: 20px 'Silkscreen', monospace; color: #f4d18a; letter-spacing: 5px; }
+#artworkLoading .fortune-loading-caption span:last-child { color: #e7efcf; font-size: 12px; letter-spacing: 2px; }
+#artworkLoading .fortune-loading-card { position: relative; width: min(500px, 100%); padding: 26px 32px 24px; background: #101f22ed; border: 1px solid #c4a26a; box-shadow: inset 0 0 0 4px #162d30, inset 0 0 0 5px #76978966, 0 8px 30px #03110e77; }
+#artworkLoading .fortune-loading-eyebrow { color: #e3c185; font: 10px 'Silkscreen', monospace; letter-spacing: 2px; }
+#artworkLoading h2 { margin: 12px 0 6px; font-size: clamp(20px, 3vw, 27px); line-height: 1.5; }
+#artworkLoading p { margin: 0 0 18px; color: #c1d6cb; font-size: 13px; line-height: 1.7; }
+#artworkLoading progress { display: block; width: 100%; height: 10px; accent-color: #ddbd78; border: 1px solid #6d8175; background: #071611; }
+#artworkLoading progress::-webkit-progress-bar { background: #071611; }
+#artworkLoading progress::-webkit-progress-value { background: linear-gradient(90deg, #72ad92, #e3c27c); }
+#artworkLoading progress::-moz-progress-bar { background: #c7bb80; }
+#artworkLoading small { display: block; margin-top: 12px; color: #9fb7aa; font-size: 11px; line-height: 1.6; }
+#artworkLoading button { display: block; margin: 18px auto 0; padding: 10px 20px; }
 #artworkLoading button[hidden] { display: none; }
+@media (max-width: 600px) {
+  #artworkLoading { padding: 16px 16px max(24px, env(safe-area-inset-bottom)); }
+  #artworkLoading .fortune-loading-scene { background-position: 43% center; }
+  #artworkLoading .fortune-loading-caption { top: max(22px, env(safe-area-inset-top)); left: max(22px, env(safe-area-inset-left)); }
+  #artworkLoading .fortune-loading-card { padding: 22px 18px 20px; }
+  #artworkLoading .fortune-loading-eyebrow { font-size: 8px; letter-spacing: 1px; }
+}
+@media (max-height: 440px) and (orientation: landscape) {
+  #artworkLoading { align-items: center; justify-content: flex-end; padding: 16px 28px; }
+  #artworkLoading .fortune-loading-card { width: min(430px, 60%); padding: 16px 24px; }
+  #artworkLoading small { display: none; }
+}
+
+
+/* Painted brass and jade corners surround real, readable interface content.
+   Nine-slice borders preserve the corners at every dialog size. */
+body :is(#playerSetupBlock, #inventoryModal > div, #settingsModal > div,
+  #characterInspectModal > div, #shopModal > div, #townModal > div,
+  #weeklyReportModal > div, #victoryModal > div, #levelUpModal > div),
+#artworkLoading .fortune-loading-card {
+  border-image-source: url('/assets/generated/fortune-ui-frame-v1.webp');
+  border-image-slice: 192;
+  border-image-width: 20px;
+  border-image-repeat: stretch;
+  background-color: #122d2e;
+}
+@media (max-width: 600px) {
+  body :is(#playerSetupBlock, #inventoryModal > div, #settingsModal > div,
+    #characterInspectModal > div, #shopModal > div, #townModal > div,
+    #weeklyReportModal > div, #victoryModal > div, #levelUpModal > div),
+  #artworkLoading .fortune-loading-card { border-image-width: 12px; }
+}
 
 /* Shop workspace: artwork, full-width services and unobscured feedback. */
 body.shop-open #gameEventFeedWindow { display: none !important; }

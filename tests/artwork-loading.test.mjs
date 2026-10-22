@@ -28,3 +28,22 @@ test('art loading waits for every image and two repaints, including failed reque
     assert.equal(overlay.hidden,false);assert.equal(button.hidden,false);assert.match(heading.textContent,/ไม่สำเร็จ/);
   }finally{globalThis.Image=oldImage;globalThis.document=oldDocument;globalThis.requestAnimationFrame=oldRAF;}
 });
+
+test('the HTML illustration stays up through boot and is reused for later map artwork', async () => {
+  const oldImage=globalThis.Image,oldDocument=globalThis.document,oldRAF=globalThis.requestAnimationFrame;
+  const images=[],raf=[],progress={},button={addEventListener(){},hidden:true},heading={},paragraph={};
+  const overlay={isConnected:true,hidden:false,setAttribute(){},querySelector(s){return s==='button'?button:s==='h2'?heading:s==='p'?paragraph:progress;}};
+  let appended=0;
+  globalThis.Image=class{constructor(){this.events={};images.push(this);}addEventListener(type,fn){this.events[type]=fn;}};
+  globalThis.document={getElementById(){return overlay;},body:{appendChild(){appended++;}}};
+  globalThis.requestAnimationFrame=fn=>raf.push(fn);
+  try {
+    const {createArtworkImage,completeArtworkBoot}=await import('../.test-build/engine/ArtworkLoading.js?boot-cover');
+    createArtworkImage();images[0].events.load();while(raf.length)raf.shift()();
+    assert.equal(overlay.hidden,false,'an atlas completing must not dismiss the boot cover');
+    completeArtworkBoot();raf.shift()();assert.equal(overlay.hidden,false);raf.shift()();
+    assert.equal(overlay.hidden,true);assert.equal(appended,0,'the HTML cover is reused without duplication');
+    createArtworkImage();assert.equal(overlay.hidden,false,'a later biome load restores the illustrated cover');
+    images[1].events.load();while(raf.length)raf.shift()();assert.equal(overlay.hidden,true);
+  } finally {globalThis.Image=oldImage;globalThis.document=oldDocument;globalThis.requestAnimationFrame=oldRAF;}
+});

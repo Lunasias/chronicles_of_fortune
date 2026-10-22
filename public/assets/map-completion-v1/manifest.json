@@ -1,0 +1,349 @@
+{
+  "generated": "2026-10-22",
+  "tool": "built-in image_gen",
+  "sources": {
+    "world-loading.png": "exec-978774ac-fdc7-48e9-b616-c956fa27e2c6.png",
+    "fortune-ui-frame.png": "exec-5b3076fa-0c26-4b33-a0fe-54cc2f8e368b.png",
+    "nature-one.png": "exec-e3a14292-6327-495e-b1c0-8fe01802240e.png",
+    "nature-two.png": "exec-8f5cb2d3-78c6-49b3-8f3d-d87da1d71768.png",
+    "scenery.png": "exec-195cea6e-1936-4cde-97c6-61bd6407d755.png"
+  },
+  "assets": [
+    {
+      "file": "grass-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 0,
+      "sourceBounds": [
+        407,
+        389
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 32267,
+      "edge": 0,
+      "sha256": "a59f3a57a5f6634fda997af19f27068637368b38e160970171b5953ed48832b7"
+    },
+    {
+      "file": "forest-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 1,
+      "sourceBounds": [
+        370,
+        380
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 35476,
+      "edge": 0,
+      "sha256": "377358e0067469de645d862e96edfaafada4409345facc9a3df64db86ff92929"
+    },
+    {
+      "file": "waterfall_forest-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 2,
+      "sourceBounds": [
+        395,
+        392
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 33520,
+      "edge": 0,
+      "sha256": "21e8c894074d1e851c770c2f6cc90caa5440f604f546df2be41eaae32863664a"
+    },
+    {
+      "file": "snow-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 3,
+      "sourceBounds": [
+        315,
+        401
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 22747,
+      "edge": 0,
+      "sha256": "513e70cd0b904b1e3903e2016bc82bd0bedb0d6d159e57873e538c8089c2e041"
+    },
+    {
+      "file": "desert-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 4,
+      "sourceBounds": [
+        335,
+        403
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 22349,
+      "edge": 0,
+      "sha256": "294beef1fea0e2e02fdb7946a4380bbba51d7546fd102e0cd167096d8b2ca753"
+    },
+    {
+      "file": "volcano-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 5,
+      "sourceBounds": [
+        329,
+        389
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 19627,
+      "edge": 0,
+      "sha256": "877b4e0a4dabe75a5b834fe6e038599e690b42a2dea6709bd15e8c50f1e1fb83"
+    },
+    {
+      "file": "cavern-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 6,
+      "sourceBounds": [
+        389,
+        393
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 32709,
+      "edge": 0,
+      "sha256": "e65ddef38284d8d0be3e46a0e39a691a0a8378a4c700043a1d1915ebc60b7a9e"
+    },
+    {
+      "file": "coral-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 7,
+      "sourceBounds": [
+        356,
+        400
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 28552,
+      "edge": 0,
+      "sha256": "ec9d7bae09eb778bdad354d7fe0b9c0382f1024a82ddd4a593ab4a5bfc59dca1"
+    },
+    {
+      "file": "abyss-nature_large.png",
+      "source": "nature-one.png",
+      "cell": 8,
+      "sourceBounds": [
+        352,
+        407
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 21253,
+      "edge": 0,
+      "sha256": "7552fac2d3f5c685950654155be1b1f2470018dd0712fd37a93b71fc388428a5"
+    },
+    {
+      "file": "castle-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 0,
+      "sourceBounds": [
+        360,
+        362
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 34188,
+      "edge": 0,
+      "sha256": "50455262e894f4843a2ce90b367287f4a2ca73fd110df6778eb64a16eb9a52a0"
+    },
+    {
+      "file": "fairy_grove-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 1,
+      "sourceBounds": [
+        380,
+        374
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 33405,
+      "edge": 0,
+      "sha256": "d7380702e19958ed2c736b6ce8bd76c1513824f49238e855a8f25dabd68f5898"
+    },
+    {
+      "file": "crystal_cavern-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 2,
+      "sourceBounds": [
+        286,
+        376
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 21799,
+      "edge": 0,
+      "sha256": "2b3f450b24d8fd49bdbe4d7b3bc4d046da3c15a064ea8a328232367da96ca886"
+    },
+    {
+      "file": "celestial-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 3,
+      "sourceBounds": [
+        396,
+        369
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 29750,
+      "edge": 0,
+      "sha256": "d7bf0c451f5560aae1b0dbb5167cedba800304c969ff5ff5459e73bd53dd8e93"
+    },
+    {
+      "file": "steampunk-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 4,
+      "sourceBounds": [
+        379,
+        369
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 31177,
+      "edge": 0,
+      "sha256": "ca4dff61619b85ef57c3520bb8c059c7df4e5d6a489ddcf05aa19589551a111d"
+    },
+    {
+      "file": "sakura_shrine-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 5,
+      "sourceBounds": [
+        401,
+        371
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 29139,
+      "edge": 0,
+      "sha256": "3fc0a31337ca4993c97a6edeadde571c3475d6c0ed7889dfd683dc8c9b7a8a99"
+    },
+    {
+      "file": "dungeon_catacombs-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 6,
+      "sourceBounds": [
+        370,
+        374
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 26172,
+      "edge": 0,
+      "sha256": "d45a29552a35a3cd34ca5bc2f1b999e753c359227f02ab09b6df2d033f026fb4"
+    },
+    {
+      "file": "dungeon_volcano-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 7,
+      "sourceBounds": [
+        353,
+        388
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 24551,
+      "edge": 0,
+      "sha256": "1f2ad1839f9c6362d79ddaeef036a00ffc0ba5e6fd82889300cfca15f2c93730"
+    },
+    {
+      "file": "dungeon_ice-nature_large.png",
+      "source": "nature-two.png",
+      "cell": 8,
+      "sourceBounds": [
+        325,
+        382
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 20264,
+      "edge": 0,
+      "sha256": "254ce5a6e31e078200db9a8cf0a747748957d91a35e780e9626035f906857a3c"
+    },
+    {
+      "file": "abyss-capital.png",
+      "source": "scenery.png",
+      "cell": 0,
+      "sourceBounds": [
+        489,
+        509
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 26361,
+      "edge": 0,
+      "sha256": "eb8d4ff98731c2f15ff3e39c3e239f76439ad8160f7454a871d7517ad376d965"
+    },
+    {
+      "file": "abyss-tavern.png",
+      "source": "scenery.png",
+      "cell": 1,
+      "sourceBounds": [
+        397,
+        408
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 34383,
+      "edge": 0,
+      "sha256": "6f8ee9d419abf39e2a836f29159567568f68e67e70d31b43b8da2f4dde43b8dd"
+    },
+    {
+      "file": "dungeon_volcano-landmark.png",
+      "source": "scenery.png",
+      "cell": 2,
+      "sourceBounds": [
+        426,
+        444
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 31203,
+      "edge": 0,
+      "sha256": "6294617cde2c38e4944e766ce482c4d7f30bc3573ba9b6960c3787c099db2d25"
+    },
+    {
+      "file": "dungeon_volcano-isekai_event.png",
+      "source": "scenery.png",
+      "cell": 3,
+      "sourceBounds": [
+        460,
+        424
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 28154,
+      "edge": 0,
+      "sha256": "36d7d2287a21e629f553845763026d4f2172e7579765700e902166b355f9a0c7"
+    },
+    {
+      "file": "volcano-capital.png",
+      "source": "scenery.png",
+      "cell": 4,
+      "sourceBounds": [
+        481,
+        495
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 29017,
+      "edge": 0,
+      "sha256": "321bf922fb80b488df074888a794527a5983b35951862c3ba8f1bdff76349a70"
+    },
+    {
+      "file": "volcano-bridge.png",
+      "source": "scenery.png",
+      "cell": 5,
+      "sourceBounds": [
+        475,
+        352
+      ],
+      "width": 256,
+      "height": 256,
+      "solid": 20178,
+      "edge": 0,
+      "sha256": "3719e73a95a9b08a2cf440f506b90122e86f8647bb44f5a140efdb94354dd5b0"
+    }
+  ]
+}

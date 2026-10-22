@@ -1,0 +1,327 @@
+{
+  "date": "2026-10-22",
+  "base": "http://localhost:5173",
+  "browser": "Chromium",
+  "views": [
+    {
+      "label": "loading-desktop",
+      "heldAtlasRequests": 5,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": true,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null,
+      "loadingCard": {
+        "x": 390,
+        "y": 469.8125,
+        "width": 500,
+        "height": 214.1875
+      }
+    },
+    {
+      "label": "loading-phone",
+      "heldAtlasRequests": 5,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "loadingVisible": true,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 764
+      },
+      "modal": null,
+      "loadingCard": {
+        "x": 16,
+        "y": 624.3125,
+        "width": 358,
+        "height": 195.6875
+      }
+    },
+    {
+      "label": "loading-landscape",
+      "heldAtlasRequests": 4,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "documentWidth": 844,
+      "loadingVisible": true,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 844,
+        "height": 390
+      },
+      "modal": null,
+      "loadingCard": {
+        "x": 386,
+        "y": 112.96875,
+        "width": 430,
+        "height": 164.0625
+      }
+    },
+    {
+      "label": "world-forest",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    },
+    {
+      "label": "world-snow",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    },
+    {
+      "label": "world-volcano",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    },
+    {
+      "label": "world-sakura_shrine",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    },
+    {
+      "label": "inventory-desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": {
+        "id": "inventoryModal",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720
+        },
+        "panel": {
+          "x": 160,
+          "y": 36,
+          "width": 960,
+          "height": 648
+        },
+        "frame": "url(\"http://localhost:5173/assets/generated/fortune-ui-frame-v1.webp\")"
+      }
+    },
+    {
+      "label": "inventory-phone",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 764
+      },
+      "modal": {
+        "id": "inventoryModal",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "panel": {
+          "x": 12,
+          "y": 42.203125,
+          "width": 366,
+          "height": 759.59375
+        },
+        "frame": "url(\"http://localhost:5173/assets/generated/fortune-ui-frame-v1.webp\")"
+      }
+    },
+    {
+      "label": "world-phone",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 764
+      },
+      "modal": null
+    },
+    {
+      "label": "title-desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    },
+    {
+      "label": "setup-desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null,
+      "panel": {
+        "x": 233.1875,
+        "y": 50.390625,
+        "width": 900,
+        "height": 619.21875
+      }
+    },
+    {
+      "label": "setup-phone",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 764
+      },
+      "modal": null,
+      "panel": {
+        "x": 16,
+        "y": 26.984375,
+        "width": 358,
+        "height": 768.03125
+      }
+    },
+    {
+      "label": "setup-phone-controls",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 764
+      },
+      "modal": null,
+      "beginButton": {
+        "x": 204.25,
+        "y": 726.984375,
+        "width": 141.75,
+        "height": 40
+      }
+    },
+    {
+      "label": "normal-initial-world",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "documentWidth": 1280,
+      "loadingVisible": false,
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "modal": null
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [],
+  "httpErrors": [],
+  "spriteCoverage": {
+    "expected": 432,
+    "rendered": 432,
+    "empty": [],
+    "missing": [],
+    "touchingCanvasEdge": []
+  },
+  "passed": true
+}

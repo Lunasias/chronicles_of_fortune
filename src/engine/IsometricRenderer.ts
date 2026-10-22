@@ -51,6 +51,7 @@ export class IsometricRenderer {
 
   // Precomputed Static Board Cache for 60 FPS zero-allocation performance
   private nodeScreenCache = new Map<number, { x: number; y: number; depth: number }>();
+  private boardNodesById = new Map<number, BoardNode>();
   private roadwaySegments: Array<{
     x1: number;
     y1: number;
@@ -60,6 +61,8 @@ export class IsometricRenderer {
     dashColor: string;
     edgeColor: string;
     interior: boolean;
+    points: Int32Array;
+    steps: number;
   }> = [];
   public hasInitializedBoardCache = false;
   private cachedNodes: BoardNode[] | null = null;
@@ -136,7 +139,7 @@ export class IsometricRenderer {
     // Initialize 3D isometric continent terrain and environmental props
     isometricTerrainEngine.initTerrain(nodes);
 
-    const nodeMap = new Map<number, BoardNode>();
+    const nodeMap = this.boardNodesById; nodeMap.clear();
     nodes.forEach(n => {
       nodeMap.set(n.id, n);
       const p = this.toScreen(n.gx, n.gy, n.gz);
@@ -197,6 +200,13 @@ export class IsometricRenderer {
             edgeColor = 'rgba(24, 5, 39, 0.4)';
           }
 
+          const dx = p2.x - p1.x, dy = p2.y - p1.y;
+          const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
+          const points = new Int32Array((steps + 1) * 2);
+          for (let step = 0; step <= steps; step++) {
+            const point = roadPoint(p1.x, p1.y, dx, dy, step / steps);
+            points[step * 2] = point.x; points[step * 2 + 1] = point.y;
+          }
           this.roadwaySegments.push({
             x1: p1.x,
             y1: p1.y,
@@ -205,7 +215,8 @@ export class IsometricRenderer {
             roadColor,
             dashColor,
             edgeColor,
-            interior: node.id >= 1000 || ['cavern','crystal_cavern','abyss','coral','castle','celestial','sakura_shrine','steampunk'].includes(node.biome)
+            interior: node.id >= 1000 || ['cavern','crystal_cavern','abyss','coral','castle','celestial','sakura_shrine','steampunk'].includes(node.biome),
+            points, steps
           });
         }
       });
@@ -339,7 +350,7 @@ export class IsometricRenderer {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Dynamic Fantasy World Sky & Parallax Horizons (Changes with Day/Night cycle)
-    const backdropNode = nodes.find(node => node.id === activePlayer?.nodeId) || nodes[0];
+    const backdropNode = this.boardNodesById.get(activePlayer?.nodeId ?? -1) || nodes[0];
     const backgroundKey = backdropKey(backdropNode?.biome || 'grass', backdropNode?.id);
     const openSky = !backgroundKey.startsWith('dungeon_') && !['cavern', 'crystal_cavern', 'coral', 'abyss'].includes(backgroundKey);
     generatedBackdrops.draw(ctx, w, h, backgroundKey, ecosystemSystem.timeOfDay);
@@ -387,7 +398,7 @@ export class IsometricRenderer {
     this.renderDustPuffs(ctx);
 
     // 7. Regional Weather Particles & Living Ecosystem
-    const activeNode = activePlayer ? nodes.find(n => n.id === activePlayer.nodeId) || nodes[0] : nodes[0];
+    const activeNode = backdropNode;
     const localWeather = ecosystemSystem.getNodeWeather(activeNode);
     if (graphicsPreferences.quality === 'high' && !prefersReducedMotion()) {
       this.renderRegionalWeather(ctx, localWeather, time, activeNode?.biome);
@@ -426,23 +437,23 @@ export class IsometricRenderer {
     maxY: number
   ) {
     // Native-pixel earth paths with irregular cobbles; no antialiased rails or centre stripe.
+    const night = ecosystemSystem.timeOfDay === 'NIGHT';
+    const roadMaterials = [isometricTerrainRenderer.roadPattern(ctx, night, false), isometricTerrainRenderer.roadPattern(ctx, night, true)];
     for (const seg of this.roadwaySegments) {
-      const roadMaterial=isometricTerrainRenderer.roadPattern(ctx,ecosystemSystem.timeOfDay==='NIGHT',seg.interior);
       if (Math.max(seg.x1, seg.x2) < minX - 30 || Math.min(seg.x1, seg.x2) > maxX + 30 ||
           Math.max(seg.y1, seg.y2) < minY - 30 || Math.min(seg.y1, seg.y2) > maxY + 30) continue;
-      const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
-      const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
+      const roadMaterial = roadMaterials[seg.interior ? 1 : 0];
+      const { points, steps } = seg;
       // Finish each entire layer before the next, so stamp shadows never cut
       // vertical seams through the preceding stone (the old fence-like pattern).
       for (const layer of [{ color: seg.edgeColor || 'rgba(42, 52, 44, 0.45)', w: 17, h: 7 }, { color: roadMaterial || seg.roadColor, w: 16, h: 6 }]) {
         ctx.fillStyle = layer.color;
         for (let i = 0; i <= steps; i++) {
-          const {x,y} = roadPoint(seg.x1,seg.y1,dx,dy,i/steps);
-          ctx.fillRect(x - layer.w / 2, y - 3, layer.w, layer.h);
+          ctx.fillRect(points[i * 2] - layer.w / 2, points[i * 2 + 1] - 3, layer.w, layer.h);
         }
       }
       for (let i = 2; i < steps - 1; i += 5) {
-        const {x,y} = roadPoint(seg.x1,seg.y1,dx,dy,i/steps);
+        const x = points[i * 2], y = points[i * 2 + 1];
         const j = (i % 3) - 1;
         ctx.fillStyle = '#655c49'; ctx.fillRect(x - 3 + j, y - 1, 5, 3);
         ctx.fillStyle = '#b1a084'; ctx.fillRect(x - 3 + j, y - 2, 4, 2);
@@ -821,7 +832,7 @@ export class IsometricRenderer {
 
       if(node.routeKind) renderList.push({depth:depth+20,draw:()=>{
         const bridge=regionalArt.get(backdropKey(node.biome),'bridge');if(!bridge)return;
-        const other=nodes.find(n=>n.id===node.neighbors[0]);
+        const other=this.boardNodesById.get(node.neighbors[0]);
         const mirror=other&&Math.abs(other.gx-node.gx)>=Math.abs(other.gy-node.gy);
         ctx.save();ctx.translate(px,py);if(mirror)ctx.scale(-1,1);
         ctx.drawImage(bridge,-64,-Number(bridge.dataset.footY)+20);ctx.restore();
@@ -1083,7 +1094,7 @@ export class IsometricRenderer {
     const sprite = navigationArrows.frame(0);
     if (!sprite) return;
     for (const id of highlightedNodes) {
-      const node = nodes.find(n => n.id === id); if (!node) continue;
+      const node = this.boardNodesById.get(id); if (!node) continue;
       const p = this.nodeScreenCache.get(id) || this.toScreen(node.gx,node.gy,node.gz);
       if (p.x < minX-100 || p.x > maxX+100 || p.y < minY-180 || p.y > maxY+180) continue;
       const hovered = this.hoveredNodeId === id;
@@ -1111,7 +1122,7 @@ export class IsometricRenderer {
     const zoom=this.snapZoom(this.camera.zoom),cx=snapWorld(this.camera.x,zoom),cy=snapWorld(this.camera.y,zoom);
     const project=(x:number,y:number)=>({x:this.canvas.width/2+(x-cx)*zoom,y:this.canvas.height/2+(y-cy)*zoom});
     const heroWorld=this.toScreen(player.gridX,player.gridY,player.gridZ),hero=project(heroWorld.x,heroWorld.y);
-    const targets=nodes.filter(n=>ids.includes(n.id)).map(n=>{const p=this.toScreen(n.gx,n.gy,n.gz);return{id:n.id,...project(p.x,p.y-markerClearance(n.type))};});
+    const targets=ids.flatMap(id=>{const n=this.boardNodesById.get(id);if(!n)return[];const p=this.nodeScreenCache.get(id)!;return[{id,...project(p.x,p.y-markerClearance(n.type))}];});
     this.directionGuides=offscreenDirectionGuides(hero,targets,this.canvas.width,this.canvas.height);
     ctx.save();ctx.imageSmoothingEnabled=false;
     for(const guide of this.directionGuides){

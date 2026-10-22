@@ -22,6 +22,14 @@ export interface SaveMetadata {
   totalPlayers: number;
 }
 
+export interface SaveOperationResult {
+  success: boolean;
+  error?: string;
+  warning?: string;
+  recoveredFromBackup?: boolean;
+  bossState?: { currentHp: number; maxHp: number };
+}
+
 export interface SerializedPlayer {
   id: number;
   name: string;
@@ -156,16 +164,113 @@ function numOr(value: unknown, fallback: number): number {
 
 /** Equipment slots that always exist on a Player. */
 const DEFAULT_EQUIPMENT = { weapon: null, shield: null, armor: null, accessory: null };
+const isRecord = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
+const MAX_IMPORT_LENGTH = 8 * 1024 * 1024;
+const GAME_MODES = ['standard', 'blitz', 'coop_raid', 'endless_spire', 'roguelike_draft'];
 
 export class SaveManager {
-  private static getStorageKeys(slot: number = 1): { saveKey: string; metaKey: string } {
+  private static getStorageKeys(slot: number = 1): { saveKey: string; metaKey: string; backupKey: string } {
+    if (!Number.isInteger(slot) || slot < 0 || slot > 3) throw new Error('Invalid save slot');
     if (slot === 0) {
-      return { saveKey: `${STORAGE_KEY}_auto`, metaKey: `${META_KEY}_auto` };
+      return { saveKey: `${STORAGE_KEY}_auto`, metaKey: `${META_KEY}_auto`, backupKey: `${STORAGE_KEY}_auto_backup` };
     }
-    if (slot <= 1) {
-      return { saveKey: STORAGE_KEY, metaKey: META_KEY };
+    if (slot === 1) {
+      return { saveKey: STORAGE_KEY, metaKey: META_KEY, backupKey: `${STORAGE_KEY}_backup` };
     }
-    return { saveKey: `${STORAGE_KEY}_slot_${slot}`, metaKey: `${META_KEY}_slot_${slot}` };
+    return { saveKey: `${STORAGE_KEY}_slot_${slot}`, metaKey: `${META_KEY}_slot_${slot}`, backupKey: `${STORAGE_KEY}_slot_${slot}_backup` };
+  }
+
+  /** Validate before touching either the active world or an existing save slot. */
+  public static validateSaveData(data: unknown): SaveOperationResult {
+    if (!isRecord(data)) return { success: false, error: 'ข้อมูลบันทึกเสียหาย (โครงสร้างไม่ถูกต้อง)' };
+    const version = numOr(data.version, 0);
+    if (version < SAVE_VERSION) return { success: false, error: 'เซฟนี้เป็นกติกาเดิม กรุณาเริ่มการเดินทางใหม่' };
+    if (version > SAVE_VERSION) return { success: false, error: `ไฟล์บันทึกเป็นเวอร์ชัน ${version} ซึ่งใหม่กว่าที่เกมนี้รองรับ (สูงสุด v${SAVE_VERSION})` };
+    if (!Array.isArray(data.players) || data.players.length === 0 || data.players.length > 8) return { success: false, error: 'ไฟล์บันทึกไม่มีข้อมูลผู้เล่นที่ถูกต้อง' };
+    if (!isRecord(data.world) || data.world.rulesVersion !== 2) return { success: false, error: 'ไม่พบสถานะโลกของกติกาใหม่' };
+    const fail = (): SaveOperationResult => ({ success: false, error: 'ข้อมูลบันทึกเสียหาย (ข้อมูลโลกหรือผู้เล่นไม่สมบูรณ์)' });
+    const pending: unknown[] = [data];
+    let entries = 0;
+    while (pending.length) {
+      const value = pending.pop();
+      if (++entries > 100000) return fail();
+      if (value && typeof value === 'object') {
+        for (const [key, child] of Object.entries(value)) {
+          if (['__proto__', 'prototype', 'constructor'].includes(key)) return fail();
+          if (child && typeof child === 'object') pending.push(child);
+        }
+      }
+    }
+    if (Object.keys(data.world).some(key => Object.prototype.hasOwnProperty.call(WorldState.prototype, key))) return fail();
+    if (data.gameMode != null && !GAME_MODES.includes(data.gameMode) || data.world.mode != null && !GAME_MODES.includes(data.world.mode)) return fail();
+    if (data.aiDifficulty != null && !['casual', 'tactical', 'ruthless'].includes(data.aiDifficulty)) return fail();
+    const ids = new Set<number>();
+    for (const p of data.players) {
+      if (!isRecord(p) || !Number.isInteger(p.id) || ids.has(p.id) || typeof p.name !== 'string' || typeof p.classKey !== 'string') return fail();
+      ids.add(p.id);
+      for (const key of ['inventory', 'fieldSpells', 'townDeeds', 'relics']) if (p[key] != null && !Array.isArray(p[key])) return fail();
+      for (const key of ['equipment', 'prank', 'foodBuff', 'activeGuildQuest', 'companion', 'backupNormalStats', 'matchStats']) if (p[key] != null && !isRecord(p[key])) return fail();
+      if (p.inventory?.some((item: unknown) => !isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string' || typeof item.type !== 'string')) return fail();
+      if (p.fieldSpells?.some((spell: unknown) => typeof spell !== 'string') || p.relics?.some((relic: unknown) => typeof relic !== 'string')) return fail();
+      if (p.equipment && Object.values(p.equipment).some(item => item != null && !isRecord(item))) return fail();
+    }
+    for (const key of ['weather', 'forecast', 'threat', 'events', 'expeditions', 'bossHealth', 'bossKillers']) if (key in data.world && !isRecord(data.world[key])) return fail();
+    for (const key of ['defeatedBosses', 'raidTargets', 'claimedTreasures', 'calamityHistory']) if (key in data.world && !Array.isArray(data.world[key])) return fail();
+    if (data.world.result != null && !isRecord(data.world.result)) return fail();
+    if (data.world.calamity != null && !isRecord(data.world.calamity)) return fail();
+    if (data.world.modifier != null && !isRecord(data.world.modifier)) return fail();
+    if (Object.values(data.world.events ?? {}).some(memory => !isRecord(memory) || !Array.isArray(memory.recent) || !isRecord(memory.lastSeen) || !isRecord(memory.flags))) return fail();
+    if (Object.values(data.world.expeditions ?? {}).some(run => !isRecord(run) || ['opened', 'visited', 'guardians', 'claimedFloors'].some(key => !Array.isArray(run[key])))) return fail();
+    for (const key of ['townStates', 'homeStates', 'logs', 'placedTraps']) if (data[key] != null && !Array.isArray(data[key])) return fail();
+    if (data.townStates?.some((entry: unknown) => !isRecord(entry) || !isRecord(entry.townData))) return fail();
+    if (data.homeStates?.some((entry: unknown) => !isRecord(entry) || !isRecord(entry.homeData))) return fail();
+    if (data.logs?.some((entry: unknown) => !isRecord(entry) || typeof entry.text !== 'string' || !['info', 'gold', 'battle', 'level', 'darkling'].includes(entry.type))) return fail();
+    if (data.placedTraps?.some((entry: unknown) => !isRecord(entry) || !Number.isFinite(entry.nodeId) || !Number.isFinite(entry.damage))) return fail();
+    for (const key of ['aiState', 'decree', 'calamityState']) if (data[key] != null && !isRecord(data[key])) return fail();
+    if (data.aiState && (data.aiState.grudgeMatrix != null && !isRecord(data.aiState.grudgeMatrix) || data.aiState.moveHistory != null && !isRecord(data.aiState.moveHistory))) return fail();
+    if (data.decree && (!isRecord(data.decree.activeDecree) || typeof data.decree.activeDecree.id !== 'string')) return fail();
+    if (data.calamityState?.corruptedNodes != null && !Array.isArray(data.calamityState.corruptedNodes)) return fail();
+    return { success: true };
+  }
+
+  private static metadataFor(data: SaveGameData): SaveMetadata {
+    const index = Math.max(0, Math.min(data.players.length - 1, Math.trunc(numOr(data.activePlayerIdx, 0))));
+    const hero = data.players[index];
+    return {
+      saveVersion: numOr(data.version, SAVE_VERSION), savedAt: numOr(data.savedAt, 0), dateStr: typeof data.dateStr === 'string' ? data.dateStr : '',
+      day: Math.max(1, numOr(data.dayCounter, 1)), week: Math.max(1, numOr(data.weekCounter, 1)),
+      activeHeroName: hero.name || 'Unknown Hero', activeHeroClass: typeof hero.className === 'string' ? hero.className : 'Warrior',
+      activeHeroLevel: Math.max(1, numOr(hero.level, 1)), activeHeroGold: Math.max(0, numOr(hero.gold, 0)), totalPlayers: data.players.length
+    };
+  }
+
+  private static parseStoredData(raw: string | null): { data?: SaveGameData; error?: string } {
+    if (!raw) return {};
+    try {
+      const data: unknown = JSON.parse(raw);
+      const validation = this.validateSaveData(data);
+      return validation.success ? { data: data as SaveGameData } : { error: validation.error };
+    } catch { return { error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' }; }
+  }
+
+  /** The payload is authoritative; a failed metadata write never makes it disappear. */
+  private static writeStoredData(data: SaveGameData, slot: number): SaveOperationResult {
+    try {
+      const { saveKey, metaKey, backupKey } = this.getStorageKeys(slot);
+      const previous = localStorage.getItem(saveKey);
+      let warning: string | undefined;
+      // Never replace the recovery copy with a damaged primary file.
+      if (this.parseStoredData(previous).data) {
+        try { localStorage.setItem(backupKey, previous!); }
+        catch { warning = 'บันทึกสำเร็จ แต่พื้นที่ไม่พอสำหรับสำเนาสำรองรอบก่อน'; }
+      }
+      localStorage.setItem(saveKey, JSON.stringify(data));
+      try { localStorage.setItem(metaKey, JSON.stringify(this.metadataFor(data))); }
+      catch { /* The slot list derives its metadata from the committed payload. */ }
+      return { success: true, warning };
+    } catch {
+      return { success: false, error: 'บันทึกไม่สำเร็จ พื้นที่จัดเก็บเต็มหรือเบราว์เซอร์ไม่อนุญาตให้บันทึก ข้อมูลเดิมยังอยู่' };
+    }
   }
 
   public static getSlotMetas(): Array<{ slot: number; meta: SaveMetadata | null }> {
@@ -179,7 +284,8 @@ export class SaveManager {
   public static exportSaveData(slot: number = 1): string | null {
     try {
       const { saveKey } = this.getStorageKeys(slot);
-      const raw = localStorage.getItem(saveKey);
+      const recoverable = this.readSlotData(slot);
+      const raw = recoverable.data ? JSON.stringify(recoverable.data) : localStorage.getItem(saveKey);
       if (!raw) return null;
       const bytes = new TextEncoder().encode(raw);
       let binary = '';
@@ -193,65 +299,33 @@ export class SaveManager {
     }
   }
 
-  public static importSaveData(game: GameState, encodedStr: string, slot: number = 1): { success: boolean; error?: string } {
+  public static importSaveData(game: GameState, encodedStr: string, slot: number = 1): SaveOperationResult {
     try {
-      if (!encodedStr || typeof encodedStr !== 'string') {
-        return { success: false, error: 'รหัสข้อมูลบันทึกไม่ถูกต้อง' };
+      if (typeof encodedStr !== 'string' || !encodedStr.trim() || encodedStr.length > MAX_IMPORT_LENGTH) {
+        return { success: false, error: 'รหัสข้อมูลบันทึกไม่ถูกต้องหรือมีขนาดใหญ่เกินไป' };
       }
-      let jsonStr = '';
       const trimmed = encodedStr.trim();
-      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-        jsonStr = trimmed;
-      } else {
+      let jsonStr: string;
+      if (trimmed.startsWith('{')) jsonStr = trimmed;
+      else {
         const binary = atob(trimmed);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        jsonStr = new TextDecoder().decode(bytes);
+        const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+        jsonStr = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
       }
-
       const data = JSON.parse(jsonStr) as SaveGameData;
-      if (!data || typeof data !== 'object') {
-        return { success: false, error: 'โครงสร้างข้อมูลบันทึกไม่ถูกต้อง' };
-      }
-      if (!Array.isArray(data.players) || data.players.length === 0) {
-        return { success: false, error: 'ไม่พบข้อมูลผู้เล่นในไฟล์บันทึก' };
-      }
-
-      const { saveKey, metaKey } = this.getStorageKeys(slot);
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('th-TH', {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-      });
-      const hero = data.players[data.activePlayerIdx || 0] || data.players[0];
-      const meta: SaveMetadata = {
-        saveVersion: data.version || SAVE_VERSION,
-        savedAt: data.savedAt || Date.now(),
-        dateStr: data.dateStr || dateStr,
-        day: data.dayCounter || 1,
-        week: data.weekCounter || 1,
-        activeHeroName: hero ? hero.name : 'Unknown Hero',
-        activeHeroClass: hero ? (hero.className || 'Hero') : 'Hero',
-        activeHeroLevel: hero ? (hero.level || 1) : 1,
-        activeHeroGold: hero ? (hero.gold || 300) : 300,
-        totalPlayers: data.players.length
-      };
-
-      localStorage.setItem(saveKey, jsonStr);
-      localStorage.setItem(metaKey, JSON.stringify(meta));
-
-      return this.load(game, slot);
-    } catch (err) {
-      console.error('Failed to import save data:', err);
+      const prepared = this.prepareSaveData(game, data);
+      if (!prepared.success || !prepared.preparedGame) return prepared;
+      const stored = this.writeStoredData(data, slot);
+      if (!stored.success) return stored;
+      this.commitPreparedSave(game, prepared.preparedGame, data, true);
+      return { success: true, bossState: prepared.bossState, warning: stored.warning };
+    } catch {
       return { success: false, error: 'ถอดรหัสข้อมูลบันทึกไม่สำเร็จ โปรดตรวจสอบรหัสที่คัดลอกมา' };
     }
   }
 
-  public static clearSave(slot: number = 1) {
-    const { saveKey, metaKey } = this.getStorageKeys(slot);
-    localStorage.removeItem(saveKey);
-    localStorage.removeItem(metaKey);
+  public static clearSave(slot: number = 1): void {
+    this.clear(slot);
   }
 
   public static serializeGameState(game: GameState, bossState?: { currentHp: number; maxHp: number }): SaveGameData {
@@ -347,39 +421,33 @@ export class SaveManager {
     };
   }
 
-  public static applySaveData(game: GameState, data: SaveGameData, announceLog: boolean = true): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
+  private static prepareSaveData(game: GameState, data: SaveGameData): SaveOperationResult & { preparedGame?: GameState } {
     try {
-      if (!data || typeof data !== 'object') {
-        return { success: false, error: 'ข้อมูลบันทึกเสียหาย (โครงสร้างไม่ถูกต้อง)' };
+      const validation = this.validateSaveData(data);
+      if (!validation.success) return validation;
+      // Hydrate a private candidate. No running board, RNG or shared subsystem changes
+      // until every player and map entry has been constructed successfully.
+      data = structuredClone(data);
+      game = Object.assign(Object.create(Object.getPrototypeOf(game)), game) as GameState;
+      game.world = WorldState.restore(data.world);
+      const defaults = new WorldState(data.world.seed);
+      for (const realm of Object.keys(defaults.weather) as Array<keyof WorldState['weather']>) {
+        const weather = data.world.weather?.[realm];
+        const forecast = data.world.forecast?.[realm];
+        const weatherTypes = ['sunny', 'rain', 'snow', 'heatwave', 'miasma', 'blood_moon', 'sandstorm'];
+        game.world.weather[realm] = weatherTypes.includes(weather) ? weather : defaults.weather[realm];
+        game.world.forecast[realm] = weatherTypes.includes(forecast) ? forecast : defaults.forecast[realm];
+        game.world.threat[realm] = Math.max(0, Math.min(100, numOr(data.world.threat?.[realm], 0)));
       }
-
-      const version = numOr(data.version, 0);
-      if (version < SAVE_VERSION) {
-        return { success: false, error: 'เซฟนี้เป็นกติกาเดิม กรุณาเริ่มการเดินทางใหม่' };
-      }
-      if (version > SAVE_VERSION) {
-        return {
-          success: false,
-          error: `ไฟล์บันทึกเป็นเวอร์ชัน ${version} ซึ่งใหม่กว่าที่เกมนี้รองรับ (สูงสุด v${SAVE_VERSION})`
-        };
-      }
-      if (!Array.isArray(data.players) || data.players.length === 0) {
-        return { success: false, error: 'ไฟล์บันทึกไม่มีข้อมูลผู้เล่น' };
-      }
-
-      if (!data.world || data.world.rulesVersion !== 2) return { success: false, error: 'ไม่พบสถานะโลกของกติกาใหม่' };
-      game.world = WorldState.restore(data.world); bindWorld(game.world);
+      game.world.seed = (numOr(data.world.seed, game.world.seed) >>> 0) || 1;
+      game.world.rng = (numOr(data.world.rng, game.world.seed) >>> 0) || 1;
+      game.world.day = Math.max(1, Math.trunc(numOr(data.world.day, 1)));
+      game.world.round = Math.max(0, Math.trunc(numOr(data.world.round, 0)));
+      game.world.hour = Math.max(0, Math.min(23, numOr(data.world.hour, 8)));
       if (data.gameMode) game.gameMode = data.gameMode;
-      if (data.calamityState) {
-        worldCalamitySystem.chaosMeter = numOr(data.calamityState.chaosMeter, 0);
-        worldCalamitySystem.maxChaos = numOr(data.calamityState.maxChaos, 100);
-        worldCalamitySystem.corruptedNodes = Array.isArray(data.calamityState.corruptedNodes) ? [...data.calamityState.corruptedNodes] : [];
-        worldCalamitySystem.calamityCount = numOr(data.calamityState.calamityCount, 0);
-      }
-      game.allowDarkling = data.allowDarkling;
-      game.blitzDayLimit = data.blitzDayLimit; game.coopRaidDayLimit = data.coopRaidDayLimit;
-      aiSystem.grudgeMatrix = data.aiState?.grudgeMatrix ?? {}; aiSystem.moveHistory = data.aiState?.moveHistory ?? {};
-      if (data.decree) { royalDecreeSystem.activeDecree = data.decree.activeDecree; royalDecreeSystem.bountyClaimed = data.decree.bountyClaimed; royalDecreeSystem.activeWantedBounty = data.decree.activeWantedBounty; }
+      game.allowDarkling = typeof data.allowDarkling === 'boolean' ? data.allowDarkling : true;
+      game.blitzDayLimit = Math.max(1, numOr(data.blitzDayLimit, 20));
+      game.coopRaidDayLimit = Math.max(1, numOr(data.coopRaidDayLimit, 30));
       game.resetBoard();
       if (data.players.some(p => dungeonSystem.isInDungeon(p.nodeId))) dungeonSystem.ensureDungeonLoaded(game);
       const nodesById = new Map(game.allNodes.map(n => [n.id, n]));
@@ -402,8 +470,9 @@ export class SaveManager {
         p.gold = Math.max(0, numOr(sp.gold, 300));
         p.townDeeds = Array.isArray(sp.townDeeds) ? sp.townDeeds.filter(d => nodesById.has(d)) : [];
         p.townsControlled = p.townDeeds.length;
-        p.prevNodeId = numOr(sp.prevNodeId, -1) >= 0 ? numOr(sp.prevNodeId, -1) : null;
+        p.prevNodeId = nodesById.has(numOr(sp.prevNodeId, -1)) ? numOr(sp.prevNodeId, -1) : null;
         p.dungeonReturnNodeId = nodesById.has(numOr(sp.dungeonReturnNodeId, -1)) ? numOr(sp.dungeonReturnNodeId, -1) : null;
+        if (!nodesById.has(p.nodeId)) p.nodeId = 0;
         const here = nodesById.get(p.nodeId);
         p.gridX = here ? here.gx : numOr(sp.gridX, 0);
         p.gridY = here ? here.gy : numOr(sp.gridY, 0);
@@ -494,10 +563,8 @@ export class SaveManager {
       if (data.aiDifficulty) {
         game.aiDifficulty = data.aiDifficulty;
       }
-      if (Array.isArray(data.placedTraps)) {
-        game.placedTraps = data.placedTraps;
-      }
-      game.activePlayerIdx = Math.min(Math.max(0, numOr(data.activePlayerIdx, 0)), game.players.length - 1);
+      game.placedTraps = Array.isArray(data.placedTraps) ? data.placedTraps.filter(trap => nodesById.has(trap.nodeId)) : [];
+      game.activePlayerIdx = Math.min(Math.max(0, Math.trunc(numOr(data.activePlayerIdx, 0))), game.players.length - 1);
       game.phase = game.world.result ? 'VICTORY' : 'BOARD_TURN';
       game.remainingMoves = 0;
       game.highlightedNodes = [];
@@ -506,14 +573,9 @@ export class SaveManager {
       game.activeBattleEnemyCombatant = null;
       game.pendingTileNode = null;
       game.pendingPvPVictim = null;
-      if (Array.isArray(data.logs)) {
-        game.logs = data.logs;
-      }
-      if (announceLog) {
-        game.addLog(`📂 โหลดบันทึกสำเร็จ! (วันที่ ${game.dayCounter}, สัปดาห์ที่ ${game.weekCounter})`, 'info');
-      }
+      game.logs = Array.isArray(data.logs) ? data.logs.slice(0, 60) : [];
       return {
-        success: true,
+        success: true, preparedGame: game,
         bossState: numOr(data.bossCurrentHp, 0) > 0
           ? { currentHp: numOr(data.bossCurrentHp, 0), maxHp: numOr(data.bossMaxHp, 380) }
           : undefined
@@ -524,91 +586,106 @@ export class SaveManager {
     }
   }
 
-  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
-    try {
-      if (!game || game.players.length === 0) return false;
-      const { saveKey, metaKey } = this.getStorageKeys(slot);
-      const saveData = this.serializeGameState(game, bossState);
-
-      const hero = game.activePlayer;
-      const meta: SaveMetadata = {
-        saveVersion: SAVE_VERSION,
-        savedAt: saveData.savedAt,
-        dateStr: saveData.dateStr || '',
-        day: game.dayCounter,
-        week: game.weekCounter,
-        activeHeroName: hero ? hero.name : 'Unknown Hero',
-        activeHeroClass: hero ? hero.className : 'Warrior',
-        activeHeroLevel: hero ? hero.level : 1,
-        activeHeroGold: hero ? hero.gold : 300,
-        totalPlayers: game.players.length
-      };
-
-      localStorage.setItem(saveKey, JSON.stringify(saveData));
-      localStorage.setItem(metaKey, JSON.stringify(meta));
-      return true;
-    } catch (err) {
-      console.error('Failed to save game:', err);
-      return false;
+  private static commitPreparedSave(game: GameState, prepared: GameState, data: SaveGameData, announceLog: boolean): void {
+    Object.assign(game, prepared);
+    bindWorld(game.world);
+    const calamity = data.calamityState;
+    worldCalamitySystem.chaosMeter = Math.max(0, numOr(calamity?.chaosMeter, 0));
+    worldCalamitySystem.maxChaos = Math.max(1, numOr(calamity?.maxChaos, 100));
+    worldCalamitySystem.corruptedNodes = Array.isArray(calamity?.corruptedNodes) ? [...calamity.corruptedNodes] : [];
+    worldCalamitySystem.calamityCount = Math.max(0, numOr(calamity?.calamityCount, 0));
+    aiSystem.grudgeMatrix = structuredClone(data.aiState?.grudgeMatrix ?? {});
+    aiSystem.moveHistory = structuredClone(data.aiState?.moveHistory ?? {});
+    if (data.decree) {
+      royalDecreeSystem.activeDecree = structuredClone(data.decree.activeDecree);
+      royalDecreeSystem.bountyClaimed = !!data.decree.bountyClaimed;
+      royalDecreeSystem.activeWantedBounty = structuredClone(data.decree.activeWantedBounty);
+    } else royalDecreeSystem.reset();
+    if (announceLog) {
+      // A UI callback failure must not turn an already committed load into a false failure.
+      try { game.addLog(`📂 โหลดบันทึกสำเร็จ! (วันที่ ${game.dayCounter}, สัปดาห์ที่ ${game.weekCounter})`, 'info'); }
+      catch (error) { console.error('Save loaded, but its notification could not be displayed:', error); }
     }
   }
 
-  public static load(game: GameState, slot: number = 1): { success: boolean; error?: string; bossState?: { currentHp: number; maxHp: number } } {
-    try {
-      const { saveKey } = this.getStorageKeys(slot);
-      const raw = localStorage.getItem(saveKey);
-      if (!raw) return { success: false, error: `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
+  public static applySaveData(game: GameState, data: SaveGameData, announceLog: boolean = true): SaveOperationResult {
+    const prepared = this.prepareSaveData(game, data);
+    if (!prepared.success || !prepared.preparedGame) return { success: false, error: prepared.error };
+    this.commitPreparedSave(game, prepared.preparedGame, data, announceLog);
+    return { success: true, bossState: prepared.bossState };
+  }
 
-      let data: SaveGameData;
+  public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
+    return this.saveWithResult(game, bossState, slot).success;
+  }
+
+  public static saveWithResult(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): SaveOperationResult {
+    try {
+      if (!game || game.players.length === 0) return { success: false, error: 'ยังไม่มีการเดินทางให้บันทึก' };
+      const data = this.serializeGameState(game, bossState);
+      const validation = this.validateSaveData(data);
+      if (!validation.success) return validation;
+      return this.writeStoredData(data, slot);
+    } catch {
+      return { success: false, error: 'สร้างข้อมูลบันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่' };
+    }
+  }
+
+  private static readSlotData(slot: number): { data?: SaveGameData; error?: string; recoveredFromBackup?: boolean } {
+    const { saveKey, backupKey } = this.getStorageKeys(slot);
+    const raw = localStorage.getItem(saveKey);
+    const primary = this.parseStoredData(raw);
+    if (primary.data) return primary;
+    if (raw) {
       try {
-        data = JSON.parse(raw) as SaveGameData;
-      } catch {
-        return { success: false, error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' };
-      }
-      return this.applySaveData(game, data);
-    } catch (err) {
-      console.error('Failed to load game:', err);
+        const version = JSON.parse(raw)?.version;
+        // An older/newer format is not corruption. Never silently substitute an old run.
+        if (typeof version === 'number' && version !== SAVE_VERSION) return primary;
+      } catch { /* An unreadable primary can be recovered from its last good copy. */ }
+    }
+    const backup = this.parseStoredData(localStorage.getItem(backupKey));
+    if (backup.data) return { data: backup.data, recoveredFromBackup: true };
+    return { error: primary.error || backup.error || `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
+  }
+
+  public static load(game: GameState, slot: number = 1): SaveOperationResult {
+    try {
+      const stored = this.readSlotData(slot);
+      if (!stored.data) return { success: false, error: stored.error };
+      const applied = this.applySaveData(game, stored.data);
+      return { ...applied, recoveredFromBackup: applied.success && stored.recoveredFromBackup || undefined };
+    } catch {
       return { success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูลบันทึก' };
     }
   }
 
   public static hasSave(slot: number = 1): boolean {
     try {
-      const { metaKey } = this.getStorageKeys(slot);
-      return !!localStorage.getItem(metaKey);
-    } catch {
-      return false;
-    }
+      const { saveKey, backupKey } = this.getStorageKeys(slot);
+      return !!(localStorage.getItem(saveKey) || localStorage.getItem(backupKey));
+    } catch { return false; }
   }
 
   public static getSaveMetadata(slot: number = 1): SaveMetadata | null {
     try {
-      const { metaKey } = this.getStorageKeys(slot);
-      const raw = localStorage.getItem(metaKey);
-      if (!raw) return null;
-      const meta = JSON.parse(raw) as SaveMetadata;
-      if (!meta || typeof meta !== 'object') return null;
-      return {
-        saveVersion: numOr(meta.saveVersion, 1),
-        savedAt: numOr(meta.savedAt, 0),
-        dateStr: meta.dateStr || '',
-        day: numOr(meta.day, 1),
-        week: numOr(meta.week, 1),
-        activeHeroName: meta.activeHeroName || 'Unknown Hero',
-        activeHeroClass: meta.activeHeroClass || 'Warrior',
-        activeHeroLevel: numOr(meta.activeHeroLevel, 1),
-        activeHeroGold: numOr(meta.activeHeroGold, 0),
-        totalPlayers: numOr(meta.totalPlayers, 0)
-      };
-    } catch {
+      const stored = this.readSlotData(slot);
+      if (stored.data) return this.metadataFor(stored.data);
+      // Keep incompatible saves visible so the player can export them or see the version error.
+      const { saveKey } = this.getStorageKeys(slot);
+      const data = JSON.parse(localStorage.getItem(saveKey) || 'null');
+      if (isRecord(data) && typeof data.version === 'number' && data.version !== SAVE_VERSION && Array.isArray(data.players) && data.players.length &&
+        data.players.every((player: unknown) => isRecord(player) && typeof player.name === 'string')) {
+        return this.metadataFor(data as SaveGameData);
+      }
       return null;
-    }
+    } catch { return null; }
   }
 
   public static clear(slot: number = 1): void {
     try {
-      const { saveKey, metaKey } = this.getStorageKeys(slot);
+      const { saveKey, metaKey, backupKey } = this.getStorageKeys(slot);
       localStorage.removeItem(saveKey);
+      localStorage.removeItem(backupKey);
       localStorage.removeItem(metaKey);
     } catch (err) {
       console.error('Failed to clear savegame:', err);

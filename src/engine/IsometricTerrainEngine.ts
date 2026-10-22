@@ -45,7 +45,9 @@ export class IsometricTerrainEngine {
   private regionalBuckets = new Map<string,RegionalScenery[]>();
   private floorTheme: string | null = null;
   public getVisibleRegionalScenery(minX:number,maxX:number,minY:number,maxY:number) {
-    return this.visibleScenery(this.regionalBuckets,minX,maxX,minY,maxY);
+    // Regional art is 128px tall and rooted near its bottom. Include roots just
+    // below the viewport so their visible canopy/roof never disappears early.
+    return this.visibleScenery(this.regionalBuckets,minX,maxX,minY,maxY,160);
   }
   public worldDressing: WorldDressing[] = [];
   public groves: Array<{ x: number; y: number; depth: number; species: string; variant: number }> = [];
@@ -76,10 +78,10 @@ export class IsometricTerrainEngine {
   public getVisibleGroves(minX: number, maxX: number, minY: number, maxY: number) {
     return this.visibleScenery(this.groveBuckets, minX, maxX, minY, maxY);
   }
-  private visibleScenery<T extends { x: number; y: number }>(buckets: Map<string, T[]>, minX: number, maxX: number, minY: number, maxY: number): T[] {
+  private visibleScenery<T extends { x: number; y: number }>(buckets: Map<string, T[]>, minX: number, maxX: number, minY: number, maxY: number, margin = 120): T[] {
     const result: T[] = [];
-    for (let x = Math.floor((minX - 120) / this.bucketSize); x <= Math.floor((maxX + 120) / this.bucketSize); x++)
-      for (let y = Math.floor((minY - 120) / this.bucketSize); y <= Math.floor((maxY + 120) / this.bucketSize); y++)
+    for (let x = Math.floor((minX - margin) / this.bucketSize); x <= Math.floor((maxX + margin) / this.bucketSize); x++)
+      for (let y = Math.floor((minY - margin) / this.bucketSize); y <= Math.floor((maxY + margin) / this.bucketSize); y++)
         result.push(...(buckets.get(`${x},${y}`) || []));
     return result;
   }
