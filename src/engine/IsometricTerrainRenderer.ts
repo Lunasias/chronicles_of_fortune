@@ -6,6 +6,7 @@ import {
 } from './IsometricTerrainPainter';
 import { PROP_SIZE, paintProp, propSizeBucket, type PropPaintOptions, type PropType } from './IsometricPropPainter';
 import { GroundMaterials } from './GroundMaterials';
+import { canvasBudget } from './PerformanceBudget';
 
 /**
  * Serves the 104x82 pixel-art sprite for every board floor tile.
@@ -16,7 +17,7 @@ import { GroundMaterials } from './GroundMaterials';
  * canvas and caches it per biome / cliff / time-of-day combination.
  */
 export class IsometricTerrainRenderer {
-  private cache = new Map<string, HTMLCanvasElement>();
+  private cache = canvasBudget<string>(12);
   private materials = new GroundMaterials(() => this.cache.clear());
   private roadPatterns = new WeakMap<CanvasRenderingContext2D,Map<string,CanvasPattern>>();
 
@@ -61,7 +62,7 @@ export class IsometricTerrainRenderer {
     this.propCache.clear();
   }
 
-  private propCache = new Map<string, HTMLCanvasElement>();
+  private propCache = canvasBudget<string>(4);
 
   /**
    * The pixel-art sprite for one piece of floor clutter.

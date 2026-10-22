@@ -1,4 +1,5 @@
 import { getWorld } from './WorldState';
+import { talentBonus } from './TalentTree';
 import { EquipmentItem, IsoDirection, PrankState } from '../engine/PixelSpriteGenerator';
 import { BoardNode, DOKAPON_NODES } from './BoardMap';
 
@@ -38,10 +39,10 @@ export const HERO_CLASSES: Record<string, HeroClassData> = {
     name: 'จอมเวท (Magician)',
     avatar: '🔮',
     color: '#a855f7',
-    baseHp: 70,
+    baseHp: 76,
     baseMp: 70,
     atk: 6,
-    def: 7,
+    def: 8,
     mag: 16,
     spd: 10,
     luk: 8,
@@ -588,6 +589,7 @@ export const HERO_SKINS: Record<string, SkinVariantData[]> = {
 };
 
 export class Player {
+  public talents: string[] = [];
   public id: number;
   public name: string;
   public classKey: string;
@@ -836,7 +838,7 @@ export class Player {
     if (this.polymorphTurns > 0) {
       return 1; // Turned into a helpless pig or mole!
     }
-    let val = this[stat] || 0;
+    let val = (this[stat] || 0) + talentBonus(this, stat);
     if (this.isDarkling) {
       const multiplier = stat === 'atk' || stat === 'mag' ? 2 : stat === 'def' || stat === 'spd' ? 1.5 : 1;
       val = Math.floor(val * multiplier);

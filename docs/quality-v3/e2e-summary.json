@@ -1,0 +1,42 @@
+{
+  "stats": {
+    "startTime": "2026-10-22T21:09:45.686Z",
+    "duration": 46160.395,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "name": "start a campaign, save, reload and continue the same Unicode character",
+      "status": "expected",
+      "durationMs": 4988
+    },
+    {
+      "name": "battle command resolves damage and returns a playable command phase",
+      "status": "expected",
+      "durationMs": 3403
+    },
+    {
+      "name": "WebRTC peers authenticate, synchronize a real turn, reject spoofing, and pause on host loss",
+      "status": "expected",
+      "durationMs": 19769
+    },
+    {
+      "name": "Quick Match supports a real talent choice, migration-safe reload, and a journey summary",
+      "status": "expected",
+      "durationMs": 6191
+    },
+    {
+      "name": "NPC choices and town projects run through actual game dialogs",
+      "status": "expected",
+      "durationMs": 3656
+    },
+    {
+      "name": "mobile cold load, bounded canvas memory and compact movement dock",
+      "status": "expected",
+      "durationMs": 4149
+    }
+  ]
+}

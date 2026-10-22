@@ -126,6 +126,17 @@ export class BattleUI {
     audio.restoreWorldBgm();
   }
 
+  /** Invalidate pending round callbacks before restoring a shared checkpoint. */
+  public abortForCheckpoint(): void {
+    this.onBattleEndCallback = undefined;
+    this.game.activeBattle = null; this.game.activeBattleEnemyCombatant = null;
+    this.isSpectating = false; this.isExecutingRound = false; this.cutscene.active = false;
+    this.pendingAttackerAction = null; this.activeSummon = null; this.remotePrompt = null;
+    combatVFX.reset();
+    for (const id of ['battleScreen', 'battleScoutModal', 'journeyDecision']) document.getElementById(id)?.classList.add('hidden');
+    document.getElementById('battleScreen')?.classList.remove('is-spectating');
+  }
+
   // Combat Animation States
   public attackerAnim: CharacterAnimState = 'idle';
   public defenderAnim: CharacterAnimState = 'idle';
@@ -708,6 +719,7 @@ export class BattleUI {
 
   private handleAttackerInput(atkAction: AttackerAction, isRemote = false) {
     if (this.isSpectating) return;
+    if (!networkRoomManager.isConnectionHealthy()) return;
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
 
@@ -773,6 +785,7 @@ export class BattleUI {
   }
 
   private handleDefenderInput(defAction: DefenderAction, isRemote = false) {
+    if (!networkRoomManager.isConnectionHealthy()) return;
     if (this.isSpectating) return;
     const b = this.game.activeBattle;
     if (!b || this.isExecutingRound) return;
@@ -986,6 +999,7 @@ export class BattleUI {
       enemy.hp = Math.max(0, enemy.hp - dmg);
 
       setTimeout(() => {
+        if (this.game.activeBattle !== b) return;
         combatVFX.spawnFloatingCombatText(enemyX, enemyY - 60, `-${dmg} HP!`, 'crit');
         combatVFX.triggerImpactFlash('#ffffff', 0.85);
         audio.strikeHit();
@@ -1029,6 +1043,7 @@ export class BattleUI {
   }
 
   public triggerEmergencyCompanionAssist(playerC: Combatant, enemyC: Combatant, onComplete: () => void) {
+    const battle = this.game.activeBattle;
     const pRef = playerC.playerRef;
     if (!pRef || !pRef.companion) {
       onComplete();
@@ -1073,6 +1088,7 @@ export class BattleUI {
     this.updateUI();
 
     setTimeout(() => {
+      if (this.game.activeBattle !== battle) return;
       if (enemyC.hp <= 0) {
         this.concludeBattle(playerC, enemyC);
       } else {
@@ -1091,6 +1107,7 @@ export class BattleUI {
     if (!isAttackerHuman) {
       // AI or Monster is Attacking!
       setTimeout(() => {
+        if (this.game.activeBattle !== b || !networkRoomManager.isConnectionHealthy()) return;
         const action = b.attacker.playerRef
           ? aiSystem.chooseAttackerAction(b.attacker.playerRef, b.defender, this.game.aiDifficulty)
           : (this.game.world.random() < 0.45 ? 'attack' : this.game.world.random() < 0.75 ? 'strike' : 'magic');
@@ -1564,6 +1581,8 @@ export class BattleUI {
 
   private concludeBattle(winner: Combatant, loser: Combatant) {
     if (this.isSpectating) return;
+    const current = this.game.activeBattle;
+    if (!current || ![current.attacker, current.defender].includes(winner) || ![current.attacker, current.defender].includes(loser)) return;
     this.syncSpectatorView(performance.now(), true, true);
     if (winner.playerRef && !winner.playerRef.isAI) {
       audio.victory();

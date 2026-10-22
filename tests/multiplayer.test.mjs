@@ -75,11 +75,12 @@ test('lobby departure reassigns seats without duplicate indices', async t => {
 test('rejoin uses session identity, never a duplicate display name or claimed seat', async t => {
   const { host, guests: [guest] } = await roomWithGuests(t);
   const member = structuredClone(host.getRoomInfo().connectedPeers[1]);
+  const ticket = guest.rejoinTicket;
   host.setStatus('playing'); guest.leaveRoom(); await flush();
   assert.equal(host.getRoomInfo().connectedPeers[1].isDisconnected, true);
   const restored = manager(); t.after(() => restored.leaveRoom());
   restored.rejoinRoom({ roomCode: host.getRoomCode(), clientSessionId: member.clientSessionId, myPeerId: member.id,
-    playerName: member.name, classKey: member.classKey, skinVariant: 0, playerIndex: 0, status: 'playing' });
+    playerName: member.name, classKey: member.classKey, skinVariant: 0, playerIndex: 0, status: 'playing', rejoinTicket: ticket });
   await flush();
   assert.equal(restored.getLocalPlayerIndex(), 1);
   assert.equal(host.getRoomInfo().connectedPeers.length, 2);
@@ -95,7 +96,7 @@ test('duplicate JOIN on second transport still sends authoritative roster', asyn
   const { host, guests: [guest] } = await roomWithGuests(t);
   let acknowledgements = 0;
   guest.onPacket(p => { if (p.type === 'PEER_CONNECTED') acknowledgements++; });
-  host.processIncomingPacket(packet(host, guest.getMyPeerId(), 'JOIN_ROOM', { peer: guest.getRoomInfo().connectedPeers[1] }), 'webrtc');
+  host.processIncomingPacket(packet(host, guest.getMyPeerId(), 'JOIN_ROOM', { peer: guest.getRoomInfo().connectedPeers[1], rejoinTicket: guest.rejoinTicket }), 'webrtc');
   await flush();
   assert.equal(acknowledgements, 1);
   assert.equal(host.getRoomInfo().connectedPeers.length, 2);
@@ -138,6 +139,36 @@ test('invalid room codes do not destroy the existing room', t => {
   const code = host.getRoomCode();
   assert.equal(host.joinRoom('bad-code'), false);
   assert.equal(host.getRoomCode(), code);
+});
+
+test('knowing a public roster/session identity cannot reclaim a seat without its private ticket', async t => {
+  const { host, guests: [guest] } = await roomWithGuests(t);
+  const member = structuredClone(host.getRoomInfo().connectedPeers[1]);
+  const attacker = manager(); t.after(() => attacker.leaveRoom());
+  attacker.rejoinRoom({ roomCode: host.getRoomCode(), clientSessionId: member.clientSessionId, myPeerId: member.id, playerIndex: 1, playerName: 'Impostor', classKey: 'mage', status: 'lobby' });
+  await flush(); assert.equal(host.getRoomInfo().connectedPeers[1].id, guest.getMyPeerId());
+});
+
+test('invalid tokens, stale turns and replayed sequences are rejected before relay', async t => {
+  const { host, guests: [guest, spectator] } = await roomWithGuests(t, 2);
+  host.setTurnContext(() => 'seed:1:0'); host.setCommandValidator(p => p.payload.playerIdx === 0);
+  let received = 0, relayed = 0;
+  host.onPacket(p => { if (p.type === 'DICE_ROLL') received++; });
+  spectator.onPacket(p => { if (p.type === 'DICE_ROLL') { relayed++; assert.equal(p.authToken, undefined); } });
+  const valid = { ...packet(host, guest.getMyPeerId(), 'DICE_ROLL', { playerIdx: 0, totalRoll: 4 }), authToken: guest.rejoinTicket, turnId: 'seed:1:0', sequence: 2 };
+  for (const bad of [{ ...valid, authToken: 'wrong' }, { ...valid, turnId: 'seed:0:0' }, { ...valid, payload: { playerIdx: 1 } }]) host.processIncomingPacket({ ...bad, packetId: `invalid-${++serial}` }, 'webrtc');
+  await flush(); assert.equal(received, 0); assert.equal(relayed, 0);
+  host.processIncomingPacket(valid, 'webrtc'); await flush(); assert.equal(received, 1); assert.equal(relayed, 1);
+  host.processIncomingPacket({ ...valid, packetId: 'replay-new-id' }, 'webrtc'); await flush(); assert.equal(received, 1); assert.equal(relayed, 1);
+});
+
+test('lobby profiles reject malformed class/skin data and relayed chat uses the admitted name', async t => {
+  const { host, guests: [guest] } = await roomWithGuests(t);
+  guest.updatePlayerProfile('Real name', { injected: true }, -50); await flush();
+  const member = host.getRoomInfo().connectedPeers[1]; assert.equal(member.classKey, 'mage'); assert.equal(member.skinVariant, 0);
+  let name; host.onPacket(p => { if (p.type === 'CHAT_MSG') name = p.senderName; });
+  guest.broadcast({ ...packet(host, guest.getMyPeerId(), 'CHAT_MSG', { text: 'test' }), senderName: 'Forged Host' });
+  await flush(); assert.equal(name, 'Real name');
 });
 
 test('both host and guest moves carry their dice budget even when dice delivery is missing', async t => {

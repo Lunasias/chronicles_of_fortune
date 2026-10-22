@@ -300,7 +300,7 @@ export class MultiplayerRoomUI {
               <span class="text-[10px] text-slate-400 font-bold">โหมด:</span>
               <select id="selectLobbyGameMode" class="bg-slate-900 border border-slate-700 text-[10px] px-1.5 py-0.5 text-amber-300 outline-none">
                 <option value="standard" ${this.gameMode === 'standard' ? 'selected' : ''}>มาตรฐาน (Standard)</option>
-                <option value="blitz" ${this.gameMode === 'blitz' ? 'selected' : ''}>Blitz (จำกัด 20 วัน)</option>
+                <option value="blitz" ${this.gameMode === 'blitz' ? 'selected' : ''}>Blitz (จำกัด ${room.matchConfig?.days ?? 20} วัน)</option>
                 <option value="coop_raid" ${this.gameMode === 'coop_raid' ? 'selected' : ''}>Co-op Demon Lord Raid</option>
                 <option value="roguelike_draft" ${this.gameMode === 'roguelike_draft' ? 'selected' : ''}>Roguelike Draft</option>
                 <option value="endless_spire" ${this.gameMode === 'endless_spire' ? 'selected' : ''}>Endless Spire</option>
@@ -374,6 +374,8 @@ export class MultiplayerRoomUI {
           </div>
         </div>
 
+        ${isHost && room.status === 'lobby' ? '<button type="button" id="btnLobbyQuickMatch" class="pixel-btn">ดวลแปดวัน · Lv.2 · 500G · รางวัล ×1.5</button>' : ''}
+        ${room.matchConfig ? `<p>กติกา: ${room.matchConfig.days} วัน · เริ่ม Lv.${room.matchConfig.startingLevel} · ${room.matchConfig.startingGold}G · รางวัล ×${room.matchConfig.rewardRate}</p>` : ''}
         <!-- Chat / Ping box -->
         <div class="flex flex-col gap-1">
           <span class="text-[10px] text-slate-400">แชทในห้อง:</span>
@@ -400,6 +402,7 @@ export class MultiplayerRoomUI {
     `;
 
     document.getElementById('btnRetryRoomConnection')?.addEventListener('click', () => networkRoomManager.reconnectWebRTC());
+    document.getElementById('btnLobbyQuickMatch')?.addEventListener('click', () => networkRoomManager.updateLobbySettings({ gameMode: 'blitz', matchConfig: { days: 8, startingLevel: 2, startingGold: 500, rewardRate: 1.5 } }));
 
     if (room.status === 'playing') {
       this.modal.querySelectorAll<HTMLButtonElement | HTMLSelectElement>('.btn-lobby-party-size, #selectLobbyGameMode, .btn-toggle-slot-ai, .lobby-change-class').forEach(el => el.disabled = true);

@@ -1,0 +1,188 @@
+{
+  "encoding": "lossless WebP",
+  "files": [
+    {
+      "file": "backdrops-v1/abyss.png",
+      "original": 3003256,
+      "delivery": 2363316,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/castle.png",
+      "original": 3745603,
+      "delivery": 2773086,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/cavern.png",
+      "original": 3559400,
+      "delivery": 2660352,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/celestial.png",
+      "original": 3274684,
+      "delivery": 2553922,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/coral.png",
+      "original": 3467301,
+      "delivery": 2732050,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/crystal_cavern.png",
+      "original": 3484169,
+      "delivery": 2685836,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/desert.png",
+      "original": 3326102,
+      "delivery": 2641822,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/dungeon_catacombs.png",
+      "original": 2946731,
+      "delivery": 2147602,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/dungeon_ice.png",
+      "original": 3345659,
+      "delivery": 2397650,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/dungeon_volcano.png",
+      "original": 3250021,
+      "delivery": 2600308,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/fairy_grove.png",
+      "original": 3963126,
+      "delivery": 2942230,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/forest.png",
+      "original": 4018010,
+      "delivery": 2988936,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/grass.png",
+      "original": 3427205,
+      "delivery": 2662032,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/sakura_shrine.png",
+      "original": 3700918,
+      "delivery": 2854314,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/snow.png",
+      "original": 3524717,
+      "delivery": 2597554,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/steampunk.png",
+      "original": 3706291,
+      "delivery": 2791672,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/volcano.png",
+      "original": 3294720,
+      "delivery": 2609584,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "backdrops-v1/waterfall_forest.png",
+      "original": 3654990,
+      "delivery": 2835280,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "cleric-actions-atlas.png",
+      "original": 2892325,
+      "delivery": 2055982,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "cleric-motion-atlas.png",
+      "original": 2933903,
+      "delivery": 2068314,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "magician-actions-atlas.png",
+      "original": 2488046,
+      "delivery": 1877226,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "magician-motion-atlas.png",
+      "original": 2983274,
+      "delivery": 2199876,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "ranger-actions-atlas.png",
+      "original": 2525381,
+      "delivery": 1892418,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "ranger-motion-atlas.png",
+      "original": 2725013,
+      "delivery": 2053328,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "spellblade-actions-atlas.png",
+      "original": 2751619,
+      "delivery": 2017756,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "spellblade-motion-atlas.png",
+      "original": 3006349,
+      "delivery": 2182020,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "thief-actions-atlas.png",
+      "original": 2013435,
+      "delivery": 1509088,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "thief-motion-atlas.png",
+      "original": 2152342,
+      "delivery": 1622090,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "warrior-actions-atlas.png",
+      "original": 2130057,
+      "delivery": 1598774,
+      "visiblePixelsIdentical": true
+    },
+    {
+      "file": "warrior-motion-atlas.png",
+      "original": 2364964,
+      "delivery": 1741520,
+      "visiblePixelsIdentical": true
+    }
+  ],
+  "originalBytes": 93659611,
+  "deliveryBytes": 70655938,
+  "reductionPercent": 24.6
+}

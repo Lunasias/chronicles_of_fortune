@@ -73,7 +73,7 @@ test('royal contracts survive v2 saves and reject malformed ledgers without repl
   assert.equal(validRoyalContractState(undefined), true);
   assert.equal(validRoyalContractState({ 1: { completed: ['unknown'], active: null } }), false);
   assert.equal(validRoyalContractState({ 1: { completed: ['road_warden', 'road_warden'], active: null } }), false);
-  const legacy = JSON.parse(raw); delete legacy.world.royalContracts;
+  const legacy = JSON.parse(raw); delete legacy.world.royalContracts; delete legacy.integrity; legacy.version = 2;
   assert.equal(SaveManager.applySaveData(loaded, legacy).success, true);
   assert.deepEqual(loaded.world.royalContracts, {});
 });

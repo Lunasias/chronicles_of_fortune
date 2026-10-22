@@ -16,9 +16,11 @@ export function evaluateMatch(game: GameState): MatchResult | null {
   if (gameMode === 'blitz') return dayCounter > game.blitzDayLimit ? { winnerId: leader.id, reason: 'มูลค่าทรัพย์สินสูงสุดเมื่อจบการแข่งขันสายฟ้าแลบ' } : null;
   if (gameMode === 'roguelike_draft') return dayCounter > 28 ? { winnerId: leader.id, reason: 'มูลค่าทรัพย์สินสูงสุดหลังจบฤดูกาลดราฟต์' } : null;
   if (game.winGoal === 'boss' && world.campaignBossId !== null && world.defeatedBosses.includes(world.campaignBossId)) return { winnerId: world.bossKillers[world.campaignBossId], reason: 'พิชิตผู้พิทักษ์แห่งหุบเหวสำเร็จ' };
-  const winner = players.find(p => game.winGoal === 'gold' ? p.gold >= RULES.goldGoal : game.winGoal === 'towns' ? p.townsControlled >= RULES.townGoal : false);
-  if (winner) return { winnerId: winner.id, reason: game.winGoal === 'gold' ? `สะสมเงินครบ ${RULES.goldGoal}G` : `ครองเมืองครบ ${RULES.townGoal} แห่ง` };
-  if (dayCounter > RULES.campaignDays) return { winnerId: leader.id, reason: 'มูลค่าทรัพย์สินสูงสุดเมื่อสิ้นสุดแคมเปญ 42 วัน' };
+  const goldGoal = world.matchConfig?.goldGoal ?? RULES.goldGoal, townGoal = world.matchConfig?.townGoal ?? RULES.townGoal;
+  const days = world.matchConfig?.days ?? RULES.campaignDays;
+  const winner = players.find(p => game.winGoal === 'gold' ? p.gold >= goldGoal : game.winGoal === 'towns' ? p.townsControlled >= townGoal : false);
+  if (winner) return { winnerId: winner.id, reason: game.winGoal === 'gold' ? `สะสมเงินครบ ${goldGoal}G` : `ครองเมืองครบ ${townGoal} แห่ง` };
+  if (dayCounter > days) return { winnerId: leader.id, reason: `มูลค่าทรัพย์สินสูงสุดเมื่อสิ้นสุดแคมเปญ ${days} วัน` };
   return null;
 }
 
@@ -28,5 +30,5 @@ export function matchObjective(game: GameState): string {
   if (game.gameMode === 'blitz') return `ทรัพย์สินสูงสุดเมื่อจบวันที่ ${game.blitzDayLimit}`;
   if (game.gameMode === 'roguelike_draft') return 'เลือกพรทุกสัปดาห์ • แข่งขันทรัพย์สิน 28 วัน';
   if (game.winGoal === 'boss') return `พิชิตผู้พิทักษ์แห่งหุบเหว • จุดหมาย #${game.world.campaignBossId}`;
-  return game.winGoal === 'gold' ? `สะสมเงิน ${RULES.goldGoal}G` : game.winGoal === 'towns' ? `ครองเมือง ${RULES.townGoal} แห่ง` : 'แข่งขันทรัพย์สิน 42 วัน';
+  return game.winGoal === 'gold' ? `สะสมเงิน ${game.world.matchConfig?.goldGoal ?? RULES.goldGoal}G` : game.winGoal === 'towns' ? `ครองเมือง ${game.world.matchConfig?.townGoal ?? RULES.townGoal} แห่ง` : `แข่งขันทรัพย์สิน ${game.world.matchConfig?.days ?? 42} วัน`;
 }

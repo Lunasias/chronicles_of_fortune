@@ -22,10 +22,12 @@ class GeneratedBackdrops {
   draw(ctx: CanvasRenderingContext2D, w: number, h: number, key: BackdropKey, timeOfDay: TimeOfDay, anchorY = .5) {
     let image = this.images.get(key);
     if (!image) {
+      // Keep at most three decoded region backdrops alive while touring the world.
+      if (this.images.size >= 3) this.images.delete(this.images.keys().next().value!);
       image = createArtworkImage();
       this.images.set(key, image);
-      image.src = `/assets/art-v2/backdrops-v1/${key}.png`;
-    }
+      image.src = `/assets/art-v2/backdrops-v1/${key}.webp`;
+    } else { this.images.delete(key); this.images.set(key, image); }
     ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#152636'; ctx.fillRect(0, 0, w, h);
     if (image.complete && image.naturalWidth) {

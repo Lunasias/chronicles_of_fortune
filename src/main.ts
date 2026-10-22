@@ -14,6 +14,15 @@ import { JOB_VISUALS } from './engine/JobVisuals';
 import { GameState } from './game/GameState';
 import { IsometricRenderer } from './engine/IsometricRenderer';
 import { canAcceptTurnPacket, acceptNetworkMovement, applyNetworkState, RemoteMovementPlayback } from './engine/MultiplayerSync';
+import { networkTurnId, validTurnSnapshot } from './engine/NetworkProtocol';
+import { PerformanceMonitor, mobileGraphicsDefault } from './engine/PerformanceBudget';
+import { CURRENT_SAVE_VERSION } from './game/SaveMigration';
+import { configureMatch } from './game/MatchConfig';
+import { CampaignWorkshop } from './ui/CampaignWorkshop';
+import { InteractiveTutorial } from './ui/InteractiveTutorial';
+import { offerStoryline } from './ui/StorylineEncounter';
+import { recordMatchMoment } from './game/CampaignStories';
+import './styles/campaign-systems.css';
 import { canShowMovementNavigation } from './engine/NavigationArrows';
 import { HUD } from './ui/HUD';
 import { MovementUI } from './ui/MovementUI';
@@ -65,6 +74,11 @@ import { installCampaignLauncher } from './ui/CampaignLauncher';
 import { startRoyalContract, claimRoyalContract, abandonRoyalContract, royalContractViews, recordRoyalBossVictory } from './game/RoyalContracts';
 
 class DokaponApp {
+  private workshop: CampaignWorkshop;
+  private tutorial: InteractiveTutorial;
+  private mobileRendering = mobileGraphicsDefault();
+  public performanceMonitor = new PerformanceMonitor();
+  private lastPaint = 0;
   private visualReviewActive = false;
   private visualReviewMeter: HTMLElement | null = null;
   private visualReviewSamples = 0;
@@ -129,6 +143,8 @@ class DokaponApp {
       this.renderer.hoveredNodeId = node.id;
     }, (action, id) => this.handleRoyalContract(action, id), () => this.game.phase === 'BOARD_TURN' && this.isMyTurn() && !this.game.activePlayer?.isAI);
     this.worldNavigator.attachMovementAction();
+    this.tutorial = new InteractiveTutorial(this.game);
+    this.workshop = new CampaignWorkshop(this.game, () => this.isMyTurn() && !this.game.activePlayer.isAI && this.game.phase === 'BOARD_TURN', () => { this.saveGameProgress(false); this.syncMultiplayerState(); this.hud.update(); }, node => { this.renderer.centerCameraOn(node.gx, node.gy, node.gz); this.renderer.hoveredNodeId = node.id; });
     this.battleUI = new BattleUI(this.game);
     this.townUI = new TownUI(this.game);
     this.shopUI = new ShopUI(this.game);
@@ -191,12 +207,13 @@ class DokaponApp {
 
   public isMyTurn(): boolean {
     if (!networkRoomManager.isInRoom()) return true;
+    if (!networkRoomManager.isConnectionHealthy()) return false;
     if (this.game.activePlayer.isAI) return false;
     return this.game.activePlayerIdx === networkRoomManager.getLocalPlayerIndex();
   }
 
   private ownsActiveTurn(): boolean {
-    return !networkRoomManager.isInRoom() || this.isMyTurn() || (networkRoomManager.isHost() && this.game.activePlayer.isAI);
+    return !networkRoomManager.isInRoom() || networkRoomManager.isConnectionHealthy() && (this.isMyTurn() || networkRoomManager.isHost() && this.game.activePlayer.isAI);
   }
 
   private isTurnPacket(pkt: NetworkPacket): boolean {
@@ -205,6 +222,7 @@ class DokaponApp {
 
   private canShowMovementNavigation(): boolean {
     return !!this.game.activePlayer && canShowMovementNavigation(this.game.phase, this.game.remainingMoves, this.game.activePlayer.isAI, this.isMyTurn())
+      && !document.querySelector('dialog[open]')
       && !Array.from(document.querySelectorAll('[role="dialog"], #diceRollModal')).some(panel => !panel.closest('.hidden, [hidden]'));
   }
 
@@ -214,15 +232,15 @@ class DokaponApp {
     if (opts.saveData) {
       const me = networkRoomManager.getRoomInfo()?.connectedPeers.find(p => p.id === networkRoomManager.getMyPeerId());
       if (me?.playerIndex !== undefined) networkRoomManager.setLocalPlayerIndex(me.playerIndex);
-      SaveManager.applySaveData(this.game, opts.saveData, false);
-      this.game.gameMode = (opts.gameMode as any) || 'standard';
-      this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
+      if (!SaveManager.applySaveData(this.game, opts.saveData, false).success) { void gameDialogs.message('เข้าห้องไม่สำเร็จ', 'ได้รับจุดบันทึกที่ไม่สมบูรณ์ กรุณาเชื่อมต่อห้องใหม่'); return; }
       networkRoomManager.setStatus('playing');
       networkRoomManager.saveSessionSnapshot(opts.saveData);
     } else {
       this.game.gameMode = (opts.gameMode as any) || 'standard';
       this.game.initGame(opts.partyConfig, opts.winGoal || 'networth');
       this.game.gameMode = (opts.gameMode as any) || 'standard';
+      const config = networkRoomManager.getRoomInfo()?.matchConfig;
+      if (config) { configureMatch(this.game, config); if (this.game.gameMode === 'coop_raid') this.game.coopRaidDayLimit = config.days; }
       this.game.aiDifficulty = opts.aiDifficulty || 'tactical';
       networkRoomManager.setLocalPlayerIndex(0);
       networkRoomManager.setStatus('playing');
@@ -263,6 +281,8 @@ class DokaponApp {
   }
 
   private bindNetworkListeners() {
+    networkRoomManager.setTurnContext(() => networkTurnId(this.game));
+    networkRoomManager.setCommandValidator(packet => this.isTurnPacket(packet) && (packet.type !== 'SYNC_STATE' || validTurnSnapshot(this.game, packet.payload)));
     networkRoomManager.onPacket(pkt => {
       if (pkt.type === 'DICE_ROLL') {
         if (!this.isTurnPacket(pkt) || !['BOARD_TURN', 'DICE_ROLLING'].includes(this.game.phase)) return;
@@ -304,8 +324,9 @@ class DokaponApp {
           // A transport reconnect must not overwrite a still-running turn. A refreshed
           // turn owner instead resumes a shared board checkpoint on every machine.
           this.battleUI.resendRemotePrompt(targetPlayerIndex!);
-          if (targetPlayerIndex === this.game.activePlayerIdx && !pkt.payload?.previousPeerId) return;
-          const restartTurn = targetPlayerIndex === this.game.activePlayerIdx;
+          const recovery = networkRoomManager.needsCheckpointRecovery();
+          if (targetPlayerIndex === this.game.activePlayerIdx && !pkt.payload?.previousPeerId && !recovery) return;
+          const restartTurn = recovery || targetPlayerIndex === this.game.activePlayerIdx;
           if (restartTurn) {
             this.game.phase = 'BOARD_TURN'; this.game.remainingMoves = 0; this.game.highlightedNodes = [];
           }
@@ -331,6 +352,7 @@ class DokaponApp {
             },
             timestamp: Date.now()
           });
+          networkRoomManager.finishCheckpointRecovery();
           if (restartTurn) this.onTurnStarted();
         }
       } else if (pkt.type === 'REJOIN_ACK') {
@@ -338,15 +360,14 @@ class DokaponApp {
           const mySessionId = getOrCreateClientSessionId();
           const isTarget = pkt.payload.clientSessionId === mySessionId || pkt.payload.peerId === networkRoomManager.getMyPeerId();
           if (isTarget || pkt.payload.restartTurn) {
+            if (!SaveManager.applySaveData(this.game, pkt.payload.saveData, false).success) return;
             this.remoteMovement.cancel();
+            this.battleUI.abortForCheckpoint();
             if (pkt.payload.restartTurn) document.getElementById('journeyDecision')?.classList.add('hidden');
             if (isTarget && typeof pkt.payload.playerIndex === 'number') {
               networkRoomManager.setLocalPlayerIndex(pkt.payload.playerIndex);
             }
             networkRoomManager.setStatus('playing');
-            SaveManager.applySaveData(this.game, pkt.payload.saveData, false);
-            if (pkt.payload.gameMode) this.game.gameMode = pkt.payload.gameMode;
-            if (pkt.payload.aiDifficulty) this.game.aiDifficulty = pkt.payload.aiDifficulty;
             networkRoomManager.saveSessionSnapshot(pkt.payload.saveData);
 
             document.getElementById('titleScreen')?.classList.add('hidden');
@@ -375,6 +396,11 @@ class DokaponApp {
     networkRoomManager.onStateChange(() => {
       if (!networkRoomManager.isInRoom()) { this.remoteMovement.cancel(); this.battleUI.closeSpectatorView(); }
       this.updateMultiplayerHudBadge();
+      if (this.game.phase !== 'TITLE') {
+        if (!networkRoomManager.isConnectionHealthy()) { this.remoteMovement.cancel(); this.battleUI.abortForCheckpoint(); }
+        const waiting = networkRoomManager.isInRoom() && !this.isMyTurn();
+        for (const id of ['btnRollDice', 'btnUseSpinner', 'btnFieldMagic']) document.getElementById(id)?.toggleAttribute('disabled', waiting);
+      }
     });
   }
 
@@ -407,7 +433,7 @@ class DokaponApp {
     `;
   }
 
-  private syncMultiplayerState(authorityPlayerIdx = this.game.activePlayerIdx) {
+  private syncMultiplayerState(authorityPlayerIdx = this.game.activePlayerIdx, authorityTurnId = networkTurnId(this.game)) {
     if (!networkRoomManager.isInRoom()) return;
     const authority = this.game.players[authorityPlayerIdx];
     if (!(authority?.isAI ? networkRoomManager.isHost() : authorityPlayerIdx === networkRoomManager.getLocalPlayerIndex())) return;
@@ -423,6 +449,7 @@ class DokaponApp {
       roomCode: networkRoomManager.getRoomCode()!,
       senderId: networkRoomManager.getMyPeerId(),
       senderName: this.game.activePlayer.displayName,
+      turnId: authorityTurnId,
       payload: { state: snapshot, playerIdx: authorityPlayerIdx, phase: this.game.phase, remainingMoves: this.game.remainingMoves },
       timestamp: Date.now()
     });
@@ -1001,6 +1028,7 @@ class DokaponApp {
       if (!document.querySelector('#playerSetupRoster .player-setup-card')) this.renderRosterSetup(3);
       document.getElementById('titleButtonsBlock')?.classList.add('hidden');
       document.getElementById('playerSetupBlock')?.classList.remove('hidden');
+      this.rosterSkinUpdaters.forEach(refresh => refresh());
     });
 
     document.getElementById('btnBackToMenu')?.addEventListener('click', () => {
@@ -1649,6 +1677,7 @@ class DokaponApp {
 
         const currentSkin = skins[variant] || { name: 'ค่าเริ่มต้น' };
         skinLabel.innerText = currentSkin.name;
+        if (document.getElementById('playerSetupBlock')?.classList.contains('hidden')) return;
 
         // Render live preview
         pCtx.clearRect(0, 0, 48, 48);
@@ -1714,6 +1743,10 @@ class DokaponApp {
     }));
 
     this.game.initGame(partyConfig, winGoal);
+    const control = (id: string) => Number((document.getElementById(id) as HTMLSelectElement)?.value);
+    configureMatch(this.game, { days: control('matchDays'), startingGold: control('matchStartingGold'), startingLevel: control('matchStartingLevel'), rewardRate: control('matchRewardRate'), goldGoal: control('matchGoldGoal'), townGoal: control('matchTownGoal') });
+    if (this.game.gameMode === 'coop_raid') this.game.coopRaidDayLimit = this.game.world.matchConfig!.days;
+    if ((document.getElementById('matchTutorial') as HTMLInputElement)?.checked) for (const p of this.game.players) if (!p.isAI) this.game.world.tutorial[p.id] = { enabled: true, turns: 0, actions: [] };
 
     const allowDarklingCheck = document.getElementById('checkAllowDarkling') as HTMLInputElement | null;
     if (allowDarklingCheck) {
@@ -1836,11 +1869,14 @@ class DokaponApp {
     this.hud.update();
   }
 
-  private handleTileArrival(tile: BoardNode) {
+  private handleTileArrival(tile: BoardNode, storyHandled = false) {
     if (!this.ownsActiveTurn()) return;
     triggerHaptic('selection');
     const p = this.game.activePlayer;
-    this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
+    if (!storyHandled) {
+      this.game.addLog(`${p.displayName} เหยียบ ${tile.name} (${tile.type.toUpperCase()})`);
+      if (offerStoryline(this.game, tile, () => this.handleTileArrival(tile, true))) return;
+    }
 
     // Transition score and weather ambience together after arriving in a region.
     if (!p.isDarkling && this.game.phase !== 'BATTLE') {
@@ -2122,6 +2158,7 @@ class DokaponApp {
     player.gold += gold;
     player.matchStats.goldEarnedTotal += gold;
     player.matchStats.monstersKilled++;
+    if (player.talents.includes('vampiric')) player.hp = Math.min(player.maxHp, player.hp + 8);
     const leveledUp = player.gainXP(xp);
     if (leveledUp) {
       audio.levelUpFanfare();
@@ -2516,6 +2553,7 @@ class DokaponApp {
 
   private advanceTurn() {
     if (!this.ownsActiveTurn()) return;
+    recordMatchMoment(this.game);
     this.game.checkWinConditions();
     if (this.showMatchResult()) { this.syncMultiplayerState(); return; }
     this.hud.update();
@@ -2540,6 +2578,7 @@ class DokaponApp {
 
   private finishAdvanceTurn() {
     const authorityPlayerIdx = this.game.activePlayerIdx;
+    const authorityTurnId = networkTurnId(this.game);
     this.game.endTurn(() => {
       this.weeklyReportUI.open(() => {
         // Announce King Rico's Royal Decree for the new week!
@@ -2553,7 +2592,7 @@ class DokaponApp {
           this.updateTitleSaveStatus();
 
           this.game.startTurn();
-          this.syncMultiplayerState(authorityPlayerIdx);
+          this.syncMultiplayerState(authorityPlayerIdx, authorityTurnId);
           this.onTurnStarted();
           if (this.game.activePlayer.isAI) {
             this.handleAITurnStart();
@@ -2562,9 +2601,9 @@ class DokaponApp {
       });
     });
 
-    if (this.showMatchResult()) { this.syncMultiplayerState(authorityPlayerIdx); return; }
+    if (this.showMatchResult()) { this.syncMultiplayerState(authorityPlayerIdx, authorityTurnId); return; }
     if (this.game.phase === 'BOARD_TURN') {
-      this.syncMultiplayerState(authorityPlayerIdx);
+      this.syncMultiplayerState(authorityPlayerIdx, authorityTurnId);
       this.onTurnStarted();
       if (this.game.activePlayer.isAI) {
         this.handleAITurnStart();
@@ -2573,8 +2612,13 @@ class DokaponApp {
   }
 
   private turnBannerTimeout: any = null;
+  private lastAutoSaveTurn = '';
 
   private onTurnStarted() {
+    if (!this.visualReviewActive && this.game.phase === 'BOARD_TURN' && this.ownsActiveTurn()) {
+      const stamp = networkTurnId(this.game);
+      if (stamp !== this.lastAutoSaveTurn) { this.lastAutoSaveTurn = stamp; this.saveGameProgress(false); }
+    }
     if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
     if (p.isAI && this.ownsActiveTurn() && this.game.phase === 'BOARD_TURN') {
@@ -2697,7 +2741,7 @@ class DokaponApp {
     const metaEl = document.getElementById('titleLoadGameMeta');
     if (!btnLoad) return;
 
-    const activeEntry = metas.filter(entry => entry.meta?.saveVersion === 2)
+    const activeEntry = metas.filter(entry => entry.meta?.saveVersion === CURRENT_SAVE_VERSION)
       .sort((a, b) => (b.meta?.savedAt ?? 0) - (a.meta?.savedAt ?? 0))[0];
     btnLoad.dataset.saveSlot = activeEntry ? String(activeEntry.slot) : '';
     btnLoad.disabled = !activeEntry;
@@ -2768,6 +2812,7 @@ class DokaponApp {
       }
       audio.fanfare();
       if (res.recoveredFromBackup) this.game.addLog('กู้คืนความคืบหน้าจากสำเนาบันทึกก่อนหน้าเรียบร้อยแล้ว', 'info');
+      if (res.warning) this.game.addLog(res.warning, 'info');
       document.getElementById('titleScreen')?.classList.add('hidden');
       document.getElementById('settingsModal')?.classList.add('hidden');
       document.getElementById('topHUD')?.classList.remove('hidden');
@@ -3816,6 +3861,11 @@ class DokaponApp {
   }
 
   public loop(time: number) {
+    // Hidden tabs retain networking/audio timers but do not rebuild the world canvas.
+    const interval = this.mobileRendering ? 1000 / 30 : 1000 / 60;
+    if (document.hidden || time - this.lastPaint < interval - 1) { requestAnimationFrame(t => this.loop(t)); return; }
+    this.lastPaint = time;
+    const paintStarted = performance.now();
     if (this.visualReviewActive && this.visualReviewMeter) {
       this.visualReviewSamples++;
       const now = performance.now(), elapsed = now - this.visualReviewSampleAt;
@@ -3825,6 +3875,7 @@ class DokaponApp {
       }
     }
     this.gamepadController?.update();
+    this.tutorial.update(time, !this.visualReviewActive && this.game.phase !== 'TITLE' && this.isMyTurn() && !this.adventureGuide.isOpen && !document.querySelector('dialog[open]'));
     this.adventureGuide.update(time, !this.visualReviewActive && this.game.phase !== 'TITLE' && this.isMyTurn());
     if (this.game.phase !== 'CHOOSING_PATH') this.selectedMoveNodeId = null;
     const showMovement = this.canShowMovementNavigation();
@@ -3850,6 +3901,7 @@ class DokaponApp {
       }
     }
 
+    this.performanceMonitor.record(paintStarted);
     requestAnimationFrame(t => this.loop(t));
   }
 }

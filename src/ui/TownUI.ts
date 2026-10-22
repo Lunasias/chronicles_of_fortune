@@ -111,7 +111,7 @@ export class TownUI {
       btnRob?.classList.remove('hidden');
       btnTakeover?.classList.remove('hidden');
       const isTradeRoute = owner ? townManager.isTownInTradeRoute(townNode, owner, this.game.allNodes) : false;
-      const takeoverCost = (townNode.townData?.baseValue || 200) * (isTradeRoute ? 3 : 2);
+      const takeoverCost = owner ? townManager.takeoverCost(townNode, owner, this.game.allNodes) : 0;
       const takeoverText = document.getElementById('townTakeoverCostText');
       if (takeoverText) takeoverText.innerText = `ฮุบซื้อกรรมสิทธิ์ (${takeoverCost}G)${isTradeRoute ? ' [เส้นทางการค้า x3]' : ''}`;
     } else {
@@ -124,6 +124,7 @@ export class TownUI {
     const investCost = 200 * (townNode.townData?.level || 1);
     investCostText.innerText = `ลงทุน ${investCost}G (อัปเกรด)`;
     this.refreshTownStatusUI();
+    this.renderProjects(townNode, isOwner);
 
     // Render 2.5D Isometric Town Plaza Diorama
     const canvas = document.getElementById('townDioramaCanvas') as HTMLCanvasElement;
@@ -142,8 +143,13 @@ export class TownUI {
         if (p.hp < p.maxHp * 0.6 && p.gold >= 30) {
           this.handleInn();
         }
-        if (owner?.id === p.id && p.gold >= investCost) {
+        const remainingDays = (this.game.world.matchConfig?.days ?? (this.game.gameMode === 'blitz' ? this.game.blitzDayLimit : 42)) - this.game.dayCounter + 1;
+        if (owner?.id === p.id && p.gold >= investCost && remainingDays > 4) {
           this.handleInvest();
+        }
+        if (owner?.id === p.id && townNode.townData && !townNode.townData.project && remainingDays > 8) {
+          const project = p.hp < p.maxHp * .6 ? 'sanctuary' : 'market';
+          if (p.gold >= townManager.projectCost(project) + 100) townManager.developTown(townNode, p, project);
         }
         setTimeout(() => this.handleLeave(), Math.max(100, Math.round(600 / speed)));
       }, Math.max(100, Math.round(800 / speed)));
@@ -171,6 +177,18 @@ export class TownUI {
     audio.levelUp();
     this.game.addLog(`🛏️ ${p.displayName} พักผ่อนที่โรงแรม! ฟื้นฟู HP และ MP เต็มเปี่ยม พร้อมลบล้างสถานะผิดปกติ!`);
     this.refreshTownStatusUI();
+  }
+
+  private renderProjects(node: BoardNode, isOwner: boolean) {
+    let section = document.getElementById('townProjects');
+    if (!section) { section = document.createElement('section'); section.id = 'townProjects'; section.className = 'town-projects'; document.getElementById('btnTownInvest')?.parentElement?.append(section); }
+    const project = node.townData?.project;
+    section.hidden = !isOwner && !project;
+    const names = { market: 'ตลาดชุมชน', sanctuary: 'สวนแห่งการเยียวยา', watchtower: 'หอเฝ้าระวัง' };
+    section.innerHTML = project ? `<p>โครงการเมือง: ${names[project]}</p>` : `<p>พัฒนาเมืองเลเวล 2 · เลือกได้หนึ่งโครงการ</p>${(['market', 'sanctuary', 'watchtower'] as const).map(id => `<button type="button" class="pixel-btn" data-town-project="${id}" ${!isOwner || (node.townData?.level || 1) < 2 || this.game.activePlayer.gold < townManager.projectCost(id) ? 'disabled' : ''}>${names[id]} · ${townManager.projectCost(id)}G · ${{ market: 'ภาษี +15G ต่อเทิร์น', sanctuary: 'ฟื้น HP 3 / MP 2 ทุกเทิร์น', watchtower: 'ค่าฮุบซื้อเมืองเพิ่ม 30%' }[id]}</button>`).join('')}`;
+    section.querySelectorAll<HTMLButtonElement>('[data-town-project]').forEach(button => button.addEventListener('click', () => {
+      if (townManager.developTown(node, this.game.activePlayer, button.dataset.townProject as keyof typeof names)) { this.game.addLog(`พัฒนาเมือง ${node.name}: ${names[button.dataset.townProject as keyof typeof names]}`, 'level'); this.open(node, this.onTownLeaveCallback!, this.onInitiateRobCallback!); }
+    }));
   }
 
   private handleInvest() {

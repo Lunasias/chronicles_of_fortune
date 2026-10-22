@@ -2,6 +2,7 @@ import { customIsometricHeroRenderer } from './CustomIsometricHeroRenderer';
 import { customIsometricMonsterRenderer } from './CustomIsometricMonsterRenderer';
 import { isometricBuildingRenderer } from './IsometricBuildingRenderer';
 import { isometricFoliageRenderer } from './IsometricFoliageRenderer';
+import { canvasBudget } from './PerformanceBudget';
 
 export interface EquipmentItem {
   id: string;
@@ -34,7 +35,7 @@ export interface PrankState {
 }
 
 export class PixelSpriteGenerator {
-  private cache = new Map<string, HTMLCanvasElement>();
+  private cache = canvasBudget<string>(8);
 
   private makeCanvas(w: number, h: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
     const c = document.createElement('canvas');

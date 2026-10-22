@@ -1,6 +1,7 @@
 import { IsoDirection, CharacterAnimState } from './PixelSpriteGenerator';
 import { animationPoseIndex } from './ArtDirection';
 import { monsterArtAtlas } from './MonsterArtAtlas';
+import { canvasBudget } from './PerformanceBudget';
 
 // Unit direction vectors for 2:1 Isometric Board and Battle Movement
 const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
@@ -26,7 +27,7 @@ const DIR_NAME_MAP: Record<IsoDirection, string> = {
 };
 
 export class CustomIsometricMonsterRenderer {
-  private cache = new Map<string, HTMLCanvasElement>();
+  private cache = canvasBudget<string>(8);
   private monsterImageStore = new Map<string, HTMLImageElement>();
   private loadedArchetypes = new Set<string>();
   private loadingArchetypes = new Set<string>();

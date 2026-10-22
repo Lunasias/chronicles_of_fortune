@@ -108,7 +108,7 @@ body #btnSpinWonderChest { align-self: center; flex-shrink: 0; white-space: norm
   body #wonderIconLarge { min-height: 40px; }
   body #wonderIconLarge .pixel-icon { width: 36px; height: 36px; }
 }
-.system-menu-content { max-width: calc(100vw - 32px); max-height: calc(100dvh - var(--hud-clearance) - 16px); overflow-y: auto; }
+.system-menu-content { max-width: calc(100vw - 32px); max-height: calc(100dvh - var(--hud-clearance) - var(--dock-clearance, 88px) - 24px); overflow-y: auto; }
 .audio-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .audio-setting-row label { font-size: 12px; }
 .audio-setting-row input[type='range'] { width: clamp(90px, 24vw, 180px); min-height: 36px; accent-color: #f3bf53; }

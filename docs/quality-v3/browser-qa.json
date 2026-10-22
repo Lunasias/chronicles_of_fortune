@@ -1,0 +1,147 @@
+{
+  "base": "http://localhost:5173",
+  "checks": [
+    {
+      "name": "Decoded canvas budget respected on desktop",
+      "passed": true,
+      "detail": {
+        "frames": 109,
+        "frameP50": 4.9000000059604645,
+        "frameP95": 6.0999999940395355,
+        "canvasBytes": 5543936,
+        "canvasBudget": 90177536,
+        "cacheEvictions": 0,
+        "assetRequests": 15,
+        "transferBytes": 22295225
+      }
+    },
+    {
+      "name": "Talent tree fits desktop",
+      "passed": true
+    },
+    {
+      "name": "Talent fork spends actual character points on desktop",
+      "passed": true
+    },
+    {
+      "name": "Live tutorial stays inside desktop",
+      "passed": true
+    },
+    {
+      "name": "Decoded canvas budget respected on phone",
+      "passed": true,
+      "detail": {
+        "frames": 61,
+        "frameP50": 5,
+        "frameP95": 5.799999997019768,
+        "canvasBytes": 6374400,
+        "canvasBudget": 45088768,
+        "cacheEvictions": 0,
+        "assetRequests": 15,
+        "transferBytes": 22295225
+      }
+    },
+    {
+      "name": "Talent tree fits phone",
+      "passed": true
+    },
+    {
+      "name": "Talent fork spends actual character points on phone",
+      "passed": true
+    },
+    {
+      "name": "Live tutorial stays inside phone",
+      "passed": true
+    },
+    {
+      "name": "Decoded canvas budget respected on landscape",
+      "passed": true,
+      "detail": {
+        "frames": 58,
+        "frameP50": 2.9000000059604645,
+        "frameP95": 3.8000000044703484,
+        "canvasBytes": 4424704,
+        "canvasBudget": 45088768,
+        "cacheEvictions": 0,
+        "assetRequests": 14,
+        "transferBytes": 21780333
+      }
+    },
+    {
+      "name": "Talent tree fits landscape",
+      "passed": true
+    },
+    {
+      "name": "Talent fork spends actual character points on landscape",
+      "passed": true
+    },
+    {
+      "name": "Live tutorial stays inside landscape",
+      "passed": true
+    },
+    {
+      "name": "No runtime or asset failures",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "performance": [
+    {
+      "label": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "coldLoadMs": 1468,
+      "frames": 109,
+      "frameP50": 4.9000000059604645,
+      "frameP95": 6.0999999940395355,
+      "canvasBytes": 5543936,
+      "canvasBudget": 90177536,
+      "cacheEvictions": 0,
+      "assetRequests": 15,
+      "transferBytes": 22295225
+    },
+    {
+      "label": "phone",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "coldLoadMs": 1622,
+      "frames": 61,
+      "frameP50": 5,
+      "frameP95": 5.799999997019768,
+      "canvasBytes": 6374400,
+      "canvasBudget": 45088768,
+      "cacheEvictions": 0,
+      "assetRequests": 15,
+      "transferBytes": 22295225
+    },
+    {
+      "label": "landscape",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "coldLoadMs": 898,
+      "frames": 58,
+      "frameP50": 2.9000000059604645,
+      "frameP95": 3.8000000044703484,
+      "canvasBytes": 4424704,
+      "canvasBudget": 45088768,
+      "cacheEvictions": 0,
+      "assetRequests": 14,
+      "transferBytes": 21780333
+    }
+  ],
+  "publicWebRTC": {
+    "success": true,
+    "connectMs": 3027,
+    "broadcastChannel": false,
+    "physicalDevices": 1,
+    "note": "Public PeerJS signaling and browser WebRTC; separate-device NAT/TURN not verified"
+  },
+  "passed": true
+}

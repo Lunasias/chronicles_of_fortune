@@ -1,0 +1,8 @@
+{
+  "environment": "Headless Chromium on localhost Vite; measured before regional prepacking, ground prepacking and hidden-roster deferral. Not a physical phone or WAN benchmark.",
+  "samples": [
+    { "viewport": "1280x720", "coldLoadMs": 1748, "transferBytes": 40532782, "assetRequests": 22, "renderCpuP95Ms": 3.9 },
+    { "viewport": "390x844 touch", "coldLoadMs": 1603, "transferBytes": 40432095, "assetRequests": 21, "renderCpuP95Ms": 4.7 },
+    { "viewport": "844x390 touch", "coldLoadMs": 1378, "transferBytes": 37384414, "assetRequests": 20, "renderCpuP95Ms": 2.6 }
+  ]
+}

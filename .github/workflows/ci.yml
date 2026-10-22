@@ -27,3 +27,23 @@ jobs:
       #   4. check-css-coverage               - every utility class made it into the CSS
       - name: Verify
         run: npm run verify
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Seeded balance simulation
+        run: node scripts/simulate-balance.mjs
+
+      - name: Browser journeys and real WebRTC
+        run: npm run test:e2e
+
+      - name: Browser traces and performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-report
+          path: |
+            playwright-report/
+            test-results/
+            docs/quality-v3/balance-report.json
+          retention-days: 14

@@ -37,6 +37,7 @@ export type BiomeType =
 export type RealmId = 'solaria' | 'frostpeak' | 'sunfire' | 'abyss' | 'celestial' | 'emerald';
 
 export interface TownData {
+  project?: 'market' | 'sanctuary' | 'watchtower';
   name: string;
   level: number;
   baseValue: number;

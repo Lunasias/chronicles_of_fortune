@@ -24,7 +24,9 @@ function freshGame() {
   return game;
 }
 
-const readSave = () => JSON.parse(localStorage.getItem(SAVE_KEY));
+// Mutation fixtures deliberately omit the optional disk checksum. Dedicated recovery
+// tests below damage the encoded primary to exercise checksum verification itself.
+const readSave = () => { const data = JSON.parse(localStorage.getItem(SAVE_KEY)); delete data.integrity; return data; };
 const writeSave = data => localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 
 test.beforeEach(() => {

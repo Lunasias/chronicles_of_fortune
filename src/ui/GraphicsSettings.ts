@@ -1,7 +1,8 @@
 import { normalizeGraphicsPreferences, type GraphicsPreferences } from '../engine/ArtDirection';
+import { mobileGraphicsDefault } from '../engine/PerformanceBudget';
 
 function readPreferences(): GraphicsPreferences {
-  try { return normalizeGraphicsPreferences(JSON.parse(localStorage.getItem('fortuna_graphics_v2') || 'null')); }
+  try { const saved = localStorage.getItem('fortuna_graphics_v2'); return normalizeGraphicsPreferences(saved ? JSON.parse(saved) : { quality: mobileGraphicsDefault() ? 'balanced' : 'high' }); }
   catch { return normalizeGraphicsPreferences(null); }
 }
 export const graphicsPreferences = readPreferences();

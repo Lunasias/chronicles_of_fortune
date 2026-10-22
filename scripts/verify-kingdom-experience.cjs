@@ -25,7 +25,7 @@ async function fits(selector) { return page.locator(selector).evaluate(e => { co
   await page.goto(base, { waitUntil: 'domcontentloaded' }); await ready(); await shot('title-desktop');
   check('New title uses generated kingdom artwork', await page.locator('#titleScreen').evaluate(e => getComputedStyle(e).backgroundImage.includes('kingdom-title-v2.webp')));
   await page.locator('#btnStartAdventure').click();
-  check('Five campaign presets are available', await page.locator('[data-campaign-preset]').count() === 5);
+  check('Six campaign presets include Quick Match', await page.locator('[data-campaign-preset]').count() === 6 && await page.locator('[data-campaign-preset="quick_match"]').count() === 1);
   await page.locator('[data-campaign-preset="crown_rivals"]').click();
   check('Rival preset configures four players and Darkling', await page.evaluate(() => document.querySelectorAll('.player-setup-card').length === 4 && document.querySelector('#checkAllowDarkling').checked));
   await page.locator('[data-campaign-preset="guardian_alliance"]').click();
@@ -64,6 +64,7 @@ async function fits(selector) { return page.locator(selector).evaluate(e => { co
   const code = await page.locator('dialog.game-dialog textarea').inputValue();
   check('Export is an accessible in-game code dialog', code.length > 100 && await page.locator('dialog.game-dialog textarea').getAttribute('readonly') !== null);
   await page.locator('[data-dialog-copy]').click();
+  await page.waitForFunction(() => document.querySelector('.game-dialog-status')?.textContent.includes('คัดลอก'));
   check('Export copy button acknowledges success', await page.locator('.game-dialog-status').innerText().then(t => t.includes('คัดลอก')));
   await shot('save-dialog-desktop'); await closeMessage();
   await page.locator('#selectSaveSlot').selectOption('2'); await page.locator('#btnSettingsImport').click();

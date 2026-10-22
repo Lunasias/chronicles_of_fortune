@@ -2,6 +2,7 @@ import type { GameState } from '../game/GameState';
 import { SaveManager } from '../game/SaveManager';
 import type { NetworkPacket, RoomInfo } from './NetworkRoomManager';
 import { isLegalMovementPath } from '../game/Movement';
+import { networkTurnId } from './NetworkProtocol';
 
 /** A move carries its dice budget, so it does not depend on a separate dice packet. */
 export function acceptNetworkMovement(game: GameState, room: RoomInfo | null, packet: NetworkPacket): number[] | null {
@@ -78,7 +79,7 @@ export class RemoteMovementPlayback {
 
 /** The active human simulates their turn; only the host simulates AI turns. */
 export function canAcceptTurnPacket(game: GameState, room: RoomInfo | null, packet: NetworkPacket): boolean {
-  if (!room || packet.roomCode !== room.code || packet.payload?.playerIdx !== game.activePlayerIdx) return false;
+  if (!room || packet.roomCode !== room.code || packet.payload?.playerIdx !== game.activePlayerIdx || packet.turnId && packet.turnId !== networkTurnId(game)) return false;
   const owner = room.connectedPeers.find(peer => peer.playerIndex === game.activePlayerIdx);
   return packet.senderId === (game.activePlayer.isAI ? 'host' : owner?.id);
 }

@@ -5,6 +5,7 @@ import { animationPoseIndex } from './ArtDirection';
 import { classArtAtlas } from './ClassArtAtlas';
 import { prefersReducedMotion } from '../ui/GraphicsSettings';
 import { JOB_VISUALS } from './JobVisuals';
+import { canvasBudget } from './PerformanceBudget';
 
 // =============================================================================
 // ASSET CONFIGURATION & 8-DIRECTIONAL MAPPING FOR HIGH-RES SPRITES
@@ -52,7 +53,7 @@ const ISO_DIR_VECTORS: Record<IsoDirection, { x: number; y: number }> = {
 };
 
 export class CustomIsometricHeroRenderer {
-  private cache = new Map<string, HTMLCanvasElement>();
+  private cache = canvasBudget<string>(12);
   private imageStore = new Map<string, HTMLImageElement>();
 
   constructor() {

@@ -2,6 +2,7 @@ import { createArtworkImage } from './ArtworkLoading';
 import { isolateAtlasCell } from './AtlasSprites';
 import type { CharacterAnimState, IsoDirection } from './PixelSpriteGenerator';
 import { JOB_VISUALS } from './JobVisuals';
+import { canvasBudget } from './PerformanceBudget';
 
 const DIRECTIONS: IsoDirection[] = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
 const CLASSES = new Set(['warrior', 'magician', 'thief', 'cleric', 'spellblade', 'ranger']);
@@ -54,7 +55,7 @@ export function actionPoseRow(state: CharacterAnimState, frame: number): number 
 
 class ClassArtAtlas {
   private atlases = new Map<string, { image: HTMLImageElement; cuts: number[]; ready: boolean }>();
-  private frames = new Map<string, HTMLCanvasElement>();
+  private frames = canvasBudget<string>(8);
 
   getFrame(job: string, dir: IsoDirection, state: CharacterAnimState, frame: number, visualClass = job): HTMLCanvasElement | null {
     if (!CLASSES.has(job) || typeof document === 'undefined') return null;
@@ -73,8 +74,7 @@ class ClassArtAtlas {
         entry.ready = true;
         window.dispatchEvent(new CustomEvent('class-art-loaded'));
       };
-      image.src = `/assets/art-v2/${job}-${supplemental ? 'actions' : 'motion'}-atlas.png`;
-      if (!supplemental) this.getFrame(job, dir, 'magic', 0, visualClass);
+      image.src = `/assets/art-v2/${job}-${supplemental ? 'actions' : 'motion'}-atlas.webp`;
     }
     if (!atlas.ready) return null;
     const row = supplemental ? actionPoseRow(state, frame) : classPoseRow(state, frame, job === 'cleric');

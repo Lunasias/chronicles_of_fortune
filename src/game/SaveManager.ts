@@ -9,6 +9,9 @@ import { TownData, HomeData } from './BoardMap';
 import { EquipmentItem, PrankState } from '../engine/PixelSpriteGenerator';
 import { dungeonSystem } from './DungeonSystem';
 import { worldCalamitySystem } from './WorldCalamitySystem';
+import { CURRENT_SAVE_VERSION, migrateSaveData, saveChecksum } from './SaveMigration';
+import { validTalents } from './TalentTree';
+import { normalizeMatchConfig } from './MatchConfig';
 
 export interface SaveMetadata {
   saveVersion?: number;
@@ -32,6 +35,7 @@ export interface SaveOperationResult {
 }
 
 export interface SerializedPlayer {
+  talents?: string[];
   id: number;
   name: string;
   classKey: string;
@@ -116,6 +120,7 @@ export interface SerializedPlayer {
 }
 
 export interface SaveGameData {
+  integrity?: string;
   world: WorldState;
   gameMode?: GameState['gameMode'];
   calamityState?: {
@@ -156,7 +161,7 @@ const META_KEY = 'chronicles_of_fortune_savemeta';
  * add the corresponding migration in `load` - before this existed the field was written
  * but never read, so an incompatible save silently produced NaN stats instead of failing.
  */
-const SAVE_VERSION = 2;
+const SAVE_VERSION = CURRENT_SAVE_VERSION;
 
 /** Reads a finite number out of untrusted JSON, falling back when it is missing or NaN. */
 function numOr(value: unknown, fallback: number): number {
@@ -209,6 +214,7 @@ export class SaveManager {
     for (const p of data.players) {
       if (!isRecord(p) || !Number.isInteger(p.id) || ids.has(p.id) || typeof p.name !== 'string' || typeof p.classKey !== 'string') return fail();
       ids.add(p.id);
+      if (p.talents != null && !validTalents(p.talents, p.level)) return fail();
       for (const key of ['inventory', 'fieldSpells', 'townDeeds', 'relics']) if (p[key] != null && !Array.isArray(p[key])) return fail();
       for (const key of ['equipment', 'prank', 'foodBuff', 'activeGuildQuest', 'companion', 'backupNormalStats', 'matchStats']) if (p[key] != null && !isRecord(p[key])) return fail();
       if (p.inventory?.some((item: unknown) => !isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string' || typeof item.type !== 'string')) return fail();
@@ -218,6 +224,10 @@ export class SaveManager {
     for (const key of ['weather', 'forecast', 'threat', 'events', 'expeditions', 'bossHealth', 'bossKillers']) if (key in data.world && !isRecord(data.world[key])) return fail();
     for (const key of ['defeatedBosses', 'raidTargets', 'claimedTreasures', 'calamityHistory']) if (key in data.world && !Array.isArray(data.world[key])) return fail();
     if (!validRoyalContractState(data.world.royalContracts)) return fail();
+    for (const key of ['tutorial', 'storylines', 'matchConfig']) if (key in data.world && !isRecord(data.world[key])) return fail();
+    if (Object.values(data.world.tutorial ?? {}).some(state => !isRecord(state) || typeof state.enabled !== 'boolean' || !Number.isInteger(state.turns) || state.turns < 0 || state.turns > 3 || !Array.isArray(state.actions) || state.actions.length > 12 || state.actions.some((action: unknown) => typeof action !== 'string'))) return fail();
+    if (Object.values(data.world.storylines ?? {}).some(stories => !isRecord(stories) || Object.entries(stories).some(([id, ledger]) => !['mira', 'elowen', 'bran'].includes(id) || !isRecord(ledger) || ![0, 1, 2].includes(ledger.stage) || !Number.isInteger(ledger.relationship) || ledger.relationship < 0 || ledger.relationship > 3 || !Number.isFinite(ledger.baseline) || !Array.isArray(ledger.visited) || ledger.visited.length > 1000 || ledger.visited.some((id: unknown) => !Number.isInteger(id)) || typeof ledger.lastVisit !== 'string' || ledger.path != null && !['help', 'trade'].includes(ledger.path)))) return fail();
+    if ('matchHistory' in data.world && (!Array.isArray(data.world.matchHistory) || data.world.matchHistory.length > 336 || data.world.matchHistory.some((moment: unknown) => !isRecord(moment) || typeof moment.key !== 'string' || ['day', 'playerId', 'nodeId', 'gold', 'hp', 'level', 'towns', 'kills'].some(key => !Number.isFinite(moment[key]))))) return fail();
     if (data.world.result != null && !isRecord(data.world.result)) return fail();
     if (data.world.calamity != null && !isRecord(data.world.calamity)) return fail();
     if (data.world.modifier != null && !isRecord(data.world.modifier)) return fail();
@@ -246,12 +256,13 @@ export class SaveManager {
     };
   }
 
-  private static parseStoredData(raw: string | null): { data?: SaveGameData; error?: string } {
+  private static parseStoredData(raw: string | null): { data?: SaveGameData; error?: string; warning?: string } {
     if (!raw) return {};
     try {
-      const data: unknown = JSON.parse(raw);
-      const validation = this.validateSaveData(data);
-      return validation.success ? { data: data as SaveGameData } : { error: validation.error };
+      const migrated = migrateSaveData(JSON.parse(raw));
+      if (!migrated.data) return { error: migrated.error };
+      const validation = this.validateSaveData(migrated.data);
+      return validation.success ? { data: migrated.data as SaveGameData, warning: migrated.warning } : { error: validation.error };
     } catch { return { error: 'ไฟล์บันทึกเสียหาย (อ่านรูปแบบข้อมูลไม่ได้)' }; }
   }
 
@@ -266,11 +277,18 @@ export class SaveManager {
         try { localStorage.setItem(backupKey, previous!); }
         catch { warning = 'บันทึกสำเร็จ แต่พื้นที่ไม่พอสำหรับสำเนาสำรองรอบก่อน'; }
       }
-      localStorage.setItem(saveKey, JSON.stringify(data));
+      const committed = { ...data }; delete committed.integrity;
+      committed.integrity = saveChecksum(committed as unknown as Record<string, unknown>);
+      const encoded = JSON.stringify(committed);
+      // A complete staged write survives a tab crash between storage operations.
+      localStorage.setItem(`${saveKey}_pending`, encoded);
+      localStorage.setItem(saveKey, encoded);
+      localStorage.removeItem(`${saveKey}_pending`);
       try { localStorage.setItem(metaKey, JSON.stringify(this.metadataFor(data))); }
       catch { /* The slot list derives its metadata from the committed payload. */ }
       return { success: true, warning };
     } catch {
+      try { localStorage.removeItem(`${this.getStorageKeys(slot).saveKey}_pending`); } catch { /* A crash recovery copy may remain if storage is unavailable. */ }
       return { success: false, error: 'บันทึกไม่สำเร็จ พื้นที่จัดเก็บเต็มหรือเบราว์เซอร์ไม่อนุญาตให้บันทึก ข้อมูลเดิมยังอยู่' };
     }
   }
@@ -314,13 +332,15 @@ export class SaveManager {
         const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
         jsonStr = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
       }
-      const data = JSON.parse(jsonStr) as SaveGameData;
+      const migrated = migrateSaveData(JSON.parse(jsonStr));
+      if (!migrated.data) return { success: false, error: migrated.error };
+      const data = migrated.data as SaveGameData;
       const prepared = this.prepareSaveData(game, data);
       if (!prepared.success || !prepared.preparedGame) return prepared;
       const stored = this.writeStoredData(data, slot);
       if (!stored.success) return stored;
       this.commitPreparedSave(game, prepared.preparedGame, data, true);
-      return { success: true, bossState: prepared.bossState, warning: stored.warning };
+      return { success: true, bossState: prepared.bossState, warning: stored.warning || migrated.warning };
     } catch {
       return { success: false, error: 'ถอดรหัสข้อมูลบันทึกไม่สำเร็จ โปรดตรวจสอบรหัสที่คัดลอกมา' };
     }
@@ -342,6 +362,7 @@ export class SaveManager {
       const here = nodeById.get(p.nodeId);
       return {
         id: p.id, name: p.name, classKey: p.classKey, isAI: p.isAI,
+        talents: [...p.talents],
         skinVariant: p.skinVariant || 0, level: p.level, xp: p.xp, xpNeeded: p.xpNeeded,
         maxHp: p.maxHp, hp: p.hp, maxMp: p.maxMp, mp: p.mp,
         atk: p.atk, def: p.def, mag: p.mag, spd: p.spd, luk: p.luk, gold: p.gold,
@@ -432,6 +453,7 @@ export class SaveManager {
       data = structuredClone(data);
       game = Object.assign(Object.create(Object.getPrototypeOf(game)), game) as GameState;
       game.world = WorldState.restore(data.world);
+      if (data.world.matchConfig) game.world.matchConfig = normalizeMatchConfig(data.world.matchConfig);
       const defaults = new WorldState(data.world.seed);
       for (const realm of Object.keys(defaults.weather) as Array<keyof WorldState['weather']>) {
         const weather = data.world.weather?.[realm];
@@ -458,6 +480,7 @@ export class SaveManager {
       game.players = data.players.map(sp => {
         const p = new Player(numOr(sp.id, 1), sp.name, sp.classKey, sp.isAI, numOr(sp.nodeId, 0), numOr(sp.skinVariant, 0));
         p.level = Math.max(1, numOr(sp.level, 1));
+        p.talents = sp.talents ? [...sp.talents] : [];
         p.xp = Math.max(0, numOr(sp.xp, 0));
         p.xpNeeded = Math.max(1, numOr(sp.xpNeeded, 100));
         p.maxHp = Math.max(1, numOr(sp.maxHp, 100));
@@ -611,10 +634,13 @@ export class SaveManager {
   }
 
   public static applySaveData(game: GameState, data: SaveGameData, announceLog: boolean = true): SaveOperationResult {
+    const migrated = migrateSaveData(data);
+    if (!migrated.data) return { success: false, error: migrated.error };
+    data = migrated.data;
     const prepared = this.prepareSaveData(game, data);
     if (!prepared.success || !prepared.preparedGame) return { success: false, error: prepared.error };
     this.commitPreparedSave(game, prepared.preparedGame, data, announceLog);
-    return { success: true, bossState: prepared.bossState };
+    return { success: true, bossState: prepared.bossState, warning: migrated.warning };
   }
 
   public static save(game: GameState, bossState?: { currentHp: number; maxHp: number }, slot: number = 1): boolean {
@@ -633,7 +659,7 @@ export class SaveManager {
     }
   }
 
-  private static readSlotData(slot: number): { data?: SaveGameData; error?: string; recoveredFromBackup?: boolean } {
+  private static readSlotData(slot: number): { data?: SaveGameData; error?: string; warning?: string; recoveredFromBackup?: boolean } {
     const { saveKey, backupKey } = this.getStorageKeys(slot);
     const raw = localStorage.getItem(saveKey);
     const primary = this.parseStoredData(raw);
@@ -642,11 +668,13 @@ export class SaveManager {
       try {
         const version = JSON.parse(raw)?.version;
         // An older/newer format is not corruption. Never silently substitute an old run.
-        if (typeof version === 'number' && version !== SAVE_VERSION) return primary;
+        if (typeof version === 'number' && version > SAVE_VERSION) return primary;
       } catch { /* An unreadable primary can be recovered from its last good copy. */ }
     }
     const backup = this.parseStoredData(localStorage.getItem(backupKey));
-    if (backup.data) return { data: backup.data, recoveredFromBackup: true };
+    const pending = this.parseStoredData(localStorage.getItem(`${saveKey}_pending`));
+    const recovery = [backup.data, pending.data].filter((data): data is SaveGameData => !!data).sort((a, b) => b.savedAt - a.savedAt)[0];
+    if (recovery) return { data: recovery, recoveredFromBackup: true };
     return { error: primary.error || backup.error || `ไม่พบข้อมูลบันทึกในช่องที่ ${slot}` };
   }
 
@@ -655,7 +683,7 @@ export class SaveManager {
       const stored = this.readSlotData(slot);
       if (!stored.data) return { success: false, error: stored.error };
       const applied = this.applySaveData(game, stored.data);
-      return { ...applied, recoveredFromBackup: applied.success && stored.recoveredFromBackup || undefined };
+      return { ...applied, warning: stored.warning || applied.warning, recoveredFromBackup: applied.success && stored.recoveredFromBackup || undefined };
     } catch {
       return { success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูลบันทึก' };
     }
@@ -688,6 +716,7 @@ export class SaveManager {
       const { saveKey, metaKey, backupKey } = this.getStorageKeys(slot);
       localStorage.removeItem(saveKey);
       localStorage.removeItem(backupKey);
+      localStorage.removeItem(`${saveKey}_pending`);
       localStorage.removeItem(metaKey);
     } catch (err) {
       console.error('Failed to clear savegame:', err);

@@ -4,6 +4,13 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring origin
 
 Single-player board campaign against up to 3 AI rivals, local hot-seat play, and online P2P rooms for 2–4 players with optional AI slots.
 
+The **Quality & campaign systems v3** update adds authenticated room seats and replay
+protection, safe host checkpoint recovery, save migration/checksums, browser/WebRTC CI,
+bounded canvas caches and prepacked complete map sprites. Campaigns now offer an
+interactive three-turn tutorial, an eight-day Quick Match, branching talents, town
+projects, three NPC storylines and a match timeline. [Changes, measured results and
+remaining limits](docs/quality-v3/README.md).
+
 The October 23 **Kingdom experience** update introduces five campaign presets,
 royal contracts with persistent one-time rewards, searchable locations and personal
 waypoints, live battle damage forecasts, and accessible in-game save dialogs.
@@ -41,7 +48,7 @@ resolves AI turns. Other devices receive the board position and the completed tu
 including inventory, world changes and the next player. PvP participants receive their own
 attack/defence choices; one device resolves combat so random results cannot diverge.
 
-Use **กลับเข้าห้อง** after refreshing. Seats are reserved by the tab's session identity.
+Use **กลับเข้าห้อง** after refreshing. Seats require the tab's private admission ticket.
 A refreshed active player resumes a shared board checkpoint, rather than restoring a
 partially completed combat or event dialog. The host must return to the same room after
 refreshing; host migration is not supported. Internet play uses PeerJS/WebRTC signaling
@@ -133,7 +140,8 @@ Draft offers a player choice every week for 28 days; Endless Spire continues wit
 bosses. Dungeon floors track torchlight, opened chests and guardian completion. Rewards,
 city income and catch-up mechanics have been rebalanced, with repeat-claim exploits closed.
 
-**Rules version 2 starts a new campaign; older saves are not migrated.**
+**Save format 3 migrates existing rules-2 saves and retains recovery copies.**
+Saves from the pre-rules-2 world layout remain exportable and require their original game version.
 [Architecture, rules and verification](docs/RULES_REBUILD.md).
 
 ---

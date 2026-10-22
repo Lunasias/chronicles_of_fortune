@@ -18,7 +18,7 @@ export function adventureProgress(game: GameState): AdventureProgress {
     b.getNetWorth(game.allNodes) - a.getNetWorth(game.allNodes)
     || b.matchStats.monstersKilled - a.matchStats.monstersKilled || a.id - b.id
   ).map(p => ({ id: p.id, name: p.displayName, worth: p.getNetWorth(game.allNodes), towns: p.townsControlled, level: p.level, active: p.id === player?.id }));
-  let deadline: number | null = RULES.campaignDays;
+  let deadline: number | null = game.world.matchConfig?.days ?? RULES.campaignDays;
   let title = 'การแข่งขันแห่งโชคชะตา', detail = game.objective;
   let value = Math.max(0, game.dayCounter - 1), maximum: number | null = deadline;
   if (game.gameMode === 'coop_raid') {
@@ -35,9 +35,9 @@ export function adventureProgress(game: GameState): AdventureProgress {
     maximum = deadline;
     title = game.gameMode === 'blitz' ? 'การแข่งขันสายฟ้าแลบ' : 'ฤดูกาลดราฟต์';
   } else if (game.winGoal === 'gold') {
-    title = 'สะสมเงินให้ถึงเป้าหมาย'; value = player?.gold ?? 0; maximum = RULES.goldGoal;
+    title = 'สะสมเงินให้ถึงเป้าหมาย'; value = player?.gold ?? 0; maximum = game.world.matchConfig?.goldGoal ?? RULES.goldGoal;
   } else if (game.winGoal === 'towns') {
-    title = 'สร้างอาณาจักรของคุณ'; value = player?.townsControlled ?? 0; maximum = RULES.townGoal;
+    title = 'สร้างอาณาจักรของคุณ'; value = player?.townsControlled ?? 0; maximum = game.world.matchConfig?.townGoal ?? RULES.townGoal;
   } else if (game.winGoal === 'boss') {
     title = 'พิชิตผู้พิทักษ์แห่งหุบเหว'; maximum = 1;
     value = game.world.campaignBossId !== null && game.world.defeatedBosses.includes(game.world.campaignBossId) ? 1 : 0;

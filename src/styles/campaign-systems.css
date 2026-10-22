@@ -1,0 +1,38 @@
+.campaign-workshop { margin: auto; width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 20px; color: #ecdcb9; background: #142c34; border: 2px solid #b9a074; overflow-y: auto; }
+.campaign-workshop::backdrop { background: #05151be0; }
+.campaign-workshop header { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: -20px; background: #142c34; padding: 8px 0; z-index: 1; }
+.campaign-workshop h2 { font-size: 22px; color: #efd29a; margin: 3px 0; }
+.campaign-workshop h3 { font-size: 16px; margin: 18px 0 8px; }
+.campaign-workshop header small { font-size: 9px; letter-spacing: 1px; color: #a3c1b6; }
+.campaign-workshop nav { display: flex; gap: 8px; margin: 10px 0; }
+.campaign-workshop .pixel-btn { min-height: 44px; padding: 8px 10px; font-size: 12px; }
+.workshop-content { font-size: 13px; line-height: 1.8; }
+.workshop-content > p { margin: 8px 0; color: #becfc5; }
+.talent-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.talent-grid section { display: flex; flex-direction: column; gap: 8px; }
+.talent-choice { min-height: 108px; display: flex; flex-direction: column; text-align: left; gap: 5px; padding: 12px; background: #1b3940; border: 1px solid #688378; }
+.talent-choice:disabled { opacity: .65; }
+.talent-choice[aria-pressed='true'] { opacity: 1; border-color: #e4c584; background: #345046; }
+.talent-choice strong { color: #f3d7a2; }
+.talent-choice small { font-size: 10px; color: #abc6b8; }
+.chronicle-standings { padding-left: 24px; }
+.chronicle-standings li { padding: 8px; border-bottom: 1px solid #4b6662; }
+.chronicle-standings span, .chronicle-timeline span { display: block; color: #b2c6c0; font-size: 11px; }
+.story-card { padding: 12px; border-left: 2px solid #afc2a0; background: #0d242c; margin: 8px 0; }
+.story-card p { margin: 4px 0; }
+.chronicle-timeline { display: flex; flex-direction: column; gap: 7px; }
+.chronicle-timeline button { text-align: left; }
+#interactiveTutorial { position: fixed; z-index: 31; left: 12px; top: calc(var(--hud-clearance, 100px) + 8px); width: min(310px, calc(100vw - 24px)); display: flex; align-items: start; gap: 8px; padding: 9px 10px; background: #152d33f5; border: 1px solid #bea574; color: #edcf95; font-size: 11px; line-height: 1.6; box-shadow: 0 3px 9px #0005; }
+#interactiveTutorial[hidden] { display: none; }
+#interactiveTutorial p { margin: 3px 0 0; color: #c3d3c9; }
+#interactiveTutorial button { min-width: 32px; min-height: 32px; padding: 2px; }
+body:has(#interactiveTutorial:not([hidden])) #adventureCoach { display: none; }
+.tutorial-target { outline: 2px solid #a4e1bc; outline-offset: 3px; }
+.town-projects { border-top: 1px solid #6c7b69; padding-top: 10px; margin-top: 10px; }
+.town-projects button { display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 8px; font-size: 11px; text-align: left; }
+.match-custom-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; font-size: 12px; }
+.match-custom-rules label { display: flex; flex-direction: column; gap: 4px; }
+.match-custom-rules select { min-height: 40px; padding: 6px; background: #1a353c; color: #efddb5; border: 1px solid #647c70; }
+@media (max-width: 600px) { .talent-grid { grid-template-columns: minmax(0, 1fr); } .talent-grid section { padding-bottom: 10px; border-bottom: 1px solid #546d64; } .talent-choice { min-height: 76px; } .campaign-workshop { padding: 14px; } .campaign-workshop header { top: -14px; } .campaign-workshop h2 { font-size: 19px; } }
+@media (max-height: 500px) { #interactiveTutorial { width: 240px; left: 8px; font-size: 10px; padding: 6px 8px; } }
+@media (max-width: 600px) { #interactiveTutorial { width: calc(100vw - 176px); font-size: 10px; } }

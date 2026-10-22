@@ -8,6 +8,15 @@ import { BattleEngine } from '../.test-build/game/BattleEngine.js';
 import { createPlayerCombatant } from '../.test-build/game/CombatRules.js';
 import { captureBattle, restoreBattle } from '../.test-build/engine/MultiplayerBattle.js';
 
+test('a delayed old battle conclusion cannot finish a restored or newer encounter', () => {
+  const ui = Object.create(BattleUI.prototype), oldWinner = { hp: 50 }, oldLoser = { hp: 0 };
+  let rewards = 0;
+  Object.assign(ui, { isSpectating: false, game: { activeBattle: null }, onBattleEndCallback: () => rewards++ });
+  ui.concludeBattle(oldWinner, oldLoser); assert.equal(rewards, 0);
+  const newer = { attacker: { hp: 100 }, defender: { hp: 100 } }; ui.game.activeBattle = newer;
+  ui.concludeBattle(oldWinner, oldLoser); assert.equal(rewards, 0); assert.equal(ui.game.activeBattle, newer);
+});
+
 test('spectator snapshots preserve HP, roles, equipment and hazards without simulating or mutating board players', () => {
   const game = new GameState();
   game.initGame([{ name: 'Host', classKey: 'warrior', isAI: false }, { name: 'Guest', classKey: 'cleric', isAI: false }]);

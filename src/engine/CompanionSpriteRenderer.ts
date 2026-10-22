@@ -1,4 +1,5 @@
 import { createArtworkImage } from './ArtworkLoading';
+import { canvasBudget } from './PerformanceBudget';
 import {
   COMPANION_SPRITE_SIZE,
   allCompanionKeys,
@@ -12,7 +13,7 @@ import { atlasSprite } from './AtlasSprites';
 /** Native companion/host atlas, loaded before its first visible appearance. */
 export class CompanionSpriteRenderer {
   private images = new Map<string, HTMLImageElement>();
-  private cache = new Map<string, HTMLCanvasElement>();
+  private cache = canvasBudget<string>(6);
   private readyNotified = false;
   private atlas: HTMLImageElement | null = null;
   private atlasReady = false;

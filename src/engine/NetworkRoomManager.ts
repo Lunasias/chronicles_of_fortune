@@ -5,8 +5,19 @@
  * 1. WebRTC DataChannel (via PeerJS) for online internet/cross-device play using 6-character room codes.
  * 2. BroadcastChannel for zero-latency local multi-tab/window testing on the same computer.
  */
+import { validNetworkPacket, TURN_PACKETS } from './NetworkProtocol';
+import { normalizeMatchConfig, type MatchConfig } from '../game/MatchConfig';
+const networkEnv = (import.meta as ImportMeta & { env?: Record<string, string | boolean> }).env;
+function privateSeatTicket(): string {
+  // getRandomValues is available on LAN HTTP as well as secure contexts.
+  return Array.from(crypto.getRandomValues(new Uint8Array(24)), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+const validLobbyClass = (value: unknown): value is string => typeof value === 'string' && ['warrior', 'magician', 'mage', 'cleric', 'thief', 'spellblade', 'ranger'].includes(value);
+const lobbySkin = (value: unknown): number => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 3 ? value : 0;
 
 export type NetworkPacketType =
+  | 'ROOM_ADMITTED'
+  | 'HEARTBEAT'
   | 'ROOM_ERROR'
   | 'BATTLE_PROMPT'
   | 'JOIN_ROOM'
@@ -28,6 +39,10 @@ export type NetworkPacketType =
   | 'LEAVE_ROOM';
 
 export interface NetworkPacket {
+  authToken?: string;
+  turnId?: string;
+  sequence?: number;
+  recipientId?: string;
   packetId: string;
   type: NetworkPacketType;
   roomCode: string;
@@ -50,6 +65,7 @@ export interface ConnectedPeer {
 }
 
 export interface RoomInfo {
+  matchConfig?: MatchConfig;
   code: string;
   isHost: boolean;
   myPeerId: string;
@@ -62,6 +78,9 @@ export interface RoomInfo {
 }
 
 export interface ActiveMPSession {
+  matchConfig?: MatchConfig;
+  rejoinTicket?: string;
+  admissionTickets?: Record<string, string>;
   roomCode: string;
   isHost: boolean;
   clientSessionId: string;
@@ -104,11 +123,50 @@ export class NetworkRoomManager {
   private hostConnection: any = null;
   private seenPacketIds: Set<string> = new Set();
   private packetSeq = 0;
+  private commandSeq = 0;
   private localPlayerIndex: number = 0;
   private reconnectTimer: any = null;
   private transportGeneration = 0;
   private onlineMessage = '';
   private admissionTimer: ReturnType<typeof setTimeout> | null = null;
+  private rejoinTicket = '';
+  private admissionTickets = new Map<string, string>();
+  private receivedSequences = new Map<string, number>();
+  private rateWindows = new Map<string, { since: number; count: number }>();
+  private turnContext: (() => string) | null = null;
+  private commandValidator: ((packet: NetworkPacket) => boolean) | null = null;
+  private lastHostSeen = 0;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private connected = false;
+  private recoveringCheckpoint = false;
+
+  public setTurnContext(provider: () => string) { this.turnContext = provider; }
+  public setCommandValidator(validator: (packet: NetworkPacket) => boolean) { this.commandValidator = validator; }
+  public isConnectionHealthy(): boolean { return !this.currentRoom || this.currentRoom.isHost ? !this.recoveringCheckpoint : this.connected; }
+  public needsCheckpointRecovery(): boolean { return this.recoveringCheckpoint; }
+  public finishCheckpointRecovery() { this.recoveringCheckpoint = false; this.notifyStateChange(); }
+
+  private setConnected(connected: boolean) {
+    if (this.connected === connected) return;
+    this.connected = connected;
+    if (!connected && this.currentRoom?.status === 'playing') this.setOnlineMessage('หยุดรอ Host · เก็บจุดบันทึกล่าสุดไว้แล้ว กำลังเชื่อมต่อใหม่');
+    else this.notifyStateChange();
+  }
+
+  private startHeartbeat() {
+    if (this.heartbeatTimer || typeof window === 'undefined' || !('RTCPeerConnection' in window)) return;
+    this.lastHostSeen = Date.now();
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.currentRoom) return;
+      this.broadcast({ packetId: '', type: 'HEARTBEAT', roomCode: this.currentRoom.code, senderId: this.getMyPeerId(), senderName: '', payload: {}, timestamp: Date.now() });
+      if (!this.currentRoom.isHost && Date.now() - this.lastHostSeen > 8000) { this.setConnected(false); this.scheduleAutoReconnect(); }
+    }, 2000);
+  }
+
+  private sendPrivate(packet: NetworkPacket) {
+    this.channel?.postMessage(packet);
+    this.connections.forEach(conn => { if (conn.open && conn.metadata?.peerId === packet.recipientId) conn.send(packet); });
+  }
 
   public getOnlineMessage(): string { return this.onlineMessage; }
 
@@ -198,6 +256,9 @@ export class NetworkRoomManager {
     const existing = this.getActiveSession();
 
     const session: ActiveMPSession = {
+      rejoinTicket: this.rejoinTicket,
+      matchConfig: this.currentRoom.matchConfig,
+      admissionTickets: this.currentRoom.isHost ? Object.fromEntries(this.admissionTickets) : undefined,
       roomCode: this.currentRoom.code,
       isHost: this.currentRoom.isHost,
       clientSessionId,
@@ -281,6 +342,7 @@ export class NetworkRoomManager {
     };
 
     this.setupBroadcastChannel(channelName);
+    this.connected = true; this.startHeartbeat();
     this.initHostWebRTC(code, hostPlayerName);
     this.saveSessionSnapshot();
     this.notifyStateChange();
@@ -339,6 +401,7 @@ export class NetworkRoomManager {
       senderName: playerName,
       payload: {
         peer: selfPeer,
+        protocolVersion: 2,
         clientSessionId,
         joinedAt: Date.now()
       },
@@ -358,6 +421,7 @@ export class NetworkRoomManager {
     if (!/^CF-\d{4}$/.test(cleanCode)) return false;
 
     this.leaveRoom(true);
+    this.rejoinTicket = session.rejoinTicket || '';
     const channelName = `CHRONICLES_OF_FORTUNE_ROOM_${cleanCode}`;
     const myPeerId = 'guest_' + Math.random().toString(36).substring(2, 8);
     const clientSessionId = session.clientSessionId || getOrCreateClientSessionId();
@@ -396,9 +460,11 @@ export class NetworkRoomManager {
       senderName: session.playerName,
       payload: {
         peer: selfPeer,
+        protocolVersion: 2,
         clientSessionId,
         playerIndex: session.playerIndex,
         previousPeerId: session.myPeerId,
+        rejoinTicket: this.rejoinTicket,
         rejoinedAt: Date.now()
       },
       timestamp: Date.now()
@@ -445,6 +511,8 @@ export class NetworkRoomManager {
    */
   public leaveRoom(preserveSession: boolean = false) {
     this.transportGeneration++;
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
     if (this.admissionTimer) clearTimeout(this.admissionTimer);
     this.admissionTimer = null;
     this.onlineMessage = '';
@@ -511,6 +579,8 @@ export class NetworkRoomManager {
 
     this.currentRoom = null;
     this.seenPacketIds.clear();
+    this.admissionTickets.clear(); this.receivedSequences.clear(); this.rateWindows.clear(); this.rejoinTicket = ''; this.connected = false;
+    this.recoveringCheckpoint = false;
     this.notifyStateChange();
   }
 
@@ -518,6 +588,8 @@ export class NetworkRoomManager {
    * Broadcast a network packet to all connected peers via WebRTC and BroadcastChannel
    */
   public broadcast(packet: NetworkPacket) {
+    if (this.currentRoom && !this.currentRoom.isHost) packet.authToken = this.rejoinTicket;
+    if (TURN_PACKETS.has(packet.type) && this.turnContext) { packet.turnId ||= this.turnContext(); packet.sequence = ++this.commandSeq; }
     if (!packet.packetId) {
       packet.packetId = this.nextPacketId();
     }
@@ -590,6 +662,8 @@ export class NetworkRoomManager {
   }
 
   private setupBroadcastChannel(channelName: string) {
+    // The test build uses real WebRTC only; local tabs must not mask a broken channel.
+    if (networkEnv?.VITE_MULTIPLAYER_TRANSPORT === 'webrtc') return;
     if (typeof BroadcastChannel === 'undefined') return;
 
     try {
@@ -622,6 +696,7 @@ export class NetworkRoomManager {
 
       const peerId = `cof-host-${roomCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
       this.peer = new PeerClass(peerId, {
+        ...this.peerServerOptions(),
         debug: 1,
         config: {
           iceServers: [
@@ -639,18 +714,22 @@ export class NetworkRoomManager {
 
       this.peer.on('connection', (conn: any) => {
         console.log('[NetworkRoomManager] Incoming peer connection from:', conn.peer);
-        if (generation !== this.transportGeneration || !this.currentRoom?.isHost) { conn.close(); return; }
+        if (generation !== this.transportGeneration || !this.currentRoom?.isHost || this.connections.size >= 8) { conn.close(); return; }
         this.connections.set(conn.peer, conn);
 
         conn.on('data', (data: any) => {
           if (generation !== this.transportGeneration || data?.senderId !== conn.metadata?.peerId) return;
+          const existed = this.currentRoom?.connectedPeers.some(p => p.id === data.senderId);
           this.processIncomingPacket(data as NetworkPacket, 'webrtc');
+          const member = this.currentRoom?.connectedPeers.find(p => p.id === data.senderId && !p.isHost);
+          const ticket = member && this.admissionTickets.get(member.clientSessionId || member.id);
+          if (member && ((!existed && data.type === 'JOIN_ROOM') || ticket && (data.payload?.rejoinTicket === ticket || data.authToken === ticket))) conn.authenticatedSeat = member.id;
         });
 
         conn.on('close', () => {
           if (this.connections.get(conn.peer) !== conn) return;
           this.connections.delete(conn.peer);
-          if (this.currentRoom) {
+          if (this.currentRoom && conn.authenticatedSeat) {
             const peerObj = this.currentRoom.connectedPeers.find(p => p.id === conn.metadata?.peerId);
             if (peerObj) {
               if (this.currentRoom.status === 'playing') {
@@ -704,6 +783,7 @@ export class NetworkRoomManager {
       this.hostConnection = null;
       previousPeer?.destroy();
       this.peer = new PeerClass(`cof-guest-${Math.random().toString(36).substring(2, 9)}`, {
+        ...this.peerServerOptions(),
         debug: 1,
         config: {
           iceServers: [
@@ -741,8 +821,10 @@ export class NetworkRoomManager {
             senderName: selfPeer.name,
             payload: {
               peer: selfPeer,
+              protocolVersion: 2,
               clientSessionId: selfPeer.clientSessionId,
               previousPeerId,
+              rejoinTicket: this.rejoinTicket,
               playerIndex: selfPeer.playerIndex,
               joinedAt: Date.now()
             },
@@ -761,6 +843,7 @@ export class NetworkRoomManager {
           if (this.hostConnection !== conn) return;
           console.log('[NetworkRoomManager] WebRTC connection to host closed');
           this.hostConnection = null;
+          this.setConnected(false);
           this.setOnlineMessage('การเชื่อมต่อ Host หลุด กำลังเชื่อมต่อใหม่...');
           this.scheduleAutoReconnect();
         });
@@ -830,14 +913,15 @@ export class NetworkRoomManager {
     }
   }
 
-  public updateLobbySettings(settings: { partySize?: number; gameMode?: string }): boolean {
+  public updateLobbySettings(settings: { partySize?: number; gameMode?: string; matchConfig?: Partial<MatchConfig> }): boolean {
     const room = this.currentRoom;
     if (!room?.isHost || room.status !== 'lobby') return false;
     if (settings.partySize !== undefined) {
       if (![2, 3, 4].includes(settings.partySize) || settings.partySize < room.connectedPeers.length) return false;
       room.partySize = settings.partySize;
     }
-    if (settings.gameMode && ['standard', 'blitz', 'coop_raid', 'roguelike_draft'].includes(settings.gameMode)) room.gameMode = settings.gameMode;
+    if (settings.gameMode && ['standard', 'blitz', 'coop_raid', 'roguelike_draft', 'endless_spire'].includes(settings.gameMode)) { room.gameMode = settings.gameMode; room.matchConfig = undefined; }
+    if (settings.matchConfig) room.matchConfig = normalizeMatchConfig(settings.matchConfig);
     this.publishRoster(); this.saveSessionSnapshot(); this.notifyStateChange();
     return true;
   }
@@ -846,6 +930,9 @@ export class NetworkRoomManager {
     if (!this.currentRoom?.isHost || !session.connectedPeers) return;
     this.currentRoom.connectedPeers = session.connectedPeers.map(p => ({ ...p, isDisconnected: !p.isHost }));
     this.currentRoom.partySize = session.partySize || session.connectedPeers.length;
+    this.currentRoom.matchConfig = session.matchConfig;
+    this.admissionTickets = new Map(Object.entries(session.admissionTickets || {}));
+    this.recoveringCheckpoint = session.status === 'playing' && session.connectedPeers.some(p => !p.isHost);
     this.saveSessionSnapshot();
   }
 
@@ -854,18 +941,30 @@ export class NetworkRoomManager {
     if (!room?.isHost) return;
     this.broadcast({ packetId: this.nextPacketId(), type: reconnectedPeer ? 'PEER_RECONNECTED' : 'PEER_CONNECTED', roomCode: room.code,
       senderId: 'host', senderName: room.connectedPeers[0]?.name || 'Host',
-      payload: { peer: reconnectedPeer, peers: room.connectedPeers, partySize: room.partySize, gameMode: room.gameMode, aiDifficulty: room.aiDifficulty }, timestamp: Date.now() });
+      payload: { peer: reconnectedPeer, peers: room.connectedPeers, partySize: room.partySize, gameMode: room.gameMode, aiDifficulty: room.aiDifficulty, matchConfig: room.matchConfig }, timestamp: Date.now() });
   }
 
   private processIncomingPacket(packet: NetworkPacket, source: 'webrtc' | 'broadcast') {
     const room = this.currentRoom;
-    if (!room || !packet || packet.roomCode !== room.code || typeof packet.packetId !== 'string' || !packet.packetId || typeof packet.senderId !== 'string') return;
+    if (!room || !validNetworkPacket(packet) || packet.roomCode !== room.code || packet.recipientId && packet.recipientId !== room.myPeerId) return;
     if (packet.senderId === room.myPeerId || this.markPacketSeen(packet.packetId)) return;
-    if (['START_GAME', 'PEER_CONNECTED', 'PEER_RECONNECTED', 'REJOIN_ACK', 'ROOM_ERROR'].includes(packet.type) && packet.senderId !== 'host') return;
+    if (['START_GAME', 'PEER_CONNECTED', 'PEER_RECONNECTED', 'REJOIN_ACK', 'ROOM_ERROR', 'ROOM_ADMITTED'].includes(packet.type) && packet.senderId !== 'host') return;
+    const rate = this.rateWindows.get(packet.senderId);
+    if (this.rateWindows.size >= 16 && !rate) {
+      for (const [id, window] of this.rateWindows) if (Date.now() - window.since > 60000) this.rateWindows.delete(id);
+      if (this.rateWindows.size >= 16) return;
+    }
+    if (!rate || Date.now() - rate.since > 1000) this.rateWindows.set(packet.senderId, { since: Date.now(), count: 1 });
+    else if (++rate.count > 120) return;
     if (room.isHost) {
       if (packet.type === 'JOIN_ROOM' || packet.type === 'REJOIN_ROOM') {
         const sessionId = packet.payload?.clientSessionId;
         let member = room.connectedPeers.find(p => !p.isHost && (p.id === packet.senderId || (sessionId && p.clientSessionId === sessionId)));
+        const expectedTicket = member && this.admissionTickets.get(member.clientSessionId || member.id);
+        if (member && (!expectedTicket || expectedTicket !== packet.payload?.rejoinTicket)) return;
+        if (!member && packet.payload?.protocolVersion !== 2) {
+          this.broadcast({ packetId: this.nextPacketId(), type: 'ROOM_ERROR', roomCode: room.code, senderId: 'host', senderName: 'Host', payload: { peerId: packet.senderId, message: 'โปรดรีโหลดเกมให้เป็นเวอร์ชันเดียวกับ Host ก่อนเข้าห้อง' }, timestamp: Date.now() }); return;
+        }
         if (!member && (room.status === 'playing' || room.connectedPeers.length >= (room.partySize || 3))) {
           this.broadcast({ packetId: this.nextPacketId(), type: 'ROOM_ERROR', roomCode: room.code, senderId: 'host', senderName: 'Host',
             payload: { peerId: packet.senderId, message: room.status === 'playing' ? 'เกมเริ่มแล้ว ไม่พบที่นั่งเดิมของคุณ' : 'ห้องเต็มแล้ว' }, timestamp: Date.now() });
@@ -873,20 +972,27 @@ export class NetworkRoomManager {
         }
         if (!member) {
           member = { id: packet.senderId, clientSessionId: sessionId, name: String(packet.senderName || 'Guest').slice(0, 24),
-            classKey: packet.payload?.peer?.classKey || 'warrior', skinVariant: packet.payload?.peer?.skinVariant || 0,
+            classKey: validLobbyClass(packet.payload?.peer?.classKey) ? packet.payload.peer.classKey : 'warrior', skinVariant: lobbySkin(packet.payload?.peer?.skinVariant),
             isHost: false, playerIndex: room.connectedPeers.length };
           room.connectedPeers.push(member);
         }
         member.id = packet.senderId; member.isDisconnected = false;
+        const identity = member.clientSessionId || member.id;
+        if (!this.admissionTickets.has(identity)) this.admissionTickets.set(identity, privateSeatTicket());
+        this.sendPrivate({ packetId: this.nextPacketId(), type: 'ROOM_ADMITTED', senderId: 'host', senderName: 'Host', roomCode: room.code, recipientId: packet.senderId, payload: { rejoinTicket: this.admissionTickets.get(identity) }, timestamp: Date.now() });
         this.publishRoster(packet.type === 'REJOIN_ROOM' ? member : undefined); this.saveSessionSnapshot(); this.notifyStateChange();
       } else {
         const member = room.connectedPeers.find(p => p.id === packet.senderId && !p.isHost);
         if (!member) return;
+        if (packet.authToken !== this.admissionTickets.get(member.clientSessionId || member.id)) return;
+        packet = { ...packet, senderName: member.name };
+        if (!this.acceptCommand(packet)) return;
+        if (packet.type === 'CHAT_MSG' && (typeof packet.payload.text !== 'string' || packet.payload.text.length > 500)) return;
         if (packet.type === 'PLAYER_UPDATE') {
           if (room.status !== 'lobby') return;
           member.name = String(packet.payload?.name || member.name).slice(0, 24);
-          member.classKey = packet.payload?.classKey || member.classKey;
-          member.skinVariant = packet.payload?.skinVariant ?? member.skinVariant;
+          if (validLobbyClass(packet.payload?.classKey)) member.classKey = packet.payload.classKey;
+          member.skinVariant = lobbySkin(packet.payload?.skinVariant);
           this.publishRoster(); this.notifyStateChange();
         } else if (packet.type === 'LEAVE_ROOM') {
           if (room.status === 'playing') member.isDisconnected = true;
@@ -897,12 +1003,20 @@ export class NetworkRoomManager {
           this.publishRoster(); this.saveSessionSnapshot(); this.notifyStateChange();
         } else {
           // Bridge both transports; all clients deduplicate the original packet ID.
+          packet = { ...packet }; delete packet.authToken;
           if (source === 'webrtc') this.channel?.postMessage(packet);
           this.connections.forEach(conn => { if (conn.open) { try { conn.send(packet); } catch {} } });
         }
       }
     } else {
       if (['JOIN_ROOM', 'REJOIN_ROOM'].includes(packet.type)) return;
+      if (packet.senderId === 'host') { this.lastHostSeen = Date.now(); this.setConnected(true); }
+      if (packet.type === 'ROOM_ADMITTED') {
+        if (typeof packet.payload.rejoinTicket !== 'string') return;
+        this.rejoinTicket = packet.payload.rejoinTicket; this.saveSessionSnapshot(); this.startHeartbeat(); return;
+      }
+      if (packet.type === 'LEAVE_ROOM' && packet.senderId === 'host') { this.setConnected(false); this.scheduleAutoReconnect(); }
+      if (!this.acceptCommand(packet)) return;
       if (packet.type === 'PEER_CONNECTED' || packet.type === 'PEER_RECONNECTED') {
         if (packet.senderId !== 'host' || !Array.isArray(packet.payload?.peers)) return;
         if (this.admissionTimer) clearTimeout(this.admissionTimer);
@@ -911,6 +1025,7 @@ export class NetworkRoomManager {
         room.connectedPeers = packet.payload.peers;
         room.partySize = packet.payload.partySize ?? room.partySize;
         room.gameMode = packet.payload.gameMode ?? room.gameMode;
+        room.matchConfig = packet.payload.matchConfig;
         room.aiDifficulty = packet.payload.aiDifficulty ?? room.aiDifficulty;
         const me = room.connectedPeers.find(p => p.id === room.myPeerId);
         if (me && typeof me.playerIndex === 'number') this.localPlayerIndex = me.playerIndex;
@@ -919,9 +1034,23 @@ export class NetworkRoomManager {
         if (!packet.payload?.saveData || room.status === 'playing') return;
       }
     }
+    if (packet.type === 'REJOIN_ACK') this.receivedSequences.delete('host');
     this.onPacketListeners.forEach(listener => {
       try { listener(packet); } catch (err) { console.error('[NetworkRoomManager] Listener dispatch error:', err); }
     });
+  }
+
+  private acceptCommand(packet: NetworkPacket): boolean {
+    if (!TURN_PACKETS.has(packet.type) || !this.turnContext) return true;
+    if (packet.turnId !== this.turnContext() || !Number.isSafeInteger(packet.sequence) || packet.sequence! <= (this.receivedSequences.get(packet.senderId) || 0) || this.commandValidator && !this.commandValidator(packet)) return false;
+    this.receivedSequences.set(packet.senderId, packet.sequence!);
+    return true;
+  }
+
+  private peerServerOptions(): Record<string, unknown> {
+    // Custom signaling is restricted to local development/CI. Production keeps the public broker.
+    if (networkEnv?.DEV && networkEnv.VITE_PEER_HOST === '127.0.0.1') return { host: '127.0.0.1', port: Number(networkEnv.VITE_PEER_PORT) || 9000, path: '/', secure: false };
+    return {};
   }
 
   private notifyStateChange() {

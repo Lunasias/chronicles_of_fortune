@@ -1,4 +1,6 @@
 import { WorldState, bindWorld } from './WorldState';
+import { recordMatchMoment } from './CampaignStories';
+import { learnTalent, talentPoints } from './TalentTree';
 import { movementRoutes, isLegalMovementPath } from './Movement';
 import { evaluateMatch, matchObjective } from './MatchRules';
 import { worldCalamitySystem } from './WorldCalamitySystem';
@@ -327,6 +329,11 @@ export class GameState {
     this.phase = 'BOARD_TURN';
 
     const audioNode = this.allNodes.find(node => node.id === p.nodeId);
+    if (p.talents.includes('meditation')) p.mp = Math.min(p.maxMp, p.mp + 3);
+    if (p.isAI && talentPoints(p) > 0) {
+      const branch = p.getTotalStat('mag') > p.getTotalStat('atk') ? ['arcane', 'meditation', 'warden', 'bastion'] : p.aiPersonality === 'economist' ? ['warden', 'steward', 'blade', 'vampiric'] : ['blade', 'vampiric', 'warden', 'bastion'];
+      for (const id of branch) learnTalent(p, id);
+    }
     if (p.isDarkling) audio.playBgm('darkling');
     else audio.playBiomeBgm(audioNode?.biome || 'forest');
 
@@ -354,7 +361,7 @@ export class GameState {
     // MAG Stat Bonus: High MAG grants MP cost discount for field spells!
     const playerMag = caster.getTotalStat('mag');
     const mpDiscount = Math.floor(playerMag / 8);
-    const actualMpCost = Math.max(5, spell.mpCost - mpDiscount);
+    const actualMpCost = Math.max(5, spell.mpCost - mpDiscount - (caster.talents.includes('focus') ? 2 : 0));
 
     if (caster.mp < actualMpCost) {
       return { success: false, message: `Not enough MP! Requires ${actualMpCost} MP (ลดลงจาก ${spell.mpCost} MP ด้วยพลังเวท MAG ${playerMag}).` };
@@ -741,6 +748,9 @@ export class GameState {
 
     // Process active player end-of-turn effects
     const prevP = this.activePlayer;
+    recordMatchMoment(this);
+    const training = this.world.tutorial[prevP.id];
+    if (training?.enabled && training.turns < 3) { training.turns++; if (training.turns >= 3) training.enabled = false; }
     prevP.hasFlexibleMovement = false;
     const tickRes = prevP.tickTurn();
     if (prevP.foodBuff && --prevP.foodBuff.turnsRemaining <= 0) prevP.foodBuff = null;

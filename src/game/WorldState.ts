@@ -2,6 +2,9 @@ import type { BoardNode, RealmId } from './BoardMap';
 import type { CalamityEvent } from './WorldCalamitySystem';
 import type { GameModeType, RoguelikeModifier } from './GameState';
 import type { RoyalContractLedger } from './RoyalContracts';
+import type { MatchConfig } from './MatchConfig';
+import type { StoryLedger, MatchMoment } from './CampaignStories';
+import type { TutorialState } from './Tutorial';
 
 export type WorldWeather = 'sunny' | 'rain' | 'snow' | 'heatwave' | 'miasma' | 'blood_moon' | 'sandstorm';
 export type WorldTime = 'DAWN' | 'DAY' | 'DUSK' | 'NIGHT';
@@ -43,6 +46,10 @@ export class WorldState {
   campaignBossId: number | null = null;
   claimedTreasures: number[] = [];
   royalContracts: Record<number, RoyalContractLedger> = {};
+  matchConfig?: MatchConfig;
+  storylines: Record<number, Record<string, StoryLedger>> = {};
+  matchHistory: MatchMoment[] = [];
+  tutorial: Record<number, TutorialState> = {};
   calamity: CalamityEvent | null = null;
   calamityHistory: string[] = [];
   result: MatchResult | null = null;

@@ -22,11 +22,18 @@
     "gen:props": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_prop_sprites.cjs",
     "gen:sky": "tsc -p tsconfig.test.json && node scripts/prepare-test-build.cjs && node scripts/generate_sky_sprites.cjs",
     "gen:art": "npm run gen:buildings && npm run gen:foliage && npm run gen:terrain && npm run gen:props && npm run gen:sky",
-    "verify": "npm run typecheck && npm run build && npm test && npm run check:css"
+    "verify": "npm run typecheck && npm run build && npm test && npm run check:css",
+    "test:e2e": "npm run build && playwright test",
+    "test:balance": "npm run pretest && node scripts/simulate-balance.mjs",
+    "optimize:assets": "node scripts/optimize-runtime-assets.cjs",
+    "package:regions": "node scripts/package-regional-delivery.cjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "autoprefixer": "^10.6.1",
+    "peer": "^1.0.2",
     "postcss": "^8.5.28",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"

@@ -1,0 +1,81 @@
+{
+  "model": "production rules with instant road movement, simplified shop/event policy; no PvP, dungeons or Darkling",
+  "seeds": 100,
+  "modes": {
+    "quick8": {
+      "matches": 50,
+      "finished": 50,
+      "turns": 800,
+      "avgFinalWorth": 1133,
+      "avgLevel": 2.58,
+      "avgTurns": 16
+    },
+    "standard42": {
+      "matches": 50,
+      "finished": 50,
+      "turns": 4200,
+      "avgFinalWorth": 4512,
+      "avgLevel": 4.5,
+      "avgTurns": 84
+    }
+  },
+  "classResults": {
+    "warrior": {
+      "played": 40,
+      "wins": 23,
+      "deaths": 20,
+      "kills": 227,
+      "totalWorth": 131184,
+      "levels": 148,
+      "winRate": 0.575,
+      "avgWorth": 3280,
+      "avgLevel": 3.7
+    },
+    "magician": {
+      "played": 40,
+      "wins": 24,
+      "deaths": 15,
+      "kills": 241,
+      "totalWorth": 129321,
+      "levels": 152,
+      "winRate": 0.6,
+      "avgWorth": 3233,
+      "avgLevel": 3.8
+    },
+    "thief": {
+      "played": 40,
+      "wins": 13,
+      "deaths": 12,
+      "kills": 185,
+      "totalWorth": 79199,
+      "levels": 130,
+      "winRate": 0.325,
+      "avgWorth": 1980,
+      "avgLevel": 3.25
+    },
+    "cleric": {
+      "played": 40,
+      "wins": 17,
+      "deaths": 29,
+      "kills": 205,
+      "totalWorth": 109532,
+      "levels": 137,
+      "winRate": 0.425,
+      "avgWorth": 2738,
+      "avgLevel": 3.42
+    },
+    "spellblade": {
+      "played": 40,
+      "wins": 23,
+      "deaths": 22,
+      "kills": 221,
+      "totalWorth": 115231,
+      "levels": 141,
+      "winRate": 0.575,
+      "avgWorth": 2881,
+      "avgLevel": 3.52
+    }
+  },
+  "stalledBattles": 0,
+  "invalidStates": 0
+}

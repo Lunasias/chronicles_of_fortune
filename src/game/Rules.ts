@@ -34,9 +34,10 @@ export function monsterRewards(tier: number, world: WorldState, node: BoardNode,
   const xpDecreeMult = isBloodMoonDecree && (!node || node.type === 'red') ? 2.5 : (decreeId === 'ROYAL_FESTIVAL_HUNT' ? 2.0 : 1);
   const goldDecreeMult = decreeId === 'ROYAL_FESTIVAL_HUNT' ? 2.0 : 1;
   const midasMult = player?.relics?.includes('midas_touch') ? 1.3 : 1;
+  const pace = world.matchConfig?.rewardRate ?? 1;
   return {
-    gold: Math.round(base * weather * (boss ? 1.6 : 1) * goldDecreeMult * midasMult),
-    xp: Math.round(base * weather * (boss ? 2 : 1.2) * xpDecreeMult)
+    gold: Math.round(base * weather * (boss ? 1.6 : 1) * goldDecreeMult * midasMult * pace),
+    xp: Math.round(base * weather * (boss ? 2 : 1.2) * xpDecreeMult * pace)
   };
 }
 export const monsterReward = monsterRewards;

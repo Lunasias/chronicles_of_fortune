@@ -3,6 +3,7 @@ import { JOB_VISUALS } from './JobVisuals';
 import type { CharacterAnimState } from './PixelSpriteGenerator';
 import { allCompanionKeys } from '../game/CompanionDatabase';
 import { isolateAtlasCell } from './AtlasSprites';
+import { canvasBudget } from './PerformanceBudget';
 
 /** Delivered sheets can have slightly uneven gutters. Cut through transparency,
  * rather than assuming that every requested cell size was returned verbatim. */
@@ -48,7 +49,7 @@ export function ambientFrame(time: number, seed: number, reduced: boolean): numb
 /** Versioned generated artwork. Cell extraction never recolours or resynthesizes it. */
 export class PresentationArt {
   private sources = new Map<PresentationSheet, { image: HTMLImageElement; ready: boolean; promise: Promise<boolean>; rows: number[]; columns: number[]; unit: number }>();
-  private frames = new Map<string, HTMLCanvasElement>();
+  private frames = canvasBudget<string>(8);
 
   preload(sheet: PresentationSheet): Promise<boolean> {
     const found = this.sources.get(sheet);

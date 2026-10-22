@@ -7,6 +7,17 @@ import { royalDecreeSystem } from './RoyalDecreeSystem';
 import { worldCalamitySystem } from './WorldCalamitySystem';
 
 export class TownManager {
+  projectCost(project: 'market' | 'sanctuary' | 'watchtower'): number {
+    return Math.round(({ market: 220, sanctuary: 180, watchtower: 260 }[project]) * ((getWorld().matchConfig?.days ?? 42) <= 12 ? .6 : 1));
+  }
+  developTown(node: BoardNode, player: Player, project: 'market' | 'sanctuary' | 'watchtower'): boolean {
+    if (!['market', 'sanctuary', 'watchtower'].includes(project) || !node.townData || node.townData.ownerId !== player.id || node.townData.isOccupiedByMonster || node.townData.level < 2 || node.townData.project || player.gold < this.projectCost(project)) return false;
+    const cost = this.projectCost(project);
+    player.gold -= cost; node.townData.project = project; node.townData.baseValue += Math.round(cost * .6); return true;
+  }
+  takeoverCost(node: BoardNode, owner: Player, nodes?: BoardNode[]): number {
+    return Math.round((node.townData?.baseValue || 200) * (nodes && this.isTownInTradeRoute(node, owner, nodes) ? 3 : 2) * (node.townData?.project === 'watchtower' ? 1.3 : 1));
+  }
   // Liberate town after defeating the monster
   liberateTown(townNode: BoardNode, player: Player, players: Player[] = [player]): { goldReward: number; xpReward: number; bountyReward: number } {
     if (!townNode.townData) return { goldReward: 0, xpReward: 0, bountyReward: 0 };
@@ -149,8 +160,7 @@ export class TownManager {
       return { success: false, cost: 0, message: 'เมืองนี้ไม่ได้อยู่ในการครอบครองของคู่แข่ง!' };
     }
     const isTradeRoute = allNodes ? this.isTownInTradeRoute(townNode, currentOwner, allNodes) : false;
-    const multiplier = isTradeRoute ? 3 : 2;
-    const cost = (townNode.townData.baseValue || 200) * multiplier;
+    const cost = this.takeoverCost(townNode, currentOwner, allNodes);
     if (buyer.gold < cost) {
       return { success: false, cost, message: `ต้องการทอง ${cost}G เพื่อทำการฮุบกรรมสิทธิ์เมือง!${isTradeRoute ? ' (เมืองนี้อยู่ในเส้นทางการค้า ต้องใช้เงิน 3 เท่า)' : ''}` };
     }
@@ -178,6 +188,7 @@ export class TownManager {
         let tax = Math.floor(Math.min(55, node.townData.taxYield * 0.5) * decreeMult * tierMult);
         if (node.townData.specialization === 'trade_port') tax = Math.floor(tax * 1.5);
         if (node.townData.specialization === 'mining') tax += 25;
+        if (node.townData.project === 'market') tax += 15;
         if (activeTradeRoutes.includes(node.realmId)) {
           tax = Math.floor(tax * 1.30); // 30% Trade Route bonus!
         }
@@ -191,6 +202,10 @@ export class TownManager {
       totalTax += interest;
     }
 
+    if (player.talents.includes('steward')) totalTax += Math.min(30, Math.floor(totalTax * .15));
+    const sanctuaries = allNodes.filter(node => node.townData?.ownerId === player.id && !node.townData.isOccupiedByMonster && node.townData.project === 'sanctuary').length;
+    player.hp = Math.min(player.maxHp, player.hp + Math.min(12, sanctuaries * 3));
+    player.mp = Math.min(player.maxMp, player.mp + Math.min(8, sanctuaries * 2));
     if (totalTax > 0) {
       player.gold += totalTax;
       player.matchStats.goldEarnedTotal += totalTax;

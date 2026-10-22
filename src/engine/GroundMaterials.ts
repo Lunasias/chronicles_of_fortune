@@ -46,7 +46,7 @@ export class GroundMaterials {
     if (!this.image) {
       this.image = createArtworkImage();
       this.image.onload = () => { this.ready = true; this.onReady(); window.dispatchEvent(new CustomEvent('world-art-loaded')); };
-      this.image.src = '/assets/art-v2/world-rebuild-v1/ground-materials.png';
+      this.image.src = '/assets/runtime-v3/ground-materials.webp';
     }
     if (!this.ready) return;
     const key = MATERIAL_ORDER.includes(biome) ? biome : 'grass';

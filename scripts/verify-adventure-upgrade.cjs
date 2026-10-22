@@ -80,7 +80,7 @@ async function openSettings(page) {
   check('Autosaving after import preserves the manual slot', await page.evaluate(() => localStorage.getItem('chronicles_of_fortune_savegame')) === manual);
   await openSettings(page); await page.locator('#selectSaveSlot').selectOption('2'); await shot(page, 'save-settings-desktop'); await page.locator('#btnCloseSettings').click();
   await page.reload({ waitUntil: 'domcontentloaded' }); await ready(page);
-  const latest = await page.evaluate(async () => { const { SaveManager } = await import('/src/game/SaveManager.ts'); return SaveManager.getSlotMetas().filter(entry => entry.meta?.saveVersion === 2).sort((a, b) => b.meta.savedAt - a.meta.savedAt)[0]?.slot; });
+  const latest = await page.evaluate(async () => { const { SaveManager } = await import('/src/game/SaveManager.ts'); const { CURRENT_SAVE_VERSION } = await import('/src/game/SaveMigration.ts'); return SaveManager.getSlotMetas().filter(entry => entry.meta?.saveVersion === CURRENT_SAVE_VERSION).sort((a, b) => b.meta.savedAt - a.meta.savedAt)[0]?.slot; });
   check('Continue selects the newest compatible save', Number(await page.locator('#btnTitleLoadGame').getAttribute('data-save-slot')) === latest, { latest });
   await page.locator('#btnTitleLoadGame').click(); await page.waitForFunction(() => document.querySelector('#titleScreen').classList.contains('hidden')); await ready(page);
   check('Continue returns to the saved campaign', await page.locator('#hudHeroCard').innerText().then(text => text.includes('ผู้กล้า')));

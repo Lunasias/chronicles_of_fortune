@@ -1,0 +1,140 @@
+{
+  "method": "pre-extracted original runtime sprites, lossless WebP",
+  "files": [
+    {
+      "theme": "grass",
+      "original": 3136481,
+      "delivery": 541476,
+      "sha256": "93b7eb8b60fe128d57ba85d065d859d0a7cde14038f6661f6190f8cf31ca39c1",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "forest",
+      "original": 3204913,
+      "delivery": 556598,
+      "sha256": "44e92fe2034739b948d3ed93e2640baf17250d33ef58593e914c1f6a1f62f593",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "waterfall_forest",
+      "original": 3256550,
+      "delivery": 586142,
+      "sha256": "86ae40c3e99835a97b05878d8a9d622e31d1c5fd550eb731558b086ad8b52f73",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "snow",
+      "original": 3194285,
+      "delivery": 543342,
+      "sha256": "d8681281b35ba8c74f46ae87238767dfef242716a6fae0076acb3a9faf28c11b",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "desert",
+      "original": 3047381,
+      "delivery": 514592,
+      "sha256": "705849b82c66ae5abb49aed397478a2150e475290b180c0a5a8e8b943de81d85",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "volcano",
+      "original": 2984697,
+      "delivery": 504480,
+      "sha256": "636ddc4a27ce534fe2a577eb95b7b13a307aae6f4a7d5806cbfdc1d763ff953b",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "cavern",
+      "original": 3065884,
+      "delivery": 538274,
+      "sha256": "f606d18d14a3756f16be658ebe562572875eb2c4097f72bb657d91af1081b486",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "coral",
+      "original": 3192311,
+      "delivery": 580972,
+      "sha256": "39b1e49178a62a4fd6e2c1796c4e65db63211ccacc75b95f0df9628781f0d6d5",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "abyss",
+      "original": 3010530,
+      "delivery": 489184,
+      "sha256": "bb3f6c263d898fb7fa67532f7c96773f42e7cde0a2ddb2827bf615e7021e4de8",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "castle",
+      "original": 3214177,
+      "delivery": 553100,
+      "sha256": "09260b749e9069aedb2cc211789766b0818642f52ad40812705e775007cac04c",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "fairy_grove",
+      "original": 3119724,
+      "delivery": 562242,
+      "sha256": "2fdcb734321435491f2c6f6b4b2d3351adb347aa18a6aae835ad416d1f6a5d4a",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "crystal_cavern",
+      "original": 3132406,
+      "delivery": 565042,
+      "sha256": "3d87d3ad8b40d33bc9fe31b066bf6e73b4f2abe6e320ca6f3649d505b353585e",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "celestial",
+      "original": 3263096,
+      "delivery": 574148,
+      "sha256": "e8eca9cae5cd13bd1aaa7eb188aacd8808281c032f786f6deb97ba208bd5830a",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "steampunk",
+      "original": 3103502,
+      "delivery": 532300,
+      "sha256": "bca561b0ebe1a19b918d9365325a4ae407ee0ffbc4b17c3fd709725466f45da9",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "sakura_shrine",
+      "original": 3344946,
+      "delivery": 604704,
+      "sha256": "a747d04585c3a74e9837b8a280b1a43aaf7b02a54e46630d2a6862e554c1b8ab",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "dungeon_catacombs",
+      "original": 3136120,
+      "delivery": 509380,
+      "sha256": "e7467fe1deef84741d601ec0a39ff8604d9c902b5fd6812e0fa080e736f6c174",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "dungeon_volcano",
+      "original": 2898730,
+      "delivery": 479982,
+      "sha256": "b50a1910b763e47545d8b6bd3a523a381d315dbfa453dfe8ef792e4b4d7c90c3",
+      "runtimePixelsIdentical": true
+    },
+    {
+      "theme": "dungeon_ice",
+      "original": 3076955,
+      "delivery": 520348,
+      "sha256": "1e0e1f4262fb49f4955d9e554d47f8938ca6a05acb17cdf6135527785d386d77",
+      "runtimePixelsIdentical": true
+    }
+  ],
+  "originalBytes": 60372993,
+  "deliveryBytes": 10138584,
+  "ground": {
+    "original": 3990305,
+    "delivery": 382278,
+    "sha256": "83b730cdb56665cba05c336f66002ea00d4507b9bd526b630ef04d95a958fe53",
+    "runtimePixelsIdentical": true
+  },
+  "reductionPercent": 83.2
+}

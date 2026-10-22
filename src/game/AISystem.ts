@@ -1,6 +1,6 @@
 import { Player } from './Player';
 import { BoardNode } from './BoardMap';
-import { AttackerAction, DefenderAction } from './BattleEngine';
+import { BattleEngine, AttackerAction, DefenderAction } from './BattleEngine';
 import { EquipmentItem } from '../engine/PixelSpriteGenerator';
 import { getWorld } from './WorldState';
 import { getNodeEncounterPreview } from './MonsterDatabase';
@@ -77,6 +77,7 @@ export class AISystem {
     if (candidateNodeIds.length === 1) return candidateNodeIds[0];
 
     const world = getWorld();
+    const magicExhausted = aiPlayer.getTotalStat('mag') > aiPlayer.getTotalStat('atk') * 1.4 && aiPlayer.mp < 10;
     const memory = world.memory(aiPlayer.id);
     const distanceFrom = (start: number): Map<number, number> => {
       const byId = new Map(allNodes.map(n => [n.id, n]));
@@ -88,12 +89,12 @@ export class AISystem {
     };
     const distances = distanceFrom(aiPlayer.nodeId);
     let goal = allNodes.find(n => n.id === memory.flags.goalNodeId && n.id !== aiPlayer.nodeId);
-    if (!goal || aiPlayer.hp < aiPlayer.maxHp * 0.4 || (memory.flags.goalUntil ?? 0) < world.day) {
+    if (!goal || aiPlayer.hp < aiPlayer.maxHp * 0.4 || magicExhausted || (memory.flags.goalUntil ?? 0) < world.day) {
       const quest = aiPlayer.activeGuildQuest;
       const candidates = allNodes.filter(n => {
         const run = world.expeditions[aiPlayer.id];
         if (run) return run.guardians.includes(run.depth) || aiPlayer.hp < aiPlayer.maxHp * 0.4 ? isDungeonExit(n.id) : n.type === 'boss';
-        if (aiPlayer.hp < aiPlayer.maxHp * 0.4) return n.type === 'church' || n.type === 'tavern' || n.homeData?.ownerId === aiPlayer.id;
+        if (aiPlayer.hp < aiPlayer.maxHp * 0.4 || magicExhausted) return n.type === 'church' || n.type === 'tavern' || n.homeData?.ownerId === aiPlayer.id;
         if (quest?.targetNodeId !== undefined) return n.id === quest.targetNodeId;
         if (quest?.targetRealm && quest.targetRealm !== n.realmId) return false;
         if (quest?.targetType === 'boss') return n.type === 'boss' && !world.defeatedBosses.includes(n.id);
@@ -127,6 +128,7 @@ export class AISystem {
       if (!node) return;
 
       let score = 0;
+      if (magicExhausted && (node.type === 'church' || node.type === 'tavern' || node.homeData?.ownerId === aiPlayer.id)) score += 160;
       if (goal) score += Math.max(-150, 150 - (distanceToGoal.get(id) ?? 100) * 10);
       const preview = getNodeEncounterPreview(node, aiPlayer);
       if (preview.encounterChancePercent > 0 && preview.featuredMonster) {
@@ -266,9 +268,18 @@ export class AISystem {
   ): AttackerAction {
     const isSilenced = ((ai as any).silenceTurns ?? 0) > 0;
     const canUseMagic = !isSilenced && ai.mp >= 10;
-    const canUseSkill = !isSilenced && !skillUsed && !(ai as any).skillUsed && ai.mp >= 12;
+    const skillCost = BattleEngine.actionCost({ playerRef: ai } as any, 'skill');
+    const isExplosion = ai.classKey === 'magician';
+    const canUseSkill = !isSilenced && !skillUsed && !(ai as any).skillUsed && ai.mp >= skillCost && (!isExplosion || ai.hp > ai.maxHp * .5 && opponent.hp > opponent.maxHp * .45);
 
     const roll = getWorld().random();
+    // Spellcasters spend their real MP advantage instead of repeatedly swinging a weak weapon.
+    // Explosion is reserved for enemies whose HP makes its sacrifice worthwhile.
+    if (ai.getTotalStat('mag') > ai.getTotalStat('atk') * 1.6 && canUseMagic && roll < .85) {
+      const magicEstimate = Math.max(6, ai.getTotalStat('mag') * 2.6 + 12 - opponent.mag * .85);
+      if (canUseSkill && isExplosion && opponent.maxHp * .4 > magicEstimate * 1.2 && roll < .5) return 'skill';
+      return 'magic';
+    }
     if (difficulty === 'casual' && roll < 0.50) {
       const actions: AttackerAction[] = canUseMagic ? ['attack', 'attack', 'strike', 'magic'] : ['attack', 'attack', 'strike'];
       return actions[Math.floor(getWorld().random() * actions.length)];

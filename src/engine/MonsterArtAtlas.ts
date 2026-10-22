@@ -1,6 +1,7 @@
 import { createArtworkImage } from './ArtworkLoading';
 import { atlasRowCuts } from './ClassArtAtlas';
 import { isolateAtlasCell } from './AtlasSprites';
+import { canvasBudget } from './PerformanceBudget';
 import type { CharacterAnimState, IsoDirection } from './PixelSpriteGenerator';
 
 const GROUPS: Record<string, string[]> = {
@@ -13,7 +14,7 @@ const GROUPS: Record<string, string[]> = {
 class MonsterArtAtlas {
   private failed = new Set<string>();
   private sheets = new Map<string, { image: HTMLImageElement; cuts: number[]; ready: boolean }>();
-  private frames = new Map<string, HTMLCanvasElement>();
+  private frames = canvasBudget<string>(8);
   hasFailed(archetype: string): boolean {
     return Object.keys(GROUPS).some(group => GROUPS[group].includes(archetype) && this.failed.has(group));
   }
