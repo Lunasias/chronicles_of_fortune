@@ -17,7 +17,9 @@ export class MovementUI {
   private health: HTMLElement;
   private confirm: HTMLButtonElement;
   private list: HTMLElement;
-  private options: HTMLDetailsElement;
+  private options: HTMLElement;
+  private expand: HTMLButtonElement;
+  private risk: HTMLElement;
   private recommendation: HTMLButtonElement;
   private destinations: RouteDestinationInsight[] = [];
   private filtered: RouteDestinationInsight[] = [];
@@ -30,26 +32,30 @@ export class MovementUI {
     this.panel.id = 'movementNavigator'; this.panel.hidden = true;
     this.panel.setAttribute('aria-label', 'วางแผนและเลือกเส้นทางเดิน');
     this.panel.innerHTML = `
-      <div class="movement-heading"><strong>วางแผนเส้นทาง</strong><span id="movementStatus"></span><span id="movementHealth" class="movement-health"></span></div>
+      <div class="movement-heading"><strong>เลือกทางเดิน</strong><span id="movementStatus"></span><button type="button" id="btnMoveExpand" class="pixel-btn" aria-expanded="false" aria-controls="movementOptions">ดูตัวเลือก ▴</button></div>
+      <div id="movementDestination" role="status" aria-live="polite" aria-atomic="true"><strong id="movementTitle"></strong><div class="movement-preview"><p id="movementDetail"></p><span id="movementRisk" class="movement-risk"></span></div></div>
+      <div id="movementOptions" class="movement-options" hidden>
+      <span id="movementHealth" class="movement-health"></span>
       <div class="movement-filters" role="group" aria-label="กรองจุดหมาย">${ROUTE_FILTERS.map(filter => `<button type="button" class="pixel-btn" data-route-filter="${filter.id}" aria-pressed="${filter.id === 'all'}">${filter.label} <span>0</span></button>`).join('')}</div>
       <button type="button" id="movementRecommendation" class="movement-recommendation" hidden></button>
-      <details class="movement-options"><summary id="movementListStatus">ดูจุดหมายทั้งหมด</summary>
+      <p id="movementListStatus">ดูจุดหมายทั้งหมด</p>
         <div class="movement-list-toolbar"><label>เรียงตาม <select id="movementSort" aria-label="เรียงจุดหมาย"><option value="route">ลำดับบนแผนที่</option><option value="risk">ความเสี่ยงต่ำก่อน</option><option value="steps">จำนวนก้าว</option></select></label><span>แตะเพื่อดูเส้นทางก่อนยืนยัน</span></div>
         <div id="movementDestinations" class="movement-list" role="group" aria-label="จุดหมายที่เดินถึง"></div>
-      </details>
-      <div id="movementDestination" role="status" aria-live="polite" aria-atomic="true"><strong id="movementTitle"></strong><p id="movementDetail"></p><p id="movementAdvice" class="movement-advice"></p></div>
+      <p id="movementAdvice" class="movement-advice"></p>
+      <p class="movement-help">เลือกจุดหมายเพื่อดูทางก่อน · Enter ยืนยันเดิน · F ดูตัวละคร · ค่าต่อสู้เป็นประมาณการ ไม่รวมคริติคอล สกิลและการป้องกัน</p>
+      </div>
       <div class="movement-actions">
         <button type="button" id="btnMovePrevious" class="pixel-btn" aria-label="ปลายทางก่อนหน้าในรายการ">← ก่อนหน้า</button>
         <button type="button" id="btnMoveNext" class="pixel-btn" aria-label="ปลายทางถัดไปในรายการ">ถัดไป →</button>
         <button type="button" id="btnMoveConfirm" class="pixel-btn pixel-btn-gold">ยืนยันเดินไปที่นี่</button>
         <button type="button" id="btnMoveCenter" class="pixel-btn" aria-label="กลับไปดูตัวละคร">◎ ตัวละคร</button>
-      </div>
-      <p class="movement-help">เลือกจุดหมายเพื่อดูทางก่อน · Enter ยืนยันเดิน · F ดูตัวละคร · ค่าต่อสู้เป็นประมาณการ ไม่รวมคริติคอล สกิลและการป้องกัน</p>`;
+      </div>`;
     document.body.appendChild(this.panel);
     this.title = this.panel.querySelector('#movementTitle')!; this.detail = this.panel.querySelector('#movementDetail')!;
     this.status = this.panel.querySelector('#movementStatus')!; this.advice = this.panel.querySelector('#movementAdvice')!;
     this.health = this.panel.querySelector('#movementHealth')!; this.confirm = this.panel.querySelector('#btnMoveConfirm')!;
-    this.list = this.panel.querySelector('#movementDestinations')!; this.options = this.panel.querySelector('details')!;
+    this.list = this.panel.querySelector('#movementDestinations')!; this.options = this.panel.querySelector('#movementOptions')!;
+    this.expand = this.panel.querySelector('#btnMoveExpand')!; this.risk = this.panel.querySelector('#movementRisk')!;
     this.recommendation = this.panel.querySelector('#movementRecommendation')!;
     const cycle = (direction: number) => {
       if (!this.onSelect) return onCycle(direction);
@@ -60,8 +66,9 @@ export class MovementUI {
     this.panel.querySelector('#btnMoveNext')!.addEventListener('click', () => cycle(1));
     this.confirm.addEventListener('click', onConfirm);
     this.panel.querySelector('#btnMoveCenter')!.addEventListener('click', onCenter);
+    this.expand.addEventListener('click', () => this.setExpanded(this.options.hidden));
     this.panel.querySelectorAll<HTMLButtonElement>('[data-route-filter]').forEach(button => button.addEventListener('click', () => {
-      this.filter = button.dataset.routeFilter as RouteFilter; this.options.open = true; this.renderList(); this.measure();
+      this.filter = button.dataset.routeFilter as RouteFilter; this.renderList(); this.measure();
     }));
     this.panel.querySelector<HTMLSelectElement>('#movementSort')!.addEventListener('change', event => { this.sort = (event.target as HTMLSelectElement).value as RouteSort; this.renderList(); this.measure(); });
     this.list.addEventListener('click', event => {
@@ -70,7 +77,17 @@ export class MovementUI {
       if (button && this.destinations.some(destination => destination.id === id)) this.onSelect?.(id);
     });
     this.recommendation.addEventListener('click', () => { const id = Number(this.recommendation.dataset.nodeId); if (this.destinations.some(destination => destination.id === id)) this.onSelect?.(id); });
-    this.options.addEventListener('toggle', () => this.measure());
+    new ResizeObserver(() => this.measure()).observe(this.panel);
+  }
+
+  private setExpanded(expanded: boolean) {
+    // Keep focus on a visible control if details are collapsed programmatically.
+    if (!expanded && this.options.contains(document.activeElement)) this.expand.focus({ preventScroll: true });
+    this.options.hidden = !expanded;
+    this.panel.dataset.expanded = String(expanded);
+    this.expand.setAttribute('aria-expanded', String(expanded));
+    this.expand.textContent = expanded ? 'ย่อแผง ▾' : 'ดูตัวเลือก ▴';
+    this.measure();
   }
 
   private measure() {
@@ -110,7 +127,7 @@ export class MovementUI {
     const now = performance.now();
     if (this.wasVisible && selectedId === this.selectedId && now < this.nextSnapshotAt) return;
     this.nextSnapshotAt = now + 120;
-    if (!this.wasVisible) { this.filter = 'all'; this.options.open = window.innerWidth > 900; this.wasVisible = true; }
+    if (!this.wasVisible) { this.filter = 'all'; this.setExpanded(false); this.wasVisible = true; }
     this.measure();
     const player = game.activePlayer, world = game.world;
     const reachable = new Set(game.highlightedNodes);
@@ -148,11 +165,14 @@ export class MovementUI {
     if (!selected || !node) {
       this.title.textContent = 'เลือกจุดหมายบนแผนที่หรือจากรายการ';
       this.detail.textContent = player.hasFlexibleMovement ? `ผลึกอิสระ: หยุดได้ตั้งแต่ 1 ถึง ${game.remainingMoves} ก้าว` : `เดินครบ ${game.remainingMoves} ก้าว · ออกเดินได้ทั้งสองทิศทาง`;
+      this.risk.textContent = ''; this.risk.hidden = true;
       this.advice.textContent = 'การกรองและดูข้อมูลยังไม่เริ่มเดิน กดยืนยันเมื่อพร้อม'; this.advice.dataset.risk = 'none'; return;
     }
     this.title.textContent = `${selected.originalIndex + 1}/${game.highlightedNodes.length} · ${selected.name}`;
     this.detail.textContent = `${selected.steps} ก้าว · ${node.subRegionName || node.realmName} · ${selected.benefit}`;
     this.advice.dataset.risk = selected.advice.risk;
+    this.risk.hidden = false; this.risk.dataset.risk = selected.advice.risk;
+    this.risk.textContent = selected.rivalName ? `อาจดวล PvP · ${selected.advice.label}` : `ปะทะ ${selected.encounterChance}% · ${selected.advice.label}`;
     this.advice.textContent = selected.rivalName
       ? `พบ ${selected.rivalName} · อาจดวล PvP · ${selected.advice.label}`
       : `โอกาสปะทะ ${selected.encounterChance}% · ${selected.advice.label}${selected.advice.incomingDamage ? ` · ศัตรูโจมตีแรงราว ${selected.advice.incomingDamage} HP` : ''}`;

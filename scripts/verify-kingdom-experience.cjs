@@ -46,6 +46,7 @@ async function fits(selector) { return page.locator(selector).evaluate(e => { co
   check('Pinning focuses the map without moving the player', await page.evaluate(() => window.__gameApp.game.activePlayer.nodeId) === nodeBefore && await page.locator('#waypointTracker').isVisible());
   await page.locator('#btnRollDice').click();
   await page.waitForFunction(() => window.__gameApp.game.phase === 'CHOOSING_PATH' && document.querySelector('#diceRollModal').classList.contains('hidden'));
+  await page.locator('#btnMoveExpand').click();
   await page.locator('#btnMoveWaypoint').waitFor({ state: 'visible' }); await page.locator('#btnMoveWaypoint').click();
   check('Waypoint advice selects a legal dice destination and waits for confirmation', await page.evaluate(() => { const a = window.__gameApp; return a.game.highlightedNodes.includes(a.selectedMoveNodeId) && a.game.phase === 'CHOOSING_PATH' && a.game.activePlayer.nodeId === 0; }));
   await shot('waypoint-route-desktop');

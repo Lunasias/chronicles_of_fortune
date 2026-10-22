@@ -46,7 +46,7 @@ export class WorldNavigator {
     this.movementButton = document.createElement('button'); this.movementButton.type = 'button';
     this.movementButton.id = 'btnMoveWaypoint'; this.movementButton.className = 'pixel-btn waypoint-route-button'; this.movementButton.hidden = true;
     this.movementButton.addEventListener('click', () => { if (this.recommended !== null) this.preview(this.recommended); });
-    document.querySelector('#movementNavigator .movement-heading')?.after(this.movementButton);
+    document.querySelector('#movementOptions')?.prepend(this.movementButton);
   }
   open() {
     if (!this.game.activePlayer) return;

@@ -42,16 +42,27 @@
 .adventure-coach-close { min-height: 44px; min-width: 32px; color: #bbc7c3; }
 body.adventure-guide-open :is(#floatingEventToast, #turnStartBanner, #orientationHintToast) { display: none; }
 
-body #movementNavigator { width: min(650px, calc(100vw - 24px)); max-height: min(530px, calc(100dvh - var(--hud-clearance, 100px) - var(--dock-clearance, 88px) - 28px)); overflow-y: auto; overscroll-behavior: contain; }
+body #movementNavigator { display: flex; flex-direction: column; width: min(650px, calc(100vw - 24px)); bottom: calc(var(--dock-clearance, 88px) + 8px); max-height: min(420px, 50dvh, calc(100dvh - var(--hud-clearance, 100px) - var(--dock-clearance, 88px) - 24px)); padding: 8px 12px; overflow: visible; line-height: 1.4; }
+body #movementNavigator[hidden] { display: none; }
+body #movementNavigator .movement-heading { align-items: center; flex-shrink: 0; font-size: 11px; }
+#movementStatus { flex: 1; text-align: right; color: #c5d6ce; }
+#btnMoveExpand { min-height: 32px; padding: 4px 9px; font-size: 11px; white-space: nowrap; }
+body #movementDestination { flex-shrink: 0; min-height: 0; margin: 4px 0 8px; }
+#movementTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.movement-preview { display: flex; align-items: baseline; gap: 8px; }
+body #movementDetail { flex: 1; min-width: 0; margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.movement-risk { flex-shrink: 0; font-size: 10px; color: #b8d6b5; }
+.movement-risk[data-risk='danger'] { color: #ffc0ad; }
+.movement-risk[data-risk='caution'] { color: #f2d093; }
 .movement-filters { display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0; }
 .movement-filters button { min-height: 36px; padding: 4px 10px; font-size: 11px; }
 .movement-filters button[aria-pressed='true'] { color: #15292e; background: #c4ae77; border-color: #efd398; }
-.movement-options { margin: 8px 0; }
-.movement-options summary { cursor: pointer; padding: 6px 0; color: #c5d6ce; }
+.movement-options { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 0 8px; padding: 8px 4px 4px; border-top: 1px solid #526766; }
+#movementListStatus { margin: 4px 0; color: #c5d6ce; font-size: 11px; }
 .movement-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; }
 .movement-list-toolbar label { display: flex; gap: 8px; align-items: center; }
 .movement-list-toolbar select { min-height: 36px; padding: 4px 8px; font-size: 11px; }
-.movement-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 190px; overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 4px; }
+.movement-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 2px 4px 4px; }
 .movement-card { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 64px; padding: 9px 10px; border: 1px solid #617b7c; background: #172f39; color: #f0e2c4; text-align: left; font-size: 12px; line-height: 1.5; }
 .movement-card strong { overflow-wrap: anywhere; }
 .movement-card[aria-pressed='true'], .movement-card[aria-current='true'] { border-color: #ecd096; box-shadow: inset 3px 0 #d7bd84; background: #29423f; }
@@ -61,7 +72,8 @@ body #movementNavigator { width: min(650px, calc(100vw - 24px)); max-height: min
 .movement-recommendation { color: #c5ddbe; font-size: 11px; padding: 4px 0; }
 .movement-health { color: #e6bc8e; font-size: 11px; margin: 4px 0; }
 .movement-empty { padding: 12px; color: #b7c9c8; font-size: 12px; line-height: 1.6; }
-body #movementNavigator .movement-actions { position: sticky; bottom: -12px; z-index: 2; padding: 9px 0 8px; background: #142936; }
+body #movementNavigator .movement-actions { position: static; flex-shrink: 0; padding: 0; background: #142936; }
+body #movementNavigator .movement-actions button { min-height: 40px; }
 .movement-list button:focus-visible, .movement-filters button:focus-visible { outline: 2px solid #a8dfc1; outline-offset: 1px; }
 
 @media (max-width: 600px) {
@@ -73,15 +85,19 @@ body #movementNavigator .movement-actions { position: sticky; bottom: -12px; z-i
   .adventure-guide-content { font-size: 13px; padding-right: 3px; }
   .adventure-combat-grid, .adventure-service-list { grid-template-columns: minmax(0, 1fr); }
   .adventure-control-list { grid-template-columns: 88px 1fr; }
-  .movement-list { grid-template-columns: minmax(0, 1fr); max-height: 145px; }
+  .movement-list { grid-template-columns: minmax(0, 1fr); }
   .movement-filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
   .movement-filters button { flex-shrink: 0; min-height: 40px; }
-  body #movementNavigator { bottom: var(--dock-clearance); padding: 9px 10px 4px; }
+  body #movementNavigator { bottom: calc(var(--dock-clearance, 88px) + 6px); padding: 7px 9px; }
+  .movement-preview { display: block; }
+  .movement-risk { display: block; margin-top: 2px; }
+  .movement-risk[hidden] { display: none; }
+  .movement-list-toolbar > span { display: none; }
+  body #movementNavigator .movement-actions button { min-height: 44px; }
   #adventureCoach { padding: 8px 10px; gap: 6px; }
 }
 @media (max-height: 500px) and (min-width: 601px) {
-  body #movementNavigator { right: 10px; left: auto; transform: none; width: min(480px, calc(100vw - 24px)); bottom: var(--dock-clearance); max-height: calc(100dvh - var(--hud-clearance, 75px) - var(--dock-clearance, 70px) - 12px); }
-  .movement-list { max-height: 105px; }
+  body #movementNavigator { right: 10px; left: auto; transform: none; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - var(--hud-clearance, 75px) - var(--dock-clearance, 70px) - 24px); }
   .adventure-guide-header h2 { font-size: 20px; }
   .adventure-guide-header { padding-bottom: 8px; }
   .adventure-guide-tabs { padding-bottom: 8px; }

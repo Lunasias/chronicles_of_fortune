@@ -90,6 +90,7 @@ async function openSettings(page) {
   await page.waitForFunction(() => document.querySelectorAll('[data-route-node]').length > 0);
   const cards = page.locator('[data-route-node]'); const firstId = await cards.first().getAttribute('data-route-node');
   check('Rolled destinations start unconfirmed', await page.locator('#btnMoveConfirm').isDisabled());
+  await page.locator('#btnMoveExpand').click();
   await cards.first().click(); await page.waitForFunction(id => document.querySelector(`[data-route-node="${id}"]`)?.getAttribute('aria-pressed') === 'true', firstId);
   check('Selecting a destination previews without starting movement', await page.locator('#movementNavigator').isVisible() && await page.locator('#btnMoveConfirm').isEnabled());
   await page.keyboard.press('Enter'); await page.waitForTimeout(200);
@@ -104,11 +105,16 @@ async function openSettings(page) {
   await context.close();
 
   // Deterministic rich route fixtures for filtering, keyboard scope and small screens.
-  for (const [label, viewport] of [['desktop', { width: 1280, height: 720 }], ['phone', { width: 390, height: 844 }], ['landscape', { width: 844, height: 390 }]]) {
+  for (const [label, viewport] of [['widescreen', { width: 1920, height: 930 }], ['desktop', { width: 1280, height: 720 }], ['phone', { width: 390, height: 844 }], ['landscape', { width: 844, height: 390 }]]) {
     const context = await browser.newContext({ viewport, serviceWorkers: 'block', reducedMotion: 'reduce' });
     await context.addInitScript(() => { localStorage.setItem('fortune_mobile_display_pref', 'portrait'); localStorage.setItem('fortuna_guide_v1', 'dismissed'); });
     const page = await context.newPage(); observe(page); page.setDefaultTimeout(20000);
     await page.goto(`${base}/?art-scene=world&biome=grass&roll=6`, { waitUntil: 'domcontentloaded' }); await ready(page);
+    const compact = await inViewport(page, '#movementNavigator');
+    check(`Route planner starts compact (${label})`, await page.locator('#movementOptions').isHidden() && compact.visible && compact.rect.height < 180, compact);
+    await page.locator('#btnMoveNext').click();
+    check(`Compact arrows preview a destination without walking (${label})`, await page.locator('#btnMoveConfirm').isEnabled() && await page.evaluate(() => window.__gameApp.game.phase === 'CHOOSING_PATH'));
+    await page.locator('#btnMoveExpand').click();
     const chip = page.locator('[data-route-filter="services"]');
     if (await chip.isEnabled()) {
       await chip.click(); const ids = await page.locator('[data-route-node]').evaluateAll(buttons => buttons.map(button => button.dataset.routeNode));
@@ -117,10 +123,19 @@ async function openSettings(page) {
       await page.keyboard.press('ArrowRight'); await page.waitForTimeout(100);
       const selected = await page.locator('[data-route-node][aria-pressed="true"]').getAttribute('data-route-node');
       check(`Keyboard cycling stays inside the active filter (${label})`, ids.includes(selected), { ids, selected });
-    } else await page.locator('#movementListStatus').click();
+    }
     await page.locator('#btnMoveConfirm').scrollIntoViewIfNeeded();
     const box = await inViewport(page, '#btnMoveConfirm'); check(`Movement confirmation remains reachable (${label})`, box.visible && box.documentWidth <= viewport.width, box);
     await shot(page, `route-filter-${label}`);
+    const selectedBeforeCollapse = await page.locator('[data-route-node][aria-pressed="true"]').getAttribute('data-route-node');
+    await page.locator('#btnMoveExpand').click();
+    const collapsed = await inViewport(page, '#movementNavigator');
+    check(`Route planner collapses without losing the selected destination (${label})`, await page.locator('#movementOptions').isHidden() && await page.locator('#btnMoveConfirm').isEnabled() && await page.locator('[data-route-node][aria-pressed="true"]').getAttribute('data-route-node') === selectedBeforeCollapse && collapsed.visible && collapsed.rect.height < 180, collapsed);
+    check(`Compact planner leaves the control dock clear (${label})`, await page.evaluate(() => document.querySelector('#movementNavigator').getBoundingClientRect().bottom <= document.querySelector('#bottomBar').getBoundingClientRect().top));
+    await page.locator('#btnMoveExpand').press('Enter');
+    check(`Keyboard can reopen details without starting movement (${label})`, await page.locator('#movementOptions').isVisible() && await page.evaluate(() => window.__gameApp.game.phase === 'CHOOSING_PATH'));
+    await page.locator('#btnMoveExpand').press('Space');
+    await shot(page, `route-compact-${label}`);
     await page.keyboard.press('?'); await page.locator('#adventureGuideModal').waitFor({ state: 'visible' });
     await page.locator('[data-guide-tab="journey"]').click(); await shot(page, `guide-journey-${label}`);
     const guide = await inViewport(page, '.adventure-guide-dialog'); check(`Journal fits the viewport (${label})`, guide.visible && guide.documentWidth <= viewport.width, guide);
