@@ -1,8 +1,11 @@
 import { BattleEngine, type Combatant, type AttackerAction } from '../game/BattleEngine';
 import { escapeHtml } from '../util/Html';
+import { battleForecast } from './BattleForecast';
 
 export function actionHint(actor: Combatant, action: AttackerAction, skillUsed = false): { cost: number; blocked: boolean; text: string } {
   const cost = BattleEngine.actionCost(actor, action);
+  if (actor.freezeTurns && !actor.playerRef?.relics.includes('dragon_heart')) return { cost: 0, blocked: false, text: 'แช่แข็ง · รอบนี้ขยับไม่ได้' };
+  if (actor.silenceTurns && ['magic', 'skill'].includes(action)) return { cost: 0, blocked: false, text: 'ใบ้ · ใช้เวทจะเสียจังหวะ' };
   if (action === 'skill' && (skillUsed || actor.skillUsed)) return { cost, blocked: true, text: 'ใช้แล้วในศึกนี้' };
   if (actor.mp < cost) return { cost, blocked: true, text: `MP ไม่พอ · ต้องการ ${cost}` };
   return { cost, blocked: false, text: action === 'skill' ? `${cost} MP · 1 ครั้ง/ศึก` : cost ? `${cost} MP` : 'ไม่ใช้ MP' };
@@ -33,6 +36,17 @@ export function updateBattlePresentation(battle: BattleEngine, skillUsed: boolea
     button.disabled = hint.blocked;
     button.setAttribute('aria-disabled', String(hint.blocked));
     button.title = action === 'skill' ? `${battle.attacker.skillName ?? 'ท่าอาชีพ'} · ${hint.text}` : hint.text;
+    const forecast = battleForecast(battle.attacker, battle.defender, action);
+    let estimate = button.querySelector<HTMLElement>('.command-forecast');
+    if (!estimate) { estimate = document.createElement('span'); estimate.className = 'command-forecast'; button.append(estimate); }
+    estimate.textContent = forecast.text;
+    button.title += ` · ${forecast.detail}`;
+  }
+  for (const [id, text] of [['btnCmdDefend', 'กันกายภาพ · แพ้โจมตีหนัก'], ['btnCmdCounter', 'สวนโจมตีหนัก · เสี่ยงถ้าทายผิด'], ['btnCmdMagicGuard', 'กันเวท · ระวังโจมตีกายภาพ'], ['btnCmdGiveUp', 'ยอมแพ้ · มีผลเสียจากความพ่ายแพ้']] as const) {
+    const button = document.getElementById(id); if (!button) continue;
+    let hint = button.querySelector<HTMLElement>('.command-forecast');
+    if (!hint) { hint = document.createElement('span'); hint.className = 'command-forecast'; button.append(hint); }
+    hint.textContent = text;
   }
   const player = battle.isPlayerAttacking ? battle.attacker : battle.defender;
   const enemy = battle.isPlayerAttacking ? battle.defender : battle.attacker;

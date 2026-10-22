@@ -4,7 +4,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const out = path.resolve(__dirname, '../docs/adventure-upgrade-v1');
 const base = process.env.FORTUNA_REVIEW_URL || 'http://localhost:5173';
-const report = { date: '2026-10-22', base, checks: [], errors: [], screenshots: [], dialogs: [] };
+const report = { date: '2026-10-23', base, checks: [], errors: [], screenshots: [], dialogs: [] };
 fs.mkdirSync(out, { recursive: true });
 let browser;
 
@@ -67,9 +67,14 @@ async function openSettings(page) {
   await openSettings(page); await page.locator('#selectSaveSlot').selectOption('1'); await page.locator('#btnSettingsSave').click();
   const manual = await page.evaluate(() => localStorage.getItem('chronicles_of_fortune_savegame'));
   check('Manual slot1 is written through Settings', !!manual && JSON.parse(manual).players[0].name === 'ผู้กล้า 🌿');
-  await page.locator('#btnSettingsExport').click(); await page.waitForTimeout(250); importCode = await page.evaluate(() => navigator.clipboard.readText());
+  await page.locator('#btnSettingsExport').click(); await page.locator('dialog.game-dialog[open]').waitFor();
+  await page.locator('[data-dialog-copy]').click(); await page.waitForTimeout(100); importCode = await page.evaluate(() => navigator.clipboard.readText());
   check('Export produces a usable Unicode save code', importCode.length > 100, { codeCharacters: importCode.length });
-  await page.locator('#selectSaveSlot').selectOption('2'); await page.locator('#btnSettingsImport').click(); await page.locator('#settingsModal').waitFor({ state: 'hidden' });
+  await page.locator('[data-dialog-confirm]').click();
+  await page.locator('#selectSaveSlot').selectOption('2'); await page.locator('#btnSettingsImport').click();
+  await page.locator('dialog.game-dialog textarea').fill(importCode); await page.locator('[data-dialog-confirm]').click();
+  await page.locator('dialog.game-dialog[open] h2').filter({ hasText: 'กลับสู่การผจญภัย' }).waitFor();
+  await page.locator('[data-dialog-confirm]').click(); await page.locator('#settingsModal').waitFor({ state: 'hidden' });
   const imported = await page.evaluate(() => JSON.parse(localStorage.getItem('chronicles_of_fortune_savegame_slot_2') || 'null'));
   check('Save import restores Unicode player names into the selected slot', imported?.players?.[0]?.name === 'ผู้กล้า 🌿');
   check('Autosaving after import preserves the manual slot', await page.evaluate(() => localStorage.getItem('chronicles_of_fortune_savegame')) === manual);

@@ -1,4 +1,5 @@
 import { WorldState, bindWorld } from './WorldState';
+import { validRoyalContractState } from './RoyalContracts';
 import { aiSystem } from './AISystem';
 import { royalDecreeSystem, RoyalDecree } from './RoyalDecreeSystem';
 import type { CombatMoveHistory } from './AISystem';
@@ -216,6 +217,7 @@ export class SaveManager {
     }
     for (const key of ['weather', 'forecast', 'threat', 'events', 'expeditions', 'bossHealth', 'bossKillers']) if (key in data.world && !isRecord(data.world[key])) return fail();
     for (const key of ['defeatedBosses', 'raidTargets', 'claimedTreasures', 'calamityHistory']) if (key in data.world && !Array.isArray(data.world[key])) return fail();
+    if (!validRoyalContractState(data.world.royalContracts)) return fail();
     if (data.world.result != null && !isRecord(data.world.result)) return fail();
     if (data.world.calamity != null && !isRecord(data.world.calamity)) return fail();
     if (data.world.modifier != null && !isRecord(data.world.modifier)) return fail();

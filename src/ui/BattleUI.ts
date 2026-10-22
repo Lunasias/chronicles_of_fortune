@@ -371,6 +371,7 @@ export class BattleUI {
     document.getElementById('btnBattleScout')?.addEventListener('click', () => this.toggleScoutDrawer());
     document.getElementById('btnCloseScout')?.addEventListener('click', () => this.toggleScoutDrawer());
     window.addEventListener('keydown', (e) => {
+      if (e.defaultPrevented || (e.target as HTMLElement | null)?.closest('input, textarea, select, [contenteditable="true"]') || document.querySelector('dialog[open]')) return;
       if (e.key === '2' && !document.getElementById('battleScreen')?.classList.contains('hidden')) {
         this.toggleScoutDrawer();
       }
@@ -413,6 +414,7 @@ export class BattleUI {
       human.gridPos = pos;
       audio.click();
       this.updateFormationButtons(pos);
+      updateBattlePresentation(b, this.playerSkillUsedThisBattle);
       const descEl = document.getElementById('battleFormationDesc');
       if (descEl) {
         if (pos === 'front') descEl.innerText = 'แถวหน้า: +15% โจมตี/ชาร์จฟัน, +15% สวนกลับ';

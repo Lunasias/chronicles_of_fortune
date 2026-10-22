@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-22",
+  "date": "2026-10-23",
   "base": "http://localhost:5173",
   "checks": [
     {
@@ -38,7 +38,7 @@
       "name": "Export produces a usable Unicode save code",
       "passed": true,
       "detail": {
-        "codeCharacters": 25196
+        "codeCharacters": 25216
       }
     },
     {
@@ -76,7 +76,7 @@
       "name": "Explicit confirmation walks the selected legal route and reaches its named destination",
       "passed": true,
       "detail": {
-        "selectedName": "Solaria Meadows · Trail 2"
+        "selectedName": "Solaria Meadows · shop item 6"
       }
     },
     {
@@ -265,19 +265,6 @@
     "route-filter-landscape",
     "guide-journey-landscape"
   ],
-  "dialogs": [
-    {
-      "type": "alert",
-      "message": "คัดลอกรหัสเซฟ [ช่อง 1] สำเร็จ! สามารถนำไปสำรองหรือนำเข้าบนอุปกรณ์อื่นได้"
-    },
-    {
-      "type": "prompt",
-      "message": "วางรหัสบันทึก (Save Code) เพื่อนำเข้าสู่ช่อง 2:"
-    },
-    {
-      "type": "alert",
-      "message": "นำเข้าข้อมูลเซฟลงในช่อง 2 และโหลดความคืบหน้าสำเร็จ!"
-    }
-  ],
+  "dialogs": [],
   "passed": true
 }

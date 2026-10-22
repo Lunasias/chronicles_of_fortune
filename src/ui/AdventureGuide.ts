@@ -2,8 +2,9 @@ import type { GameState } from '../game/GameState';
 import type { BoardNode } from '../game/BoardMap';
 import { escapeHtml } from '../util/Html';
 import { adventureNextAction, adventureProgress, nearbyServices } from './AdventureProgress';
+import { royalContractViews } from '../game/RoyalContracts';
 
-type GuideTab = 'journey' | 'combat' | 'controls';
+type GuideTab = 'journey' | 'combat' | 'controls' | 'contracts';
 
 /** A live campaign journal, plus help that can be opened without leaving play. */
 export class AdventureGuide {
@@ -14,8 +15,10 @@ export class AdventureGuide {
   private tab: GuideTab = 'journey';
   private dismissed = false;
   private refreshedAt = 0;
+  private contractNotice = '';
 
-  constructor(private game: GameState, private onFocus: (node: BoardNode) => void) {
+  constructor(private game: GameState, private onFocus: (node: BoardNode) => void,
+    private contractAction?: (action: string, id?: string) => Promise<string>, private canManageContracts = () => false) {
     try { this.dismissed = localStorage.getItem('fortuna_guide_v1') === 'dismissed'; } catch { /* Help still works without storage. */ }
     this.modal.id = 'adventureGuideModal';
     this.modal.hidden = true;
@@ -24,16 +27,23 @@ export class AdventureGuide {
     this.modal.setAttribute('aria-labelledby', 'adventureGuideTitle');
     this.modal.innerHTML = `<div class="adventure-guide-dialog pixel-box-gold">
       <header class="adventure-guide-header"><div><span class="adventure-eyebrow">THE ADVENTURER'S JOURNAL</span><h2 id="adventureGuideTitle">สมุดนักผจญภัย</h2></div><button type="button" id="btnCloseAdventureGuide" class="pixel-btn" aria-label="ปิดสมุดนักผจญภัย">✕ ปิด</button></header>
-      <nav class="adventure-guide-tabs" aria-label="หมวดคู่มือ"><button type="button" class="pixel-btn" data-guide-tab="journey">การเดินทาง</button><button type="button" class="pixel-btn" data-guide-tab="combat">การต่อสู้</button><button type="button" class="pixel-btn" data-guide-tab="controls">วิธีควบคุม</button></nav>
+      <nav class="adventure-guide-tabs" aria-label="หมวดคู่มือ"><button type="button" class="pixel-btn" data-guide-tab="journey">การเดินทาง</button><button type="button" class="pixel-btn" data-guide-tab="contracts">ราชภารกิจ</button><button type="button" class="pixel-btn" data-guide-tab="combat">การต่อสู้</button><button type="button" class="pixel-btn" data-guide-tab="controls">วิธีควบคุม</button></nav>
       <div class="adventure-guide-content" id="adventureGuideContent"></div>
     </div>`;
     this.content = this.modal.querySelector('#adventureGuideContent')!;
     this.modal.querySelector('#btnCloseAdventureGuide')!.addEventListener('click', () => this.close());
-    this.modal.addEventListener('click', event => {
+    this.modal.addEventListener('click', async event => {
       const target = event.target as HTMLElement;
       if (target === this.modal) { this.close(); return; }
       const tab = target.closest<HTMLButtonElement>('[data-guide-tab]');
       if (tab) { this.tab = tab.dataset.guideTab as GuideTab; this.render(); return; }
+      const contract = target.closest<HTMLButtonElement>('[data-contract-action]');
+      if (contract && !contract.disabled && this.contractAction) {
+        contract.disabled = true;
+        this.contractNotice = await this.contractAction(contract.dataset.contractAction!, contract.dataset.contractId);
+        if (this.modal.hidden) return;
+        this.render(); this.modal.querySelector<HTMLButtonElement>('#btnCloseAdventureGuide')?.focus(); return;
+      }
       const service = target.closest<HTMLButtonElement>('[data-guide-node]');
       if (service) {
         const node = this.game.allNodes.find(n => n.id === Number(service.dataset.guideNode));
@@ -61,6 +71,7 @@ export class AdventureGuide {
     });
     document.body.append(this.modal, this.coach);
     document.getElementById('btnAdventureGuide')?.addEventListener('click', () => this.open());
+    document.getElementById('btnRoyalContracts')?.addEventListener('click', () => this.openContracts());
     document.addEventListener('keydown', event => {
       if (event.defaultPrevented || event.key !== '?' || event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (this.modal.hidden && Array.from(document.querySelectorAll('[role="dialog"]')).some(panel => !panel.closest('.hidden, [hidden]'))) return;
@@ -69,6 +80,7 @@ export class AdventureGuide {
   }
 
   open() {
+    this.contractNotice = '';
     this.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.modal.hidden = false; this.coach.hidden = true;
     document.body.classList.add('adventure-guide-open');
@@ -86,6 +98,7 @@ export class AdventureGuide {
   }
 
   get isOpen() { return !this.modal.hidden; }
+  openContracts() { this.tab = 'contracts'; this.open(); }
 
   moveFocus(direction: number) {
     const buttons = Array.from(this.modal.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
@@ -103,7 +116,12 @@ export class AdventureGuide {
 
   private render() {
     for (const button of this.modal.querySelectorAll<HTMLButtonElement>('[data-guide-tab]')) button.setAttribute('aria-pressed', String(button.dataset.guideTab === this.tab));
-    if (this.tab === 'combat') {
+    if (this.tab === 'contracts') {
+      const player = this.game.activePlayer;
+      if (!player) { this.content.innerHTML = '<section class="adventure-guide-intro"><h3>ราชสำนักรอเรื่องราวของคุณ</h3><p>เริ่มแคมเปญก่อนรับราชภารกิจ รับได้ครั้งละหนึ่งงานและส่งงานเพื่อรับทองกับ XP</p></section>'; return; }
+      const views = royalContractViews(this.game, player), active = views.find(view => view.active), allowed = this.canManageContracts();
+      this.content.innerHTML = `<section class="adventure-guide-intro"><h3>ราชภารกิจของ ${escapeHtml(player.displayName)}</h3><p>รับหนึ่งงานแล้วทำเป้าหมายให้สำเร็จ ความคืบหน้านับหลังรับภารกิจ รับรางวัลได้งานละหนึ่งครั้งต่อแคมเปญ</p><p class="contract-notice" role="status">${escapeHtml(this.contractNotice || (allowed ? 'รับและส่งภารกิจก่อนทอยเต๋าในเทิร์นของคุณ' : 'ดูข้อมูลได้ทุกเวลา รับและส่งงานเมื่อถึงเทิร์นของคุณก่อนทอยเต๋า'))}</p></section><div class="royal-contract-grid">${views.map(view => `<article class="royal-contract-card" data-state="${view.completed ? 'completed' : view.active ? 'active' : 'available'}"><div><span class="adventure-eyebrow">${view.completed ? 'ส่งงานแล้ว' : view.active ? 'ภารกิจปัจจุบัน' : `LV.${view.minimumLevel}+`}</span><h3>${escapeHtml(view.name)}</h3><p>${escapeHtml(view.description)}</p></div><strong class="contract-reward">${view.gold} G · ${view.xp} XP</strong>${view.active || view.completed ? `<progress max="${view.target}" value="${view.completed ? view.target : view.progress}" aria-label="ความคืบหน้า ${escapeHtml(view.name)}"></progress><small>${view.completed ? view.target : view.progress} / ${view.target}</small>` : ''}<button type="button" class="pixel-btn${view.ready ? ' pixel-btn-gold' : ''}" data-contract-action="${view.ready ? 'claim' : 'start'}" data-contract-id="${view.id}" ${!allowed || view.completed || view.locked || !!active && !view.ready ? 'disabled' : ''}>${view.completed ? 'รับรางวัลแล้ว' : view.ready ? 'ส่งงานและรับรางวัล' : view.active ? 'กำลังทำภารกิจ' : view.locked ? 'ยังไม่ปลดล็อก' : active ? 'ทำงานปัจจุบันก่อน' : 'รับภารกิจ'}</button></article>`).join('')}</div>${active ? `<button type="button" class="pixel-btn contract-abandon" data-contract-action="abandon" ${!allowed ? 'disabled' : ''}>ยกเลิกงานปัจจุบันเพื่อเลือกภารกิจใหม่</button>` : ''}`;
+    } else if (this.tab === 'combat') {
       this.content.innerHTML = `<section class="adventure-guide-intro"><h3>ทุกคำสั่งมีจังหวะได้เปรียบ</h3><p>อ่านเลือด MP และอุปกรณ์ของทั้งสองฝ่ายก่อนตัดสินใจ คำเตือนในหน้าส่องศัตรูคำนวณจากตัวละครและสภาพพื้นที่ปัจจุบัน</p></section>
         <div class="adventure-combat-grid"><article><h4>โจมตีธรรมดา</h4><p>คำสั่งพื้นฐานเมื่ออยากเก็บ MP ฝ่ายรับใช้ป้องกันเพื่อลดความเสียหายได้</p></article><article><h4>โจมตีหนัก ↔ สวนกลับ</h4><p>โจมตีหนักทะลวงการป้องกัน แต่ถ้าคู่ต่อสู้สวนกลับ คุณจะเป็นฝ่ายเสียเปรียบ</p></article><article><h4>เวทมนตร์ ↔ ป้องกันเวท</h4><p>ตรวจค่า MP และธาตุที่ศัตรูแพ้ ป้องกันเวทช่วยรับมือการโจมตีด้วยเวท</p></article><article><h4>สกิลและคู่หู</h4><p>สกิลอาชีพและการเรียกคู่หูมีข้อจำกัดต่อการต่อสู้ เก็บไว้ใช้ในจังหวะที่เปลี่ยนผลการดวลได้</p></article></div>
         <section class="adventure-guide-intro"><h3>เตรียมตัวก่อนเสี่ยง</h3><p>ยาฟื้นพลัง อาวุธ และเกราะช่วยให้ผ่านภูมิภาคที่ยากขึ้น ศัตรูในภูมิภาคเดิมไม่เพิ่มพลังตามอุปกรณ์ของคุณ ใช้พื้นที่คุ้นเคยสร้างความพร้อมก่อนท้าบอส</p></section>`;

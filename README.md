@@ -4,6 +4,11 @@ A 2.5D Isometric RPG Board Game inspired by **Dokapon Kingdom** featuring origin
 
 Single-player board campaign against up to 3 AI rivals, local hot-seat play, and online P2P rooms for 2–4 players with optional AI slots.
 
+The October 23 **Kingdom experience** update introduces five campaign presets,
+royal contracts with persistent one-time rewards, searchable locations and personal
+waypoints, live battle damage forecasts, and accessible in-game save dialogs.
+The title uses new original illustrated artwork. [What changed and how it was tested](docs/kingdom-v2/README.md).
+
 The October 22 update adds a destination planner with service/treasure/risk filters,
 combat estimates and explicit travel confirmation; a campaign journal with goals,
 standings and nearby services; stable, cached HUD rendering; validated save imports

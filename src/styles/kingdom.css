@@ -1,0 +1,107 @@
+/* Kingdom experience: campaign selection, royal contracts and real game dialogs. */
+body #titleScreen { background-image: url('/assets/generated/kingdom-title-v2.webp'); background-position: center; padding-top: 32px; padding-bottom: 44px; }
+body #titleScreen:has(#playerSetupBlock:not(.hidden)) { align-items: center; justify-content: center; padding: 16px; }
+body #titleScreen:has(#playerSetupBlock:not(.hidden)) > .text-center { display: none; }
+body #playerSetupBlock { width: min(1000px, 96vw); max-width: 1000px; max-height: calc(100dvh - 32px); padding: 22px; }
+.campaign-launcher-heading h3 { color: #f1d39a; font-size: 20px; font-weight: 600; }
+.campaign-launcher-heading p { color: #b6ccc4; margin: 4px 0 12px; font-size: 12px; }
+.campaign-preset-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.campaign-preset { min-height: 132px; display: flex; flex-direction: column; gap: 5px; padding: 13px; border: 1px solid #536e70; background: #152e35; color: #efdfbd; text-align: left; }
+.campaign-preset:hover { background: #26473e; }
+.campaign-preset[aria-pressed='true'] { border-color: #e1c98b; box-shadow: inset 3px 0 #d4bc81; background: #25463d; }
+.campaign-preset strong { font-size: 16px; line-height: 1.6; }
+.campaign-preset span { font-size: 11px; color: #b9d7bd; }
+.campaign-preset p { font-size: 12px; line-height: 1.7; color: #c0cfca; margin: 0; }
+.campaign-setup-summary { font-size: 12px; line-height: 1.8; padding: 10px 0; color: #e2c894; }
+.campaign-advanced { color: #d3d9cd; font-size: 13px; border-top: 1px solid #46615e; padding: 10px 0; }
+.campaign-advanced summary { padding: 6px 0; cursor: pointer; }
+.campaign-advanced-fields { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; }
+body .campaign-start-actions { position: sticky; bottom: -22px; z-index: 2; padding: 12px 0 14px; background: #142d36; border-top: 1px solid #698074; }
+body .campaign-start-actions button { min-height: 46px; }
+.royal-contract-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.royal-contract-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #4b6766; background: #112831; }
+.royal-contract-card > div { flex: 1; }
+.royal-contract-card[data-state='active'] { border-color: #d8bc79; background: #1d3935; }
+.royal-contract-card[data-state='completed'] { border-color: #679f83; }
+.royal-contract-card progress { width: 100%; height: 12px; accent-color: #b5d3ad; }
+.royal-contract-card progress, .adventure-objective progress { appearance: none; border: 1px solid #60796c; background: #0c232c; }
+.royal-contract-card progress::-webkit-progress-bar, .adventure-objective progress::-webkit-progress-bar { background: #0c232c; }
+.royal-contract-card progress::-webkit-progress-value, .adventure-objective progress::-webkit-progress-value { background: #b3cba0; }
+.royal-contract-card progress::-moz-progress-bar, .adventure-objective progress::-moz-progress-bar { background: #b3cba0; }
+.royal-contract-card button { min-height: 44px; font-size: 12px; padding: 8px; }
+.royal-contract-card button:disabled { opacity: .58; cursor: default; }
+.contract-reward { color: #e5c989; font-size: 14px; }
+.contract-notice { margin-top: 10px !important; color: #b7d5bd !important; }
+.contract-abandon { display: block; padding: 8px 12px; margin-top: 18px; font-size: 12px; }
+.game-dialog, .world-navigator-dialog { margin: auto; width: min(650px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); padding: 24px; background: #142b33; color: #f0e0bc; border: 2px solid #c2a36a; border-image: url('/assets/generated/fortune-ui-frame-v1.webp') 192 / 20px stretch; overflow: auto; }
+.game-dialog::backdrop, .world-navigator-dialog::backdrop { background: #05151be0; }
+.game-dialog header h2, .world-navigator-dialog h2 { margin: 4px 0 10px; color: #f4d59d; font-size: 24px; line-height: 1.5; }
+.game-dialog-message { white-space: pre-wrap; font-size: 14px; line-height: 1.9; color: #c3d2ca; margin: 0 0 14px; }
+.game-dialog-field { display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #b5ccbe; }
+.game-dialog-field[hidden] { display: none; }
+.game-dialog textarea { width: 100%; resize: vertical; min-height: 140px; max-height: 35dvh; padding: 12px; border: 1px solid #607c72; background: #071c24; color: #d9e9d9; font: 12px/1.6 monospace; user-select: text; -webkit-user-select: text; overflow-wrap: anywhere; }
+.game-dialog-status { color: #d5c88d; font-size: 12px; line-height: 1.6; margin-top: 10px; }
+.game-dialog footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.game-dialog footer button { min-height: 44px; padding: 8px 16px; font-size: 13px; }
+.game-dialog button[data-danger='true'] { background: #914f48; color: #ffedce; }
+body:has(dialog[open]) :is(#floatingEventToast, #turnStartBanner, #adventureCoach) { display: none; }
+.world-navigator-dialog { width: min(850px, calc(100vw - 28px)); }
+.world-navigator-dialog[open] { display: flex; flex-direction: column; }
+.world-navigator-dialog[hidden] { display: none; }
+.world-navigator-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-shrink: 0; }
+.world-navigator-dialog > p { color: #b4c8c3; font-size: 13px; line-height: 1.7; }
+.world-navigator-dialog button { min-height: 44px; padding: 6px 14px; font-size: 12px; }
+.world-navigator-search { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin: 14px 0 8px; flex-shrink: 0; }
+.world-navigator-search label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #bcd2c3; }
+.world-navigator-search input, .world-navigator-search select { min-height: 44px; width: 100%; padding: 8px 10px; border: 1px solid #56756b; background: #0d2029; color: #e6dfc6; font: 13px 'Kanit', sans-serif; }
+.world-navigator-search input { user-select: text; -webkit-user-select: text; }
+.world-location-results { min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.world-location-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #415f5d; margin-bottom: 8px; background: #11262f; }
+.world-location-card > div { min-width: 0; }
+.world-location-card strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.world-location-card span { display: block; color: #b4c7bd; font-size: 12px; line-height: 1.8; }
+.world-location-card small { display: block; color: #d0ba87; font-size: 11px; }
+.world-location-card[data-pinned='true'] { border-color: #d6b875; background: #234339; }
+.world-location-card button { flex-shrink: 0; }
+.world-location-card button:disabled { opacity: .45; }
+.world-navigator-dialog > footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 12px; color: #9ebeb1; font-size: 11px; flex-shrink: 0; }
+.navigation-muted { font-size: 11px !important; margin: 4px 0 8px; }
+.navigation-empty { padding: 24px; color: #b4c7bd; font-size: 13px; }
+#waypointTracker { position: fixed; left: 12px; top: calc(var(--hud-clearance, 100px) + 12px); z-index: 28; display: flex; width: min(280px, calc(100vw - 24px)); background: #14352ff5; border: 1px solid #b69f65; color: #e6d8b2; box-shadow: 0 4px 12px #0005; }
+#waypointTracker[hidden] { display: none; }
+.waypoint-open { flex: 1; min-width: 0; padding: 10px 12px; text-align: left; }
+.waypoint-open span { display: block; font-size: 10px; color: #9fbea8; }
+.waypoint-open strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.waypoint-open small { display: block; font-size: 11px; color: #d6bc84; margin-top: 3px; }
+.waypoint-clear { min-width: 36px; min-height: 44px; color: #a9c5b8; }
+.waypoint-route-button { width: 100%; margin-top: 8px; padding: 8px; font-size: 11px; text-align: left; min-height: 40px; color: #c2ddba !important; }
+body:has(#waypointTracker:not([hidden])) #adventureCoach { display: none; }
+.command-forecast { display: block; font: 11px/1.5 'Kanit', sans-serif; color: #bed8ce; margin-top: 3px; }
+body #btnCmdStrike .command-forecast { color: #353321; }
+@media (max-width: 700px) {
+  .campaign-preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .campaign-preset { min-height: 132px; padding: 10px; }
+  .campaign-preset strong { font-size: 14px; }
+  body #playerSetupBlock { padding: 16px; }
+  .royal-contract-grid { grid-template-columns: minmax(0, 1fr); }
+  .game-dialog, .world-navigator-dialog { padding: 18px; border-image-width: 14px; }
+  .game-dialog header h2, .world-navigator-dialog h2 { font-size: 20px; }
+  .world-navigator-search { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .world-location-card { padding: 10px; gap: 8px; }
+  .world-location-card strong { font-size: 12px; }
+  .world-location-card span { font-size: 11px; }
+  .world-navigator-dialog > p { font-size: 11px; }
+  #waypointTracker { top: auto; bottom: calc(var(--dock-clearance, 88px) + 12px); }
+  body.movement-open #waypointTracker { display: none; }
+  .adventure-guide-tabs { gap: 4px; }
+  .adventure-guide-tabs button { padding: 6px 2px; font-size: 11px; }
+  .command-forecast { font-size: 10px; }
+}
+@media (max-height: 500px) and (min-width: 701px) {
+  .world-navigator-search { margin-top: 4px; }
+  .world-navigator-dialog { padding: 16px 20px; }
+  .world-navigator-dialog > header h2 { font-size: 18px; margin: 0; }
+  .world-navigator-dialog > p { display: none; }
+  .world-navigator-dialog > footer { padding-top: 6px; }
+  .game-dialog { padding: 16px 20px; }
+}

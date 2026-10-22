@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-23",
+  "base": "http://localhost:5173",
+  "checks": [
+    {
+      "name": "New title uses generated kingdom artwork",
+      "passed": true
+    },
+    {
+      "name": "Five campaign presets are available",
+      "passed": true
+    },
+    {
+      "name": "Rival preset configures four players and Darkling",
+      "passed": true
+    },
+    {
+      "name": "Co-op preset configures real cooperative match rules",
+      "passed": true
+    },
+    {
+      "name": "First adventure is a gentle two-player setup",
+      "passed": true
+    },
+    {
+      "name": "Accepting a contract writes an initial baseline into the autosave",
+      "passed": true
+    },
+    {
+      "name": "Thai service search returns real inns",
+      "passed": true
+    },
+    {
+      "name": "Pinning focuses the map without moving the player",
+      "passed": true
+    },
+    {
+      "name": "Waypoint advice selects a legal dice destination and waits for confirmation",
+      "passed": true
+    },
+    {
+      "name": "Completed contract button pays the exact reward once",
+      "passed": true
+    },
+    {
+      "name": "Export is an accessible in-game code dialog",
+      "passed": true
+    },
+    {
+      "name": "Export copy button acknowledges success",
+      "passed": true
+    },
+    {
+      "name": "Import preserves Unicode names and completed contracts",
+      "passed": true
+    },
+    {
+      "name": "Import and autosave preserve manual slot one",
+      "passed": true
+    },
+    {
+      "name": "Controller cancels deletion without changing the save or issuing board actions",
+      "passed": true
+    },
+    {
+      "name": "Hot-seat players retain separate waypoint bookmarks",
+      "passed": true
+    },
+    {
+      "name": "Navigator fits phone viewport",
+      "passed": true
+    },
+    {
+      "name": "Navigator close button stays reachable on phone",
+      "passed": true
+    },
+    {
+      "name": "Contract journal fits phone viewport",
+      "passed": true
+    },
+    {
+      "name": "Save dialog and its close action fit phone",
+      "passed": true
+    },
+    {
+      "name": "Navigator fits landscape viewport",
+      "passed": true
+    },
+    {
+      "name": "Navigator close button stays reachable on landscape",
+      "passed": true
+    },
+    {
+      "name": "Contract journal fits landscape viewport",
+      "passed": true
+    },
+    {
+      "name": "Save dialog and its close action fit landscape",
+      "passed": true
+    },
+    {
+      "name": "Battle cards show fundamental damage forecasts",
+      "passed": true
+    },
+    {
+      "name": "Formation changes refresh battle information",
+      "passed": true
+    },
+    {
+      "name": "Mobile campaign setup keeps Begin Game reachable",
+      "passed": true
+    },
+    {
+      "name": "No runtime, HTTP, native browser dialog or request failures",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "title-desktop",
+    "campaign-desktop",
+    "royal-contracts-desktop",
+    "navigator-desktop",
+    "waypoint-route-desktop",
+    "contract-reward-desktop",
+    "save-dialog-desktop",
+    "navigator-phone",
+    "contracts-phone",
+    "save-dialog-phone",
+    "navigator-landscape",
+    "contracts-landscape",
+    "save-dialog-landscape",
+    "battle-forecast-desktop",
+    "title-phone",
+    "campaign-phone"
+  ],
+  "passed": true
+}

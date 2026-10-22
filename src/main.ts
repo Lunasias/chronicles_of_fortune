@@ -57,6 +57,12 @@ import { mobileDisplayManager } from './ui/MobileDisplayManager';
 import { completeArtworkBoot } from './engine/ArtworkLoading';
 import { AdventureGuide } from './ui/AdventureGuide';
 import './styles/adventure.css';
+import './styles/kingdom.css';
+import { gameDialogs } from './ui/GameDialogs';
+import { withDialogControls } from './ui/DialogControls';
+import { WorldNavigator } from './ui/WorldNavigator';
+import { installCampaignLauncher } from './ui/CampaignLauncher';
+import { startRoyalContract, claimRoyalContract, abandonRoyalContract, royalContractViews, recordRoyalBossVictory } from './game/RoyalContracts';
 
 class DokaponApp {
   private visualReviewActive = false;
@@ -70,6 +76,7 @@ class DokaponApp {
   private hud: HUD;
   private movementUI: MovementUI;
   private adventureGuide: AdventureGuide;
+  private worldNavigator: WorldNavigator;
   private selectedMoveNodeId: number | null = null;
   private battleUI: BattleUI;
   private gamepadController!: GamepadController;
@@ -108,6 +115,9 @@ class DokaponApp {
     this.game = new GameState();
 
     this.hud = new HUD(this.game);
+    this.worldNavigator = new WorldNavigator(this.game, node => {
+      this.renderer.centerCameraOn(node.gx, node.gy, node.gz); this.renderer.hoveredNodeId = node.id;
+    }, id => this.previewMoveDestination(id));
     this.movementUI = new MovementUI(
       direction => this.cycleHighlightedNode(direction),
       () => this.confirmMoveDestination(),
@@ -117,7 +127,8 @@ class DokaponApp {
     this.adventureGuide = new AdventureGuide(this.game, node => {
       this.renderer.centerCameraOn(node.gx, node.gy, node.gz);
       this.renderer.hoveredNodeId = node.id;
-    });
+    }, (action, id) => this.handleRoyalContract(action, id), () => this.game.phase === 'BOARD_TURN' && this.isMyTurn() && !this.game.activePlayer?.isAI);
+    this.worldNavigator.attachMovementAction();
     this.battleUI = new BattleUI(this.game);
     this.townUI = new TownUI(this.game);
     this.shopUI = new ShopUI(this.game);
@@ -160,6 +171,7 @@ class DokaponApp {
 
     this.initCanvasResize();
     this.bindDOMEvents();
+    installCampaignLauncher(this.game);
     this.bindInteractiveTileSelection();
     this.updateTitleSaveStatus();
     this.initGamepadController();
@@ -683,7 +695,7 @@ class DokaponApp {
   // WEB GAMEPAD CONTROLLER INTEGRATION
   // =========================================================================
   private initGamepadController() {
-    this.gamepadController = new GamepadController({
+    this.gamepadController = new GamepadController(withDialogControls({
       onPan: (dx, dy) => {
         if (!this.game.activeBattle && !this.adventureGuide.isOpen) {
           this.renderer.panCamera(dx, dy);
@@ -807,7 +819,7 @@ class DokaponApp {
       onDpadRight: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(1) : this.cycleHighlightedNode(1),
       onDpadUp: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(-1) : this.cycleHighlightedNode(-1),
       onDpadDown: () => this.adventureGuide.isOpen ? this.adventureGuide.moveFocus(1) : this.cycleHighlightedNode(1)
-    });
+    }));
   }
 
   private stepCameraZoom(direction: 1 | -1) {
@@ -1510,36 +1522,27 @@ class DokaponApp {
     });
 
     // Save Data Export & Import Handlers
-    document.getElementById('btnSettingsExport')?.addEventListener('click', () => {
+    document.getElementById('btnSettingsExport')?.addEventListener('click', async () => {
       audio.click();
       const slot = this.getSelectedSaveSlot();
       const code = SaveManager.exportSaveData(slot);
       if (code) {
-        if (navigator.clipboard?.writeText) {
-          navigator.clipboard.writeText(code).then(() => {
-            alert(`คัดลอกรหัสเซฟ [ช่อง ${slot === 0 ? 'Auto' : slot}] สำเร็จ! สามารถนำไปสำรองหรือนำเข้าบนอุปกรณ์อื่นได้`);
-          }).catch(() => {
-            prompt('รหัสบันทึกความคืบหน้า (Save Code):', code);
-          });
-        } else {
-          prompt('รหัสบันทึกความคืบหน้า (Save Code):', code);
-        }
+        await gameDialogs.code('สำรองความคืบหน้า', `รหัสเซฟ ${slot === 0 ? 'อัตโนมัติ' : `ช่อง ${slot}`} · คัดลอกเก็บไว้หรือนำเข้าบนอุปกรณ์อื่น`, code);
       } else {
         audio.hurt();
-        alert(`ยังไม่มีข้อมูลบันทึกในช่อง ${slot === 0 ? 'Auto-Save' : slot}`);
+        await gameDialogs.message('ยังไม่มีบันทึก', `ยังไม่มีข้อมูลบันทึกในช่อง ${slot === 0 ? 'อัตโนมัติ' : slot}`);
       }
     });
 
-    document.getElementById('btnSettingsImport')?.addEventListener('click', () => {
+    document.getElementById('btnSettingsImport')?.addEventListener('click', async () => {
       audio.click();
       const slot = this.getSelectedSaveSlot();
-      const code = prompt(`วางรหัสบันทึก (Save Code) เพื่อนำเข้าสู่ช่อง ${slot === 0 ? 'Auto-Save' : slot}:`);
+      const code = await gameDialogs.text('นำเข้าความคืบหน้า', `วางรหัสบันทึกเพื่อนำเข้าสู่ช่อง ${slot === 0 ? 'อัตโนมัติ' : slot} ข้อมูลที่ใช้ไม่ได้จะไม่ทับเซฟเดิม`);
       if (code && code.trim()) {
         const res = SaveManager.importSaveData(this.game, code.trim(), slot);
         if (res.success) {
           if (res.bossState) { this.bossCurrentHp = res.bossState.currentHp; this.bossMaxHp = res.bossState.maxHp; }
           audio.fanfare();
-          alert(`นำเข้าข้อมูลเซฟลงในช่อง ${slot === 0 ? 'Auto-Save' : slot} และโหลดความคืบหน้าสำเร็จ!`);
           document.getElementById('titleScreen')?.classList.add('hidden');
           document.getElementById('settingsModal')?.classList.add('hidden');
           document.getElementById('topHUD')?.classList.remove('hidden');
@@ -1548,9 +1551,10 @@ class DokaponApp {
           this.onTurnStarted();
           this.hud.update();
           this.updateTitleSaveStatus();
+          await gameDialogs.message('กลับสู่การผจญภัย', `นำเข้าข้อมูลช่อง ${slot === 0 ? 'อัตโนมัติ' : slot} เรียบร้อยแล้ว`);
         } else {
           audio.hurt();
-          alert(`นำเข้าไม่สำเร็จ: ${res.error || 'รหัสไม่ถูกต้อง'}`);
+          await gameDialogs.message('นำเข้าไม่สำเร็จ', res.error || 'รหัสบันทึกไม่ถูกต้อง');
         }
       }
     });
@@ -2489,8 +2493,25 @@ class DokaponApp {
   }
 
   private progressQuest(player: Player, action: 'monster' | 'town' | 'boss', node?: BoardNode, monsterName?: string) {
+    if (action === 'boss') recordRoyalBossVictory(this.game, player);
     const result = isekaiEventManager.onGameAction(player, action, { node, monsterName });
     if (result.message) this.game.addLog(result.message, 'level');
+  }
+
+  private async handleRoyalContract(action: string, id?: string): Promise<string> {
+    const player = this.game.activePlayer;
+    if (!player || player.isAI || !this.isMyTurn()) return 'รับและส่งภารกิจได้ในเทิร์นของตัวเอง';
+    if (action === 'abandon' && !await gameDialogs.confirm('ยกเลิกราชภารกิจ', 'ความคืบหน้าของงานปัจจุบันจะถูกยกเลิก คุณสามารถรับงานใหม่ได้ทันที')) return 'ยังคงทำภารกิจเดิม';
+    const result = action === 'claim' ? claimRoyalContract(this.game, player)
+      : action === 'abandon' ? abandonRoyalContract(this.game, player) : startRoyalContract(this.game, player, id || '');
+    if (!result.success) return result.error || 'ยังทำรายการนี้ไม่ได้';
+    const message = action === 'claim' ? `ส่งราชภารกิจ รับ ${result.gold}G และ ${result.xp} XP${result.leveledUp ? ' · เลเวลเพิ่มขึ้น!' : ''}`
+      : action === 'abandon' ? 'ยกเลิกงานแล้ว พร้อมรับภารกิจใหม่' : 'รับราชภารกิจแล้ว ความคืบหน้าเริ่มนับตั้งแต่ตอนนี้';
+    this.game.addLog(`${player.displayName}: ${message}`, action === 'claim' ? 'gold' : 'info');
+    this.hud.update(); this.saveGameProgress(false); this.syncMultiplayerState();
+    if (this.game.world.result) { this.adventureGuide.close(); this.showMatchResult(); }
+    else if (action === 'claim') audio.fanfare(); else audio.click();
+    return message;
   }
 
   private advanceTurn() {
@@ -2556,6 +2577,18 @@ class DokaponApp {
   private onTurnStarted() {
     if (this.showMatchResult()) return;
     const p = this.game.activePlayer;
+    if (p.isAI && this.ownsActiveTurn() && this.game.phase === 'BOARD_TURN') {
+      const contracts = royalContractViews(this.game, p);
+      if (contracts.some(contract => contract.ready)) {
+        const reward = claimRoyalContract(this.game, p);
+        if (reward.success) this.game.addLog(`${p.displayName} ส่งราชภารกิจ รับ ${reward.gold}G และ ${reward.xp} XP`, 'gold');
+      }
+      if (!this.game.world.royalContracts[p.id]?.active) {
+        const next = royalContractViews(this.game, p).find(contract => !contract.locked && !contract.completed);
+        if (next) startRoyalContract(this.game, p, next.id);
+      }
+    }
+    if (this.game.world.result) { this.syncMultiplayerState(); this.showMatchResult(); return; }
     const audioNode = this.game.allNodes.find(node => node.id === p.nodeId);
     if (p.isDarkling) audio.playBgm('darkling');
     else if (audioNode) {
@@ -2711,7 +2744,7 @@ class DokaponApp {
     }
   }
 
-  private loadGameProgress(requestedSlot?: number) {
+  private async loadGameProgress(requestedSlot?: number) {
     let slot = requestedSlot ?? this.getSelectedSaveSlot();
     if (!SaveManager.hasSave(slot) && requestedSlot === undefined) {
       const firstAvailable = [1, 2, 3].find(s => SaveManager.hasSave(s));
@@ -2724,7 +2757,7 @@ class DokaponApp {
 
     if (!SaveManager.hasSave(slot)) {
       audio.hurt();
-      alert(`ยังไม่มีข้อมูลบันทึกความคืบหน้าในช่อง ${slot}`);
+      await gameDialogs.message('ยังไม่มีบันทึก', `ยังไม่มีข้อมูลบันทึกความคืบหน้าในช่อง ${slot}`);
       return;
     }
     const res = SaveManager.load(this.game, slot);
@@ -2745,13 +2778,13 @@ class DokaponApp {
       this.updateTitleSaveStatus();
     } else {
       audio.hurt();
-      alert(res.error ? `โหลดบันทึกไม่สำเร็จ: ${res.error}` : 'ไม่สามารถโหลดข้อมูลบันทึกได้');
+      await gameDialogs.message('โหลดบันทึกไม่สำเร็จ', res.error || 'ไม่สามารถโหลดข้อมูลบันทึกได้');
     }
   }
 
-  private resetSavedGame() {
+  private async resetSavedGame() {
     const slot = this.getSelectedSaveSlot();
-    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเซฟเกมในช่องที่ ${slot}? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
+    if (await gameDialogs.confirm('ลบช่องบันทึกนี้หรือไม่', `ลบเซฟ ${slot === 0 ? 'อัตโนมัติ' : `ช่อง ${slot}`} และสำเนาสำรองของช่องนี้ ช่องอื่นจะยังอยู่`, true)) {
       SaveManager.clear(slot);
       audio.hurt();
       const statusEl = document.getElementById('settingsSaveStatusText');
@@ -3796,6 +3829,7 @@ class DokaponApp {
     if (this.game.phase !== 'CHOOSING_PATH') this.selectedMoveNodeId = null;
     const showMovement = this.canShowMovementNavigation();
     this.movementUI.update(this.game, this.selectedMoveNodeId, showMovement);
+    this.worldNavigator.update(time, this.game.phase !== 'TITLE' && !this.game.activeBattle && !this.adventureGuide.isOpen, showMovement);
 
     if (this.game.phase !== 'TITLE') {
       if (this.game.activeBattle) {

@@ -1,5 +1,7 @@
 # Adventure upgrade browser review — 2026-10-22
 
+Compatibility rerun on 2026-10-23: all 33 checks still pass with the Kingdom experience update. Export/import now uses the themed HTML code dialog; screenshots and the machine-readable report reflect that rerun.
+
 Chromium passed **33 checks** with no JavaScript page errors, failed requests or HTTP errors. The review used 1280×720 desktop, 390×844 portrait and 844×390 landscape viewports.
 
 The normal game path was exercised through real controls: title help → two-player setup → new game → dice roll → destination preview → explicit confirmation → arrival at the selected destination. Pressing Enter on a focused destination card only previewed it. Service filters and keyboard cycling retained valid destination IDs.
